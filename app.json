@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "magic-tracker",
+    "slug": "magic-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#000000"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#000000"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f94ef889-8205-4dac-acaf-c517dc131240"
+      }
+    },
+    "owner": "cejafi"
+  }
+}
