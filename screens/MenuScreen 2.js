@@ -1,26 +1,19 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 
-export default function MenuScreen({ navigation }) {
+export default function MenuScreen() {
   const menuItems = [
-    { name: 'Home Page', screen: 'Home' },
-    { name: 'About Us', screen: 'AboutUs' },
-    { name: 'About You', screen: 'AboutYou' },
-    { name: 'Streak', screen: 'Grow' },
-    { name: 'Quotes', screen: 'Quotes' },
-    { name: 'Settings', screen: 'Settings' },
-    { name: 'Legal Policies', screen: 'Legal' },
-    { name: 'Contact Us', screen: 'Contact' },
-    { name: 'Log Out', screen: null }
+    'Home Page',
+    'About Us',
+    'About You',
+    'Streak',
+    'Quotes',
+    'Research/Articles',
+    'Settings',
+    'Legal Policies',
+    'Contact Us',
+    'Log Out'
   ];
-
-  const handleItemPress = (item) => {
-    if (item.name === 'Log Out') {
-      Alert.alert('Log Out', 'Log out feature coming soon!');
-    } else if (item.screen) {
-      navigation.navigate(item.screen);
-    }
-  };
 
   return (
     <View style={styles.container}>
@@ -29,12 +22,8 @@ export default function MenuScreen({ navigation }) {
         
         <View style={styles.menuContainer}>
           {menuItems.map((item, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.menuItem}
-              onPress={() => handleItemPress(item)}
-            >
-              <Text style={styles.menuItemText}>{item.name}</Text>
+            <TouchableOpacity key={index} style={styles.menuItem}>
+              <Text style={styles.menuItemText}>{item}</Text>
               <Text style={styles.arrow}>›</Text>
             </TouchableOpacity>
           ))}

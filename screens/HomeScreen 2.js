@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import quotesData from '../quotes.json';
 
 // Star Component
 const Star = ({ size = 24, filled = false }) => (
@@ -19,45 +17,14 @@ const Heart = ({ size = 24, filled = false, onPress }) => (
   </TouchableOpacity>
 );
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen() {
   const [goalCompleted, setGoalCompleted] = useState(false);
   const [quoteHearted, setQuoteHearted] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [todayQuote, setTodayQuote] = useState({ quote: '', author: '' });
-  const [todaysChallenge, setTodaysChallenge] = useState('');
-  const [todaysCriterion, setTodaysCriterion] = useState('');
 
-  // Get today's quote (synced with Manifest screen)
-  useEffect(() => {
-    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-    const quoteIndex = dayOfYear % quotesData.length;
-    setTodayQuote(quotesData[quoteIndex]);
-    
-    loadTodaysChallenge();
-    loadTodaysCriterion();
-  }, []);
-
-  const loadTodaysChallenge = async () => {
-    try {
-      const challenge = await AsyncStorage.getItem('todays_challenge');
-      if (challenge) {
-        setTodaysChallenge(challenge);
-      }
-    } catch (error) {
-      console.log('Error loading challenge:', error);
-    }
-  };
-
-  const loadTodaysCriterion = async () => {
-    try {
-      const criterion = await AsyncStorage.getItem('todays_criterion');
-      if (criterion) {
-        setTodaysCriterion(criterion);
-      }
-    } catch (error) {
-      console.log('Error loading criterion:', error);
-    }
-  };
+  const todaysChallenge = "Spin Circles";
+  const inspirationQuote = "Inspiration, so much creativity and inspiration to share here. So many quotes. Build a database.";
+  const quoteAuthor = "~author";
 
   const navItems = [
     { name: 'Menu', color: '#90EE90' },
@@ -72,17 +39,8 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         
-        {/* Header with Menu Button */}
-        <View style={styles.headerContainer}>
-          <TouchableOpacity 
-            style={styles.menuButton}
-            onPress={() => navigation.navigate('Menu')}
-          >
-            <Text style={styles.menuButtonText}>☰</Text>
-          </TouchableOpacity>
-          <Text style={styles.header}>Home</Text>
-          <View style={styles.menuButtonPlaceholder} />
-        </View>
+        {/* Header */}
+        <Text style={styles.header}>Home</Text>
 
         {/* Star Progress */}
         <View style={styles.starContainer}>
@@ -101,30 +59,24 @@ export default function HomeScreen({ navigation }) {
 
         <View style={styles.divider} />
 
-        {/* Quote Box - Clickable to Manifest */}
-        <TouchableOpacity 
-          style={[styles.card, styles.purpleCard]}
-          onPress={() => navigation.navigate('Manifest')}
-        >
-          <Text style={styles.quoteText}>"{todayQuote.quote}"</Text>
-          <Text style={styles.authorText}>~{todayQuote.author}</Text>
+        {/* Quote Box */}
+        <View style={[styles.card, styles.purpleCard]}>
+          <Text style={styles.quoteText}>"{inspirationQuote}"</Text>
+          <Text style={styles.authorText}>{quoteAuthor}</Text>
           <Text style={styles.manifestText}>
             Ready to <Text style={styles.manifestHighlight}>Manifest?</Text> click here.
           </Text>
-          <View style={styles.heartRight}>
+          <View style={styles.heartLeft}>
             <Heart
               size={32}
               filled={quoteHearted}
               onPress={() => setQuoteHearted(!quoteHearted)}
             />
           </View>
-        </TouchableOpacity>
+        </View>
 
-        {/* Goal Box - Clickable to Manifest */}
-        <TouchableOpacity 
-          style={[styles.card, styles.redCard]}
-          onPress={() => navigation.navigate('Manifest')}
-        >
+        {/* Goal Box */}
+        <View style={[styles.card, styles.redCard]}>
           <Text style={styles.goalTitle}>Did you meet yesterday's grow goal?</Text>
           <Text style={styles.goalSubtext}>click heart for yes</Text>
           <Text style={styles.goalSubtext}>
@@ -134,31 +86,21 @@ export default function HomeScreen({ navigation }) {
             <Heart
               size={36}
               filled={goalCompleted}
-              onPress={(e) => {
-                e.stopPropagation();
-                setGoalCompleted(!goalCompleted);
-              }}
+              onPress={() => setGoalCompleted(!goalCompleted)}
             />
           </View>
-        </TouchableOpacity>
+        </View>
 
-        {/* Art Challenge Box - Clickable to Art */}
-        <TouchableOpacity 
-          style={[styles.card, styles.artCard]}
-          onPress={() => navigation.navigate('Art')}
-        >
+        {/* Art Challenge Box */}
+        <View style={[styles.card, styles.artCard]}>
           <Text style={styles.artLabel}>Art:</Text>
-          <Text style={styles.artChallenge}>{todaysChallenge || 'Loading...'}</Text>
-        </TouchableOpacity>
+          <Text style={styles.artChallenge}>{todaysChallenge}</Text>
+        </View>
 
         <View style={styles.divider} />
 
-        {/* Ranking Section - Clickable to Inspire */}
-        <TouchableOpacity onPress={() => navigation.navigate('Inspire')}>
-          <Text style={styles.rankTitle}>
-            Rank by: <Text style={styles.underline}>{todaysCriterion || 'Loading...'}</Text>
-          </Text>
-        </TouchableOpacity>
+        {/* Ranking Section */}
+        <Text style={styles.rankTitle}>Rank by: <Text style={styles.underline}>Most Purple</Text></Text>
         
         <View style={styles.galleryButtons}>
           <TouchableOpacity style={styles.galleryButton}>
@@ -202,7 +144,12 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <View style={{ height: 20 }} />
+        {/* Rating Badge */}
+        <View style={styles.ratingContainer}>
+          <View style={styles.ratingBadge}>
+            <Text style={styles.ratingText}>1-5</Text>
+          </View>
+        </View>
 
         <View style={{ height: 20 }} />
       </ScrollView>
@@ -222,37 +169,13 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
   },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 40,
-    marginBottom: 20,
-  },
-  menuButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuButtonText: {
-    fontSize: 24,
-    color: '#FFD700',
-    fontWeight: 'bold',
-  },
-  menuButtonPlaceholder: {
-    width: 44,
-  },
   header: {
     fontSize: 40,
     fontWeight: 'bold',
     color: '#FFD700',
     textAlign: 'center',
-    flex: 1,
+    marginTop: 40,
+    marginBottom: 20,
     textShadowColor: 'rgba(255, 215, 0, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,

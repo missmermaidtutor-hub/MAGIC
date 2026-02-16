@@ -27,6 +27,12 @@
         "projectId": "f94ef889-8205-4dac-acaf-c517dc131240"
       }
     },
-    "owner": "cejafi"
+    "owner": "cejafi",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f94ef889-8205-4dac-acaf-c517dc131240"
+    }
   }
 }

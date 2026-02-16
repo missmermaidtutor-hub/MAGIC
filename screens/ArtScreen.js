@@ -182,36 +182,102 @@ export default function ArtScreen() {
 
   // Handle art creation options
   const handleWrite = () => {
-    Alert.alert('Write', 'Writing tool coming soon! For now, use your favorite writing app and come back to upload.');
+    Alert.alert('Write', 'Writing tool coming soon! For now, create your text art and come back to upload.');
   };
 
   const handleSketch = () => {
-    Alert.alert('Sketch', 'Drawing tool coming soon! For now, use your favorite drawing app and come back to upload.');
+    Alert.alert('Sketch', 'Drawing tool coming soon! For now, create your sketch and come back to upload.');
   };
 
   const handleCapture = () => {
     Alert.alert('Capture', 'Photo capture coming soon! For now, take a photo and come back to upload.');
   };
 
-  // Handle uploads
-  const handlePrivateUpload = () => {
-    Alert.alert(
-      'Upload to Private Gallery',
-      'Your artwork will be saved to your private gallery where only you can see it.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Upload', onPress: () => Alert.alert('Success!', 'Artwork saved to private gallery! 🎨') }
-      ]
-    );
+  // Simulate image selection (in real app, this would use image picker)
+  const simulateImageSelection = () => {
+    // Random sample images for demo
+    const sampleImages = [
+      'https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1545551816-c691d80f8e31?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1580674285054-bed31e145f59?w=400&h=400&fit=crop',
+      'https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=400&h=400&fit=crop'
+    ];
+    return sampleImages[Math.floor(Math.random() * sampleImages.length)];
   };
 
-  const handleCourageUpload = () => {
+  // Handle uploads
+  const handlePrivateUpload = async () => {
+    try {
+      const imageUrl = simulateImageSelection();
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Create artwork object
+      const artwork = {
+        id: Date.now(),
+        imageUrl: imageUrl,
+        artist: 'You',
+        title: `Art from ${today}`,
+        prompt: todaysChallenge,
+        date: today,
+        isPublic: false
+      };
+
+      // Save to private gallery
+      const existingPrivate = await AsyncStorage.getItem('private_artworks');
+      const privateArtworks = existingPrivate ? JSON.parse(existingPrivate) : [];
+      privateArtworks.push(artwork);
+      await AsyncStorage.setItem('private_artworks', JSON.stringify(privateArtworks));
+
+      Alert.alert('Success!', 'Artwork saved to your private gallery! 🎨\n\nOnly you can see it.');
+    } catch (error) {
+      Alert.alert('Error', 'Could not save artwork');
+    }
+  };
+
+  const handleCourageUpload = async () => {
     Alert.alert(
       'Upload with COURAGE',
-      'Your artwork will be posted for community ranking. Are you ready to share your creativity?',
+      'Your artwork will be posted for community ranking. Ready to share your creativity?',
       [
         { text: 'Not Yet', style: 'cancel' },
-        { text: 'Share!', onPress: () => Alert.alert('Courage!', 'Artwork posted for ranking! You\'re inspiring others! ✨') }
+        { 
+          text: 'Share!', 
+          onPress: async () => {
+            try {
+              const imageUrl = simulateImageSelection();
+              const today = new Date().toISOString().split('T')[0];
+              
+              // Create artwork object
+              const artwork = {
+                id: Date.now(),
+                imageUrl: imageUrl,
+                artist: 'Anonymous', // Start anonymous
+                title: `${todaysChallenge}`,
+                prompt: todaysChallenge,
+                date: today,
+                isPublic: true,
+                rankings: []
+              };
+
+              // Save to public gallery
+              const existingPublic = await AsyncStorage.getItem('public_artworks');
+              const publicArtworks = existingPublic ? JSON.parse(existingPublic) : [];
+              publicArtworks.push(artwork);
+              await AsyncStorage.setItem('public_artworks', JSON.stringify(publicArtworks));
+
+              // Also save to private
+              const existingPrivate = await AsyncStorage.getItem('private_artworks');
+              const privateArtworks = existingPrivate ? JSON.parse(existingPrivate) : [];
+              privateArtworks.push(artwork);
+              await AsyncStorage.setItem('private_artworks', JSON.stringify(privateArtworks));
+
+              Alert.alert('Courage!', 'Artwork posted for ranking! You\'re inspiring others! ✨\n\nAlso saved to your private gallery.');
+            } catch (error) {
+              Alert.alert('Error', 'Could not upload artwork');
+            }
+          }
+        }
       ]
     );
   };

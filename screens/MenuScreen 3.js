@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 
 export default function MenuScreen({ navigation }) {
   const menuItems = [
@@ -43,45 +43,3 @@ export default function MenuScreen({ navigation }) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0a0e27',
-  },
-  content: {
-    padding: 20,
-  },
-  header: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#FFD700',
-    textAlign: 'center',
-    marginTop: 40,
-    marginBottom: 30,
-  },
-  menuContainer: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    overflow: 'hidden',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#333',
-  },
-  menuItemText: {
-    fontSize: 18,
-    color: '#90EE90',
-    fontWeight: '500',
-  },
-  arrow: {
-    fontSize: 24,
-    color: '#FFD700',
-  },
-});

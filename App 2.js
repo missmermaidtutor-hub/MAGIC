@@ -12,15 +12,6 @@ import GoalScreen from './screens/GoalScreen';
 import InspireScreen from './screens/InspireScreen';
 import CommunityScreen from './screens/CommunityScreen';
 import MenuScreen from './screens/MenuScreen';
-import StreakScreen from './screens/StreakScreen';
-
-// Import menu pages
-import AboutUsScreen from './screens/menu-pages/AboutUsScreen';
-import AboutYouScreen from './screens/menu-pages/AboutYouScreen';
-import QuotesScreen from './screens/menu-pages/QuotesScreen';
-import SettingsScreen from './screens/menu-pages/SettingsScreen';
-import LegalScreen from './screens/menu-pages/LegalScreen';
-import ContactScreen from './screens/menu-pages/ContactScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -76,8 +67,8 @@ export default function App() {
             }}
           />
           <Tab.Screen 
-            name="Grow" 
-            component={StreakScreen}
+            name="Goal" 
+            component={GoalScreen}
             options={{
               tabBarIcon: ({ color, focused }) => (
                 <TabIcon color="#FF6B6B" focused={focused} />
@@ -94,61 +85,12 @@ export default function App() {
             }}
           />
           <Tab.Screen 
-            name="Connect" 
+            name="Community" 
             component={CommunityScreen}
             options={{
               tabBarIcon: ({ color, focused }) => (
                 <TabIcon color="#DDA0DD" focused={focused} />
               ),
-            }}
-          />
-          <Tab.Screen 
-            name="Menu" 
-            component={MenuScreen}
-            options={{
-              tabBarButton: () => null, // Hides from tab bar
-            }}
-          />
-          <Tab.Screen 
-            name="AboutUs" 
-            component={AboutUsScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-          <Tab.Screen 
-            name="AboutYou" 
-            component={AboutYouScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-          <Tab.Screen 
-            name="Quotes" 
-            component={QuotesScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-          <Tab.Screen 
-            name="Settings" 
-            component={SettingsScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-          <Tab.Screen 
-            name="Legal" 
-            component={LegalScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-          <Tab.Screen 
-            name="Contact" 
-            component={ContactScreen}
-            options={{
-              tabBarButton: () => null,
             }}
           />
         </Tab.Navigator>
