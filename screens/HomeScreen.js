@@ -369,8 +369,8 @@ const calculateStreak = async () => {
 
 // From streak count, calculate earned stars
 // Each day = 1 five-pointed star. Every 7 days consolidate into 1 seven-pointed star.
-// Every 4 seven-pointed stars (28 days) consolidate into 1 month star.
-// Every 12 month stars (336 days) + remaining → year dot at 365.
+// Every 30 days consolidate into 1 month star.
+// Every 365 days → year dot.
 const getStreakStars = (streak) => {
   let remaining = streak;
 
@@ -378,9 +378,9 @@ const getStreakStars = (streak) => {
   const yearDots = Math.floor(remaining / 365);
   remaining = remaining % 365;
 
-  // Month stars: every 28 days (4 weeks = 4 seven-pointed stars)
-  const monthStars = Math.floor(remaining / 28);
-  remaining = remaining % 28;
+  // Month stars: every 30 days
+  const monthStars = Math.floor(remaining / 30);
+  remaining = remaining % 30;
 
   // Week stars: every 7 days
   const weekStars = Math.floor(remaining / 7);
@@ -573,7 +573,7 @@ export default function HomeScreen({ navigation }) {
                   justifyContent: 'flex-end',
                 }}
               >
-                {item.type === 'year' && <YearDot size={10} />}
+                {item.type === 'year' && <YearDot size={7} />}
                 {item.type === 'month' && <MonthStar size={20} />}
                 {item.type === 'week' && <WeekStar size={28} />}
                 {item.type === 'day' && <DayStar size={32} />}
