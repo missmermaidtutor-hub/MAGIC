@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import quotesData from '../quotes.json';
 
@@ -317,12 +318,102 @@ const DayStar = ({ size = 30 }) => {
   );
 };
 
+// Gold Frame wrapper — uses actual gold frame image
+// Gold Frame — gradient metallic gold border with gleam
+const GoldFrame = ({ children, style, containerStyle, onPress, thickness = 4 }) => {
+  const Wrapper = onPress ? TouchableOpacity : View;
+  return (
+    <Wrapper onPress={onPress} style={[{
+      borderRadius: 6,
+      shadowColor: '#FFD700',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.6,
+      shadowRadius: 10,
+      elevation: 8,
+    }, containerStyle]}>
+      {/* Outer gradient — diagonal metallic sweep */}
+      <LinearGradient
+        colors={['#FFF8DC', '#FFD700', '#B8860B', '#FFD700', '#FFFACD', '#DAA520', '#B8860B', '#FFD700', '#FFF8DC']}
+        locations={[0, 0.12, 0.25, 0.4, 0.5, 0.6, 0.75, 0.88, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ borderRadius: 6, padding: thickness }}
+      >
+        {/* Inner thin bright line */}
+        <View style={{
+          borderRadius: 3,
+          borderWidth: 0.5,
+          borderColor: 'rgba(255, 248, 220, 0.5)',
+        }}>
+          <View style={[{ borderRadius: 3, overflow: 'hidden' }, style]}>
+            {children}
+          </View>
+        </View>
+      </LinearGradient>
+    </Wrapper>
+  );
+};
+
 // Heart Component
 const Heart = ({ size = 24, filled = false, onPress }) => (
   <TouchableOpacity onPress={onPress}>
     <Text style={{ fontSize: size }}>
       {filled ? '❤️' : '🤍'}
     </Text>
+  </TouchableOpacity>
+);
+
+// Gold arrow image
+const goldArrowImage = require('../Cliparts/Gold arrow.jpg');
+
+// Candle component — lights up when clicked
+const Candle = ({ lit = false, onPress, size = 40 }) => (
+  <TouchableOpacity onPress={onPress} style={{ alignItems: 'center' }}>
+    {/* Flame — only visible when lit */}
+    {lit && (
+      <View style={{
+        width: size * 0.3,
+        height: size * 0.4,
+        borderRadius: size * 0.15,
+        backgroundColor: '#FF8C00',
+        marginBottom: -4,
+        shadowColor: '#FFD700',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        transform: [{ scaleX: 0.7 }],
+      }}>
+        <View style={{
+          width: size * 0.15,
+          height: size * 0.2,
+          borderRadius: size * 0.1,
+          backgroundColor: '#FFFF00',
+          alignSelf: 'center',
+          marginTop: size * 0.08,
+        }} />
+      </View>
+    )}
+    {!lit && <View style={{ height: size * 0.4 - 4 }} />}
+    {/* Wick */}
+    <View style={{
+      width: 2,
+      height: size * 0.15,
+      backgroundColor: lit ? '#333' : '#666',
+      marginBottom: -1,
+    }} />
+    {/* Candle body */}
+    <View style={{
+      width: size * 0.35,
+      height: size * 0.5,
+      backgroundColor: lit ? '#FFF8DC' : '#8B8682',
+      borderRadius: 3,
+      borderWidth: 1,
+      borderColor: lit ? '#FFD700' : '#555',
+      shadowColor: lit ? '#FFD700' : 'transparent',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: lit ? 0.8 : 0,
+      shadowRadius: 8,
+    }} />
   </TouchableOpacity>
 );
 
@@ -421,8 +512,12 @@ const getTodaysTasks = async () => {
 // ============================================================
 
 export default function HomeScreen({ navigation }) {
-  const [goalCompleted, setGoalCompleted] = useState(false);
+  const [goalAcknowledged, setGoalAcknowledged] = useState(false);
+  const [goalMetYes, setGoalMetYes] = useState(false); // true = yes, false = no/not yet
+  const [yesterdayGoal, setYesterdayGoal] = useState('');
+  const [todayGoal, setTodayGoal] = useState('');
   const [quoteHearted, setQuoteHearted] = useState(false);
+  const [savedArtworks, setSavedArtworks] = useState(new Set());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [todayQuote, setTodayQuote] = useState({ quote: '', author: '' });
   const [todaysChallenge, setTodaysChallenge] = useState('');
@@ -444,6 +539,8 @@ export default function HomeScreen({ navigation }) {
     loadTodaysCriterion();
     loadPseudonym();
     loadStreakData();
+    loadGoals();
+    loadSavedArtworks();
   }, []);
 
   const loadTodaysChallenge = async () => {
@@ -473,6 +570,112 @@ export default function HomeScreen({ navigation }) {
       }
     } catch (error) {
       console.log('Error loading profile:', error);
+    }
+  };
+
+  const loadGoals = async () => {
+    try {
+      const today = new Date();
+      const todayStr = getDateString(today);
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const yesterdayStr = getDateString(yesterday);
+
+      // Check if already acknowledged today
+      const ack = await AsyncStorage.getItem(`goal_acknowledged_${todayStr}`);
+      if (ack) {
+        setGoalAcknowledged(true);
+        setGoalMetYes(ack === 'yes');
+      }
+
+      // Load yesterday's goal
+      const yesterdayManifest = await AsyncStorage.getItem(`manifest_${yesterdayStr}`);
+      if (yesterdayManifest) {
+        try {
+          const parsed = JSON.parse(yesterdayManifest);
+          if (parsed.growthGoal && parsed.growthGoal.trim()) {
+            setYesterdayGoal(parsed.growthGoal.trim());
+          }
+        } catch (e) {}
+      }
+
+      // Load today's goal
+      const todayManifest = await AsyncStorage.getItem(`manifest_${todayStr}`);
+      if (todayManifest) {
+        try {
+          const parsed = JSON.parse(todayManifest);
+          if (parsed.growthGoal && parsed.growthGoal.trim()) {
+            setTodayGoal(parsed.growthGoal.trim());
+          }
+        } catch (e) {}
+      }
+    } catch (error) {
+      console.log('Error loading goals:', error);
+    }
+  };
+
+  const handleGoalHeart = async () => {
+    const todayStr = getDateString(new Date());
+    if (!goalAcknowledged) {
+      // First click = yes, met the goal
+      setGoalAcknowledged(true);
+      setGoalMetYes(true);
+      await AsyncStorage.setItem(`goal_acknowledged_${todayStr}`, 'yes');
+    } else if (goalMetYes) {
+      // Second click = no, didn't meet it
+      setGoalMetYes(false);
+      await AsyncStorage.setItem(`goal_acknowledged_${todayStr}`, 'no');
+    } else {
+      // Third click = back to yes
+      setGoalMetYes(true);
+      await AsyncStorage.setItem(`goal_acknowledged_${todayStr}`, 'yes');
+    }
+  };
+
+  // Save currently displayed artwork to personal archive on Connect page
+  const loadSavedArtworks = async () => {
+    try {
+      const existingRaw = await AsyncStorage.getItem('favorite_artworks');
+      if (existingRaw) {
+        const existing = JSON.parse(existingRaw);
+        const indices = new Set(existing.map(a => a.index));
+        setSavedArtworks(indices);
+      }
+    } catch (error) {
+      console.log('Error loading saved artworks:', error);
+    }
+  };
+
+  const handleFavoriteArtwork = async () => {
+    try {
+      const existingRaw = await AsyncStorage.getItem('favorite_artworks');
+      const existing = existingRaw ? JSON.parse(existingRaw) : [];
+
+      if (savedArtworks.has(currentImageIndex)) {
+        // Remove from favorites
+        const filtered = existing.filter(a => a.index !== currentImageIndex);
+        await AsyncStorage.setItem('favorite_artworks', JSON.stringify(filtered));
+        setSavedArtworks(prev => {
+          const next = new Set(prev);
+          next.delete(currentImageIndex);
+          return next;
+        });
+      } else {
+        // Add to favorites
+        const artwork = {
+          id: `fav_${Date.now()}`,
+          index: currentImageIndex,
+          title: `Artwork ${currentImageIndex + 1}`,
+          source: 'home',
+          date: getDateString(new Date()),
+          savedAt: new Date().toISOString(),
+        };
+        existing.push(artwork);
+        await AsyncStorage.setItem('favorite_artworks', JSON.stringify(existing));
+        setSavedArtworks(prev => new Set([...prev, currentImageIndex]));
+      }
+    } catch (error) {
+      console.log('Error toggling favorite:', error);
     }
   };
 
@@ -604,55 +807,88 @@ export default function HomeScreen({ navigation }) {
 
         <View style={styles.divider} />
 
-        {/* Quote Box - Clickable to Manifest */}
-        <TouchableOpacity
-          style={[styles.card, styles.purpleCard]}
-          onPress={() => navigation.navigate('Manifest')}
-        >
-          <Text style={styles.quoteText}>"{todayQuote.quote}"</Text>
-          <Text style={styles.authorText}>~{todayQuote.author}</Text>
-          <Text style={styles.manifestText}>
-            Ready to <Text style={styles.manifestHighlight}>Manifest?</Text> click here.
-          </Text>
-          <View style={styles.heartRight}>
-            <Heart
-              size={32}
-              filled={quoteHearted}
-              onPress={() => setQuoteHearted(!quoteHearted)}
-            />
-          </View>
-        </TouchableOpacity>
+        {/* Quote & Goal side by side */}
+        <View style={styles.cardRow}>
+          {/* Quote Box - Clickable to Manifest */}
+          <GoldFrame
+            style={styles.purpleCard}
+            containerStyle={styles.cardHalf}
+            onPress={() => navigation.navigate('Manifest')}
+          >
+            <View style={styles.cardInnerCompact}>
+              <Text style={styles.quoteTextSmall}>"{todayQuote.quote}"</Text>
+              <Text style={styles.authorText}>~{todayQuote.author}</Text>
+              <Text style={styles.manifestTextSmall}>
+                <Text style={styles.manifestHighlight}>Manifest?</Text> tap here
+              </Text>
+              <View style={styles.heartRightSmall}>
+                <Heart
+                  size={24}
+                  filled={quoteHearted}
+                  onPress={() => setQuoteHearted(!quoteHearted)}
+                />
+              </View>
+            </View>
+          </GoldFrame>
 
-        {/* Goal Box - Clickable to Manifest */}
-        <TouchableOpacity
-          style={[styles.card, styles.redCard]}
-          onPress={() => navigation.navigate('Manifest')}
-        >
-          <Text style={styles.goalTitle}>Did you meet yesterday's grow goal?</Text>
-          <Text style={styles.goalSubtext}>click heart for yes</Text>
-          <Text style={styles.goalSubtext}>
-            then replace with today's <Text style={styles.bold}>goal</Text>, no heart
-          </Text>
-          <View style={styles.heartRight}>
-            <Heart
-              size={36}
-              filled={goalCompleted}
-              onPress={(e) => {
-                e.stopPropagation();
-                setGoalCompleted(!goalCompleted);
-              }}
-            />
-          </View>
-        </TouchableOpacity>
+          {/* Goal Box - Clickable to Manifest */}
+          <GoldFrame
+            style={styles.redCard}
+            containerStyle={styles.cardHalf}
+            onPress={() => navigation.navigate('Manifest')}
+          >
+            <View style={styles.cardInnerCompact}>
+              <Text style={styles.goalTitleSmall}>Yesterday's grow goal?</Text>
+              <Text style={styles.goalSubtextSmall}>
+                heart = yes, twice = no
+              </Text>
 
-        {/* Art Challenge Box - Clickable to Art */}
-        <TouchableOpacity
-          style={[styles.card, styles.artCard]}
-          onPress={() => navigation.navigate('Art')}
-        >
-          <Text style={styles.artLabel}>Art:</Text>
-          <Text style={styles.artChallenge}>{todaysChallenge || 'Loading...'}</Text>
-        </TouchableOpacity>
+              {!goalAcknowledged ? (
+                <Text style={styles.goalDisplaySmall}>
+                  {yesterdayGoal || 'No goal set'}
+                </Text>
+              ) : (
+                <View>
+                  <Text style={styles.goalAckText}>
+                    {goalMetYes ? 'Great work!' : 'Keep pushing!'}
+                  </Text>
+                  <Text style={styles.goalLabel}>Today's Goal:</Text>
+                  <Text style={styles.goalDisplaySmall}>
+                    {todayGoal || 'Set goal on Manifest'}
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.heartRightSmall}>
+                <Heart
+                  size={24}
+                  filled={goalMetYes && goalAcknowledged}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleGoalHeart();
+                  }}
+                />
+              </View>
+            </View>
+          </GoldFrame>
+        </View>
+
+        {/* Art Challenge Box - Center third, double frame */}
+        <View style={styles.artBoxRow}>
+          <GoldFrame
+            containerStyle={styles.artBoxOuter}
+            onPress={() => navigation.navigate('Art')}
+          >
+            <View style={styles.artFrameGap}>
+              <GoldFrame style={styles.artCard} thickness={3}>
+                <View style={styles.cardInnerArt}>
+                  <Text style={styles.artLabel}>Art:</Text>
+                  <Text style={styles.artChallenge}>{todaysChallenge || 'Loading...'}</Text>
+                </View>
+              </GoldFrame>
+            </View>
+          </GoldFrame>
+        </View>
 
         <View style={styles.divider} />
 
@@ -663,46 +899,63 @@ export default function HomeScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
 
-        <View style={styles.galleryButtons}>
-          <TouchableOpacity style={styles.galleryButton}>
-            <Text style={styles.galleryButtonText}>show winner</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.galleryButton}>
-            <Text style={styles.galleryButtonText}>show gallery</Text>
-          </TouchableOpacity>
+        {/* Gallery buttons aligned to art box edges, above artwork */}
+        <View style={styles.galleryButtonRow}>
+          <View style={styles.galleryButtonLeft}>
+            <GoldFrame onPress={() => {}}>
+              <View style={styles.galleryButtonInner}>
+                <Text style={styles.galleryButtonText}>show winner</Text>
+              </View>
+            </GoldFrame>
+          </View>
+          <View style={styles.galleryButtonRight}>
+            <GoldFrame onPress={() => {}}>
+              <View style={styles.galleryButtonInner}>
+                <Text style={styles.galleryButtonText}>show gallery</Text>
+              </View>
+            </GoldFrame>
+          </View>
         </View>
 
-        {/* Image Display */}
+        {/* Artwork display */}
         <View style={styles.imageContainer}>
-          <TouchableOpacity onPress={() => setCurrentImageIndex(Math.max(0, currentImageIndex - 1))}>
-            <Text style={styles.navArrow}>‹</Text>
+          <TouchableOpacity onPress={() => setCurrentImageIndex(Math.max(0, currentImageIndex - 1))} style={styles.arrowButton}>
+            <Image source={goldArrowImage} style={[styles.arrowImage, { transform: [{ scaleX: -1 }] }]} resizeMode="contain" />
           </TouchableOpacity>
 
-          <View style={styles.imageFrame}>
-            <View style={styles.placeholderImage}>
-              <Text style={styles.placeholderText}>🎨</Text>
-              <Text style={styles.placeholderSubtext}>Artwork {currentImageIndex + 1}</Text>
+          <GoldFrame>
+            <View style={styles.imageFrameInner}>
+              <View style={styles.placeholderImage}>
+                <Text style={styles.placeholderText}>🎨</Text>
+                <Text style={styles.placeholderSubtext}>Artwork {currentImageIndex + 1}</Text>
+              </View>
             </View>
-          </View>
+          </GoldFrame>
 
-          <TouchableOpacity onPress={() => setCurrentImageIndex(currentImageIndex + 1)}>
-            <Text style={styles.navArrow}>›</Text>
+          <TouchableOpacity onPress={() => setCurrentImageIndex(currentImageIndex + 1)} style={styles.arrowButton}>
+            <Image source={goldArrowImage} style={styles.arrowImage} resizeMode="contain" />
           </TouchableOpacity>
         </View>
 
         {/* Inspired Section */}
         <View style={styles.inspiredContainer}>
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.iconEmoji}>✉️</Text>
-          </TouchableOpacity>
+          <GoldFrame onPress={() => {}}>
+            <View style={styles.iconButtonInner}>
+              <Text style={styles.iconEmoji}>✉️</Text>
+            </View>
+          </GoldFrame>
 
-          <View style={styles.inspiredBox}>
+          <View style={styles.inspiredTextBlock}>
             <Text style={styles.inspiredText}>Inspired?</Text>
+            <Text style={styles.inspiredSubtext}>Save to Inspiration gallery</Text>
+            <Text style={styles.inspiredSubtext}>Click candle ›</Text>
           </View>
 
-          <TouchableOpacity style={styles.iconButton}>
-            <Text style={styles.iconEmoji}>❤️</Text>
-          </TouchableOpacity>
+          <Candle
+            lit={savedArtworks.has(currentImageIndex)}
+            onPress={() => handleFavoriteArtwork()}
+            size={44}
+          />
         </View>
 
         <View style={{ height: 20 }} />
@@ -736,9 +989,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#B8860B',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
   },
   menuButtonText: {
     fontSize: 24,
@@ -798,22 +1056,48 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     opacity: 0.5,
   },
-  card: {
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 3,
-    borderColor: '#FFD700',
-    position: 'relative',
-  },
   purpleCard: {
-    backgroundColor: '#4A148C',
+    backgroundColor: '#0a0e27',
   },
   redCard: {
-    backgroundColor: '#B71C1C',
+    backgroundColor: '#0a0e27',
   },
   artCard: {
     backgroundColor: '#1a1a1a',
+  },
+  artBoxRow: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  artBoxOuter: {
+    width: '60%',
+  },
+  artFrameGap: {
+    padding: 15,
+    backgroundColor: '#0a0e27',
+  },
+  frameSpacing: {
+    marginBottom: 16,
+  },
+  cardRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 8,
+  },
+  cardHalf: {
+    flex: 1,
+  },
+  cardInner: {
+    padding: 20,
+    position: 'relative',
+  },
+  cardInnerCompact: {
+    padding: 12,
+    position: 'relative',
+    minHeight: 140,
+  },
+  cardInnerArt: {
     padding: 30,
   },
   quoteText: {
@@ -821,15 +1105,26 @@ const styles = StyleSheet.create({
     color: 'white',
     marginBottom: 10,
   },
+  quoteTextSmall: {
+    fontSize: 15,
+    color: '#D8BFD8',
+    marginBottom: 6,
+    lineHeight: 20,
+  },
   authorText: {
-    fontSize: 12,
-    color: '#E1BEE7',
+    fontSize: 13,
+    color: '#C8A2C8',
     fontStyle: 'italic',
     marginBottom: 15,
   },
   manifestText: {
     fontSize: 16,
     color: '#4FC3F7',
+    fontWeight: '600',
+  },
+  manifestTextSmall: {
+    fontSize: 14,
+    color: '#E6E6FA',
     fontWeight: '600',
   },
   manifestHighlight: {
@@ -840,16 +1135,60 @@ const styles = StyleSheet.create({
     bottom: 15,
     right: 15,
   },
+  heartRightSmall: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+  },
   goalTitle: {
     fontSize: 18,
     color: 'white',
     fontWeight: '600',
     marginBottom: 10,
   },
+  goalTitleSmall: {
+    fontSize: 16,
+    color: '#FF8A80',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
   goalSubtext: {
     fontSize: 14,
     color: '#FFCDD2',
     marginBottom: 5,
+  },
+  goalSubtextSmall: {
+    fontSize: 13,
+    color: '#F48FB1',
+    marginBottom: 4,
+  },
+  goalDisplay: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: '500',
+    marginTop: 10,
+    marginRight: 50,
+    lineHeight: 22,
+  },
+  goalDisplaySmall: {
+    fontSize: 14,
+    color: '#FFAB91',
+    fontWeight: '500',
+    marginTop: 6,
+    marginRight: 30,
+    lineHeight: 19,
+  },
+  goalAckText: {
+    fontSize: 16,
+    color: '#FF8A80',
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  goalLabel: {
+    fontSize: 14,
+    color: '#F48FB1',
+    marginTop: 8,
+    fontWeight: '600',
   },
   bold: {
     fontWeight: 'bold',
@@ -877,16 +1216,22 @@ const styles = StyleSheet.create({
   underline: {
     textDecorationLine: 'underline',
   },
-  galleryButtons: {
+  galleryButtonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 0,
+    paddingHorizontal: 0,
   },
-  galleryButton: {
-    backgroundColor: '#B8860B',
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    borderRadius: 8,
+  galleryButtonLeft: {
+    width: '20%',
+    alignItems: 'flex-end',
+  },
+  galleryButtonRight: {
+    width: '20%',
+    alignItems: 'flex-start',
+  },
+  galleryButtonInner: {
+    backgroundColor: '#1a1a1a',
     paddingHorizontal: 15,
     paddingVertical: 8,
   },
@@ -899,19 +1244,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 0,
     marginBottom: 20,
   },
-  navArrow: {
-    fontSize: 48,
-    color: '#FFD700',
-    paddingHorizontal: 10,
+  arrowButton: {
+    paddingHorizontal: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  imageFrame: {
-    width: 250,
-    height: 250,
-    borderWidth: 3,
-    borderColor: '#FFD700',
-    borderRadius: 12,
+  arrowImage: {
+    width: 50,
+    height: 30,
+  },
+  imageFrameInner: {
+    width: 240,
+    height: 240,
     backgroundColor: '#1a1a1a',
     padding: 10,
   },
@@ -935,29 +1282,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
+    gap: 15,
   },
-  iconButton: {
+  iconButtonInner: {
     backgroundColor: '#1a1a1a',
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    borderRadius: 8,
     padding: 10,
-    marginHorizontal: 15,
   },
   iconEmoji: {
     fontSize: 32,
   },
-  inspiredBox: {
-    borderWidth: 3,
-    borderColor: '#FFD700',
-    borderRadius: 12,
-    backgroundColor: '#1a1a1a',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
+  inspiredTextBlock: {
+    alignItems: 'center',
+    paddingHorizontal: 10,
   },
   inspiredText: {
     fontSize: 20,
     color: '#FFD700',
     fontWeight: 'bold',
+  },
+  inspiredSubtext: {
+    fontSize: 12,
+    color: '#87CEEB',
+    marginTop: 2,
   },
 });
