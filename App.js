@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 // Import screens
@@ -40,12 +40,27 @@ export default function App() {
       <StatusBar style="light" />
       <NavigationContainer>
         <Tab.Navigator
-          screenOptions={{
-            headerShown: false,
-            tabBarStyle: styles.tabBar,
-            tabBarActiveTintColor: '#FFD700',
-            tabBarInactiveTintColor: '#666',
-            tabBarLabelStyle: styles.tabLabel,
+          screenOptions={({ navigation, route }) => {
+            const visibleTabs = ['Home', 'Manifest', 'Art', 'Grow', 'Inspire', 'Connect'];
+            const isVisibleTab = visibleTabs.includes(route.name);
+            return {
+              headerShown: isVisibleTab,
+              headerTransparent: true,
+              headerTitle: '',
+              headerStyle: { backgroundColor: 'transparent', borderBottomWidth: 0, elevation: 0, shadowOpacity: 0 },
+              headerRight: isVisibleTab ? () => (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Menu')}
+                  style={styles.hamburgerButton}
+                >
+                  <Text style={styles.hamburgerText}>☰</Text>
+                </TouchableOpacity>
+              ) : undefined,
+              tabBarStyle: styles.tabBar,
+              tabBarActiveTintColor: '#FFD700',
+              tabBarInactiveTintColor: '#666',
+              tabBarLabelStyle: styles.tabLabel,
+            };
           }}
         >
           <Tab.Screen 
@@ -198,5 +213,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 215, 0, 0.2)',
     top: -5,
     left: -5,
+  },
+  hamburgerButton: {
+    width: 44,
+    height: 44,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#B8860B',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  hamburgerText: {
+    fontSize: 24,
+    color: '#FFD700',
+    fontWeight: 'bold',
   },
 });

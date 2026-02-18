@@ -75,6 +75,84 @@ function run() {
     console.warn('Warning: "Ranking Criteria" sheet not found in Excel file');
   }
 
+  // --- About You / Mediums ---
+  if (wb.SheetNames.includes('About You')) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets['About You'], { header: 1 });
+    const mediums = {};
+
+    rows.slice(1).forEach(r => {
+      if (!r[0] || !r[1]) return;
+
+      // Normalize category
+      let category = String(r[0]).trim();
+      if (category.toLowerCase() === '3-d') category = '3-D';
+      if (category.startsWith('Musical')) category = 'Musical';
+
+      // Process medium name
+      let text = String(r[1]).trim();
+      // Strip bullet point
+      text = text.replace(/^•\s*/, '');
+      // Fix CamelCase ONLY for known art type prefixes (not TaiChi, WordArt)
+      const artPrefixes = ['Sketch', 'Sketching', 'Model', 'Models', 'Textile', 'Weaving'];
+      for (const prefix of artPrefixes) {
+        const re = new RegExp('^(' + prefix + ')([A-Z])');
+        text = text.replace(re, '$1: $2');
+      }
+      // Fix colon without space: "Painting:Acrylic" → "Painting: Acrylic"
+      text = text.replace(/:(?!\s)/g, ': ');
+      // Normalize multiple spaces
+      text = text.replace(/\s+/g, ' ');
+
+      // Split on ": " and remove description segments
+      const segments = text.split(': ');
+      const cleaned = [];
+      for (const seg of segments) {
+        const trimmed = seg.trim();
+        if (!trimmed) continue;
+        // Skip if it looks like a description sentence (gerund + 3+ words)
+        if (/^[A-Z][a-z]+ing[\s,]/.test(trimmed) && trimmed.split(/\s+/).length >= 3) continue;
+        if (/^[A-Z][a-z]+(e|te|t|d)\s+(a|an|the|of|with|from|into|using|on|in)\s/i.test(trimmed)) continue;
+        if (/objects or scenes/i.test(trimmed)) continue;
+        // Strip inline description (e.g. "Oil Producing luminous...")
+        const inlineMatch = trimmed.match(/^(.+?)\s+[A-Z][a-z]+(?:ing|e|te)\s/);
+        if (inlineMatch) {
+          cleaned.push(inlineMatch[1].trim());
+        } else {
+          cleaned.push(trimmed);
+        }
+      }
+
+      let medium = cleaned.join(': ').replace(/:\s*$/, '').trim();
+      // Fix "WordArt" splitting: rejoin "Word: Art" → "WordArt"
+      medium = medium.replace(/^Word: Art/, 'WordArt');
+      // Capitalize first letter of medium
+      if (medium.length > 0) {
+        medium = medium.charAt(0).toUpperCase() + medium.slice(1);
+      }
+      if (!medium) return;
+
+      if (!mediums[category]) mediums[category] = [];
+      if (!mediums[category].includes(medium)) {
+        mediums[category].push(medium);
+      }
+    });
+
+    // Order categories and sort mediums within each
+    const ordered = {};
+    ['2-D', '3-D', 'Computer', 'Musical', 'Physical'].forEach(cat => {
+      if (mediums[cat]) ordered[cat] = mediums[cat].sort();
+    });
+
+    fs.writeFileSync(
+      path.join(__dirname, 'mediums.json'),
+      JSON.stringify(ordered, null, 2)
+    );
+    const totalMediums = Object.values(ordered).reduce((s, a) => s + a.length, 0);
+    console.log(`mediums.json — ${Object.keys(ordered).length} categories, ${totalMediums} mediums written`);
+  } else {
+    console.warn('Warning: "About You" sheet not found in Excel file');
+  }
+
   console.log('\nDone! JSON files updated.');
 }
 

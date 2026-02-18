@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import quotesData from '../quotes.json';
@@ -514,9 +514,12 @@ const getTodaysTasks = async () => {
 export default function HomeScreen({ navigation }) {
   const [goalAcknowledged, setGoalAcknowledged] = useState(false);
   const [goalMetYes, setGoalMetYes] = useState(false); // true = yes, false = no/not yet
+  const [goalLocked, setGoalLocked] = useState(false);
+  const [showKeepGoalPrompt, setShowKeepGoalPrompt] = useState(false);
   const [yesterdayGoal, setYesterdayGoal] = useState('');
   const [todayGoal, setTodayGoal] = useState('');
   const [quoteHearted, setQuoteHearted] = useState(false);
+  const goalLockTimerRef = useRef(null);
   const [savedArtworks, setSavedArtworks] = useState(new Set());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [todayQuote, setTodayQuote] = useState({ quote: '', author: '' });
@@ -585,7 +588,19 @@ export default function HomeScreen({ navigation }) {
       const ack = await AsyncStorage.getItem(`goal_acknowledged_${todayStr}`);
       if (ack) {
         setGoalAcknowledged(true);
-        setGoalMetYes(ack === 'yes');
+        setGoalLocked(true); // already answered today — lock it
+        if (ack === 'yes') {
+          setGoalMetYes(true);
+        } else if (ack === 'no') {
+          setGoalMetYes(false);
+          // Check if they already chose to keep the goal
+          const keptGoal = await AsyncStorage.getItem(`goal_kept_${todayStr}`);
+          if (keptGoal) {
+            setShowKeepGoalPrompt(false);
+          } else {
+            setShowKeepGoalPrompt(true);
+          }
+        }
       }
 
       // Load yesterday's goal
@@ -614,21 +629,74 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  // Schedule midnight reset for goal acknowledgment
+  useEffect(() => {
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    const msUntilMidnight = midnight.getTime() - now.getTime();
+
+    const midnightTimer = setTimeout(() => {
+      setGoalAcknowledged(false);
+      setGoalMetYes(false);
+      setGoalLocked(false);
+      setShowKeepGoalPrompt(false);
+      loadGoals();
+    }, msUntilMidnight);
+
+    return () => {
+      clearTimeout(midnightTimer);
+      if (goalLockTimerRef.current) clearTimeout(goalLockTimerRef.current);
+    };
+  }, []);
+
+  const startLockTimer = () => {
+    if (goalLockTimerRef.current) clearTimeout(goalLockTimerRef.current);
+    goalLockTimerRef.current = setTimeout(() => {
+      setGoalLocked(true);
+    }, 30000); // lock after 30 seconds
+  };
+
   const handleGoalHeart = async () => {
+    if (goalLocked) return; // heart is locked
+
     const todayStr = getDateString(new Date());
     if (!goalAcknowledged) {
       // First click = yes, met the goal
       setGoalAcknowledged(true);
       setGoalMetYes(true);
       await AsyncStorage.setItem(`goal_acknowledged_${todayStr}`, 'yes');
+      startLockTimer();
     } else if (goalMetYes) {
       // Second click = no, didn't meet it
       setGoalMetYes(false);
+      setShowKeepGoalPrompt(true);
       await AsyncStorage.setItem(`goal_acknowledged_${todayStr}`, 'no');
+      startLockTimer();
     } else {
       // Third click = back to yes
       setGoalMetYes(true);
+      setShowKeepGoalPrompt(false);
       await AsyncStorage.setItem(`goal_acknowledged_${todayStr}`, 'yes');
+      startLockTimer();
+    }
+  };
+
+  const handleKeepGoal = async (keepIt) => {
+    const todayStr = getDateString(new Date());
+    await AsyncStorage.setItem(`goal_kept_${todayStr}`, keepIt ? 'yes' : 'no');
+    setShowKeepGoalPrompt(false);
+
+    if (keepIt && yesterdayGoal) {
+      // Set yesterday's goal as today's goal
+      const todayManifestRaw = await AsyncStorage.getItem(`manifest_${todayStr}`);
+      const todayManifest = todayManifestRaw ? JSON.parse(todayManifestRaw) : {};
+      todayManifest.growthGoal = yesterdayGoal;
+      await AsyncStorage.setItem(`manifest_${todayStr}`, JSON.stringify(todayManifest));
+      setTodayGoal(yesterdayGoal);
+    } else if (!keepIt) {
+      // Navigate to Manifest to set a new goal
+      navigation.navigate('Manifest');
     }
   };
 
@@ -753,16 +821,9 @@ export default function HomeScreen({ navigation }) {
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
 
-        {/* Header with Menu Button */}
+        {/* Header */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => navigation.navigate('Menu')}
-          >
-            <Text style={styles.menuButtonText}>☰</Text>
-          </TouchableOpacity>
           <Text style={styles.header}>Home</Text>
-          <View style={styles.menuButtonPlaceholder} />
         </View>
 
         {/* ===== STREAK STAR ARROW ===== */}
@@ -831,31 +892,76 @@ export default function HomeScreen({ navigation }) {
             </View>
           </GoldFrame>
 
-          {/* Goal Box - Clickable to Manifest */}
+          {/* Goal Box */}
           <GoldFrame
             style={styles.redCard}
             containerStyle={styles.cardHalf}
-            onPress={() => navigation.navigate('Manifest')}
           >
             <View style={styles.cardInnerCompact}>
-              <Text style={styles.goalTitleSmall}>Yesterday's grow goal?</Text>
-              <Text style={styles.goalSubtextSmall}>
-                heart = yes, twice = no
-              </Text>
-
               {!goalAcknowledged ? (
-                <Text style={styles.goalDisplaySmall}>
-                  {yesterdayGoal || 'No goal set'}
-                </Text>
-              ) : (
+                /* Phase 1: Show yesterday's goal, ask if met */
                 <View>
-                  <Text style={styles.goalAckText}>
-                    {goalMetYes ? 'Great work!' : 'Keep pushing!'}
-                  </Text>
-                  <Text style={styles.goalLabel}>Today's Goal:</Text>
+                  <Text style={styles.goalTitleSmall}>Did you meet this goal yesterday?</Text>
                   <Text style={styles.goalDisplaySmall}>
-                    {todayGoal || 'Set goal on Manifest'}
+                    {yesterdayGoal || 'No goal set'}
                   </Text>
+                  <Text style={styles.goalSubtextSmall}>
+                    heart = yes, twice = no
+                  </Text>
+                </View>
+              ) : goalMetYes ? (
+                /* Phase 2a: Yes — Great work! Show today's goal */
+                <View>
+                  <Text style={styles.goalAckText}>Great work!</Text>
+                  <Text style={styles.goalLabel}>Today's Goal:</Text>
+                  {todayGoal ? (
+                    <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
+                  ) : (
+                    <TouchableOpacity onPress={() => navigation.navigate('Manifest')}>
+                      <Text style={[styles.goalDisplaySmall, styles.underline]}>
+                        Tap to set today's goal
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ) : (
+                /* Phase 2b: No — Keep pushing, offer to reuse goal */
+                <View>
+                  <Text style={styles.goalAckText}>Keep pushing!</Text>
+                  {showKeepGoalPrompt && yesterdayGoal ? (
+                    <View>
+                      <Text style={styles.goalSubtextSmall}>
+                        Would you like this to be your goal again today?
+                      </Text>
+                      <View style={styles.keepGoalButtons}>
+                        <TouchableOpacity
+                          style={styles.keepGoalYes}
+                          onPress={() => handleKeepGoal(true)}
+                        >
+                          <Text style={styles.keepGoalYesText}>Yes</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.keepGoalNo}
+                          onPress={() => handleKeepGoal(false)}
+                        >
+                          <Text style={styles.keepGoalNoText}>No</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ) : (
+                    <View>
+                      <Text style={styles.goalLabel}>Today's Goal:</Text>
+                      {todayGoal ? (
+                        <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
+                      ) : (
+                        <TouchableOpacity onPress={() => navigation.navigate('Manifest')}>
+                          <Text style={[styles.goalDisplaySmall, styles.underline]}>
+                            Tap to set today's goal
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
                 </View>
               )}
 
@@ -868,6 +974,9 @@ export default function HomeScreen({ navigation }) {
                     handleGoalHeart();
                   }}
                 />
+                {goalLocked && (
+                  <Text style={styles.lockIcon}>🔒</Text>
+                )}
               </View>
             </View>
           </GoldFrame>
@@ -895,7 +1004,8 @@ export default function HomeScreen({ navigation }) {
         {/* Ranking Section - Clickable to Inspire */}
         <TouchableOpacity onPress={() => navigation.navigate('Inspire')}>
           <Text style={styles.rankTitle}>
-            Rank by: <Text style={styles.underline}>{todaysCriterion || 'Loading...'}</Text>
+            See Today's Rank Criterion and{'\n'}
+            <Text style={styles.underline}>Cast Your Vote Here</Text>
           </Text>
         </TouchableOpacity>
 
@@ -939,16 +1049,14 @@ export default function HomeScreen({ navigation }) {
 
         {/* Inspired Section */}
         <View style={styles.inspiredContainer}>
-          <GoldFrame onPress={() => {}}>
-            <View style={styles.iconButtonInner}>
-              <Text style={styles.iconEmoji}>✉️</Text>
-            </View>
-          </GoldFrame>
+          <TouchableOpacity onPress={() => {}}>
+            <Text style={styles.iconEmoji}>✉️</Text>
+          </TouchableOpacity>
 
           <View style={styles.inspiredTextBlock}>
             <Text style={styles.inspiredText}>Inspired?</Text>
-            <Text style={styles.inspiredSubtext}>Save to Inspiration gallery</Text>
-            <Text style={styles.inspiredSubtext}>Click candle ›</Text>
+            <Text style={styles.inspiredSubtext}>Save to Your Inspiration Gallery ›</Text>
+            <Text style={styles.inspiredSubtext}>‹ Send Inspiration</Text>
           </View>
 
           <Candle
@@ -977,41 +1085,15 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   headerContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginTop: 40,
     marginBottom: 20,
-  },
-  menuButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#B8860B',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  menuButtonText: {
-    fontSize: 24,
-    color: '#FFD700',
-    fontWeight: 'bold',
-  },
-  menuButtonPlaceholder: {
-    width: 44,
   },
   header: {
     fontSize: 40,
     fontWeight: 'bold',
     color: '#FFD700',
     textAlign: 'center',
-    flex: 1,
     textShadowColor: 'rgba(255, 215, 0, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
@@ -1107,13 +1189,13 @@ const styles = StyleSheet.create({
   },
   quoteTextSmall: {
     fontSize: 15,
-    color: '#D8BFD8',
+    color: '#9C9FFF',
     marginBottom: 6,
     lineHeight: 20,
   },
   authorText: {
     fontSize: 13,
-    color: '#C8A2C8',
+    color: '#9C9FFF',
     fontStyle: 'italic',
     marginBottom: 15,
   },
@@ -1124,7 +1206,7 @@ const styles = StyleSheet.create({
   },
   manifestTextSmall: {
     fontSize: 14,
-    color: '#E6E6FA',
+    color: '#9C9FFF',
     fontWeight: '600',
   },
   manifestHighlight: {
@@ -1189,6 +1271,42 @@ const styles = StyleSheet.create({
     color: '#F48FB1',
     marginTop: 8,
     fontWeight: '600',
+  },
+  keepGoalButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  keepGoalYes: {
+    backgroundColor: '#2a2a1a',
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#90EE90',
+  },
+  keepGoalYesText: {
+    color: '#90EE90',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  keepGoalNo: {
+    backgroundColor: '#2a2a1a',
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
+  },
+  keepGoalNoText: {
+    color: '#FF6B6B',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  lockIcon: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 2,
   },
   bold: {
     fontWeight: 'bold',

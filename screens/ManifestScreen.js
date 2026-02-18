@@ -18,8 +18,11 @@ export default function ManifestScreen() {
   const [dumpStalls, setDumpStalls] = useState('');
   const [manifestVision, setManifestVision] = useState('');
   const [showPastEntries, setShowPastEntries] = useState(false);
+  const [showFavoriteQuotes, setShowFavoriteQuotes] = useState(false);
   const [pastEntries, setPastEntries] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [heartedQuotes, setHeartedQuotes] = useState([]);
+  const [todayQuoteHearted, setTodayQuoteHearted] = useState(false);
 
   // Get today's date as a string
   const getTodayDate = () => {
@@ -39,6 +42,8 @@ export default function ManifestScreen() {
     loadTodayEntry();
     // Load past entries for viewing
     loadPastEntries();
+    // Load hearted quotes
+    loadHeartedQuotes();
   }, []);
 
   // Load today's entry
@@ -75,6 +80,47 @@ export default function ManifestScreen() {
       setPastEntries(parsed);
     } catch (error) {
       console.log('Error loading past entries:', error);
+    }
+  };
+
+  // Load hearted quotes
+  const loadHeartedQuotes = async () => {
+    try {
+      const raw = await AsyncStorage.getItem('hearted_quotes');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setHeartedQuotes(parsed);
+        // Check if today's quote is already hearted
+        const isHearted = parsed.some(q => q.quote === quotesData[Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24) % quotesData.length]?.quote);
+        setTodayQuoteHearted(isHearted);
+      }
+    } catch (error) {
+      console.log('Error loading hearted quotes:', error);
+    }
+  };
+
+  // Toggle heart on a quote
+  const toggleHeartQuote = async (quoteObj) => {
+    try {
+      const raw = await AsyncStorage.getItem('hearted_quotes');
+      let saved = raw ? JSON.parse(raw) : [];
+      const exists = saved.some(q => q.quote === quoteObj.quote);
+
+      if (exists) {
+        saved = saved.filter(q => q.quote !== quoteObj.quote);
+      } else {
+        saved.push({ ...quoteObj, heartedAt: new Date().toISOString() });
+      }
+
+      await AsyncStorage.setItem('hearted_quotes', JSON.stringify(saved));
+      setHeartedQuotes(saved);
+
+      // Update today's heart state
+      if (quoteObj.quote === todayQuote.quote) {
+        setTodayQuoteHearted(!exists);
+      }
+    } catch (error) {
+      console.log('Error toggling heart:', error);
     }
   };
 
@@ -121,6 +167,45 @@ export default function ManifestScreen() {
       entry.date.includes(search)
     );
   });
+
+  // ===== FAVORITE QUOTES VIEW =====
+  if (showFavoriteQuotes) {
+    return (
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <Text style={styles.header}>Favorite Quotes</Text>
+
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => setShowFavoriteQuotes(false)}
+          >
+            <Text style={styles.backButtonText}>← Back to Today</Text>
+          </TouchableOpacity>
+
+          {heartedQuotes.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>
+                No favorite quotes yet. Tap the heart on a daily quote to save it!
+              </Text>
+            </View>
+          ) : (
+            heartedQuotes.map((q, index) => (
+              <View key={index} style={styles.favoriteQuoteCard}>
+                <Text style={styles.quoteText}>"{q.quote}"</Text>
+                <Text style={styles.quoteAuthor}>~{q.author}</Text>
+                <TouchableOpacity
+                  style={styles.heartButton}
+                  onPress={() => toggleHeartQuote(q)}
+                >
+                  <Text style={styles.heartIconFilled}>♥</Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </ScrollView>
+      </View>
+    );
+  }
 
   if (showPastEntries) {
     return (
@@ -204,16 +289,23 @@ export default function ManifestScreen() {
         <View style={styles.quoteCard}>
           <Text style={styles.quoteText}>"{todayQuote.quote}"</Text>
           <Text style={styles.quoteAuthor}>~{todayQuote.author}</Text>
-          <TouchableOpacity style={styles.heartButton}>
-            <Text style={styles.heartIcon}>♡</Text>
+          <TouchableOpacity
+            style={styles.heartButton}
+            onPress={() => toggleHeartQuote(todayQuote)}
+          >
+            <Text style={todayQuoteHearted ? styles.heartIconFilled : styles.heartIcon}>
+              {todayQuoteHearted ? '♥' : '♡'}
+            </Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.viewPastButton}
-          onPress={() => setShowPastEntries(true)}
+          onPress={() => setShowFavoriteQuotes(true)}
         >
-          <Text style={styles.viewPastButtonText}>💜 Review favorite quotes</Text>
+          <Text style={styles.viewPastButtonText}>
+            💜 Review favorite quotes ({heartedQuotes.length})
+          </Text>
         </TouchableOpacity>
 
         {/* Journaling Prompts */}
@@ -356,6 +448,19 @@ const styles = StyleSheet.create({
   heartIcon: {
     fontSize: 28,
     color: '#9C27B0',
+  },
+  heartIconFilled: {
+    fontSize: 28,
+    color: '#E91E63',
+  },
+  favoriteQuoteCard: {
+    backgroundColor: '#4A148C',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    position: 'relative',
   },
   viewPastButton: {
     backgroundColor: 'transparent',

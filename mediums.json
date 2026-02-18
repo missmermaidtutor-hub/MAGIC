@@ -1,0 +1,71 @@
+{
+  "2-D": [
+    "Painting: Acrylic",
+    "Painting: Body",
+    "Painting: Graffiti",
+    "Painting: Oil",
+    "Painting: Silkscreen Printing",
+    "Painting: Watercolor",
+    "Paper: Bookbinding",
+    "Paper: Origami",
+    "Paper: Printmaking",
+    "Paper: Scrapbooking",
+    "Photography",
+    "Sketch: Animation",
+    "Sketch: Calligraphy",
+    "Sketch: Charcoal Art",
+    "Sketching Drawing",
+    "Sketching: Comic Creation",
+    "WordArt",
+    "WordArt: Novel",
+    "WordArt: Poetry",
+    "WordArt: Screenplay",
+    "WordArt: Storytelling"
+  ],
+  "3-D": [
+    "Architecture Modeling",
+    "Culinary: Cake Decorating",
+    "Jewery: Beadwork",
+    "Model Interior Design",
+    "Model- Paper Mache",
+    "Model: Collage",
+    "Model: Engraving",
+    "Model: Glassblowing",
+    "Model: Ice Sculpting",
+    "Model: Jewelry Making",
+    "Model: Lapidary",
+    "Model: Leatherworking",
+    "Model: Metalworking",
+    "Model: Mosaic Art",
+    "Model: Pottery",
+    "Model: Puppetry",
+    "Model: Sand Art",
+    "Model: Sculpture",
+    "Model: Stencil Art",
+    "Model: Woodworking",
+    "Models-Toy Making",
+    "Models: Ceramics",
+    "Textile-Embroidery",
+    "Textile: Crocheting",
+    "Textile: Fashion Design",
+    "Textile: Felting",
+    "Textile: Knitting",
+    "Textile: Quilting",
+    "Weaving",
+    "Weaving: Basket",
+    "Weaving: Macrame"
+  ],
+  "Computer": [
+    "Digital Art",
+    "Digital Graphic Design"
+  ],
+  "Musical": [
+    "Instrument"
+  ],
+  "Physical": [
+    "Dance",
+    "Sport",
+    "TaiChi",
+    "Yoga"
+  ]
+}
