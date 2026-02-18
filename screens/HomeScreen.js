@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Alert } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Alert, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import quotesData from '../quotes.json';
 
@@ -366,6 +367,35 @@ const Heart = ({ size = 24, filled = false, onPress }) => (
 // Gold arrow image
 const goldArrowImage = require('../Cliparts/Gold arrow.jpg');
 
+// Artwork images from ARTOWORKS folder
+const artworkImages = [
+  require('../Cliparts/ARTOWORKS/10-18.jpg'),
+  require('../Cliparts/ARTOWORKS/513903252_10162679994762264_6498884796748588977_n.jpg'),
+  require('../Cliparts/ARTOWORKS/522639533_10162839591557264_4592564046517411659_n.jpg'),
+  require('../Cliparts/ARTOWORKS/523124927_10171872896690024_6576685918562285664_n.jpg'),
+  require('../Cliparts/ARTOWORKS/524144317_10162839591567264_3907841676702630020_n.jpg'),
+  require('../Cliparts/ARTOWORKS/524290019_10171872894275024_1704301799494258943_n.jpg'),
+  require('../Cliparts/ARTOWORKS/524578717_10171872892030024_3575163892748854717_n.jpg'),
+  require('../Cliparts/ARTOWORKS/524793848_10162839591502264_8318629657123426505_n.jpg'),
+  require('../Cliparts/ARTOWORKS/540119055_10162967375152264_4178779566219057526_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555085754_10237876767528314_2990466336443851643_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555101659_10237876767848322_6863063159995933424_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555445926_10237876768368335_6592243084014250211_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555447442_10237876768088328_2178101301320484529_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555501898_10163095270207264_8889387783471590897_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555507844_10162396307819195_4266799133058546729_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555573460_10237876768008326_7582047112777369094_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555583717_10163109406592264_4681170089551922231_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555617493_10237876767448312_7739267849925085879_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555723306_10162396307829195_1291367652875471158_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555724480_10163095270022264_908624543671562245_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555867320_10237876768648342_1296041638859570596_n.jpg'),
+  require('../Cliparts/ARTOWORKS/555895196_10163095270007264_5602747509153560487_n.jpg'),
+  require('../Cliparts/ARTOWORKS/556444952_10237876768448337_3573269262335540923_n.jpg'),
+  require('../Cliparts/ARTOWORKS/556489754_10163095269937264_3934142205780901707_n.jpg'),
+  require('../Cliparts/ARTOWORKS/1st Profile Pic.jpg'),
+];
+
 // Candle component — lights up when clicked
 const Candle = ({ lit = false, onPress, size = 40 }) => (
   <TouchableOpacity onPress={onPress} style={{ alignItems: 'center' }}>
@@ -483,13 +513,40 @@ const getStreakStars = (streak) => {
 };
 
 // Get today's MAGIC task completion
+// M = Manifest: wrote in muse, dump, or vision
+// A = Art: used timer/stopwatch, or wrote/sketched/captured, or uploaded (courage or private)
+// G = Grow: set a growth goal
+// I = Inspire: voted/ranked one set of artwork
+// C = Connect: browsed artwork after voting, sent email, or saved an inspiration
 const getTodaysTasks = async () => {
   const today = getDateString(new Date());
+
+  // --- M: Manifest (wrote in muse, dump, or vision) ---
+  let hasManifest = false;
+  const manifestRaw = await AsyncStorage.getItem(`manifest_${today}`);
+  if (manifestRaw) {
+    try {
+      const entry = JSON.parse(manifestRaw);
+      hasManifest = !!(
+        (entry.callMuse && entry.callMuse.trim()) ||
+        (entry.dumpStalls && entry.dumpStalls.trim()) ||
+        (entry.manifestVision && entry.manifestVision.trim())
+      );
+    } catch (e) {}
+  }
+
+  // --- A: Art (used timer/stopwatch, created, or uploaded) ---
+  const weeklyArtTime = await AsyncStorage.getItem('weekly_art_time');
+  const artTimerUsed = !!(weeklyArtTime && parseInt(weeklyArtTime) > 0);
+  const privateArtworksRaw = await AsyncStorage.getItem('private_artworks');
+  const privateArtworks = privateArtworksRaw ? JSON.parse(privateArtworksRaw) : [];
   const publicArtworksRaw = await AsyncStorage.getItem('public_artworks');
   const publicArtworks = publicArtworksRaw ? JSON.parse(publicArtworksRaw) : [];
-  const weeklyArtTime = await AsyncStorage.getItem('weekly_art_time');
+  const uploadedToday = privateArtworks.some(a => a.date === today) || publicArtworks.some(a => a.date === today);
+  const artCreated = (await AsyncStorage.getItem(`art_created_${today}`)) === 'true';
+  const hasArt = artTimerUsed || uploadedToday || artCreated;
 
-  const manifestRaw = await AsyncStorage.getItem(`manifest_${today}`);
+  // --- G: Grow (set a growth goal) ---
   let hasGoal = false;
   if (manifestRaw) {
     try {
@@ -498,12 +555,23 @@ const getTodaysTasks = async () => {
     } catch (e) {}
   }
 
+  // --- I: Inspire (voted on one set) ---
+  const hasInspire = (await AsyncStorage.getItem(`ranked_${today}`)) === 'true';
+
+  // --- C: Connect (browsed after voting, sent email, or saved inspiration) ---
+  const browsedAfterVoting = (await AsyncStorage.getItem(`browsed_${today}`)) === 'true';
+  const sentEmail = (await AsyncStorage.getItem(`email_sent_${today}`)) === 'true';
+  const favoriteArtworksRaw = await AsyncStorage.getItem('favorite_artworks');
+  const favoriteArtworks = favoriteArtworksRaw ? JSON.parse(favoriteArtworksRaw) : [];
+  const savedInspirationToday = favoriteArtworks.some(a => a.date === today);
+  const hasConnect = (hasInspire && browsedAfterVoting) || sentEmail || savedInspirationToday;
+
   return {
-    manifest: !!manifestRaw,
-    art: !!(weeklyArtTime && parseInt(weeklyArtTime) > 0),
+    manifest: hasManifest,
+    art: hasArt,
     goal: hasGoal,
-    inspire: (await AsyncStorage.getItem(`ranked_${today}`)) === 'true',
-    courage: publicArtworks.some(a => a.date === today),
+    inspire: hasInspire,
+    courage: hasConnect,
   };
 };
 
@@ -518,7 +586,7 @@ export default function HomeScreen({ navigation }) {
   const [showKeepGoalPrompt, setShowKeepGoalPrompt] = useState(false);
   const [yesterdayGoal, setYesterdayGoal] = useState('');
   const [todayGoal, setTodayGoal] = useState('');
-  const [quoteHearted, setQuoteHearted] = useState(false);
+  const [quoteHearted, setQuoteHearted] = useState(false); // synced with hearted_quotes in AsyncStorage
   const goalLockTimerRef = useRef(null);
   const [savedArtworks, setSavedArtworks] = useState(new Set());
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -544,7 +612,48 @@ export default function HomeScreen({ navigation }) {
     loadStreakData();
     loadGoals();
     loadSavedArtworks();
+    loadQuoteHeartedState();
   }, []);
+
+  // Reload hearted state every time this screen gets focus (syncs with Manifest)
+  useFocusEffect(
+    useCallback(() => {
+      loadQuoteHeartedState();
+    }, [todayQuote])
+  );
+
+  const loadQuoteHeartedState = async () => {
+    try {
+      const raw = await AsyncStorage.getItem('hearted_quotes');
+      if (raw && todayQuote.quote) {
+        const saved = JSON.parse(raw);
+        setQuoteHearted(saved.some(q => q.quote === todayQuote.quote));
+      } else {
+        setQuoteHearted(false);
+      }
+    } catch (error) {
+      console.log('Error loading hearted state:', error);
+    }
+  };
+
+  const toggleQuoteHeart = async () => {
+    try {
+      const raw = await AsyncStorage.getItem('hearted_quotes');
+      let saved = raw ? JSON.parse(raw) : [];
+      const exists = saved.some(q => q.quote === todayQuote.quote);
+
+      if (exists) {
+        saved = saved.filter(q => q.quote !== todayQuote.quote);
+      } else {
+        saved.push({ ...todayQuote, heartedAt: new Date().toISOString() });
+      }
+
+      await AsyncStorage.setItem('hearted_quotes', JSON.stringify(saved));
+      setQuoteHearted(!exists);
+    } catch (error) {
+      console.log('Error toggling quote heart:', error);
+    }
+  };
 
   const loadTodaysChallenge = async () => {
     try {
@@ -629,7 +738,30 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // Schedule midnight reset for goal acknowledgment
+  // Track which date the goal state was loaded for
+  const goalDateRef = useRef(getDateString(new Date()));
+
+  // Reset goal state if the date has changed (handles midnight + app reopen)
+  const checkGoalDateReset = () => {
+    const currentDate = getDateString(new Date());
+    if (goalDateRef.current !== currentDate) {
+      goalDateRef.current = currentDate;
+      setGoalAcknowledged(false);
+      setGoalMetYes(false);
+      setGoalLocked(false);
+      setShowKeepGoalPrompt(false);
+      loadGoals();
+    }
+  };
+
+  // Check on every focus (covers app reopen, tab switch after midnight)
+  useFocusEffect(
+    useCallback(() => {
+      checkGoalDateReset();
+    }, [])
+  );
+
+  // Also schedule a timer for midnight while the app is open
   useEffect(() => {
     const now = new Date();
     const midnight = new Date(now);
@@ -637,11 +769,7 @@ export default function HomeScreen({ navigation }) {
     const msUntilMidnight = midnight.getTime() - now.getTime();
 
     const midnightTimer = setTimeout(() => {
-      setGoalAcknowledged(false);
-      setGoalMetYes(false);
-      setGoalLocked(false);
-      setShowKeepGoalPrompt(false);
-      loadGoals();
+      checkGoalDateReset();
     }, msUntilMidnight);
 
     return () => {
@@ -886,7 +1014,7 @@ export default function HomeScreen({ navigation }) {
                 <Heart
                   size={24}
                   filled={quoteHearted}
-                  onPress={() => setQuoteHearted(!quoteHearted)}
+                  onPress={() => toggleQuoteHeart()}
                 />
               </View>
             </View>
@@ -1035,21 +1163,28 @@ export default function HomeScreen({ navigation }) {
 
           <GoldFrame>
             <View style={styles.imageFrameInner}>
-              <View style={styles.placeholderImage}>
-                <Text style={styles.placeholderText}>🎨</Text>
-                <Text style={styles.placeholderSubtext}>Artwork {currentImageIndex + 1}</Text>
-              </View>
+              <Image
+                source={artworkImages[currentImageIndex % artworkImages.length]}
+                style={styles.artworkImage}
+                resizeMode="cover"
+              />
             </View>
           </GoldFrame>
 
-          <TouchableOpacity onPress={() => setCurrentImageIndex(currentImageIndex + 1)} style={styles.arrowButton}>
+          <TouchableOpacity onPress={() => setCurrentImageIndex((currentImageIndex + 1) % artworkImages.length)} style={styles.arrowButton}>
             <Image source={goldArrowImage} style={styles.arrowImage} resizeMode="contain" />
           </TouchableOpacity>
         </View>
 
         {/* Inspired Section */}
         <View style={styles.inspiredContainer}>
-          <TouchableOpacity onPress={() => {}}>
+          <TouchableOpacity onPress={async () => {
+            const subject = encodeURIComponent('Something that inspired me');
+            const body = encodeURIComponent('This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
+            Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
+            // Mark email sent for Connect star
+            await AsyncStorage.setItem(`email_sent_${getDateString(new Date())}`, 'true');
+          }}>
             <Text style={styles.iconEmoji}>✉️</Text>
           </TouchableOpacity>
 
@@ -1378,22 +1513,11 @@ const styles = StyleSheet.create({
     width: 240,
     height: 240,
     backgroundColor: '#1a1a1a',
-    padding: 10,
+    overflow: 'hidden',
   },
-  placeholderImage: {
-    flex: 1,
-    backgroundColor: '#2a2a2a',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    fontSize: 60,
-    marginBottom: 10,
-  },
-  placeholderSubtext: {
-    color: '#FFD700',
-    fontSize: 16,
+  artworkImage: {
+    width: 240,
+    height: 240,
   },
   inspiredContainer: {
     flexDirection: 'row',

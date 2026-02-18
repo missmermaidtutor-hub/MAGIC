@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TextInput, 
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TextInput,
   TouchableOpacity,
-  Alert 
+  Alert
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import quotesData from '../quotes.json';
 
@@ -45,6 +46,13 @@ export default function ManifestScreen() {
     // Load hearted quotes
     loadHeartedQuotes();
   }, []);
+
+  // Reload hearted state every time this screen gets focus (syncs with Home)
+  useFocusEffect(
+    useCallback(() => {
+      loadHeartedQuotes();
+    }, [])
+  );
 
   // Load today's entry
   const loadTodayEntry = async () => {

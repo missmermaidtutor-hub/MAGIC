@@ -11,9 +11,13 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import promptsData from '../prompts.json';
 
+const MIN_TIMER_MINUTES = 5;
+const MAX_TIMER_MINUTES = 180;
+
 export default function ArtScreen() {
-  // Daily timer (20 minutes)
-  const [dailyTime, setDailyTime] = useState(20 * 60); // 20 minutes in seconds
+  // Daily timer (adjustable, default 20 minutes)
+  const [timerSetting, setTimerSetting] = useState(20); // minutes
+  const [dailyTime, setDailyTime] = useState(20 * 60); // seconds remaining
   const [isDailyRunning, setIsDailyRunning] = useState(false);
   
   // Weekly stopwatch
@@ -102,6 +106,14 @@ export default function ArtScreen() {
     }
   };
 
+  // Adjust timer setting
+  const adjustTimer = (delta) => {
+    if (isDailyRunning) return;
+    const newVal = Math.max(MIN_TIMER_MINUTES, Math.min(MAX_TIMER_MINUTES, timerSetting + delta));
+    setTimerSetting(newVal);
+    setDailyTime(newVal * 60);
+  };
+
   // Daily timer controls
   const toggleDailyTimer = () => {
     if (isDailyRunning) {
@@ -114,7 +126,7 @@ export default function ArtScreen() {
           if (prev <= 1) {
             clearInterval(dailyIntervalRef.current);
             setIsDailyRunning(false);
-            Alert.alert('Time\'s Up!', '20 minutes of art time complete! 🎨');
+            Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!`);
             return 0;
           }
           return prev - 1;
@@ -126,7 +138,7 @@ export default function ArtScreen() {
   const resetDailyTimer = () => {
     clearInterval(dailyIntervalRef.current);
     setIsDailyRunning(false);
-    setDailyTime(20 * 60);
+    setDailyTime(timerSetting * 60);
   };
 
   // Weekly stopwatch controls
@@ -297,16 +309,34 @@ export default function ArtScreen() {
           <Text style={styles.challengeText}>{todaysChallenge}</Text>
         </View>
 
-        {/* Daily Timer (20 minutes) */}
+        {/* Daily Timer (adjustable) */}
         <View style={styles.timerCard}>
           <View style={styles.timerIcon}>
             <Text style={styles.timerEmoji}>⏱️</Text>
           </View>
-          <Text style={styles.timerDisplay}>{formatTime(dailyTime)}</Text>
-          <Text style={styles.timerLabel}>20 minute daily timer</Text>
-          
+
+          {/* Timer adjuster */}
+          <View style={styles.timerAdjustRow}>
+            <TouchableOpacity
+              style={styles.timerAdjustButton}
+              onPress={() => adjustTimer(-1)}
+              disabled={isDailyRunning}
+            >
+              <Text style={[styles.timerAdjustText, isDailyRunning && styles.timerAdjustDisabled]}>−</Text>
+            </TouchableOpacity>
+            <Text style={styles.timerDisplay}>{formatTime(dailyTime)}</Text>
+            <TouchableOpacity
+              style={styles.timerAdjustButton}
+              onPress={() => adjustTimer(1)}
+              disabled={isDailyRunning}
+            >
+              <Text style={[styles.timerAdjustText, isDailyRunning && styles.timerAdjustDisabled]}>+</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.timerLabel}>{timerSetting} min daily timer</Text>
+
           <View style={styles.timerButtons}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.timerButton, isDailyRunning && styles.timerButtonStop]}
               onPress={toggleDailyTimer}
             >
@@ -314,7 +344,7 @@ export default function ArtScreen() {
                 {isDailyRunning ? 'Pause' : 'Start'}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.timerButtonSecondary}
               onPress={resetDailyTimer}
             >
@@ -501,6 +531,29 @@ const styles = StyleSheet.create({
   },
   timerEmoji: {
     fontSize: 40,
+  },
+  timerAdjustRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 15,
+  },
+  timerAdjustButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#333',
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  timerAdjustText: {
+    fontSize: 28,
+    color: '#FFD700',
+    fontWeight: 'bold',
+  },
+  timerAdjustDisabled: {
+    color: '#555',
   },
   timerDisplay: {
     fontSize: 56,
