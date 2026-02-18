@@ -14,6 +14,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -70,6 +71,87 @@ const DEMO_USERS = [
   },
 ];
 
+// Gold Frame component (matches HomeScreen)
+const GoldFrame = ({ children, style, containerStyle, onPress, thickness = 4 }) => {
+  const Wrapper = onPress ? TouchableOpacity : View;
+  return (
+    <Wrapper onPress={onPress} style={[{
+      borderRadius: 6,
+      shadowColor: '#FFD700',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.6,
+      shadowRadius: 10,
+      elevation: 8,
+    }, containerStyle]}>
+      <LinearGradient
+        colors={['#FFF8DC', '#FFD700', '#B8860B', '#FFD700', '#FFFACD', '#DAA520', '#B8860B', '#FFD700', '#FFF8DC']}
+        locations={[0, 0.12, 0.25, 0.4, 0.5, 0.6, 0.75, 0.88, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ borderRadius: 6, padding: thickness }}
+      >
+        <View style={{
+          borderRadius: 3,
+          borderWidth: 0.5,
+          borderColor: 'rgba(255, 248, 220, 0.5)',
+        }}>
+          <View style={[{ borderRadius: 3, overflow: 'hidden' }, style]}>
+            {children}
+          </View>
+        </View>
+      </LinearGradient>
+    </Wrapper>
+  );
+};
+
+// Candle component (matches HomeScreen)
+const Candle = ({ lit = false, onPress, size = 40 }) => (
+  <TouchableOpacity onPress={onPress} style={{ alignItems: 'center' }}>
+    {lit && (
+      <View style={{
+        width: size * 0.3,
+        height: size * 0.4,
+        borderRadius: size * 0.15,
+        backgroundColor: '#FF8C00',
+        marginBottom: -4,
+        shadowColor: '#FFD700',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        transform: [{ scaleX: 0.7 }],
+      }}>
+        <View style={{
+          width: size * 0.15,
+          height: size * 0.2,
+          borderRadius: size * 0.1,
+          backgroundColor: '#FFFF00',
+          alignSelf: 'center',
+          marginTop: size * 0.08,
+        }} />
+      </View>
+    )}
+    {!lit && <View style={{ height: size * 0.4 - 4 }} />}
+    <View style={{
+      width: 2,
+      height: size * 0.15,
+      backgroundColor: lit ? '#333' : '#666',
+      marginBottom: -1,
+    }} />
+    <View style={{
+      width: size * 0.35,
+      height: size * 0.5,
+      backgroundColor: lit ? '#FFF8DC' : '#8B8682',
+      borderRadius: 3,
+      borderWidth: 1,
+      borderColor: lit ? '#FFD700' : '#555',
+      shadowColor: lit ? '#FFD700' : 'transparent',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: lit ? 0.8 : 0,
+      shadowRadius: 8,
+    }} />
+  </TouchableOpacity>
+);
+
 export default function CommunityScreen() {
   const [publicArtworks, setPublicArtworks] = useState([]);
   const [personalArtworks, setPersonalArtworks] = useState([]);
@@ -78,16 +160,19 @@ export default function CommunityScreen() {
   const [fullViewImage, setFullViewImage] = useState(null);
   const [followedUsers, setFollowedUsers] = useState([]);
   const [newsfeedImageIndex, setNewsfeedImageIndex] = useState({});
+  const [savedNewsfeedArt, setSavedNewsfeedArt] = useState(new Set());
 
   useEffect(() => {
     loadAllGalleries();
     loadFollowedUsers();
+    loadSavedNewsfeedArt();
   }, []);
 
   // Reload galleries when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       loadAllGalleries();
+      loadSavedNewsfeedArt();
     }, [])
   );
 
@@ -98,6 +183,65 @@ export default function CommunityScreen() {
     } catch (error) {
       console.log('Error loading followed users:', error);
     }
+  };
+
+  const loadSavedNewsfeedArt = async () => {
+    try {
+      const data = await AsyncStorage.getItem('favorite_artworks');
+      if (data) {
+        const favs = JSON.parse(data);
+        setSavedNewsfeedArt(new Set(favs.map(a => a.id)));
+      }
+    } catch (error) {
+      console.log('Error loading saved newsfeed art:', error);
+    }
+  };
+
+  const handleNewsfeedCandle = async (artwork) => {
+    try {
+      const existing = await AsyncStorage.getItem('favorite_artworks');
+      let favorites = existing ? JSON.parse(existing) : [];
+      const alreadySaved = favorites.some(a => a.id === artwork.id);
+
+      if (alreadySaved) {
+        favorites = favorites.filter(a => a.id !== artwork.id);
+        setSavedNewsfeedArt(prev => {
+          const next = new Set(prev);
+          next.delete(artwork.id);
+          return next;
+        });
+      } else {
+        favorites.push({
+          id: artwork.id,
+          imageUrl: artwork.imageUrl,
+          title: artwork.title || 'Untitled',
+          source: 'newsfeed',
+          date: artwork.date,
+          savedAt: new Date().toISOString(),
+        });
+        setSavedNewsfeedArt(prev => new Set(prev).add(artwork.id));
+        // Also mark for Connect star
+        const today = new Date().toISOString().split('T')[0];
+        await AsyncStorage.setItem(`inspiration_saved_${today}`, 'true');
+      }
+      await AsyncStorage.setItem('favorite_artworks', JSON.stringify(favorites));
+      // Reload inspiration gallery
+      setInspirationArtworks(favorites);
+    } catch (error) {
+      console.log('Error toggling newsfeed candle:', error);
+    }
+  };
+
+  const handleNewsfeedEmail = async (artwork) => {
+    const subject = encodeURIComponent('Something that inspired me');
+    const body = encodeURIComponent(
+      'This inspired me to send to you!\n\n' +
+      (artwork.title ? `"${artwork.title}"\n\n` : '') +
+      '[Add your message here]\n\n— Sent from MAGIC Tracker'
+    );
+    Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
+    const today = new Date().toISOString().split('T')[0];
+    await AsyncStorage.setItem(`email_sent_${today}`, 'true');
   };
 
   const toggleFollow = async (userId) => {
@@ -446,19 +590,24 @@ export default function CommunityScreen() {
               <Text style={[styles.navArrowText, currentIndex === 0 && styles.navArrowTextDisabled]}>‹</Text>
             </TouchableOpacity>
 
-            {/* Main artwork image */}
-            <TouchableOpacity
-              style={styles.newsfeedImageWrap}
-              onPress={() => imageSource && setFullViewImage(imageSource)}
-            >
-              {imageSource ? (
-                <Image source={imageSource} style={styles.newsfeedImage} resizeMode="cover" />
-              ) : (
-                <View style={styles.placeholderArt}>
-                  <Text style={styles.placeholderEmoji}>🎨</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            {/* Gold-framed artwork image */}
+            <View style={styles.newsfeedFrameArea}>
+              <GoldFrame
+                style={styles.newsfeedFrameInner}
+                onPress={() => imageSource && setFullViewImage(imageSource)}
+                thickness={6}
+              >
+                {imageSource ? (
+                  <View style={styles.newsfeedImageBg}>
+                    <Image source={imageSource} style={styles.newsfeedImage} resizeMode="contain" />
+                  </View>
+                ) : (
+                  <View style={[styles.newsfeedImageBg, styles.placeholderArt]}>
+                    <Text style={styles.placeholderEmoji}>🎨</Text>
+                  </View>
+                )}
+              </GoldFrame>
+            </View>
 
             {/* Right arrow */}
             <TouchableOpacity
@@ -470,10 +619,20 @@ export default function CommunityScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Artwork info */}
+          {/* Candle + Artwork info + Email */}
           <View style={styles.newsfeedArtInfo}>
-            <Text style={styles.newsfeedArtTitle}>{artwork.title || 'Untitled'}</Text>
-            <Text style={styles.newsfeedArtDate}>{artwork.date}</Text>
+            <Candle
+              lit={savedNewsfeedArt.has(artwork.id)}
+              onPress={() => handleNewsfeedCandle(artwork)}
+              size={36}
+            />
+            <View style={styles.newsfeedArtInfoCenter}>
+              <Text style={styles.newsfeedArtTitle}>{artwork.title || 'Untitled'}</Text>
+              <Text style={styles.newsfeedArtDate}>{artwork.date}</Text>
+            </View>
+            <TouchableOpacity onPress={() => handleNewsfeedEmail(artwork)}>
+              <Text style={styles.newsfeedEnvelope}>✉️</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Image counter dots */}
@@ -1135,6 +1294,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#0a0e27',
+    paddingVertical: 8,
   },
   navArrow: {
     width: 36,
@@ -1156,10 +1316,20 @@ const styles = StyleSheet.create({
   navArrowTextDisabled: {
     color: '#555',
   },
-  newsfeedImageWrap: {
+  newsfeedFrameArea: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  newsfeedFrameInner: {
+    width: '100%',
+  },
+  newsfeedImageBg: {
+    width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#0a0e27',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   newsfeedImage: {
     width: '100%',
@@ -1172,6 +1342,10 @@ const styles = StyleSheet.create({
     padding: 10,
     paddingHorizontal: 14,
   },
+  newsfeedArtInfoCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
   newsfeedArtTitle: {
     fontSize: 14,
     fontWeight: '600',
@@ -1180,6 +1354,10 @@ const styles = StyleSheet.create({
   newsfeedArtDate: {
     fontSize: 12,
     color: '#666',
+    marginTop: 2,
+  },
+  newsfeedEnvelope: {
+    fontSize: 28,
   },
   dotRow: {
     flexDirection: 'row',
