@@ -619,20 +619,20 @@ export default function CommunityScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Candle + Artwork info + Email */}
+          {/* Email + Artwork info + Candle (matches HomeScreen layout) */}
           <View style={styles.newsfeedArtInfo}>
+            <TouchableOpacity onPress={() => handleNewsfeedEmail(artwork)}>
+              <Text style={styles.newsfeedEnvelope}>✉️</Text>
+            </TouchableOpacity>
+            <View style={styles.newsfeedArtInfoCenter}>
+              <Text style={styles.newsfeedArtTitle}>{artwork.title || 'Untitled'}</Text>
+              <Text style={styles.newsfeedArtDate}>{artwork.date}</Text>
+            </View>
             <Candle
               lit={savedNewsfeedArt.has(artwork.id)}
               onPress={() => handleNewsfeedCandle(artwork)}
               size={36}
             />
-            <View style={styles.newsfeedArtInfoCenter}>
-              <Text style={styles.newsfeedArtTitle}>{artwork.title || 'Untitled'}</Text>
-              <Text style={styles.newsfeedArtDate}>{artwork.date}</Text>
-            </View>
-            <TouchableOpacity onPress={() => handleNewsfeedEmail(artwork)}>
-              <Text style={styles.newsfeedEnvelope}>✉️</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Image counter dots */}
