@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
   TouchableOpacity,
   Alert,
   Platform
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Audio } from 'expo-av';
 import promptsData from '../prompts.json';
 
 const MIN_TIMER_MINUTES = 5;
@@ -30,17 +31,47 @@ export default function ArtScreen() {
   // Refs for intervals
   const dailyIntervalRef = useRef(null);
   const weeklyIntervalRef = useRef(null);
+  const alarmSoundRef = useRef(null);
 
   // Load saved weekly time on mount
   useEffect(() => {
     loadWeeklyTime();
     loadDailyChallenge();
     return () => {
-      // Cleanup intervals
+      // Cleanup intervals and sound
       if (dailyIntervalRef.current) clearInterval(dailyIntervalRef.current);
       if (weeklyIntervalRef.current) clearInterval(weeklyIntervalRef.current);
+      if (alarmSoundRef.current) {
+        alarmSoundRef.current.unloadAsync();
+      }
     };
   }, []);
+
+  // Play alarm sound when timer reaches 0
+  const playAlarmSound = async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
+      // Generate a short alarm tone using an oscillator-style approach
+      // expo-av can play from a module/URI — we'll use a freely available bell sound
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: 'https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg' },
+        { shouldPlay: true, volume: 1.0 }
+      );
+      alarmSoundRef.current = sound;
+      // Unload after playback finishes
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.didJustFinish) {
+          sound.unloadAsync();
+          alarmSoundRef.current = null;
+        }
+      });
+    } catch (error) {
+      console.log('Could not play alarm sound:', error);
+    }
+  };
 
   // Load weekly time from storage
   const loadWeeklyTime = async () => {
@@ -126,6 +157,7 @@ export default function ArtScreen() {
           if (prev <= 1) {
             clearInterval(dailyIntervalRef.current);
             setIsDailyRunning(false);
+            playAlarmSound();
             Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!`);
             return 0;
           }
