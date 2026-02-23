@@ -63,57 +63,57 @@ export default function App() {
             };
           }}
         >
-          <Tab.Screen 
-            name="Home" 
+          <Tab.Screen
+            name="Home"
             component={HomeScreen}
             options={{
               tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#90EE90" focused={focused} />
+                <TabIcon color="#C4B5FD" focused={focused} />
               ),
             }}
           />
-          <Tab.Screen 
-            name="Manifest" 
+          <Tab.Screen
+            name="Manifest"
             component={ManifestScreen}
             options={{
               tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#DDA0DD" focused={focused} />
+                <TabIcon color="#DC143C" focused={focused} />
               ),
             }}
           />
-          <Tab.Screen 
-            name="Art" 
+          <Tab.Screen
+            name="Art"
             component={ArtScreen}
+            options={{
+              tabBarIcon: ({ color, focused }) => (
+                <TabIcon color="#FF7F00" focused={focused} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="Grow"
+            component={StreakScreen}
             options={{
               tabBarIcon: ({ color, focused }) => (
                 <TabIcon color="#FFD700" focused={focused} />
               ),
             }}
           />
-          <Tab.Screen 
-            name="Grow" 
-            component={StreakScreen}
-            options={{
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#FF6B6B" focused={focused} />
-              ),
-            }}
-          />
-          <Tab.Screen 
-            name="Inspire" 
+          <Tab.Screen
+            name="Inspire"
             component={InspireScreen}
             options={{
               tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#87CEEB" focused={focused} />
+                <TabIcon color="#22C55E" focused={focused} />
               ),
             }}
           />
-          <Tab.Screen 
-            name="Connect" 
+          <Tab.Screen
+            name="Connect"
             component={CommunityScreen}
             options={{
               tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#DDA0DD" focused={focused} />
+                <TabIcon color="#6366F1" focused={focused} />
               ),
             }}
           />

@@ -282,41 +282,43 @@ export default function ArtScreen() {
   const handleCourageUpload = async () => {
     Alert.alert(
       'Upload with COURAGE',
-      'Your artwork will be posted for community ranking. Ready to share your creativity?',
+      'Your artwork will be submitted for voting. It will appear in public galleries after voting day. Ready to share your creativity?',
       [
         { text: 'Not Yet', style: 'cancel' },
-        { 
-          text: 'Share!', 
+        {
+          text: 'Share!',
           onPress: async () => {
             try {
               const imageUrl = simulateImageSelection();
               const today = new Date().toISOString().split('T')[0];
-              
+
               // Create artwork object
               const artwork = {
                 id: Date.now(),
                 imageUrl: imageUrl,
-                artist: 'Anonymous', // Start anonymous
+                artist: 'Anonymous',
                 title: `${todaysChallenge}`,
                 prompt: todaysChallenge,
                 date: today,
-                isPublic: true,
+                isPublic: false,
+                pendingVoting: true,
+                votingSubmitDate: today,
                 rankings: []
               };
 
-              // Save to public gallery
-              const existingPublic = await AsyncStorage.getItem('public_artworks');
-              const publicArtworks = existingPublic ? JSON.parse(existingPublic) : [];
-              publicArtworks.push(artwork);
-              await AsyncStorage.setItem('public_artworks', JSON.stringify(publicArtworks));
+              // Save to pending voting queue (held until after voting day)
+              const existingPending = await AsyncStorage.getItem('pending_voting_artworks');
+              const pendingArtworks = existingPending ? JSON.parse(existingPending) : [];
+              pendingArtworks.push(artwork);
+              await AsyncStorage.setItem('pending_voting_artworks', JSON.stringify(pendingArtworks));
 
-              // Also save to private
-              const existingPrivate = await AsyncStorage.getItem('private_artworks');
-              const privateArtworks = existingPrivate ? JSON.parse(existingPrivate) : [];
-              privateArtworks.push(artwork);
-              await AsyncStorage.setItem('private_artworks', JSON.stringify(privateArtworks));
+              // Also save to personal gallery
+              const existingPersonal = await AsyncStorage.getItem('personal_artworks');
+              const personalArtworks = existingPersonal ? JSON.parse(existingPersonal) : [];
+              personalArtworks.push({ ...artwork, pendingVoting: true });
+              await AsyncStorage.setItem('personal_artworks', JSON.stringify(personalArtworks));
 
-              Alert.alert('Courage!', 'Artwork posted for ranking! You\'re inspiring others! ✨\n\nAlso saved to your private gallery.');
+              Alert.alert('Courage!', 'Artwork submitted for voting! It will appear in public galleries after voting day.\n\nAlso saved to your private gallery.');
             } catch (error) {
               Alert.alert('Error', 'Could not upload artwork');
             }
@@ -484,7 +486,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#FF7F00',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 20,

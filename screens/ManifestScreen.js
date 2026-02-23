@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,7 +6,8 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert
+  Alert,
+  AppState
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -24,6 +25,38 @@ export default function ManifestScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [heartedQuotes, setHeartedQuotes] = useState([]);
   const [todayQuoteHearted, setTodayQuoteHearted] = useState(false);
+  const [midnightWarning, setMidnightWarning] = useState(false);
+
+  // Track which text boxes are focused (user is active)
+  const [activeFields, setActiveFields] = useState(new Set());
+  const midnightTimerRef = useRef(null);
+  const graceTimerRef = useRef(null);
+  const entryDateRef = useRef(null); // tracks which date the current text belongs to
+  // Refs to access latest state values inside timers
+  const callMuseRef = useRef('');
+  const dumpStallsRef = useRef('');
+  const manifestVisionRef = useRef('');
+  const growthGoalRef = useRef('');
+  const activeFieldsRef = useRef(new Set());
+
+  // Keep refs in sync with state
+  useEffect(() => { callMuseRef.current = callMuse; }, [callMuse]);
+  useEffect(() => { dumpStallsRef.current = dumpStalls; }, [dumpStalls]);
+  useEffect(() => { manifestVisionRef.current = manifestVision; }, [manifestVision]);
+  useEffect(() => { growthGoalRef.current = growthGoal; }, [growthGoal]);
+  useEffect(() => { activeFieldsRef.current = activeFields; }, [activeFields]);
+
+  const handleFieldFocus = (field) => {
+    setActiveFields(prev => new Set(prev).add(field));
+  };
+
+  const handleFieldBlur = (field) => {
+    setActiveFields(prev => {
+      const next = new Set(prev);
+      next.delete(field);
+      return next;
+    });
+  };
 
   // Get today's date as a string
   const getTodayDate = () => {
@@ -31,37 +64,193 @@ export default function ManifestScreen() {
     return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
   };
 
+  // Schedule a timer to fire at midnight
+  const scheduleMidnightReset = () => {
+    if (midnightTimerRef.current) clearTimeout(midnightTimerRef.current);
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    const msUntilMidnight = midnight - now;
+
+    midnightTimerRef.current = setTimeout(() => {
+      handleMidnightReset();
+    }, msUntilMidnight);
+  };
+
+  // Called exactly at midnight
+  const handleMidnightReset = async () => {
+    const isActive = activeFieldsRef.current.size > 0;
+    const oldDate = entryDateRef.current;
+
+    if (isActive) {
+      // User is actively typing — show warning and start 30-min grace
+      setMidnightWarning(true);
+      graceTimerRef.current = setTimeout(async () => {
+        await autoSaveWithNotation(oldDate);
+        resetTextBoxes();
+        setMidnightWarning(false);
+        entryDateRef.current = getTodayDate();
+        scheduleMidnightReset();
+      }, 30 * 60 * 1000); // 30 minutes
+    } else {
+      // Not active — save and reset immediately
+      await saveCurrentEntry(oldDate);
+      resetTextBoxes();
+      entryDateRef.current = getTodayDate();
+      scheduleMidnightReset();
+    }
+  };
+
+  // Auto-save with notation that session extended past midnight
+  const autoSaveWithNotation = async (dateKey) => {
+    try {
+      const date = dateKey || getTodayDate();
+      const entry = {
+        growthGoal: growthGoalRef.current,
+        callMuse: callMuseRef.current,
+        dumpStalls: dumpStallsRef.current,
+        manifestVision: manifestVisionRef.current,
+        savedAt: new Date().toISOString(),
+        autoSaved: true,
+        autoSaveNote: 'Session auto-saved after midnight grace period. May be continued on next day.',
+      };
+      await AsyncStorage.setItem(`manifest_${date}`, JSON.stringify(entry));
+    } catch (error) {
+      console.log('Error auto-saving entry:', error);
+    }
+  };
+
+  // Save current entry for a specific date
+  const saveCurrentEntry = async (dateKey) => {
+    try {
+      const date = dateKey || getTodayDate();
+      const existing = await AsyncStorage.getItem(`manifest_${date}`);
+      const parsed = existing ? JSON.parse(existing) : {};
+      const entry = {
+        ...parsed,
+        growthGoal: growthGoalRef.current,
+        callMuse: callMuseRef.current,
+        dumpStalls: dumpStallsRef.current,
+        manifestVision: manifestVisionRef.current,
+        savedAt: new Date().toISOString(),
+      };
+      await AsyncStorage.setItem(`manifest_${date}`, JSON.stringify(entry));
+    } catch (error) {
+      console.log('Error saving entry:', error);
+    }
+  };
+
+  // Reset muse, dump, vision (NOT the goal)
+  const resetTextBoxes = () => {
+    setCallMuse('');
+    setDumpStalls('');
+    setManifestVision('');
+  };
+
+  // Load goal separately — persists until HomeScreen acknowledges or full day without goal
+  const loadGoal = async () => {
+    try {
+      const today = getTodayDate();
+      // Check if HomeScreen has acknowledged the goal (reset signal)
+      const ackDate = await AsyncStorage.getItem('goal_acknowledged_date');
+      const currentGoal = await AsyncStorage.getItem('current_grow_goal');
+      const goalSetDate = await AsyncStorage.getItem('goal_set_date');
+
+      if (ackDate === today) {
+        // Goal was acknowledged today on HomeScreen — check if new goal was set
+        const newGoal = await AsyncStorage.getItem('current_grow_goal');
+        setGrowthGoal(newGoal || '');
+        return;
+      }
+
+      if (currentGoal) {
+        // Check if a full calendar day has passed without a goal being set
+        if (goalSetDate) {
+          const setDate = new Date(goalSetDate);
+          const now = new Date();
+          const daysSince = Math.floor((now - setDate) / (1000 * 60 * 60 * 24));
+          if (daysSince > 1 && !currentGoal.trim()) {
+            // More than a full day with no goal — reset
+            setGrowthGoal('');
+            return;
+          }
+        }
+        setGrowthGoal(currentGoal);
+      } else {
+        // Try loading from today's manifest entry
+        const entry = await AsyncStorage.getItem(`manifest_${today}`);
+        if (entry) {
+          const parsed = JSON.parse(entry);
+          setGrowthGoal(parsed.growthGoal || '');
+        }
+      }
+    } catch (error) {
+      console.log('Error loading goal:', error);
+    }
+  };
+
+  // Save goal to persistent storage when it changes
+  const handleGoalChange = async (text) => {
+    setGrowthGoal(text);
+    try {
+      await AsyncStorage.setItem('current_grow_goal', text);
+      if (text.trim()) {
+        await AsyncStorage.setItem('goal_set_date', getTodayDate());
+      }
+    } catch (error) {
+      console.log('Error saving goal:', error);
+    }
+  };
+
   // Get quote of the day (same quote for the whole day)
   useEffect(() => {
-    const today = getTodayDate();
     // Use date as seed for consistent daily quote
     const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
     const quoteIndex = dayOfYear % quotesData.length;
     setTodayQuote(quotesData[quoteIndex]);
-    
-    // Load today's entry if it exists
+
+    entryDateRef.current = getTodayDate();
+    // Load today's text entry (muse, dump, vision)
     loadTodayEntry();
+    // Load goal separately (persistent)
+    loadGoal();
     // Load past entries for viewing
     loadPastEntries();
     // Load hearted quotes
     loadHeartedQuotes();
+    // Schedule midnight reset
+    scheduleMidnightReset();
+
+    return () => {
+      if (midnightTimerRef.current) clearTimeout(midnightTimerRef.current);
+      if (graceTimerRef.current) clearTimeout(graceTimerRef.current);
+    };
   }, []);
 
-  // Reload hearted state every time this screen gets focus (syncs with Home)
+  // Reload hearted state and check date every time this screen gets focus
   useFocusEffect(
     useCallback(() => {
       loadHeartedQuotes();
+      loadGoal();
+      // Check if date changed while screen was unfocused
+      const currentDate = getTodayDate();
+      if (entryDateRef.current && entryDateRef.current !== currentDate) {
+        // Date changed — reset text boxes for new day
+        resetTextBoxes();
+        entryDateRef.current = currentDate;
+        loadTodayEntry();
+        scheduleMidnightReset();
+      }
     }, [])
   );
 
-  // Load today's entry
+  // Load today's text entry (muse, dump, vision — NOT goal)
   const loadTodayEntry = async () => {
     try {
       const today = getTodayDate();
       const entry = await AsyncStorage.getItem(`manifest_${today}`);
       if (entry) {
         const parsed = JSON.parse(entry);
-        setGrowthGoal(parsed.growthGoal || '');
         setCallMuse(parsed.callMuse || '');
         setDumpStalls(parsed.dumpStalls || '');
         setManifestVision(parsed.manifestVision || '');
@@ -143,8 +332,13 @@ export default function ManifestScreen() {
         manifestVision,
         savedAt: new Date().toISOString()
       };
-      
+
       await AsyncStorage.setItem(`manifest_${today}`, JSON.stringify(entry));
+      // Also persist goal separately
+      await AsyncStorage.setItem('current_grow_goal', growthGoal);
+      if (growthGoal.trim()) {
+        await AsyncStorage.setItem('goal_set_date', today);
+      }
       Alert.alert('Saved!', 'Your manifest entry has been saved.');
       loadPastEntries(); // Refresh past entries
     } catch (error) {
@@ -251,7 +445,11 @@ export default function ManifestScreen() {
             filteredEntries.map((entry, index) => (
               <View key={index} style={styles.entryCard}>
                 <Text style={styles.entryDate}>{formatDate(entry.date)}</Text>
-                
+
+                {entry.autoSaved && (
+                  <Text style={styles.autoSaveNote}>{entry.autoSaveNote}</Text>
+                )}
+
                 {entry.growthGoal && (
                   <View style={styles.entrySection}>
                     <Text style={styles.entrySectionTitle}>Growth Goal:</Text>
@@ -316,10 +514,19 @@ export default function ManifestScreen() {
           </Text>
         </TouchableOpacity>
 
+        {/* Midnight warning banner */}
+        {midnightWarning && (
+          <View style={styles.midnightBanner}>
+            <Text style={styles.midnightBannerText}>
+              It is midnight. You've done what you can today. Get ready for tomorrow. This window will save and reset in 30 minutes. If you are still working you can continue in tomorrow's log.
+            </Text>
+          </View>
+        )}
+
         {/* Journaling Prompts */}
         <View style={styles.journalCard}>
           <Text style={styles.journalTitle}>Manifest</Text>
-          
+
           {/* 1. Growth Goal - Short */}
           <View style={styles.promptContainer}>
             <Text style={styles.promptNumber}>1.</Text>
@@ -330,7 +537,9 @@ export default function ManifestScreen() {
                 placeholder="What will you achieve today?"
                 placeholderTextColor="#666"
                 value={growthGoal}
-                onChangeText={setGrowthGoal}
+                onChangeText={handleGoalChange}
+                onFocus={() => handleFieldFocus('goal')}
+                onBlur={() => handleFieldBlur('goal')}
               />
             </View>
           </View>
@@ -346,6 +555,8 @@ export default function ManifestScreen() {
                 placeholderTextColor="#666"
                 value={callMuse}
                 onChangeText={setCallMuse}
+                onFocus={() => handleFieldFocus('muse')}
+                onBlur={() => handleFieldBlur('muse')}
                 multiline
                 numberOfLines={4}
               />
@@ -363,6 +574,8 @@ export default function ManifestScreen() {
                 placeholderTextColor="#666"
                 value={dumpStalls}
                 onChangeText={setDumpStalls}
+                onFocus={() => handleFieldFocus('dump')}
+                onBlur={() => handleFieldBlur('dump')}
                 multiline
                 numberOfLines={4}
               />
@@ -380,6 +593,8 @@ export default function ManifestScreen() {
                 placeholderTextColor="#666"
                 value={manifestVision}
                 onChangeText={setManifestVision}
+                onFocus={() => handleFieldFocus('vision')}
+                onBlur={() => handleFieldBlur('vision')}
                 multiline
                 numberOfLines={6}
               />
@@ -417,7 +632,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#DC143C',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 10,
@@ -477,7 +692,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   viewPastButtonText: {
-    color: '#DDA0DD',
+    color: '#FF8A80',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -492,7 +707,7 @@ const styles = StyleSheet.create({
   journalTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#9C9FFF',
+    color: '#DC143C',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -623,5 +838,30 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#DDA0DD',
     lineHeight: 22,
+  },
+
+  autoSaveNote: {
+    fontSize: 12,
+    color: '#FFA500',
+    fontStyle: 'italic',
+    marginBottom: 10,
+    paddingHorizontal: 4,
+  },
+
+  // Midnight warning banner
+  midnightBanner: {
+    backgroundColor: '#4A148C',
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 16,
+  },
+  midnightBannerText: {
+    color: '#FFD700',
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

@@ -467,14 +467,14 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#22C55E',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 18,
-    color: '#87CEEB',
+    color: '#86EFAC',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
   criterionCard: {
     backgroundColor: '#1a1a1a',
     borderWidth: 3,
-    borderColor: '#87CEEB',
+    borderColor: '#86EFAC',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   },
   criterionLabel: {
     fontSize: 16,
-    color: '#87CEEB',
+    color: '#86EFAC',
     marginBottom: 10,
   },
   criterionText: {
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 14,
-    color: '#87CEEB',
+    color: '#86EFAC',
     textAlign: 'center',
     marginBottom: 10,
   },
@@ -516,11 +516,11 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#87CEEB',
+    backgroundColor: '#86EFAC',
   },
   instructionText: {
     fontSize: 14,
-    color: '#87CEEB',
+    color: '#86EFAC',
     textAlign: 'center',
     marginBottom: 15,
     fontStyle: 'italic',
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 10,
     borderWidth: 2,
-    borderColor: '#87CEEB',
+    borderColor: '#86EFAC',
     position: 'relative',
   },
   artworkImage: {
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   },
   artworkTitle: {
     fontSize: 10,
-    color: '#87CEEB',
+    color: '#86EFAC',
     fontStyle: 'italic',
   },
   actionButtons: {
@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
   },
   rankButtonText: {
     fontSize: 16,
-    color: '#87CEEB',
+    color: '#86EFAC',
     fontWeight: 'bold',
   },
   rankButtonTextSelected: {
@@ -684,7 +684,7 @@ const styles = StyleSheet.create({
   freeScrollBanner: {
     backgroundColor: '#1a1a1a',
     borderWidth: 2,
-    borderColor: '#87CEEB',
+    borderColor: '#86EFAC',
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
   },
   freeScrollText: {
     fontSize: 16,
-    color: '#87CEEB',
+    color: '#86EFAC',
     textAlign: 'center',
     fontWeight: '600',
   },
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
   },
   completeSubtext: {
     fontSize: 14,
-    color: '#87CEEB',
+    color: '#86EFAC',
     textAlign: 'center',
   },
   emptyState: {
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#87CEEB',
+    color: '#86EFAC',
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -805,7 +805,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    color: '#87CEEB',
+    color: '#86EFAC',
     fontStyle: 'italic',
   },
   modalHint: {

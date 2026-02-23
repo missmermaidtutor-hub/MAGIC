@@ -103,11 +103,11 @@ const WeekStar = ({ size = 24 }) => {
 // Each point fills independently: M=Manifest, A=Art, G=Goal, I=Inspire, C=Courage
 const MagicStar = ({ tasks = {}, size = 52 }) => {
   const pointColors = {
-    manifest: tasks.manifest ? '#DDA0DD' : '#1a2a4a',
-    art:      tasks.art      ? '#FFD700' : '#1a2a4a',
-    goal:     tasks.goal     ? '#FF6B6B' : '#1a2a4a',
-    inspire:  tasks.inspire  ? '#87CEEB' : '#1a2a4a',
-    courage:  tasks.courage  ? '#90EE90' : '#1a2a4a',
+    manifest: tasks.manifest ? '#DC143C' : '#1a2a4a',
+    art:      tasks.art      ? '#FF7F00' : '#1a2a4a',
+    goal:     tasks.goal     ? '#FFD700' : '#1a2a4a',
+    inspire:  tasks.inspire  ? '#22C55E' : '#1a2a4a',
+    courage:  tasks.courage  ? '#6366F1' : '#1a2a4a',
   };
 
   const pointAngles = [
@@ -129,15 +129,24 @@ const MagicStar = ({ tasks = {}, size = 52 }) => {
         justifyContent: 'center',
         alignItems: 'center',
       }}>
-        {/* Glow when all complete */}
+        {/* Radiating gold glow when all complete */}
         {allComplete && (
-          <View style={{
-            position: 'absolute',
-            width: size + 14,
-            height: size + 14,
-            borderRadius: (size + 14) / 2,
-            backgroundColor: 'rgba(79, 195, 247, 0.3)',
-          }} />
+          <>
+            <View style={{
+              position: 'absolute',
+              width: size + 24,
+              height: size + 24,
+              borderRadius: (size + 24) / 2,
+              backgroundColor: 'rgba(255, 215, 0, 0.15)',
+            }} />
+            <View style={{
+              position: 'absolute',
+              width: size + 14,
+              height: size + 14,
+              borderRadius: (size + 14) / 2,
+              backgroundColor: 'rgba(255, 215, 0, 0.35)',
+            }} />
+          </>
         )}
         {/* Gold star outline — slightly larger triangles behind the colored ones */}
         {pointAngles.map(({ key, angle }) => (
@@ -162,11 +171,17 @@ const MagicStar = ({ tasks = {}, size = 52 }) => {
           width: size * 0.3,
           height: size * 0.3,
           borderRadius: size * 0.15,
-          backgroundColor: allComplete ? '#4FC3F7' : '#0d1530',
+          backgroundColor: allComplete ? '#FFD700' : '#0d1530',
           position: 'absolute',
           zIndex: 10,
+          ...(allComplete ? {
+            shadowColor: '#FFD700',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 1,
+            shadowRadius: 8,
+          } : {}),
         }} />
-        {/* 5 colored points (on top of gold outline) */}
+        {/* 5 colored points (on top of gold outline) — all gold when complete */}
         {pointAngles.map(({ key, angle }) => (
           <View key={key} style={{
             position: 'absolute',
@@ -177,11 +192,17 @@ const MagicStar = ({ tasks = {}, size = 52 }) => {
             borderBottomWidth: size * 0.42,
             borderLeftColor: 'transparent',
             borderRightColor: 'transparent',
-            borderBottomColor: pointColors[key],
+            borderBottomColor: allComplete ? '#FFD700' : pointColors[key],
             transform: [
               { rotate: `${angle + 90}deg` },
               { translateY: -size * 0.14 },
             ],
+            ...(allComplete ? {
+              shadowColor: '#FFD700',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.8,
+              shadowRadius: 4,
+            } : {}),
           }} />
         ))}
       </View>
@@ -189,7 +210,7 @@ const MagicStar = ({ tasks = {}, size = 52 }) => {
       <View style={{ flexDirection: 'row', marginTop: 4 }}>
         {['M', 'A', 'G', 'I', 'C'].map((letter, i) => {
           const keys = ['manifest', 'art', 'goal', 'inspire', 'courage'];
-          const colors = ['#DDA0DD', '#FFD700', '#FF6B6B', '#87CEEB', '#90EE90'];
+          const colors = ['#DC143C', '#FF7F00', '#FFD700', '#22C55E', '#6366F1'];
           return (
             <Text key={letter} style={{
               fontSize: 9,
@@ -296,7 +317,7 @@ const DayStar = ({ size = 30 }) => {
       {/* Filled points */}
       {[...Array(points)].map((_, i) => {
         const angle = (i * 72) - 90;
-        const colors = ['#DDA0DD', '#FFD700', '#FF6B6B', '#87CEEB', '#90EE90'];
+        const colors = ['#DC143C', '#FF7F00', '#FFD700', '#22C55E', '#6366F1'];
         return (
           <View key={i} style={{
             position: 'absolute',
@@ -1544,7 +1565,7 @@ const styles = StyleSheet.create({
   },
   inspiredSubtext: {
     fontSize: 12,
-    color: '#87CEEB',
+    color: '#86EFAC',
     marginTop: 2,
   },
 });

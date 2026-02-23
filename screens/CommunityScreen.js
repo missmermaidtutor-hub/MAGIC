@@ -75,13 +75,14 @@ const DEMO_USERS = [
 const GoldFrame = ({ children, style, containerStyle, onPress, thickness = 4 }) => {
   const Wrapper = onPress ? TouchableOpacity : View;
   return (
-    <Wrapper onPress={onPress} style={[{
+    <Wrapper onPress={onPress} activeOpacity={0.8} style={[{
       borderRadius: 6,
       shadowColor: '#FFD700',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.6,
       shadowRadius: 10,
       elevation: 8,
+      alignSelf: 'stretch',
     }, containerStyle]}>
       <LinearGradient
         colors={['#FFF8DC', '#FFD700', '#B8860B', '#FFD700', '#FFFACD', '#DAA520', '#B8860B', '#FFD700', '#FFF8DC']}
@@ -153,7 +154,7 @@ const Candle = ({ lit = false, onPress, size = 40 }) => (
 );
 
 export default function CommunityScreen() {
-  const [publicArtworks, setPublicArtworks] = useState([]);
+  const [curatedArtworks, setCuratedArtworks] = useState([]);
   const [personalArtworks, setPersonalArtworks] = useState([]);
   const [inspirationArtworks, setInspirationArtworks] = useState([]);
   const [activeGallery, setActiveGallery] = useState('newsfeed');
@@ -165,14 +166,16 @@ export default function CommunityScreen() {
   useEffect(() => {
     loadAllGalleries();
     loadFollowedUsers();
-    loadSavedNewsfeedArt();
+    loadSavedArt();
+    promotePendingVotingArtworks();
   }, []);
 
   // Reload galleries when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       loadAllGalleries();
-      loadSavedNewsfeedArt();
+      loadSavedArt();
+      promotePendingVotingArtworks();
     }, [])
   );
 
@@ -185,7 +188,7 @@ export default function CommunityScreen() {
     }
   };
 
-  const loadSavedNewsfeedArt = async () => {
+  const loadSavedArt = async () => {
     try {
       const data = await AsyncStorage.getItem('favorite_artworks');
       if (data) {
@@ -193,11 +196,55 @@ export default function CommunityScreen() {
         setSavedNewsfeedArt(new Set(favs.map(a => a.id)));
       }
     } catch (error) {
-      console.log('Error loading saved newsfeed art:', error);
+      console.log('Error loading saved art:', error);
     }
   };
 
-  const handleNewsfeedCandle = async (artwork) => {
+  // Move pending voting artworks to curated gallery after voting day passes
+  const promotePendingVotingArtworks = async () => {
+    try {
+      const pendingData = await AsyncStorage.getItem('pending_voting_artworks');
+      if (!pendingData) return;
+      const pending = JSON.parse(pendingData);
+      if (pending.length === 0) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      const ready = pending.filter(a => a.votingSubmitDate < today);
+      const stillPending = pending.filter(a => a.votingSubmitDate >= today);
+
+      if (ready.length > 0) {
+        // Move ready artworks to curated gallery
+        const curatedData = await AsyncStorage.getItem('public_artworks');
+        const curated = curatedData ? JSON.parse(curatedData) : [];
+        const promoted = ready.map(a => ({
+          ...a,
+          pendingVoting: false,
+          isPublic: true,
+          madePublic: true,
+          publicDate: new Date().toISOString(),
+        }));
+        const updatedCurated = [...curated, ...promoted];
+        await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
+
+        // Update personal artworks to clear pending flag
+        const personalData = await AsyncStorage.getItem('personal_artworks');
+        if (personalData) {
+          const personal = JSON.parse(personalData);
+          const readyIds = new Set(ready.map(a => a.id));
+          const updatedPersonal = personal.map(a =>
+            readyIds.has(a.id) ? { ...a, pendingVoting: false } : a
+          );
+          await AsyncStorage.setItem('personal_artworks', JSON.stringify(updatedPersonal));
+        }
+
+        await AsyncStorage.setItem('pending_voting_artworks', JSON.stringify(stillPending));
+      }
+    } catch (error) {
+      console.log('Error promoting pending artworks:', error);
+    }
+  };
+
+  const handleCandleSave = async (artwork) => {
     try {
       const existing = await AsyncStorage.getItem('favorite_artworks');
       let favorites = existing ? JSON.parse(existing) : [];
@@ -215,24 +262,22 @@ export default function CommunityScreen() {
           id: artwork.id,
           imageUrl: artwork.imageUrl,
           title: artwork.title || 'Untitled',
-          source: 'newsfeed',
+          source: 'candle_save',
           date: artwork.date,
           savedAt: new Date().toISOString(),
         });
         setSavedNewsfeedArt(prev => new Set(prev).add(artwork.id));
-        // Also mark for Connect star
         const today = new Date().toISOString().split('T')[0];
         await AsyncStorage.setItem(`inspiration_saved_${today}`, 'true');
       }
       await AsyncStorage.setItem('favorite_artworks', JSON.stringify(favorites));
-      // Reload inspiration gallery
       setInspirationArtworks(favorites);
     } catch (error) {
-      console.log('Error toggling newsfeed candle:', error);
+      console.log('Error toggling candle:', error);
     }
   };
 
-  const handleNewsfeedEmail = async (artwork) => {
+  const handleEmailShare = async (artwork) => {
     const subject = encodeURIComponent('Something that inspired me');
     const body = encodeURIComponent(
       'This inspired me to send to you!\n\n' +
@@ -266,10 +311,9 @@ export default function CommunityScreen() {
   };
 
   const getNewsfeedUsers = () => {
-    // Build newsfeed: demo users + current user's public artworks as "You"
     const users = [...DEMO_USERS];
-    if (publicArtworks.length > 0) {
-      const sorted = [...publicArtworks].sort((a, b) =>
+    if (curatedArtworks.length > 0) {
+      const sorted = [...curatedArtworks].sort((a, b) =>
         new Date(b.savedAt || b.date) - new Date(a.savedAt || a.date)
       );
       users.unshift({
@@ -284,23 +328,17 @@ export default function CommunityScreen() {
 
   const loadAllGalleries = async () => {
     try {
-      // Load public artworks
       const publicData = await AsyncStorage.getItem('public_artworks');
-      if (publicData) {
-        setPublicArtworks(JSON.parse(publicData));
-      }
+      if (publicData) setCuratedArtworks(JSON.parse(publicData));
+      else setCuratedArtworks([]);
 
-      // Load personal artworks (user's own uploads)
       const personalData = await AsyncStorage.getItem('personal_artworks');
-      if (personalData) {
-        setPersonalArtworks(JSON.parse(personalData));
-      }
+      if (personalData) setPersonalArtworks(JSON.parse(personalData));
+      else setPersonalArtworks([]);
 
-      // Load inspiration artworks (saved from Inspire/Home via candle)
       const favData = await AsyncStorage.getItem('favorite_artworks');
-      if (favData) {
-        setInspirationArtworks(JSON.parse(favData));
-      }
+      if (favData) setInspirationArtworks(JSON.parse(favData));
+      else setInspirationArtworks([]);
     } catch (error) {
       console.log('Error loading galleries:', error);
     }
@@ -334,7 +372,7 @@ export default function CommunityScreen() {
         const updated = [...personalArtworks, newArtwork];
         setPersonalArtworks(updated);
         await AsyncStorage.setItem('personal_artworks', JSON.stringify(updated));
-        Alert.alert('Uploaded!', 'Your artwork has been added to your Personal Gallery.');
+        Alert.alert('Uploaded!', 'Your artwork has been added to your Private Gallery.');
       }
     } catch (error) {
       console.log('Error uploading image:', error);
@@ -342,52 +380,60 @@ export default function CommunityScreen() {
     }
   };
 
-  const handleTogglePublic = async (artwork, fromGallery) => {
+  // Toggle artwork in/out of curated gallery
+  const handleToggleCurate = async (artwork, fromGallery) => {
     try {
-      if (fromGallery === 'personal') {
-        // Move from personal to public
-        const updatedPersonal = personalArtworks.filter(a => a.id !== artwork.id);
-        const publicArt = { ...artwork, madePublic: true, publicDate: new Date().toISOString() };
-        const updatedPublic = [...publicArtworks, publicArt];
+      const isCurated = curatedArtworks.some(a => a.id === artwork.id);
 
-        setPersonalArtworks(updatedPersonal);
-        setPublicArtworks(updatedPublic);
-        await AsyncStorage.setItem('personal_artworks', JSON.stringify(updatedPersonal));
-        await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedPublic));
-      } else if (fromGallery === 'public') {
-        // Move from public back to personal
-        const updatedPublic = publicArtworks.filter(a => a.id !== artwork.id);
-        const privateArt = { ...artwork, madePublic: false };
-        delete privateArt.publicDate;
-        const updatedPersonal = [...personalArtworks, privateArt];
+      if (isCurated) {
+        // Remove from curated
+        const updatedCurated = curatedArtworks.filter(a => a.id !== artwork.id);
+        setCuratedArtworks(updatedCurated);
+        await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
 
-        setPublicArtworks(updatedPublic);
-        setPersonalArtworks(updatedPersonal);
-        await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedPublic));
-        await AsyncStorage.setItem('personal_artworks', JSON.stringify(updatedPersonal));
-      } else if (fromGallery === 'inspiration') {
-        // Toggle inspiration artwork public visibility
-        const updatedInspiration = inspirationArtworks.map(a =>
-          a.id === artwork.id ? { ...a, isPublic: !a.isPublic } : a
-        );
-        setInspirationArtworks(updatedInspiration);
-        await AsyncStorage.setItem('favorite_artworks', JSON.stringify(updatedInspiration));
+        // Update flags in source gallery
+        if (fromGallery === 'personal') {
+          const updated = personalArtworks.map(a =>
+            a.id === artwork.id ? { ...a, madePublic: false } : a
+          );
+          setPersonalArtworks(updated);
+          await AsyncStorage.setItem('personal_artworks', JSON.stringify(updated));
+        } else if (fromGallery === 'inspiration') {
+          const updated = inspirationArtworks.map(a =>
+            a.id === artwork.id ? { ...a, isPublic: false } : a
+          );
+          setInspirationArtworks(updated);
+          await AsyncStorage.setItem('favorite_artworks', JSON.stringify(updated));
+        }
+      } else {
+        // Add to curated
+        const curatedArt = {
+          ...artwork,
+          madePublic: true,
+          isPublic: true,
+          publicDate: new Date().toISOString(),
+        };
+        const updatedCurated = [...curatedArtworks, curatedArt];
+        setCuratedArtworks(updatedCurated);
+        await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
 
-        if (!artwork.isPublic) {
-          // Add to public gallery
-          const publicArt = { ...artwork, isPublic: true, publicDate: new Date().toISOString() };
-          const updatedPublic = [...publicArtworks, publicArt];
-          setPublicArtworks(updatedPublic);
-          await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedPublic));
-        } else {
-          // Remove from public gallery
-          const updatedPublic = publicArtworks.filter(a => a.id !== artwork.id);
-          setPublicArtworks(updatedPublic);
-          await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedPublic));
+        // Update flags in source gallery
+        if (fromGallery === 'personal') {
+          const updated = personalArtworks.map(a =>
+            a.id === artwork.id ? { ...a, madePublic: true } : a
+          );
+          setPersonalArtworks(updated);
+          await AsyncStorage.setItem('personal_artworks', JSON.stringify(updated));
+        } else if (fromGallery === 'inspiration') {
+          const updated = inspirationArtworks.map(a =>
+            a.id === artwork.id ? { ...a, isPublic: true } : a
+          );
+          setInspirationArtworks(updated);
+          await AsyncStorage.setItem('favorite_artworks', JSON.stringify(updated));
         }
       }
     } catch (error) {
-      console.log('Error toggling public:', error);
+      console.log('Error toggling curate:', error);
     }
   };
 
@@ -410,10 +456,23 @@ export default function CommunityScreen() {
                 const updated = inspirationArtworks.filter(a => a.id !== artwork.id);
                 setInspirationArtworks(updated);
                 await AsyncStorage.setItem('favorite_artworks', JSON.stringify(updated));
-              } else if (fromGallery === 'public') {
-                const updated = publicArtworks.filter(a => a.id !== artwork.id);
-                setPublicArtworks(updated);
+                setSavedNewsfeedArt(prev => {
+                  const next = new Set(prev);
+                  next.delete(artwork.id);
+                  return next;
+                });
+              } else if (fromGallery === 'curated') {
+                const updated = curatedArtworks.filter(a => a.id !== artwork.id);
+                setCuratedArtworks(updated);
                 await AsyncStorage.setItem('public_artworks', JSON.stringify(updated));
+              }
+              // Also remove from curated if it was there
+              if (fromGallery !== 'curated') {
+                const updatedCurated = curatedArtworks.filter(a => a.id !== artwork.id);
+                if (updatedCurated.length !== curatedArtworks.length) {
+                  setCuratedArtworks(updatedCurated);
+                  await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
+                }
               }
             } catch (error) {
               console.log('Error deleting artwork:', error);
@@ -442,7 +501,6 @@ export default function CommunityScreen() {
     );
   };
 
-  // Sample images for inspiration artworks that only have an index (from HomeScreen candle)
   const getSampleImageUrl = (index) => {
     const sampleImages = [
       'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=400&fit=crop',
@@ -485,62 +543,123 @@ export default function CommunityScreen() {
     }
   ];
 
+  // ─── Gallery Item with candle + curate toggle ───
   const renderGalleryItem = (artwork, fromGallery) => {
     const imageSource = getArtworkImageSource(artwork);
-    const isOwned = fromGallery === 'personal' || fromGallery === 'inspiration';
+    const isCurated = curatedArtworks.some(a => a.id === artwork.id);
+    const isPrivateGallery = fromGallery === 'personal' || fromGallery === 'inspiration';
 
     return (
       <View key={artwork.id} style={styles.galleryItemContainer}>
-        <TouchableOpacity
-          style={styles.galleryItem}
+        <GoldFrame
           onPress={() => imageSource && setFullViewImage(imageSource)}
+          thickness={3}
         >
           {imageSource ? (
-            <Image source={imageSource} style={styles.galleryImage} resizeMode="cover" />
+            <View style={styles.galleryImageBg}>
+              <Image source={imageSource} style={styles.galleryImage} resizeMode="contain" />
+            </View>
           ) : (
-            <View style={styles.placeholderArt}>
+            <View style={[styles.galleryImageBg, styles.placeholderArt]}>
               <Text style={styles.placeholderEmoji}>🎨</Text>
               <Text style={styles.placeholderLabel}>{artwork.title || 'Artwork'}</Text>
             </View>
           )}
-        </TouchableOpacity>
+        </GoldFrame>
 
-        {/* Action buttons below each artwork */}
-        {isOwned && (
-          <View style={styles.artworkActions}>
+        {/* Actions row: candle + curate toggle + delete */}
+        <View style={styles.artworkActions}>
+          <Candle
+            lit={savedNewsfeedArt.has(artwork.id)}
+            onPress={() => handleCandleSave(artwork)}
+            size={28}
+          />
+
+          {isPrivateGallery && (
             <TouchableOpacity
-              style={[styles.actionBtn, artwork.isPublic || artwork.madePublic ? styles.actionBtnActive : null]}
-              onPress={() => handleTogglePublic(artwork, fromGallery)}
+              style={[styles.curateBtn, isCurated && styles.curateBtnActive]}
+              onPress={() => handleToggleCurate(artwork, fromGallery)}
             >
-              <Text style={styles.actionBtnText}>
-                {(artwork.isPublic || artwork.madePublic) ? '🌐 Public' : '🔒 Private'}
+              <Text style={styles.curateBtnText}>
+                {isCurated ? '🖼️ Curated' : '🖼️ Curate'}
               </Text>
             </TouchableOpacity>
+          )}
+
+          {artwork.pendingVoting && (
+            <View style={styles.pendingBadge}>
+              <Text style={styles.pendingBadgeText}>Voting</Text>
+            </View>
+          )}
+
+          {isPrivateGallery && (
             <TouchableOpacity
               style={styles.deleteBtn}
               onPress={() => handleDeleteArtwork(artwork, fromGallery)}
             >
               <Text style={styles.deleteBtnText}>✕</Text>
             </TouchableOpacity>
-          </View>
-        )}
+          )}
+        </View>
 
-        {/* Date label */}
         {artwork.date && (
-          <Text style={styles.artworkDate}>{artwork.date}</Text>
+          <Text style={styles.artworkDate}>{artwork.title || artwork.date}</Text>
         )}
       </View>
     );
   };
 
+  // ─── Curated gallery item (with candle, no curate toggle) ───
+  const renderCuratedItem = (artwork) => {
+    const imageSource = getArtworkImageSource(artwork);
+
+    return (
+      <View key={artwork.id} style={styles.galleryItemContainer}>
+        <GoldFrame
+          onPress={() => imageSource && setFullViewImage(imageSource)}
+          thickness={3}
+        >
+          {imageSource ? (
+            <View style={styles.galleryImageBg}>
+              <Image source={imageSource} style={styles.galleryImage} resizeMode="contain" />
+            </View>
+          ) : (
+            <View style={[styles.galleryImageBg, styles.placeholderArt]}>
+              <Text style={styles.placeholderEmoji}>🎨</Text>
+            </View>
+          )}
+        </GoldFrame>
+
+        <View style={styles.artworkActions}>
+          <Candle
+            lit={savedNewsfeedArt.has(artwork.id)}
+            onPress={() => handleCandleSave(artwork)}
+            size={28}
+          />
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={() => handleDeleteArtwork(artwork, 'curated')}
+          >
+            <Text style={styles.deleteBtnText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        {artwork.date && (
+          <Text style={styles.artworkDate}>{artwork.title || artwork.date}</Text>
+        )}
+      </View>
+    );
+  };
+
+  // ─── Newsfeed (Visit Curations) ───
   const renderNewsfeed = () => {
     const users = getNewsfeedUsers();
     if (users.length === 0) {
       return (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyEmoji}>📰</Text>
+          <Text style={styles.emptyEmoji}>🖼️</Text>
           <Text style={styles.emptyText}>
-            No galleries to show yet.{'\n'}Make some of your artworks public to appear here!
+            No curations to visit yet.{'\n'}Add artworks to your curated gallery to appear here!
           </Text>
         </View>
       );
@@ -556,7 +675,6 @@ export default function CommunityScreen() {
 
       return (
         <View key={user.id} style={styles.newsfeedCard}>
-          {/* User header with avatar, name, and follow button */}
           <View style={styles.newsfeedHeader}>
             <View style={styles.newsfeedUserInfo}>
               <Text style={styles.newsfeedAvatar}>{user.avatar}</Text>
@@ -579,18 +697,15 @@ export default function CommunityScreen() {
             )}
           </View>
 
-          {/* Artwork display with left/right navigation */}
           <View style={styles.newsfeedArtContainer}>
-            {/* Left arrow */}
             <TouchableOpacity
-              style={[styles.navArrow, styles.navArrowLeft, currentIndex === 0 && styles.navArrowDisabled]}
+              style={[styles.navArrow, currentIndex === 0 && styles.navArrowDisabled]}
               onPress={() => navigateNewsfeed(user.id, -1)}
               disabled={currentIndex === 0}
             >
               <Text style={[styles.navArrowText, currentIndex === 0 && styles.navArrowTextDisabled]}>‹</Text>
             </TouchableOpacity>
 
-            {/* Gold-framed artwork image */}
             <View style={styles.newsfeedFrameArea}>
               <GoldFrame
                 style={styles.newsfeedFrameInner}
@@ -609,9 +724,8 @@ export default function CommunityScreen() {
               </GoldFrame>
             </View>
 
-            {/* Right arrow */}
             <TouchableOpacity
-              style={[styles.navArrow, styles.navArrowRight, currentIndex >= user.artworks.length - 1 && styles.navArrowDisabled]}
+              style={[styles.navArrow, currentIndex >= user.artworks.length - 1 && styles.navArrowDisabled]}
               onPress={() => navigateNewsfeed(user.id, 1)}
               disabled={currentIndex >= user.artworks.length - 1}
             >
@@ -619,9 +733,9 @@ export default function CommunityScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Email + Artwork info + Candle (matches HomeScreen layout) */}
+          {/* Email + info + Candle */}
           <View style={styles.newsfeedArtInfo}>
-            <TouchableOpacity onPress={() => handleNewsfeedEmail(artwork)}>
+            <TouchableOpacity onPress={() => handleEmailShare(artwork)}>
               <Text style={styles.newsfeedEnvelope}>✉️</Text>
             </TouchableOpacity>
             <View style={styles.newsfeedArtInfoCenter}>
@@ -630,19 +744,15 @@ export default function CommunityScreen() {
             </View>
             <Candle
               lit={savedNewsfeedArt.has(artwork.id)}
-              onPress={() => handleNewsfeedCandle(artwork)}
+              onPress={() => handleCandleSave(artwork)}
               size={36}
             />
           </View>
 
-          {/* Image counter dots */}
           {user.artworks.length > 1 && (
             <View style={styles.dotRow}>
               {user.artworks.map((_, i) => (
-                <View
-                  key={i}
-                  style={[styles.dot, i === currentIndex && styles.dotActive]}
-                />
+                <View key={i} style={[styles.dot, i === currentIndex && styles.dotActive]} />
               ))}
             </View>
           )}
@@ -651,58 +761,65 @@ export default function CommunityScreen() {
     });
   };
 
+  // ─── Gallery content switcher ───
   const renderGalleryContent = () => {
     switch (activeGallery) {
       case 'newsfeed':
         return renderNewsfeed();
 
-      case 'public':
-        return publicArtworks.length > 0 ? (
+      case 'curated':
+        return curatedArtworks.length > 0 ? (
           <View style={styles.galleryGrid}>
-            {publicArtworks.map(artwork => renderGalleryItem(artwork, 'public'))}
+            {curatedArtworks.map(artwork => renderCuratedItem(artwork))}
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🌐</Text>
+            <Text style={styles.emptyEmoji}>🖼️</Text>
             <Text style={styles.emptyText}>
-              No public artworks yet.{'\n'}Make your personal artworks public to share!
+              Your curated gallery is empty.{'\n'}Go to My Private Galleries and tap the curate button to add artworks!
             </Text>
           </View>
         );
 
-      case 'personal':
+      case 'private':
         return (
           <>
+            {/* Upload button */}
             <TouchableOpacity style={styles.uploadButton} onPress={handleUploadImage}>
               <Text style={styles.uploadButtonText}>+ Upload Image</Text>
             </TouchableOpacity>
+
+            {/* My Uploads section */}
+            <Text style={styles.privateSubheader}>My Uploads</Text>
             {personalArtworks.length > 0 ? (
               <View style={styles.galleryGrid}>
                 {personalArtworks.map(artwork => renderGalleryItem(artwork, 'personal'))}
               </View>
             ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyEmoji}>📷</Text>
+              <View style={styles.emptyStateSmall}>
                 <Text style={styles.emptyText}>
-                  Your personal gallery is empty.{'\n'}Upload your own art and inspiration!
+                  No uploads yet. Tap + Upload Image above!
+                </Text>
+              </View>
+            )}
+
+            {/* Divider */}
+            <View style={styles.sectionDivider} />
+
+            {/* My Inspirations section */}
+            <Text style={styles.privateSubheader}>My Inspirations</Text>
+            {inspirationArtworks.length > 0 ? (
+              <View style={styles.galleryGrid}>
+                {inspirationArtworks.map(artwork => renderGalleryItem(artwork, 'inspiration'))}
+              </View>
+            ) : (
+              <View style={styles.emptyStateSmall}>
+                <Text style={styles.emptyText}>
+                  No saved inspirations yet. Light the candle on artworks you love!
                 </Text>
               </View>
             )}
           </>
-        );
-
-      case 'inspiration':
-        return inspirationArtworks.length > 0 ? (
-          <View style={styles.galleryGrid}>
-            {inspirationArtworks.map(artwork => renderGalleryItem(artwork, 'inspiration'))}
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🕯️</Text>
-            <Text style={styles.emptyText}>
-              No saved inspirations yet.{'\n'}Light the candle on artworks you love!
-            </Text>
-          </View>
         );
 
       default:
@@ -716,64 +833,50 @@ export default function CommunityScreen() {
         <Text style={styles.header}>Connect</Text>
         <Text style={styles.subtitle}>Galleries & Community</Text>
 
-        {/* Gallery Tab Selector */}
+        {/* 3-Tab Selector */}
         <View style={styles.tabRow}>
           <TouchableOpacity
             style={[styles.tab, activeGallery === 'newsfeed' && styles.tabActive]}
             onPress={() => setActiveGallery('newsfeed')}
           >
-            <Text style={styles.tabIcon}>📰</Text>
+            <Text style={styles.tabIcon}>🖼️</Text>
             <Text style={[styles.tabLabel, activeGallery === 'newsfeed' && styles.tabLabelActive]}>
-              Feed
+              Visit{'\n'}Curations
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.tab, activeGallery === 'public' && styles.tabActive]}
-            onPress={() => setActiveGallery('public')}
+            style={[styles.tab, activeGallery === 'curated' && styles.tabActive]}
+            onPress={() => setActiveGallery('curated')}
           >
-            <Text style={styles.tabIcon}>🌐</Text>
-            <Text style={[styles.tabLabel, activeGallery === 'public' && styles.tabLabelActive]}>
-              Public
+            <Text style={styles.tabIcon}>⭐</Text>
+            <Text style={[styles.tabLabel, activeGallery === 'curated' && styles.tabLabelActive]}>
+              My Curated{'\n'}Gallery
             </Text>
-            {publicArtworks.length > 0 && (
-              <Text style={styles.tabCount}>{publicArtworks.length}</Text>
+            {curatedArtworks.length > 0 && (
+              <Text style={styles.tabCount}>{curatedArtworks.length}</Text>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.tab, activeGallery === 'personal' && styles.tabActive]}
-            onPress={() => setActiveGallery('personal')}
+            style={[styles.tab, activeGallery === 'private' && styles.tabActive]}
+            onPress={() => setActiveGallery('private')}
           >
             <Text style={styles.tabIcon}>🔒</Text>
-            <Text style={[styles.tabLabel, activeGallery === 'personal' && styles.tabLabelActive]}>
-              Personal
+            <Text style={[styles.tabLabel, activeGallery === 'private' && styles.tabLabelActive]}>
+              My Private{'\n'}Galleries
             </Text>
-            {personalArtworks.length > 0 && (
-              <Text style={styles.tabCount}>{personalArtworks.length}</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tab, activeGallery === 'inspiration' && styles.tabActive]}
-            onPress={() => setActiveGallery('inspiration')}
-          >
-            <Text style={styles.tabIcon}>🕯️</Text>
-            <Text style={[styles.tabLabel, activeGallery === 'inspiration' && styles.tabLabelActive]}>
-              Inspiration
-            </Text>
-            {inspirationArtworks.length > 0 && (
-              <Text style={styles.tabCount}>{inspirationArtworks.length}</Text>
+            {(personalArtworks.length + inspirationArtworks.length) > 0 && (
+              <Text style={styles.tabCount}>{personalArtworks.length + inspirationArtworks.length}</Text>
             )}
           </TouchableOpacity>
         </View>
 
         {/* Gallery Description */}
         <Text style={styles.galleryDescription}>
-          {activeGallery === 'newsfeed' && 'Browse galleries from the community'}
-          {activeGallery === 'public' && 'Artworks visible to the community'}
-          {activeGallery === 'personal' && 'Your private uploads — only you can see these'}
-          {activeGallery === 'inspiration' && 'Saved works from others — only you can see these'}
+          {activeGallery === 'newsfeed' && 'Browse curated galleries from the community'}
+          {activeGallery === 'curated' && 'Artworks you chose to share publicly'}
+          {activeGallery === 'private' && 'Your uploads and inspirations — only you can see these'}
         </Text>
 
         {/* Gallery Content */}
@@ -781,7 +884,7 @@ export default function CommunityScreen() {
           {renderGalleryContent()}
         </View>
 
-        {/* Research & Articles Section */}
+        {/* Research & Articles */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionIcon}>📚</Text>
@@ -790,7 +893,6 @@ export default function CommunityScreen() {
           <Text style={styles.sectionDescription}>
             Science behind creativity and mental health
           </Text>
-
           {researchArticles.map((article, index) => (
             <TouchableOpacity
               key={index}
@@ -804,7 +906,7 @@ export default function CommunityScreen() {
           ))}
         </View>
 
-        {/* Boutique Section */}
+        {/* Boutique */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionIcon}>🛍️</Text>
@@ -813,7 +915,6 @@ export default function CommunityScreen() {
           <Text style={styles.sectionDescription}>
             Turn your art into physical products
           </Text>
-
           <View style={styles.boutiqueItems}>
             <View style={styles.boutiqueItem}>
               <Text style={styles.boutiqueEmoji}>🖼️</Text>
@@ -832,11 +933,7 @@ export default function CommunityScreen() {
               <Text style={styles.boutiqueLabel}>Cases</Text>
             </View>
           </View>
-
-          <TouchableOpacity
-            style={styles.boutiqueButton}
-            onPress={handleBoutique}
-          >
+          <TouchableOpacity style={styles.boutiqueButton} onPress={handleBoutique}>
             <Text style={styles.boutiqueButtonText}>Browse Boutique</Text>
           </TouchableOpacity>
         </View>
@@ -846,12 +943,12 @@ export default function CommunityScreen() {
           <Text style={styles.statsTitle}>Community Stats</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{publicArtworks.length}</Text>
-              <Text style={styles.statLabel}>Public</Text>
+              <Text style={styles.statNumber}>{curatedArtworks.length}</Text>
+              <Text style={styles.statLabel}>Curated</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{personalArtworks.length}</Text>
-              <Text style={styles.statLabel}>Personal</Text>
+              <Text style={styles.statLabel}>Uploads</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{inspirationArtworks.length}</Text>
@@ -908,20 +1005,20 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#6366F1',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 18,
-    color: '#DDA0DD',
+    color: '#818CF8',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
   },
 
-  // Gallery Tabs
+  // Tabs
   tabRow: {
     flexDirection: 'row',
     marginBottom: 8,
@@ -932,7 +1029,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
   },
@@ -944,9 +1041,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   tabLabel: {
-    fontSize: 12,
+    fontSize: 10,
     color: '#888',
     fontWeight: '600',
+    textAlign: 'center',
   },
   tabLabelActive: {
     color: '#FFD700',
@@ -984,14 +1082,12 @@ const styles = StyleSheet.create({
     width: '48%',
     marginBottom: 15,
   },
-  galleryItem: {
-    width: '100%',
+  galleryImageBg: {
+    alignSelf: 'stretch',
     aspectRatio: 1,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#0a0e27',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   galleryImage: {
     width: '100%',
@@ -1018,22 +1114,38 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 6,
+    gap: 4,
   },
-  actionBtn: {
-    paddingHorizontal: 8,
+  curateBtn: {
+    flex: 1,
+    paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#555',
     backgroundColor: '#2a2a2a',
+    alignItems: 'center',
   },
-  actionBtnActive: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#1a3a1a',
+  curateBtnActive: {
+    borderColor: '#FFD700',
+    backgroundColor: '#2a1a0a',
   },
-  actionBtnText: {
-    fontSize: 11,
+  curateBtnText: {
+    fontSize: 10,
     color: '#DDA0DD',
+  },
+  pendingBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+    backgroundColor: '#4A148C',
+    borderWidth: 1,
+    borderColor: '#9C27B0',
+  },
+  pendingBadgeText: {
+    fontSize: 9,
+    color: '#DDA0DD',
+    fontWeight: 'bold',
   },
   deleteBtn: {
     paddingHorizontal: 8,
@@ -1052,6 +1164,25 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#666',
     marginTop: 3,
+  },
+
+  // Private galleries
+  privateSubheader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 12,
+    marginTop: 5,
+  },
+  sectionDivider: {
+    height: 1,
+    backgroundColor: '#FFD700',
+    marginVertical: 18,
+    opacity: 0.4,
+  },
+  emptyStateSmall: {
+    padding: 20,
+    alignItems: 'center',
   },
 
   // Upload
@@ -1088,7 +1219,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  // Section Cards (Research, Boutique)
+  // Section Cards
   sectionCard: {
     backgroundColor: '#1a1a1a',
     borderWidth: 3,
@@ -1303,8 +1434,6 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     zIndex: 2,
   },
-  navArrowLeft: {},
-  navArrowRight: {},
   navArrowDisabled: {
     opacity: 0.2,
   },
@@ -1318,14 +1447,14 @@ const styles = StyleSheet.create({
   },
   newsfeedFrameArea: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'center',
   },
   newsfeedFrameInner: {
-    width: '100%',
+    alignSelf: 'stretch',
   },
   newsfeedImageBg: {
-    width: '100%',
+    alignSelf: 'stretch',
     aspectRatio: 1,
     backgroundColor: '#0a0e27',
     justifyContent: 'center',

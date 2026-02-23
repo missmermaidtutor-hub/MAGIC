@@ -5,21 +5,41 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Dimensions
+  Dimensions,
+  Modal
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DAY_ABBR = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
+// MAGIC color constants
+const MAGIC_COLORS = {
+  manifest: '#DC143C',  // Maroon/Red
+  art:      '#FF7F00',  // Orange
+  grow:     '#FFD700',  // Yellow/Gold
+  inspire:  '#22C55E',  // Green
+  connect:  '#6366F1',  // Indigo
+};
+const MAGIC_KEYS = ['manifest', 'art', 'goal', 'inspire', 'courage'];
+const MAGIC_COLOR_ARRAY = [MAGIC_COLORS.manifest, MAGIC_COLORS.art, MAGIC_COLORS.grow, MAGIC_COLORS.inspire, MAGIC_COLORS.connect];
+const MAGIC_LABELS = ['Manifest', 'Art', 'Grow', 'Inspire', 'Connect'];
+const MAGIC_GUIDANCE = [
+  'Write in your Muse, Dump, or Vision journal',
+  'Use the art timer, create, or upload artwork',
+  'Set a growth goal in your Manifest',
+  'Vote on today\'s artwork rankings',
+  'Browse curations, send inspiration, or save art',
+];
+
 // ─── Mini 5-point MAGIC star for calendar cells ───────────────────
 const CalendarStar = ({ tasks = {}, size = 14 }) => {
   const pointColors = {
-    manifest: tasks.manifest ? '#DDA0DD' : '#1a2a4a',
-    art:      tasks.art      ? '#FFD700' : '#1a2a4a',
-    goal:     tasks.goal     ? '#FF6B6B' : '#1a2a4a',
-    inspire:  tasks.inspire  ? '#87CEEB' : '#1a2a4a',
-    courage:  tasks.courage  ? '#90EE90' : '#1a2a4a',
+    manifest: tasks.manifest ? MAGIC_COLORS.manifest : '#1a2a4a',
+    art:      tasks.art      ? MAGIC_COLORS.art      : '#1a2a4a',
+    goal:     tasks.goal     ? MAGIC_COLORS.grow     : '#1a2a4a',
+    inspire:  tasks.inspire  ? MAGIC_COLORS.inspire  : '#1a2a4a',
+    courage:  tasks.courage  ? MAGIC_COLORS.connect  : '#1a2a4a',
   };
 
   const pointAngles = [
@@ -40,7 +60,7 @@ const CalendarStar = ({ tasks = {}, size = 14 }) => {
           width: size + 3,
           height: size + 3,
           borderRadius: (size + 3) / 2,
-          backgroundColor: 'rgba(79, 195, 247, 0.3)',
+          backgroundColor: 'rgba(255, 215, 0, 0.4)',
         }} />
       )}
       {pointAngles.map(({ key, angle }) => (
@@ -64,7 +84,7 @@ const CalendarStar = ({ tasks = {}, size = 14 }) => {
         width: size * 0.28,
         height: size * 0.28,
         borderRadius: size * 0.14,
-        backgroundColor: allComplete ? '#4FC3F7' : '#0d1530',
+        backgroundColor: allComplete ? '#FFD700' : '#0d1530',
         position: 'absolute',
         zIndex: 10,
       }} />
@@ -78,7 +98,7 @@ const CalendarStar = ({ tasks = {}, size = 14 }) => {
           borderBottomWidth: size * 0.38,
           borderLeftColor: 'transparent',
           borderRightColor: 'transparent',
-          borderBottomColor: pointColors[key],
+          borderBottomColor: allComplete ? '#FFD700' : pointColors[key],
           transform: [
             { rotate: `${angle + 90}deg` },
             { translateY: -size * 0.13 },
@@ -172,7 +192,7 @@ const loadMonthData = async (year, month) => {
 };
 
 // ─── Single compact month grid ───────────────────────────────────
-const MiniMonth = ({ year, month, data, cellSize, todayInfo }) => {
+const MiniMonth = ({ year, month, data, cellSize, todayInfo, onDayPress }) => {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
   const { todayDate, todayMonth, todayYear } = todayInfo;
@@ -207,8 +227,14 @@ const MiniMonth = ({ year, month, data, cellSize, todayInfo }) => {
 
       <View style={styles.calendarGrid}>
         {cells.map(cell => (
-          <View
+          <TouchableOpacity
             key={cell.key}
+            activeOpacity={cell.type === 'day' && !cell.isFuture ? 0.6 : 1}
+            onPress={() => {
+              if (cell.type === 'day' && !cell.isFuture && onDayPress) {
+                onDayPress({ day: cell.day, month, year, tasks: cell.tasks });
+              }
+            }}
             style={[
               styles.calendarCell,
               { width: cellSize, height: cellSize + 6 },
@@ -229,7 +255,7 @@ const MiniMonth = ({ year, month, data, cellSize, todayInfo }) => {
                 )}
               </>
             )}
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </View>
@@ -249,6 +275,7 @@ export default function StreakScreen() {
 
   const [month1Data, setMonth1Data] = useState({});
   const [month2Data, setMonth2Data] = useState({});
+  const [selectedDay, setSelectedDay] = useState(null); // { day, month, year, tasks }
 
   const [streakData, setStreakData] = useState({
     currentStreak: 0,
@@ -383,6 +410,39 @@ export default function StreakScreen() {
     setViewMonth(prev.month);
   };
 
+  // Day detail handlers
+  const handleDayPress = (dayInfo) => {
+    setSelectedDay(dayInfo);
+  };
+
+  const navigateDay = (direction) => {
+    if (!selectedDay) return;
+    let { day, month: m, year: y } = selectedDay;
+    day += direction;
+    if (day < 1) {
+      const prev = getPrevMonth(y, m);
+      y = prev.year;
+      m = prev.month;
+      day = getDaysInMonth(y, m);
+    } else if (day > getDaysInMonth(y, m)) {
+      const nx = getNextMonth(y, m);
+      y = nx.year;
+      m = nx.month;
+      day = 1;
+    }
+    // Don't navigate into future
+    if (y > today.getFullYear() ||
+      (y === today.getFullYear() && m > today.getMonth()) ||
+      (y === today.getFullYear() && m === today.getMonth() && day > today.getDate())) return;
+
+    // Get tasks for this day from loaded data
+    let tasks = null;
+    if (y === m1Year && m === m1Month) tasks = month1Data[day] || null;
+    else if (y === m2Year && m === m2Month) tasks = month2Data[day] || null;
+
+    setSelectedDay({ day, month: m, year: y, tasks });
+  };
+
   const next = getNextMonth(m1Year, m1Month);
   const next2 = getNextMonth(next.year, next.month);
   const forwardBlocked = next2.year > today.getFullYear() ||
@@ -395,7 +455,7 @@ export default function StreakScreen() {
   const monthGap = 8;
   const availableWidth = SCREEN_WIDTH - 40 - arrowWidth * 2 - monthGap - 8;
   const monthWidth = Math.floor(availableWidth / 2);
-  const cellSize = Math.floor(monthWidth / 7);
+  const cellSize = Math.floor((monthWidth - 2) / 7); // -2 for miniMonth paddingHorizontal
 
   const goalPct = streakData.goalsSet > 0
     ? Math.round((streakData.goalsMet / streakData.goalsSet) * 100)
@@ -409,16 +469,16 @@ export default function StreakScreen() {
         {/* Legend */}
         <View style={styles.legendCard}>
           <View style={styles.legendRowH}>
-            <View style={[styles.legendDot, { backgroundColor: '#DDA0DD' }]} />
-            <Text style={styles.legendLetter}>M</Text>
-            <View style={[styles.legendDot, { backgroundColor: '#FFD700' }]} />
-            <Text style={styles.legendLetter}>A</Text>
-            <View style={[styles.legendDot, { backgroundColor: '#FF6B6B' }]} />
-            <Text style={styles.legendLetter}>G</Text>
-            <View style={[styles.legendDot, { backgroundColor: '#87CEEB' }]} />
-            <Text style={styles.legendLetter}>I</Text>
-            <View style={[styles.legendDot, { backgroundColor: '#90EE90' }]} />
-            <Text style={styles.legendLetter}>C</Text>
+            <View style={[styles.legendDot, { backgroundColor: MAGIC_COLORS.manifest }]} />
+            <Text style={[styles.legendLetter, { color: MAGIC_COLORS.manifest }]}>M</Text>
+            <View style={[styles.legendDot, { backgroundColor: MAGIC_COLORS.art }]} />
+            <Text style={[styles.legendLetter, { color: MAGIC_COLORS.art }]}>A</Text>
+            <View style={[styles.legendDot, { backgroundColor: MAGIC_COLORS.grow }]} />
+            <Text style={[styles.legendLetter, { color: MAGIC_COLORS.grow }]}>G</Text>
+            <View style={[styles.legendDot, { backgroundColor: MAGIC_COLORS.inspire }]} />
+            <Text style={[styles.legendLetter, { color: MAGIC_COLORS.inspire }]}>I</Text>
+            <View style={[styles.legendDot, { backgroundColor: MAGIC_COLORS.connect }]} />
+            <Text style={[styles.legendLetter, { color: MAGIC_COLORS.connect }]}>C</Text>
           </View>
         </View>
 
@@ -434,6 +494,7 @@ export default function StreakScreen() {
                 year={m1Year} month={m1Month}
                 data={month1Data} cellSize={cellSize}
                 todayInfo={todayInfo}
+                onDayPress={handleDayPress}
               />
             </View>
             <View style={styles.monthGap} />
@@ -442,6 +503,7 @@ export default function StreakScreen() {
                 year={m2Year} month={m2Month}
                 data={month2Data} cellSize={cellSize}
                 todayInfo={todayInfo}
+                onDayPress={handleDayPress}
               />
             </View>
           </View>
@@ -480,37 +542,187 @@ export default function StreakScreen() {
         {/* Row 2: MAGIC category counts */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: '#DDA0DD' }]}>{streakData.manifestDays}</Text>
+            <Text style={[styles.statNumber, { color: MAGIC_COLORS.manifest }]}>{streakData.manifestDays}</Text>
             <Text style={styles.statLabel}>Manifest{'\n'}Days</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: '#87CEEB' }]}>{streakData.inspireDays}</Text>
+            <Text style={[styles.statNumber, { color: MAGIC_COLORS.inspire }]}>{streakData.inspireDays}</Text>
             <Text style={styles.statLabel}>Inspire{'\n'}Days</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: '#90EE90' }]}>{streakData.couragePosts}</Text>
-            <Text style={styles.statLabel}>Courage{'\n'}Posts</Text>
+            <Text style={[styles.statNumber, { color: MAGIC_COLORS.connect }]}>{streakData.couragePosts}</Text>
+            <Text style={styles.statLabel}>Connect{'\n'}Posts</Text>
           </View>
         </View>
 
         {/* Row 3: Goals */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: '#FF6B6B' }]}>{streakData.goalsSet}</Text>
+            <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsSet}</Text>
             <Text style={styles.statLabel}>Goals Set</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: '#FF6B6B' }]}>{streakData.goalsMet}</Text>
+            <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsMet}</Text>
             <Text style={styles.statLabel}>Goals Met</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: '#FF6B6B' }]}>{goalPct}%</Text>
+            <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{goalPct}%</Text>
             <Text style={styles.statLabel}>Goal Rate</Text>
           </View>
         </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* ─── Day Detail Modal ─── */}
+      <Modal
+        visible={selectedDay !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedDay(null)}
+      >
+        <View style={styles.dayModalOverlay}>
+          <View style={styles.dayModalCard}>
+            {selectedDay && (() => {
+              const tasks = selectedDay.tasks || {};
+              const allComplete = tasks.manifest && tasks.art && tasks.goal && tasks.inspire && tasks.courage;
+              const completedCount = MAGIC_KEYS.filter(k => tasks[k]).length;
+              const dateStr = `${getMonthNameShort(selectedDay.month)} ${selectedDay.day}, ${selectedDay.year}`;
+              const starSize = 90;
+
+              const pointAngles = [
+                { key: 'manifest', angle: -90 },
+                { key: 'art',      angle: -90 + 72 },
+                { key: 'goal',     angle: -90 + 144 },
+                { key: 'inspire',  angle: -90 + 216 },
+                { key: 'courage',  angle: -90 + 288 },
+              ];
+              const pointColors = {
+                manifest: tasks.manifest ? MAGIC_COLORS.manifest : '#1a2a4a',
+                art:      tasks.art      ? MAGIC_COLORS.art      : '#1a2a4a',
+                goal:     tasks.goal     ? MAGIC_COLORS.grow     : '#1a2a4a',
+                inspire:  tasks.inspire  ? MAGIC_COLORS.inspire  : '#1a2a4a',
+                courage:  tasks.courage  ? MAGIC_COLORS.connect  : '#1a2a4a',
+              };
+
+              return (
+                <>
+                  {/* Header with date and arrows */}
+                  <View style={styles.dayModalHeader}>
+                    <TouchableOpacity onPress={() => navigateDay(-1)} style={styles.dayNavArrow}>
+                      <Text style={styles.dayNavArrowText}>◀</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.dayModalDate}>{dateStr}</Text>
+                    <TouchableOpacity onPress={() => navigateDay(1)} style={styles.dayNavArrow}>
+                      <Text style={styles.dayNavArrowText}>▶</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Large star */}
+                  <View style={{ alignItems: 'center', marginVertical: 16 }}>
+                    <View style={{ width: starSize, height: starSize, justifyContent: 'center', alignItems: 'center' }}>
+                      {allComplete && (
+                        <>
+                          <View style={{
+                            position: 'absolute',
+                            width: starSize + 30,
+                            height: starSize + 30,
+                            borderRadius: (starSize + 30) / 2,
+                            backgroundColor: 'rgba(255, 215, 0, 0.15)',
+                          }} />
+                          <View style={{
+                            position: 'absolute',
+                            width: starSize + 18,
+                            height: starSize + 18,
+                            borderRadius: (starSize + 18) / 2,
+                            backgroundColor: 'rgba(255, 215, 0, 0.3)',
+                          }} />
+                        </>
+                      )}
+                      {pointAngles.map(({ key, angle }) => (
+                        <View key={`o-${key}`} style={{
+                          position: 'absolute',
+                          width: 0, height: 0,
+                          borderLeftWidth: starSize * 0.15,
+                          borderRightWidth: starSize * 0.15,
+                          borderBottomWidth: starSize * 0.48,
+                          borderLeftColor: 'transparent',
+                          borderRightColor: 'transparent',
+                          borderBottomColor: '#B8860B',
+                          transform: [{ rotate: `${angle + 90}deg` }, { translateY: -starSize * 0.155 }],
+                        }} />
+                      ))}
+                      <View style={{
+                        width: starSize * 0.3, height: starSize * 0.3,
+                        borderRadius: starSize * 0.15,
+                        backgroundColor: allComplete ? '#FFD700' : '#0d1530',
+                        position: 'absolute', zIndex: 10,
+                      }} />
+                      {pointAngles.map(({ key, angle }) => (
+                        <View key={key} style={{
+                          position: 'absolute',
+                          width: 0, height: 0,
+                          borderLeftWidth: starSize * 0.12,
+                          borderRightWidth: starSize * 0.12,
+                          borderBottomWidth: starSize * 0.42,
+                          borderLeftColor: 'transparent',
+                          borderRightColor: 'transparent',
+                          borderBottomColor: allComplete ? '#FFD700' : pointColors[key],
+                          transform: [{ rotate: `${angle + 90}deg` }, { translateY: -starSize * 0.14 }],
+                        }} />
+                      ))}
+                    </View>
+
+                    {/* MAGIC letters */}
+                    <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                      {['M', 'A', 'G', 'I', 'C'].map((letter, i) => (
+                        <Text key={letter} style={{
+                          fontSize: 16,
+                          fontWeight: 'bold',
+                          color: tasks[MAGIC_KEYS[i]] ? MAGIC_COLOR_ARRAY[i] : '#2a3a5a',
+                          marginHorizontal: 3,
+                        }}>{letter}</Text>
+                      ))}
+                    </View>
+
+                    <Text style={styles.dayModalProgress}>
+                      {completedCount}/5 completed
+                    </Text>
+                  </View>
+
+                  {/* Guidance list */}
+                  <View style={styles.dayModalGuidance}>
+                    {MAGIC_KEYS.map((key, i) => {
+                      const done = !!tasks[key];
+                      return (
+                        <View key={key} style={styles.guidanceRow}>
+                          <View style={[styles.guidanceDot, {
+                            backgroundColor: done ? MAGIC_COLOR_ARRAY[i] : '#333',
+                          }]} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.guidanceLabel, {
+                              color: done ? MAGIC_COLOR_ARRAY[i] : '#666',
+                            }]}>
+                              {done ? '✓ ' : ''}{MAGIC_LABELS[i]}
+                            </Text>
+                            {!done && (
+                              <Text style={styles.guidanceHint}>{MAGIC_GUIDANCE[i]}</Text>
+                            )}
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  <TouchableOpacity onPress={() => setSelectedDay(null)} style={styles.dayModalClose}>
+                    <Text style={styles.dayModalCloseText}>Close</Text>
+                  </TouchableOpacity>
+                </>
+              );
+            })()}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -555,7 +767,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendLetter: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFD700',
     marginRight: 6,
@@ -624,7 +836,7 @@ const styles = StyleSheet.create({
   dayHeaderText: {
     fontSize: 7,
     fontWeight: '600',
-    color: '#555',
+    color: '#BBBBBB',
   },
   calendarGrid: {
     flexDirection: 'row',
@@ -644,7 +856,7 @@ const styles = StyleSheet.create({
   },
   dayNumber: {
     fontSize: 7,
-    color: '#777',
+    color: '#CCCCCC',
     marginBottom: 0,
   },
   todayNumber: {
@@ -652,7 +864,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   futureNumber: {
-    color: '#333',
+    color: '#555',
   },
 
   // Today button
@@ -696,5 +908,91 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#888',
     textAlign: 'center',
+  },
+
+  // Day Detail Modal
+  dayModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+  },
+  dayModalCard: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    padding: 20,
+    width: '100%',
+    maxWidth: 340,
+  },
+  dayModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dayNavArrow: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  dayNavArrowText: {
+    fontSize: 20,
+    color: '#FFD700',
+  },
+  dayModalDate: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
+  },
+  dayModalProgress: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 8,
+  },
+  dayModalGuidance: {
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    paddingTop: 12,
+  },
+  guidanceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    gap: 10,
+  },
+  guidanceDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginTop: 4,
+  },
+  guidanceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  guidanceHint: {
+    fontSize: 12,
+    color: '#555',
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  dayModalClose: {
+    marginTop: 16,
+    alignSelf: 'center',
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    backgroundColor: '#2a1a0a',
+  },
+  dayModalCloseText: {
+    fontSize: 14,
+    color: '#FFD700',
+    fontWeight: '600',
   },
 });
