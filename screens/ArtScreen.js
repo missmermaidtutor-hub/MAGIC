@@ -188,17 +188,40 @@ export default function ArtScreen() {
     setDailyTime(timerSetting * 60);
   };
 
+  // Fill art point for today + previous 7 days when stopwatch hits 120 min
+  const fillArtRetroactive = async () => {
+    try {
+      const today = new Date();
+      for (let i = 0; i < 8; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const existing = await AsyncStorage.getItem(`art_time_${dateStr}`);
+        if (!existing || parseInt(existing) === 0) {
+          await AsyncStorage.setItem(`art_time_${dateStr}`, '7200');
+        }
+      }
+      Alert.alert('120 Minutes!', 'Art point filled for today and the past 7 days!');
+    } catch (e) {}
+  };
+
   // Weekly stopwatch controls
+  const retroactiveFiredRef = useRef(false);
   const toggleWeeklyStopwatch = () => {
     if (isWeeklyRunning) {
       clearInterval(weeklyIntervalRef.current);
       setIsWeeklyRunning(false);
       saveWeeklyTime(weeklyTime);
     } else {
+      if (weeklyTime === 0) retroactiveFiredRef.current = false;
       setIsWeeklyRunning(true);
       weeklyIntervalRef.current = setInterval(() => {
         setWeeklyTime((prev) => {
           const newTime = prev + 1;
+          if (newTime >= 7200 && !retroactiveFiredRef.current) {
+            retroactiveFiredRef.current = true;
+            fillArtRetroactive();
+          }
           return newTime;
         });
       }, 1000);
