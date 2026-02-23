@@ -55,29 +55,33 @@ export default function ArtScreen() {
     };
   }, []);
 
-  // Play alarm sound when timer reaches 0
+  // Play whimsical chime when timer reaches 0
   const playAlarmSound = async () => {
     try {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
         staysActiveInBackground: false,
       });
-      // Generate a short alarm tone using an oscillator-style approach
-      // expo-av can play from a module/URI — we'll use a freely available bell sound
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: 'https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg' },
-        { shouldPlay: true, volume: 1.0 }
-      );
-      alarmSoundRef.current = sound;
-      // Unload after playback finishes
-      sound.setOnPlaybackStatusUpdate((status) => {
-        if (status.didJustFinish) {
-          sound.unloadAsync();
-          alarmSoundRef.current = null;
+      // Play 3 ascending bell tones for a magical chime effect
+      const rates = [0.85, 1.0, 1.25];
+      for (let i = 0; i < rates.length; i++) {
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: 'https://actions.google.com/sounds/v1/alarms/medium_bell_ringing_near.ogg' },
+          { shouldPlay: true, volume: 0.8, rate: rates[i], shouldCorrectPitch: true }
+        );
+        alarmSoundRef.current = sound;
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.didJustFinish) {
+            sound.unloadAsync();
+          }
+        });
+        // Stagger each tone
+        if (i < rates.length - 1) {
+          await new Promise(r => setTimeout(r, 400));
         }
-      });
+      }
     } catch (error) {
-      console.log('Could not play alarm sound:', error);
+      console.log('Could not play chime sound:', error);
     }
   };
 
