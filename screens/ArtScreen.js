@@ -6,7 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Platform
+  Platform,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
@@ -27,6 +30,10 @@ export default function ArtScreen() {
   
   // Challenge
   const [todaysChallenge, setTodaysChallenge] = useState('');
+
+  // Write modal
+  const [writeModalVisible, setWriteModalVisible] = useState(false);
+  const [writeText, setWriteText] = useState('');
   
   // Refs for intervals
   const dailyIntervalRef = useRef(null);
@@ -264,7 +271,97 @@ export default function ArtScreen() {
 
   // Handle art creation options
   const handleWrite = () => {
-    Alert.alert('Write', 'Writing tool coming soon! For now, create your text art and come back to upload.');
+    setWriteText('');
+    setWriteModalVisible(true);
+  };
+
+  const saveWriteToPersonal = async () => {
+    if (!writeText.trim()) {
+      Alert.alert('Empty', 'Write something first!');
+      return;
+    }
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const artwork = {
+        id: Date.now(),
+        type: 'text',
+        text: writeText.trim(),
+        artist: 'You',
+        title: `Writing from ${today}`,
+        prompt: todaysChallenge,
+        date: today,
+        isPublic: false
+      };
+      const existingRaw = await AsyncStorage.getItem('private_artworks');
+      const artworks = existingRaw ? JSON.parse(existingRaw) : [];
+      artworks.push(artwork);
+      await AsyncStorage.setItem('private_artworks', JSON.stringify(artworks));
+      // Mark art done for today
+      const existing = await AsyncStorage.getItem(`art_time_${today}`);
+      if (!existing || parseInt(existing) === 0) {
+        await AsyncStorage.setItem(`art_time_${today}`, '1');
+      }
+      await AsyncStorage.setItem(`art_created_${today}`, 'true');
+      setWriteModalVisible(false);
+      Alert.alert('Saved!', 'Your writing has been saved to your personal gallery.');
+    } catch (e) {
+      Alert.alert('Error', 'Could not save writing.');
+    }
+  };
+
+  const saveWriteToCourage = async () => {
+    if (!writeText.trim()) {
+      Alert.alert('Empty', 'Write something first!');
+      return;
+    }
+    Alert.alert(
+      'Upload with COURAGE',
+      'Your writing will be submitted for voting. Ready to share?',
+      [
+        { text: 'Not Yet', style: 'cancel' },
+        {
+          text: 'Share!',
+          onPress: async () => {
+            try {
+              const today = new Date().toISOString().split('T')[0];
+              const artwork = {
+                id: Date.now(),
+                type: 'text',
+                text: writeText.trim(),
+                artist: 'Anonymous',
+                title: todaysChallenge || `Writing from ${today}`,
+                prompt: todaysChallenge,
+                date: today,
+                isPublic: false,
+                pendingVoting: true,
+                votingSubmitDate: today,
+                rankings: []
+              };
+              // Save to voting queue
+              const pendingRaw = await AsyncStorage.getItem('pending_voting_artworks');
+              const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
+              pending.push(artwork);
+              await AsyncStorage.setItem('pending_voting_artworks', JSON.stringify(pending));
+              // Also save to personal
+              const personalRaw = await AsyncStorage.getItem('personal_artworks');
+              const personal = personalRaw ? JSON.parse(personalRaw) : [];
+              personal.push({ ...artwork, pendingVoting: true });
+              await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
+              // Mark art done for today
+              const existing = await AsyncStorage.getItem(`art_time_${today}`);
+              if (!existing || parseInt(existing) === 0) {
+                await AsyncStorage.setItem(`art_time_${today}`, '1');
+              }
+              await AsyncStorage.setItem(`art_created_${today}`, 'true');
+              setWriteModalVisible(false);
+              Alert.alert('Courage!', 'Writing submitted for voting and saved to your personal gallery.');
+            } catch (e) {
+              Alert.alert('Error', 'Could not upload writing.');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleSketch = () => {
@@ -509,6 +606,39 @@ export default function ArtScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Write Modal */}
+      <Modal visible={writeModalVisible} transparent animationType="slide">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.writeModalOverlay}
+        >
+          <View style={styles.writeModalCard}>
+            <Text style={styles.writeModalTitle}>Write</Text>
+            <Text style={styles.writeModalPrompt}>{todaysChallenge}</Text>
+            <TextInput
+              style={styles.writeTextInput}
+              multiline
+              placeholder="Start writing..."
+              placeholderTextColor="#666"
+              value={writeText}
+              onChangeText={setWriteText}
+              autoFocus
+            />
+            <View style={styles.writeButtonRow}>
+              <TouchableOpacity style={styles.writePersonalBtn} onPress={saveWriteToPersonal}>
+                <Text style={styles.writeBtnText}>Save to{'\n'}Personal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.writeCourageBtn} onPress={saveWriteToCourage}>
+                <Text style={styles.writeBtnText}>Save to{'\n'}Courage</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={styles.writeCloseBtn} onPress={() => setWriteModalVisible(false)}>
+              <Text style={styles.writeCloseBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -742,5 +872,83 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  writeModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  writeModalCard: {
+    backgroundColor: '#1a1a1a',
+    borderWidth: 3,
+    borderColor: '#FFD700',
+    borderRadius: 16,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  writeModalTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#FF7F00',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  writeModalPrompt: {
+    fontSize: 16,
+    color: '#FFA500',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 16,
+  },
+  writeTextInput: {
+    backgroundColor: '#0a0e27',
+    borderWidth: 2,
+    borderColor: '#333',
+    borderRadius: 10,
+    color: '#fff',
+    fontSize: 16,
+    padding: 15,
+    minHeight: 200,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  writeButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  writePersonalBtn: {
+    flex: 1,
+    backgroundColor: '#2a2a4a',
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    borderRadius: 10,
+    padding: 14,
+    alignItems: 'center',
+  },
+  writeCourageBtn: {
+    flex: 1,
+    backgroundColor: '#4a2a2a',
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    borderRadius: 10,
+    padding: 14,
+    alignItems: 'center',
+  },
+  writeBtnText: {
+    color: '#FFD700',
+    fontSize: 15,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  writeCloseBtn: {
+    alignSelf: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+  },
+  writeCloseBtnText: {
+    color: '#888',
+    fontSize: 16,
   },
 });
