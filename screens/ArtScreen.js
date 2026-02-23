@@ -145,11 +145,25 @@ export default function ArtScreen() {
     setDailyTime(newVal * 60);
   };
 
+  // Save daily timer elapsed time to mark art star point
+  const saveDailyArtTime = async (elapsedSeconds) => {
+    if (elapsedSeconds > 0) {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const existing = await AsyncStorage.getItem(`art_time_${today}`);
+        const total = (existing ? parseInt(existing) : 0) + elapsedSeconds;
+        await AsyncStorage.setItem(`art_time_${today}`, total.toString());
+      } catch (e) {}
+    }
+  };
+
   // Daily timer controls
   const toggleDailyTimer = () => {
     if (isDailyRunning) {
       clearInterval(dailyIntervalRef.current);
       setIsDailyRunning(false);
+      const elapsed = (timerSetting * 60) - dailyTime;
+      saveDailyArtTime(elapsed);
     } else {
       setIsDailyRunning(true);
       dailyIntervalRef.current = setInterval(() => {
@@ -157,6 +171,7 @@ export default function ArtScreen() {
           if (prev <= 1) {
             clearInterval(dailyIntervalRef.current);
             setIsDailyRunning(false);
+            saveDailyArtTime(timerSetting * 60);
             playAlarmSound();
             Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!`);
             return 0;

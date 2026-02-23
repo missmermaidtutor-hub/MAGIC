@@ -557,15 +557,17 @@ const getTodaysTasks = async () => {
   }
 
   // --- A: Art (used timer/stopwatch, created, or uploaded) ---
+  const dailyArtTime = await AsyncStorage.getItem(`art_time_${today}`);
+  const dailyTimerUsed = !!(dailyArtTime && parseInt(dailyArtTime) > 0);
   const weeklyArtTime = await AsyncStorage.getItem('weekly_art_time');
-  const artTimerUsed = !!(weeklyArtTime && parseInt(weeklyArtTime) > 0);
+  const weeklyTimerUsed = !!(weeklyArtTime && parseInt(weeklyArtTime) > 0);
   const privateArtworksRaw = await AsyncStorage.getItem('private_artworks');
   const privateArtworks = privateArtworksRaw ? JSON.parse(privateArtworksRaw) : [];
   const publicArtworksRaw = await AsyncStorage.getItem('public_artworks');
   const publicArtworks = publicArtworksRaw ? JSON.parse(publicArtworksRaw) : [];
   const uploadedToday = privateArtworks.some(a => a.date === today) || publicArtworks.some(a => a.date === today);
   const artCreated = (await AsyncStorage.getItem(`art_created_${today}`)) === 'true';
-  const hasArt = artTimerUsed || uploadedToday || artCreated;
+  const hasArt = dailyTimerUsed || weeklyTimerUsed || uploadedToday || artCreated;
 
   // --- G: Grow (set a growth goal) ---
   let hasGoal = false;
