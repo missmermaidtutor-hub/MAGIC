@@ -31,9 +31,10 @@ export default function ArtScreen() {
   // Challenge
   const [todaysChallenge, setTodaysChallenge] = useState('');
 
-  // Write modal
+  // Art input modal
   const [writeModalVisible, setWriteModalVisible] = useState(false);
   const [writeText, setWriteText] = useState('');
+  const [writeMode, setWriteMode] = useState('write');
   
   // Refs for intervals
   const dailyIntervalRef = useRef(null);
@@ -270,24 +271,35 @@ export default function ArtScreen() {
   };
 
   // Handle art creation options
-  const handleWrite = () => {
+  const openArtModal = (mode) => {
+    setWriteMode(mode);
     setWriteText('');
     setWriteModalVisible(true);
   };
 
+  const handleWrite = () => openArtModal('write');
+
+  const modeLabels = { write: 'Writing', sketch: 'Sketch', capture: 'Capture' };
+  const modePlaceholders = {
+    write: 'Start writing...',
+    sketch: 'Describe your sketch or add notes...',
+    capture: 'Describe what you captured or add notes...',
+  };
+
   const saveWriteToPersonal = async () => {
     if (!writeText.trim()) {
-      Alert.alert('Empty', 'Write something first!');
+      Alert.alert('Empty', 'Add something first!');
       return;
     }
     try {
       const today = new Date().toISOString().split('T')[0];
+      const label = modeLabels[writeMode] || 'Art';
       const artwork = {
         id: Date.now(),
-        type: 'text',
+        type: writeMode,
         text: writeText.trim(),
         artist: 'You',
-        title: `Writing from ${today}`,
+        title: `${label} from ${today}`,
         prompt: todaysChallenge,
         date: today,
         isPublic: false
@@ -303,20 +315,20 @@ export default function ArtScreen() {
       }
       await AsyncStorage.setItem(`art_created_${today}`, 'true');
       setWriteModalVisible(false);
-      Alert.alert('Saved!', 'Your writing has been saved to your personal gallery.');
+      Alert.alert('Saved!', `Your ${modeLabels[writeMode].toLowerCase()} has been saved to your personal gallery.`);
     } catch (e) {
-      Alert.alert('Error', 'Could not save writing.');
+      Alert.alert('Error', 'Could not save.');
     }
   };
 
   const saveWriteToCourage = async () => {
     if (!writeText.trim()) {
-      Alert.alert('Empty', 'Write something first!');
+      Alert.alert('Empty', 'Add something first!');
       return;
     }
     Alert.alert(
       'Upload with COURAGE',
-      'Your writing will be submitted for voting. Ready to share?',
+      `Your ${modeLabels[writeMode].toLowerCase()} will be submitted for voting. Ready to share?`,
       [
         { text: 'Not Yet', style: 'cancel' },
         {
@@ -324,12 +336,13 @@ export default function ArtScreen() {
           onPress: async () => {
             try {
               const today = new Date().toISOString().split('T')[0];
+              const label = modeLabels[writeMode] || 'Art';
               const artwork = {
                 id: Date.now(),
-                type: 'text',
+                type: writeMode,
                 text: writeText.trim(),
                 artist: 'Anonymous',
-                title: todaysChallenge || `Writing from ${today}`,
+                title: todaysChallenge || `${label} from ${today}`,
                 prompt: todaysChallenge,
                 date: today,
                 isPublic: false,
@@ -354,7 +367,7 @@ export default function ArtScreen() {
               }
               await AsyncStorage.setItem(`art_created_${today}`, 'true');
               setWriteModalVisible(false);
-              Alert.alert('Courage!', 'Writing submitted for voting and saved to your personal gallery.');
+              Alert.alert('Courage!', `${label} submitted for voting and saved to your personal gallery.`);
             } catch (e) {
               Alert.alert('Error', 'Could not upload writing.');
             }
@@ -364,13 +377,9 @@ export default function ArtScreen() {
     );
   };
 
-  const handleSketch = () => {
-    Alert.alert('Sketch', 'Drawing tool coming soon! For now, create your sketch and come back to upload.');
-  };
+  const handleSketch = () => openArtModal('sketch');
 
-  const handleCapture = () => {
-    Alert.alert('Capture', 'Photo capture coming soon! For now, take a photo and come back to upload.');
-  };
+  const handleCapture = () => openArtModal('capture');
 
   // Simulate image selection (in real app, this would use image picker)
   const simulateImageSelection = () => {
@@ -614,12 +623,12 @@ export default function ArtScreen() {
           style={styles.writeModalOverlay}
         >
           <View style={styles.writeModalCard}>
-            <Text style={styles.writeModalTitle}>Write</Text>
+            <Text style={styles.writeModalTitle}>{modeLabels[writeMode] || 'Write'}</Text>
             <Text style={styles.writeModalPrompt}>{todaysChallenge}</Text>
             <TextInput
               style={styles.writeTextInput}
               multiline
-              placeholder="Start writing..."
+              placeholder={modePlaceholders[writeMode] || 'Start writing...'}
               placeholderTextColor="#666"
               value={writeText}
               onChangeText={setWriteText}
