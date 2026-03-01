@@ -146,13 +146,6 @@ export default function InspireScreen() {
 
   const handleRank = (artworkId, score) => {
     if (isSubmitted) return;
-    const scoreAlreadyUsed = Object.entries(rankings).some(
-      ([id, rank]) => rank === score && parseInt(id) !== artworkId
-    );
-    if (scoreAlreadyUsed) {
-      Alert.alert('Already Used', `Rank ${score} is already assigned. Each artwork must have a unique rank.`);
-      return;
-    }
     const newRankings = { ...rankings, [artworkId]: score };
     saveRankings(newRankings);
   };
@@ -160,6 +153,13 @@ export default function InspireScreen() {
   const handleSubmit = async () => {
     if (Object.keys(rankings).length < currentArtworks.length) {
       Alert.alert('Incomplete', 'Please rank all artworks before submitting.');
+      return;
+    }
+    // Check for duplicate ranks on submit
+    const usedRanks = Object.values(rankings);
+    const uniqueRanks = new Set(usedRanks);
+    if (uniqueRanks.size !== usedRanks.length) {
+      Alert.alert('Duplicate Ranks', 'Each artwork must have a unique rank. Please adjust before submitting.');
       return;
     }
     try {
@@ -280,7 +280,6 @@ export default function InspireScreen() {
           <View style={styles.rankingContainer}>
             <View style={styles.rankingButtons}>
               {[1, 2, 3, 4].map((score) => {
-                const available = isRankAvailable(score, artwork.id);
                 const isSelected = currentRank === score;
                 return (
                   <TouchableOpacity
@@ -288,11 +287,10 @@ export default function InspireScreen() {
                     style={[
                       styles.rankButton,
                       isSelected && styles.rankButtonSelected,
-                      !available && !isSelected && styles.rankButtonDisabled,
                       isSubmitted && styles.rankButtonDisabled
                     ]}
                     onPress={() => handleRank(artwork.id, score)}
-                    disabled={(!available && !isSelected) || isSubmitted}
+                    disabled={isSubmitted}
                   >
                     <Text style={[
                       styles.rankButtonText,
@@ -475,15 +473,15 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 18,
-    color: '#86EFAC',
+    color: '#004225',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
   },
   criterionCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#93E9BE',
     borderWidth: 3,
-    borderColor: '#86EFAC',
+    borderColor: '#004225',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
@@ -491,7 +489,7 @@ const styles = StyleSheet.create({
   },
   criterionLabel: {
     fontSize: 16,
-    color: '#86EFAC',
+    color: '#004225',
     marginBottom: 10,
   },
   criterionText: {
@@ -505,23 +503,23 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 14,
-    color: '#86EFAC',
+    color: '#004225',
     textAlign: 'center',
     marginBottom: 10,
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#93E9BE',
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#86EFAC',
+    backgroundColor: '#004225',
   },
   instructionText: {
     fontSize: 14,
-    color: '#86EFAC',
+    color: '#004225',
     textAlign: 'center',
     marginBottom: 15,
     fontStyle: 'italic',
@@ -534,7 +532,7 @@ const styles = StyleSheet.create({
   },
   artworkCard: {
     width: '48%',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#93E9BE',
     borderWidth: 2,
     borderColor: '#FFD700',
     borderRadius: 12,
@@ -551,7 +549,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 10,
     borderWidth: 2,
-    borderColor: '#86EFAC',
+    borderColor: '#004225',
     position: 'relative',
   },
   artworkImage: {
@@ -587,7 +585,7 @@ const styles = StyleSheet.create({
   },
   artworkTitle: {
     fontSize: 10,
-    color: '#86EFAC',
+    color: '#004225',
     fontStyle: 'italic',
   },
   actionButtons: {
@@ -596,7 +594,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionButtonSmall: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#93E9BE',
     borderWidth: 1,
     borderColor: '#666',
     borderRadius: 6,
@@ -623,9 +621,9 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 17.5,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#93E9BE',
     borderWidth: 2,
-    borderColor: '#666',
+    borderColor: '#004225',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -634,13 +632,13 @@ const styles = StyleSheet.create({
     borderColor: '#FFD700',
   },
   rankButtonDisabled: {
-    backgroundColor: '#1a1a1a',
-    borderColor: '#333',
+    backgroundColor: '#93E9BE',
+    borderColor: '#004225',
     opacity: 0.4,
   },
   rankButtonText: {
     fontSize: 16,
-    color: '#86EFAC',
+    color: '#004225',
     fontWeight: 'bold',
   },
   rankButtonTextSelected: {
@@ -650,22 +648,22 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   submitButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#93E9BE',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#004225',
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
     marginBottom: 20,
   },
   submitButtonDisabled: {
-    backgroundColor: '#2a2a2a',
-    borderColor: '#666',
+    backgroundColor: '#93E9BE',
+    borderColor: '#004225',
     opacity: 0.5,
   },
   submitButtonText: {
     fontSize: 20,
-    color: '#000',
+    color: '#004225',
     fontWeight: 'bold',
   },
   nextButton: {
@@ -683,9 +681,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   freeScrollBanner: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#93E9BE',
     borderWidth: 2,
-    borderColor: '#86EFAC',
+    borderColor: '#004225',
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
@@ -693,12 +691,12 @@ const styles = StyleSheet.create({
   },
   freeScrollText: {
     fontSize: 16,
-    color: '#86EFAC',
+    color: '#004225',
     textAlign: 'center',
     fontWeight: '600',
   },
   completeCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#93E9BE',
     borderWidth: 3,
     borderColor: '#FFD700',
     borderRadius: 12,
@@ -715,7 +713,7 @@ const styles = StyleSheet.create({
   },
   completeSubtext: {
     fontSize: 14,
-    color: '#86EFAC',
+    color: '#004225',
     textAlign: 'center',
   },
   emptyState: {
@@ -731,7 +729,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#86EFAC',
+    color: '#004225',
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -762,7 +760,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#93E9BE',
     borderWidth: 2,
     borderColor: '#FFD700',
     justifyContent: 'center',
@@ -806,7 +804,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    color: '#86EFAC',
+    color: '#004225',
     fontStyle: 'italic',
   },
   modalHint: {
