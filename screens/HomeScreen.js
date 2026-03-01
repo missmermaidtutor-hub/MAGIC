@@ -417,6 +417,40 @@ const artworkImages = [
   require('../Cliparts/ARTOWORKS/1st Profile Pic.jpg'),
 ];
 
+// Winner pseudonyms for daily winners
+const WINNER_PSEUDONYMS = [
+  'Luna Starweaver', 'Oak Thornberry', 'Coral Reef', 'Blaze Phoenix',
+  'Sage Moonwhisper', 'River Stone', 'Ember Glow', 'Willow Creek',
+  'Azure Bloom', 'Jade Whisper', 'Crimson Tide', 'Frost Petal',
+  'Storm Dancer', 'Golden Vine', 'Silver Mist', 'Dawn Breaker',
+  'Echo Star', 'Fern Hollow', 'Dusk Weaver', 'Iris Moon',
+  'Pearl Harbor', 'Raven Song', 'Maple Shade', 'Cobalt Sky',
+  'Ivy Rose',
+];
+
+// Generate one winner per day going backwards from today
+const generateWinners = () => {
+  const winners = [];
+  const today = new Date();
+  for (let i = 0; i < artworkImages.length; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const year = date.getFullYear();
+    winners.push({
+      date: dateStr,
+      displayDate: `${month}/${day}/${year}`,
+      imageIndex: i,
+      pseudonym: WINNER_PSEUDONYMS[i % WINNER_PSEUDONYMS.length],
+    });
+  }
+  return winners;
+};
+
+const dailyWinners = generateWinners();
+
 // Candle component — lights up when clicked
 const Candle = ({ lit = false, onPress, size = 40 }) => (
   <TouchableOpacity onPress={onPress} style={{ alignItems: 'center' }}>
@@ -1157,20 +1191,23 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.divider} />
 
         {/* Ranking Section - Clickable to Inspire */}
-        <TouchableOpacity onPress={() => navigation.navigate('Inspire')}>
-          <Text style={styles.rankTitle}>
-            See Today's Rank Criterion and{'\n'}
-            <Text style={styles.underline}>Cast Your Vote Here</Text>
-          </Text>
-          <Text style={styles.rankSubtext}>or browse yesterday's Courage below without voting</Text>
-        </TouchableOpacity>
+        <View style={styles.rankBorder}>
+          <GoldFrame>
+            <TouchableOpacity style={styles.rankBox} onPress={() => navigation.navigate('Inspire')}>
+              <Text style={styles.rankTitle}>
+                See Today's Rank Criterion and{'\n'}
+                <Text style={styles.underline}>Cast Your Vote Here</Text>
+              </Text>
+            </TouchableOpacity>
+          </GoldFrame>
+        </View>
 
         {/* Gallery buttons aligned to art box edges, above artwork */}
         <View style={styles.galleryButtonRow}>
           <View style={styles.galleryButtonLeft}>
             <GoldFrame onPress={() => {}}>
               <View style={styles.galleryButtonInner}>
-                <Text style={styles.galleryButtonText}>show winner</Text>
+                <Text style={styles.galleryButtonText}>Show Current{'\n'}Winner</Text>
               </View>
             </GoldFrame>
           </View>
@@ -1183,13 +1220,24 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Date Winner label centered below buttons */}
+        <View style={styles.winnerDateRow}>
+          <GoldFrame>
+            <View style={styles.winnerDateInner}>
+              <Text style={styles.winnerDateText}>
+                {dailyWinners[currentImageIndex % dailyWinners.length]?.displayDate} winner
+              </Text>
+            </View>
+          </GoldFrame>
+        </View>
+
         {/* Artwork display */}
         <View style={styles.imageContainer}>
           <TouchableOpacity onPress={() => setCurrentImageIndex(Math.max(0, currentImageIndex - 1))} style={styles.arrowButton}>
             <Image source={goldArrowImage} style={[styles.arrowImage, { transform: [{ scaleX: -1 }] }]} resizeMode="contain" />
           </TouchableOpacity>
 
-          <GoldFrame>
+          <GoldFrame thickness={50}>
             <View style={styles.imageFrameInner}>
               <Image
                 source={artworkImages[currentImageIndex % artworkImages.length]}
@@ -1202,6 +1250,17 @@ export default function HomeScreen({ navigation }) {
           <TouchableOpacity onPress={() => setCurrentImageIndex((currentImageIndex + 1) % artworkImages.length)} style={styles.arrowButton}>
             <Image source={goldArrowImage} style={styles.arrowImage} resizeMode="contain" />
           </TouchableOpacity>
+        </View>
+
+        {/* Winner pseudonym */}
+        <View style={styles.winnerNameRow}>
+          <GoldFrame>
+            <View style={styles.winnerNameInner}>
+              <Text style={styles.winnerNameText}>
+                {dailyWinners[currentImageIndex % dailyWinners.length]?.pseudonym}
+              </Text>
+            </View>
+          </GoldFrame>
         </View>
 
         {/* Inspired Section */}
@@ -1503,19 +1562,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  rankBorder: {
+    borderWidth: 5,
+    borderColor: '#004225',
+    borderRadius: 11,
+    marginBottom: 15,
+  },
+  rankBox: {
+    backgroundColor: 'rgba(207, 232, 199, 0.5)',
+    padding: 15,
+    alignItems: 'center',
+  },
   rankTitle: {
     fontSize: 22,
-    color: '#7c8b77',
+    color: '#004225',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 5,
-  },
-  rankSubtext: {
-    fontSize: 14,
-    color: '#7c8b77',
-    textAlign: 'center',
-    marginBottom: 15,
-    fontStyle: 'italic',
   },
   underline: {
     textDecorationLine: 'underline',
@@ -1543,6 +1606,38 @@ const styles = StyleSheet.create({
     color: '#FFE082',
     fontSize: 14,
     fontWeight: '600',
+  },
+  winnerDateRow: {
+    alignItems: 'center',
+    marginTop: 5,
+    marginBottom: 8,
+  },
+  winnerDateInner: {
+    backgroundColor: '#004225',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  winnerDateText: {
+    color: '#cfe8c7',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  winnerNameRow: {
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  winnerNameInner: {
+    backgroundColor: '#004225',
+    paddingHorizontal: 25,
+    paddingVertical: 10,
+  },
+  winnerNameText: {
+    color: '#cfe8c7',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   imageContainer: {
     flexDirection: 'row',
