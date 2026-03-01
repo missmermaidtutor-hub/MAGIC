@@ -7,7 +7,8 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
-  AppState
+  AppState,
+  ImageBackground
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -373,7 +374,7 @@ export default function ManifestScreen() {
   // ===== FAVORITE QUOTES VIEW =====
   if (showFavoriteQuotes) {
     return (
-      <View style={styles.container}>
+      <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.header}>Favorite Quotes</Text>
 
@@ -405,13 +406,13 @@ export default function ManifestScreen() {
             ))
           )}
         </ScrollView>
-      </View>
+      </ImageBackground>
     );
   }
 
   if (showPastEntries) {
     return (
-      <View style={styles.container}>
+      <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.header}>Past Entries</Text>
           
@@ -481,12 +482,12 @@ export default function ManifestScreen() {
             ))
           )}
         </ScrollView>
-      </View>
+      </ImageBackground>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Manifest</Text>
         <Text style={styles.subtitle}>Today</Text>
@@ -617,7 +618,7 @@ export default function ManifestScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 

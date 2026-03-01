@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, ImageBackground } from 'react-native';
 
 export default function MenuScreen({ navigation }) {
   const menuItems = [
@@ -23,7 +23,7 @@ export default function MenuScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Menu</Text>
         
@@ -40,7 +40,7 @@ export default function MenuScreen({ navigation }) {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 

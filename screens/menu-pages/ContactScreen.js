@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Linking, Alert, ImageBackground } from 'react-native';
 
 export default function ContactScreen({ navigation }) {
   const handleEmail = () => {
@@ -7,7 +7,7 @@ export default function ContactScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerContainer}>
           <TouchableOpacity 
@@ -35,7 +35,7 @@ export default function ContactScreen({ navigation }) {
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 

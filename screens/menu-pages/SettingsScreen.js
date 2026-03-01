@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
-  TextInput
+  TextInput,
+  ImageBackground
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import mediumsData from '../../mediums.json';
@@ -168,7 +169,7 @@ export default function SettingsScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header with Back Button */}
         <View style={styles.headerContainer}>
@@ -489,7 +490,7 @@ export default function SettingsScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 

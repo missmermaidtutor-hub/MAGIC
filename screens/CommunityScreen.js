@@ -9,7 +9,8 @@ import {
   Alert,
   Linking,
   Modal,
-  Dimensions
+  Dimensions,
+  ImageBackground
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -828,7 +829,7 @@ export default function CommunityScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Connect</Text>
         <Text style={styles.subtitle}>Galleries & Community</Text>
@@ -990,7 +991,7 @@ export default function CommunityScreen() {
           </ScrollView>
         </View>
       </Modal>
-    </View>
+    </ImageBackground>
   );
 }
 

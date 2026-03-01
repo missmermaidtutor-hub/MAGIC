@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert
+  Alert,
+  ImageBackground
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -51,7 +52,7 @@ export default function AboutYouScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header with Back Button */}
         <View style={styles.headerContainer}>
@@ -157,7 +158,7 @@ export default function AboutYouScreen({ navigation }) {
           <Text style={styles.statsSubtext}>Stats coming soon!</Text>
         </View>
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 

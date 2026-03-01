@@ -9,7 +9,8 @@ import {
   Alert,
   Share,
   Modal,
-  Dimensions
+  Dimensions,
+  ImageBackground
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import rankingCriteria from '../ranking-criteria.json';
@@ -312,7 +313,7 @@ export default function InspireScreen() {
 
   if (allArtworks.length === 0) {
     return (
-      <View style={styles.container}>
+      <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.header}>Inspire</Text>
           <View style={styles.emptyState}>
@@ -322,12 +323,12 @@ export default function InspireScreen() {
             </Text>
           </View>
         </ScrollView>
-      </View>
+      </ImageBackground>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       {/* Full-page image viewer modal */}
       <Modal
         visible={fullViewArtwork !== null}
@@ -452,7 +453,7 @@ export default function InspireScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 

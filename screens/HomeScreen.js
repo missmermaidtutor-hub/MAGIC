@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Alert, Linking } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Alert, Linking, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -969,7 +969,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
 
         {/* Header */}
@@ -1226,7 +1226,7 @@ export default function HomeScreen({ navigation }) {
 
         <View style={{ height: 20 }} />
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 

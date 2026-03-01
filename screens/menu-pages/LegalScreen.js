@@ -1,9 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 
 export default function LegalScreen({ navigation }) {
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerContainer}>
           <TouchableOpacity 
@@ -26,7 +26,7 @@ export default function LegalScreen({ navigation }) {
           <Text style={styles.text}>Privacy policy coming soon.</Text>
         </View>
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 

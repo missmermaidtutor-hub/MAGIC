@@ -6,7 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
-  Modal
+  Modal,
+  ImageBackground
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -462,7 +463,7 @@ export default function StreakScreen() {
     : 0;
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Grow</Text>
 
@@ -723,7 +724,7 @@ export default function StreakScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </ImageBackground>
   );
 }
 

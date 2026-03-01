@@ -1,9 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 
 export default function AboutUsScreen({ navigation }) {
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header with Back Button */}
         <View style={styles.headerContainer}>
@@ -63,7 +63,7 @@ export default function AboutUsScreen({ navigation }) {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </ImageBackground>
   );
 }
 

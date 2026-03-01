@@ -10,7 +10,8 @@ import {
   Modal,
   TextInput,
   KeyboardAvoidingView,
-  AppState
+  AppState,
+  ImageBackground
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -580,7 +581,7 @@ export default function ArtScreen() {
   const weeklyProgress = Math.min((weeklyTime / (120 * 60)) * 100, 100);
 
   return (
-    <View style={styles.container}>
+    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Art Studio</Text>
         
@@ -779,7 +780,7 @@ export default function ArtScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </ImageBackground>
   );
 }
 
