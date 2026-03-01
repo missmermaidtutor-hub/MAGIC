@@ -295,7 +295,7 @@ export default function InspireScreen() {
                     <Text style={[
                       styles.rankButtonText,
                       isSelected && styles.rankButtonTextSelected,
-                      !available && !isSelected && styles.rankButtonTextDisabled
+                      isSubmitted && styles.rankButtonTextDisabled
                     ]}>
                       {score}
                     </Text>
