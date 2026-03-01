@@ -342,9 +342,28 @@ export default function ArtScreen() {
 
   // Format time display
   const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
+
+  // Parse editable timer fields
+  const [editHrs, setEditHrs] = useState('00');
+  const [editMins, setEditMins] = useState('20');
+  const [editSecs, setEditSecs] = useState('00');
+
+  const applyEditedTime = () => {
+    const h = Math.max(0, Math.min(3, parseInt(editHrs) || 0));
+    const m = Math.max(0, Math.min(59, parseInt(editMins) || 0));
+    const s = Math.max(0, Math.min(59, parseInt(editSecs) || 0));
+    const total = h * 3600 + m * 60 + s;
+    const clamped = Math.max(MIN_TIMER_MINUTES * 60, Math.min(MAX_TIMER_MINUTES * 60, total));
+    setEditHrs(String(Math.floor(clamped / 3600)).padStart(2, '0'));
+    setEditMins(String(Math.floor((clamped % 3600) / 60)).padStart(2, '0'));
+    setEditSecs(String(clamped % 60).padStart(2, '0'));
+    setTimerSetting(Math.ceil(clamped / 60));
+    setDailyTime(clamped);
   };
 
   const formatStopwatch = (seconds) => {
@@ -577,27 +596,38 @@ export default function ArtScreen() {
             <Text style={styles.timerEmoji}>⏱️</Text>
           </View>
 
-          {/* Editable minutes input */}
+          {/* Editable HH:MM:SS input */}
           {!isDailyRunning && !alarmRinging ? (
             <View style={styles.timerInputRow}>
               <TextInput
                 style={styles.timerInput}
                 keyboardType="number-pad"
-                value={String(timerSetting)}
-                onChangeText={(text) => {
-                  const num = parseInt(text) || 0;
-                  setTimerSetting(num);
-                  setDailyTime(num * 60);
-                }}
-                onBlur={() => {
-                  const clamped = Math.max(MIN_TIMER_MINUTES, Math.min(MAX_TIMER_MINUTES, timerSetting));
-                  setTimerSetting(clamped);
-                  setDailyTime(clamped * 60);
-                }}
-                maxLength={3}
+                value={editHrs}
+                onChangeText={setEditHrs}
+                onBlur={applyEditedTime}
+                maxLength={2}
                 selectTextOnFocus
               />
-              <Text style={styles.timerInputLabel}>minutes</Text>
+              <Text style={styles.timerColon}>:</Text>
+              <TextInput
+                style={styles.timerInput}
+                keyboardType="number-pad"
+                value={editMins}
+                onChangeText={setEditMins}
+                onBlur={applyEditedTime}
+                maxLength={2}
+                selectTextOnFocus
+              />
+              <Text style={styles.timerColon}>:</Text>
+              <TextInput
+                style={styles.timerInput}
+                keyboardType="number-pad"
+                value={editSecs}
+                onChangeText={setEditSecs}
+                onBlur={applyEditedTime}
+                maxLength={2}
+                selectTextOnFocus
+              />
             </View>
           ) : (
             <Text style={styles.timerDisplay}>{formatTime(dailyTime)}</Text>
@@ -847,22 +877,24 @@ const styles = StyleSheet.create({
   timerInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'center',
     marginBottom: 15,
   },
   timerInput: {
-    fontSize: 48,
+    fontSize: 44,
     color: '#FFD700',
     fontWeight: 'bold',
     textAlign: 'center',
     borderBottomWidth: 2,
     borderBottomColor: '#FFD700',
-    minWidth: 100,
+    width: 70,
     paddingVertical: 4,
   },
-  timerInputLabel: {
-    fontSize: 20,
-    color: '#FFA500',
+  timerColon: {
+    fontSize: 44,
+    color: '#FFD700',
+    fontWeight: 'bold',
+    marginHorizontal: 4,
   },
   timerDisplay: {
     fontSize: 56,
