@@ -9,13 +9,15 @@ import {
   Platform,
   Modal,
   TextInput,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  AppState
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import promptsData from '../prompts.json';
 
-const MIN_TIMER_MINUTES = 5;
+const MIN_TIMER_MINUTES = 1;
 const MAX_TIMER_MINUTES = 180;
 
 export default function ArtScreen() {
@@ -41,12 +43,16 @@ export default function ArtScreen() {
   const weeklyIntervalRef = useRef(null);
   const alarmSoundRef = useRef(null);
 
+  // End-time refs for background persistence
+  const dailyEndTimeRef = useRef(null);   // timestamp when daily timer should finish
+  const weeklyStartTimeRef = useRef(null); // timestamp when weekly stopwatch was started
+  const weeklyBaseRef = useRef(0);         // accumulated weekly seconds before current run
+
   // Load saved weekly time on mount
   useEffect(() => {
     loadWeeklyTime();
     loadDailyChallenge();
     return () => {
-      // Cleanup intervals and sound
       if (dailyIntervalRef.current) clearInterval(dailyIntervalRef.current);
       if (weeklyIntervalRef.current) clearInterval(weeklyIntervalRef.current);
       if (alarmSoundRef.current) {
@@ -55,33 +61,71 @@ export default function ArtScreen() {
     };
   }, []);
 
-  // Play whimsical chime when timer reaches 0
+  // Restore timers when tab is focused or app returns from background
+  const syncTimers = () => {
+    // Sync daily timer
+    if (dailyEndTimeRef.current && isDailyRunning) {
+      const remaining = Math.max(0, Math.round((dailyEndTimeRef.current - Date.now()) / 1000));
+      if (remaining <= 0) {
+        clearInterval(dailyIntervalRef.current);
+        setIsDailyRunning(false);
+        setDailyTime(0);
+        dailyEndTimeRef.current = null;
+        saveDailyArtTime(timerSetting * 60);
+        playAlarmSound();
+        Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!`);
+      } else {
+        setDailyTime(remaining);
+      }
+    }
+    // Sync weekly stopwatch
+    if (weeklyStartTimeRef.current && isWeeklyRunning) {
+      const elapsed = weeklyBaseRef.current + Math.round((Date.now() - weeklyStartTimeRef.current) / 1000);
+      setWeeklyTime(elapsed);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      syncTimers();
+    }, [isDailyRunning, isWeeklyRunning])
+  );
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') syncTimers();
+    });
+    return () => sub.remove();
+  }, [isDailyRunning, isWeeklyRunning]);
+
+  // Play rain sound when timer reaches 0
   const playAlarmSound = async () => {
     try {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
+        staysActiveInBackground: true,
+        interruptionModeIOS: 1,
+        shouldDuckAndroid: false,
+        interruptionModeAndroid: 1,
+        playThroughEarpieceAndroid: false,
       });
-      // Play 3 ascending bell tones for a magical chime effect
-      const rates = [0.85, 1.0, 1.25];
-      for (let i = 0; i < rates.length; i++) {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: 'https://actions.google.com/sounds/v1/alarms/medium_bell_ringing_near.ogg' },
-          { shouldPlay: true, volume: 0.8, rate: rates[i], shouldCorrectPitch: true }
-        );
-        alarmSoundRef.current = sound;
-        sound.setOnPlaybackStatusUpdate((status) => {
-          if (status.didJustFinish) {
-            sound.unloadAsync();
-          }
-        });
-        // Stagger each tone
-        if (i < rates.length - 1) {
-          await new Promise(r => setTimeout(r, 400));
-        }
-      }
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: 'https://actions.google.com/sounds/v1/weather/rain_on_roof.ogg' },
+        { shouldPlay: true, volume: 1.0, isMuted: false }
+      );
+      alarmSoundRef.current = sound;
+      // Play it loud — set volume again after creation
+      await sound.setVolumeAsync(1.0);
+      // Stop after 8 seconds
+      setTimeout(async () => {
+        try {
+          await sound.stopAsync();
+          await sound.unloadAsync();
+          alarmSoundRef.current = null;
+        } catch (e) {}
+      }, 8000);
     } catch (error) {
-      console.log('Could not play chime sound:', error);
+      console.log('Could not play rain sound:', error);
     }
   };
 
@@ -174,22 +218,25 @@ export default function ArtScreen() {
     if (isDailyRunning) {
       clearInterval(dailyIntervalRef.current);
       setIsDailyRunning(false);
+      dailyEndTimeRef.current = null;
       const elapsed = (timerSetting * 60) - dailyTime;
       saveDailyArtTime(elapsed);
     } else {
+      dailyEndTimeRef.current = Date.now() + dailyTime * 1000;
       setIsDailyRunning(true);
       dailyIntervalRef.current = setInterval(() => {
-        setDailyTime((prev) => {
-          if (prev <= 1) {
-            clearInterval(dailyIntervalRef.current);
-            setIsDailyRunning(false);
-            saveDailyArtTime(timerSetting * 60);
-            playAlarmSound();
-            Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!`);
-            return 0;
-          }
-          return prev - 1;
-        });
+        const remaining = Math.max(0, Math.round((dailyEndTimeRef.current - Date.now()) / 1000));
+        if (remaining <= 0) {
+          clearInterval(dailyIntervalRef.current);
+          setIsDailyRunning(false);
+          setDailyTime(0);
+          dailyEndTimeRef.current = null;
+          saveDailyArtTime(timerSetting * 60);
+          playAlarmSound();
+          Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!`);
+        } else {
+          setDailyTime(remaining);
+        }
       }, 1000);
     }
   };
@@ -197,6 +244,7 @@ export default function ArtScreen() {
   const resetDailyTimer = () => {
     clearInterval(dailyIntervalRef.current);
     setIsDailyRunning(false);
+    dailyEndTimeRef.current = null;
     setDailyTime(timerSetting * 60);
   };
 
@@ -223,19 +271,23 @@ export default function ArtScreen() {
     if (isWeeklyRunning) {
       clearInterval(weeklyIntervalRef.current);
       setIsWeeklyRunning(false);
-      saveWeeklyTime(weeklyTime);
+      const elapsed = weeklyBaseRef.current + Math.round((Date.now() - weeklyStartTimeRef.current) / 1000);
+      weeklyBaseRef.current = elapsed;
+      weeklyStartTimeRef.current = null;
+      setWeeklyTime(elapsed);
+      saveWeeklyTime(elapsed);
     } else {
       if (weeklyTime === 0) retroactiveFiredRef.current = false;
+      weeklyBaseRef.current = weeklyTime;
+      weeklyStartTimeRef.current = Date.now();
       setIsWeeklyRunning(true);
       weeklyIntervalRef.current = setInterval(() => {
-        setWeeklyTime((prev) => {
-          const newTime = prev + 1;
-          if (newTime >= 7200 && !retroactiveFiredRef.current) {
-            retroactiveFiredRef.current = true;
-            fillArtRetroactive();
-          }
-          return newTime;
-        });
+        const elapsed = weeklyBaseRef.current + Math.round((Date.now() - weeklyStartTimeRef.current) / 1000);
+        setWeeklyTime(elapsed);
+        if (elapsed >= 7200 && !retroactiveFiredRef.current) {
+          retroactiveFiredRef.current = true;
+          fillArtRetroactive();
+        }
       }, 1000);
     }
   };
@@ -252,6 +304,8 @@ export default function ArtScreen() {
           onPress: () => {
             clearInterval(weeklyIntervalRef.current);
             setIsWeeklyRunning(false);
+            weeklyStartTimeRef.current = null;
+            weeklyBaseRef.current = 0;
             setWeeklyTime(0);
             saveWeeklyTime(0);
           }
