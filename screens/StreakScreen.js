@@ -680,7 +680,7 @@ export default function StreakScreen() {
                         <Text key={letter} style={{
                           fontSize: 16,
                           fontWeight: 'bold',
-                          color: tasks[MAGIC_KEYS[i]] ? MAGIC_COLOR_ARRAY[i] : '#2a3a5a',
+                          color: tasks[MAGIC_KEYS[i]] ? MAGIC_COLOR_ARRAY[i] : '#888',
                           marginHorizontal: 3,
                         }}>{letter}</Text>
                       ))}
@@ -698,11 +698,11 @@ export default function StreakScreen() {
                       return (
                         <View key={key} style={styles.guidanceRow}>
                           <View style={[styles.guidanceDot, {
-                            backgroundColor: done ? MAGIC_COLOR_ARRAY[i] : '#333',
+                            backgroundColor: done ? MAGIC_COLOR_ARRAY[i] : '#888',
                           }]} />
                           <View style={{ flex: 1 }}>
                             <Text style={[styles.guidanceLabel, {
-                              color: done ? MAGIC_COLOR_ARRAY[i] : '#666',
+                              color: done ? MAGIC_COLOR_ARRAY[i] : '#1a1a1a',
                             }]}>
                               {done ? '✓ ' : ''}{MAGIC_LABELS[i]}
                             </Text>
@@ -740,7 +740,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#662C1A',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 10,
@@ -790,7 +790,7 @@ const styles = StyleSheet.create({
   },
   sideArrowText: {
     fontSize: 16,
-    color: '#b18630',
+    color: '#662C1A',
   },
   sideArrowTextDisabled: {
     color: '#555',
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'rgba(255, 254, 190, 0.25)',
     borderWidth: 1,
-    borderColor: '#b18630',
+    borderColor: '#662C1A',
     borderRadius: 10,
     paddingVertical: 6,
     paddingHorizontal: 4,
@@ -812,7 +812,7 @@ const styles = StyleSheet.create({
   },
   monthGap: {
     width: 6,
-    backgroundColor: '#b18630',
+    backgroundColor: '#662C1A',
     marginVertical: 4,
   },
 
@@ -823,7 +823,7 @@ const styles = StyleSheet.create({
   miniMonthTitle: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#662C1A',
     textAlign: 'center',
     marginBottom: 2,
   },
@@ -837,7 +837,7 @@ const styles = StyleSheet.create({
   dayHeaderText: {
     fontSize: 7,
     fontWeight: '600',
-    color: '#BBBBBB',
+    color: '#662C1A',
   },
   calendarGrid: {
     flexDirection: 'row',
@@ -857,11 +857,11 @@ const styles = StyleSheet.create({
   },
   dayNumber: {
     fontSize: 7,
-    color: '#FFD700',
+    color: '#662C1A',
     marginBottom: 0,
   },
   todayNumber: {
-    color: '#FFD700',
+    color: '#662C1A',
     fontWeight: 'bold',
   },
   futureNumber: {
@@ -977,7 +977,7 @@ const styles = StyleSheet.create({
   },
   guidanceHint: {
     fontSize: 12,
-    color: '#555',
+    color: '#333',
     marginTop: 2,
     fontStyle: 'italic',
   },

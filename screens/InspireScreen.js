@@ -17,7 +17,7 @@ import rankingCriteria from '../ranking-criteria.json';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-export default function InspireScreen() {
+export default function InspireScreen({ navigation }) {
   const [todaysCriterion, setTodaysCriterion] = useState('');
   const [rankings, setRankings] = useState({});
   const [favorites, setFavorites] = useState(new Set());
@@ -449,7 +449,7 @@ export default function InspireScreen() {
         )}
 
         {/* View Galleries Button */}
-        <TouchableOpacity style={styles.galleryButton}>
+        <TouchableOpacity style={styles.galleryButton} onPress={() => navigation.navigate('Connect', { gallery: 'private' })}>
           <Text style={styles.galleryButtonText}>
             View My Inspiration Gallery ({favorites.size} saved)
           </Text>
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#22C55E',
+    color: '#004225',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 10,

@@ -154,21 +154,24 @@ const Candle = ({ lit = false, onPress, size = 40 }) => (
   </TouchableOpacity>
 );
 
-export default function CommunityScreen() {
+export default function CommunityScreen({ route }) {
   const [curatedArtworks, setCuratedArtworks] = useState([]);
   const [personalArtworks, setPersonalArtworks] = useState([]);
   const [inspirationArtworks, setInspirationArtworks] = useState([]);
-  const [activeGallery, setActiveGallery] = useState('newsfeed');
+  const [activeGallery, setActiveGallery] = useState(route?.params?.gallery || 'newsfeed');
   const [fullViewImage, setFullViewImage] = useState(null);
   const [followedUsers, setFollowedUsers] = useState([]);
   const [newsfeedImageIndex, setNewsfeedImageIndex] = useState({});
   const [savedNewsfeedArt, setSavedNewsfeedArt] = useState(new Set());
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [userPseudonym, setUserPseudonym] = useState('');
 
   useEffect(() => {
     loadAllGalleries();
     loadFollowedUsers();
     loadSavedArt();
     promotePendingVotingArtworks();
+    loadUserIdentity();
   }, []);
 
   // Reload galleries when screen comes into focus & mark as browsed for Connect star
@@ -180,7 +183,11 @@ export default function CommunityScreen() {
       // Mark browsed for today's Connect (C) star point
       const today = new Date().toISOString().split('T')[0];
       AsyncStorage.setItem(`browsed_${today}`, 'true');
-    }, [])
+      // Switch to gallery tab if navigated with param
+      if (route?.params?.gallery) {
+        setActiveGallery(route.params.gallery);
+      }
+    }, [route?.params?.gallery])
   );
 
   const loadFollowedUsers = async () => {
@@ -189,6 +196,24 @@ export default function CommunityScreen() {
       if (data) setFollowedUsers(JSON.parse(data));
     } catch (error) {
       console.log('Error loading followed users:', error);
+    }
+  };
+
+  const loadUserIdentity = async () => {
+    try {
+      const settingsRaw = await AsyncStorage.getItem('app_settings');
+      const profileRaw = await AsyncStorage.getItem('user_profile');
+      if (settingsRaw) {
+        const settings = JSON.parse(settingsRaw);
+        setIsAnonymous(settings.anonymous ?? false);
+        if (settings.username) setUserPseudonym(settings.username);
+      }
+      if (profileRaw) {
+        const profile = JSON.parse(profileRaw);
+        if (profile.username && !userPseudonym) setUserPseudonym(profile.username);
+      }
+    } catch (error) {
+      console.log('Error loading user identity:', error);
     }
   };
 
@@ -318,19 +343,7 @@ export default function CommunityScreen() {
   };
 
   const getNewsfeedUsers = () => {
-    const users = [...DEMO_USERS];
-    if (curatedArtworks.length > 0) {
-      const sorted = [...curatedArtworks].sort((a, b) =>
-        new Date(b.savedAt || b.date) - new Date(a.savedAt || a.date)
-      );
-      users.unshift({
-        id: 'current_user',
-        name: 'You',
-        avatar: '⭐',
-        artworks: sorted,
-      });
-    }
-    return users;
+    return [...DEMO_USERS];
   };
 
   const loadAllGalleries = async () => {
@@ -588,7 +601,7 @@ export default function CommunityScreen() {
               onPress={() => handleToggleCurate(artwork, fromGallery)}
             >
               <Text style={styles.curateBtnText}>
-                {isCurated ? '🖼️ Curated' : '🖼️ Curate'}
+                {isCurated ? '🖼️ Public' : '🖼️ Private'}
               </Text>
             </TouchableOpacity>
           )}
@@ -637,6 +650,11 @@ export default function CommunityScreen() {
           )}
         </GoldFrame>
 
+        <Text style={styles.curatedTitle}>{artwork.title || 'Untitled'}</Text>
+        <Text style={styles.curatedArtist}>
+          {isAnonymous ? 'Anonymous' : (userPseudonym || 'Anonymous')}
+        </Text>
+
         <View style={styles.artworkActions}>
           <Candle
             lit={savedNewsfeedArt.has(artwork.id)}
@@ -650,10 +668,6 @@ export default function CommunityScreen() {
             <Text style={styles.deleteBtnText}>✕</Text>
           </TouchableOpacity>
         </View>
-
-        {artwork.date && (
-          <Text style={styles.artworkDate}>{artwork.title || artwork.date}</Text>
-        )}
       </View>
     );
   };
@@ -1144,6 +1158,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FF6B6B',
     fontWeight: 'bold',
+  },
+  curatedTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#050d61',
+    textAlign: 'center',
+    marginTop: 6,
+  },
+  curatedArtist: {
+    fontSize: 11,
+    color: '#050d61',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 2,
   },
   artworkDate: {
     fontSize: 10,

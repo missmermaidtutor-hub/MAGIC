@@ -755,6 +755,9 @@ export default function ArtScreen() {
           style={styles.writeModalOverlay}
         >
           <View style={styles.writeModalCard}>
+            <TouchableOpacity style={styles.modalXButton} onPress={() => setWriteModalVisible(false)}>
+              <Text style={styles.modalXText}>✕</Text>
+            </TouchableOpacity>
             <Text style={styles.writeModalTitle}>{modeLabels[writeMode] || 'Write'}</Text>
             <Text style={styles.writeModalPrompt}>{todaysChallenge}</Text>
             <TextInput
@@ -1004,13 +1007,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   uploadButtonText: {
-    color: '#FFD700',
+    color: '#FF7F00',
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
   },
   courageUploadText: {
-    color: '#FFD700',
+    color: '#FF7F00',
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -1028,6 +1031,24 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     maxHeight: '80%',
+    position: 'relative',
+  },
+  modalXButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f7bc6e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  modalXText: {
+    fontSize: 20,
+    color: '#fff',
+    fontWeight: 'bold',
   },
   writeModalTitle: {
     fontSize: 28,
