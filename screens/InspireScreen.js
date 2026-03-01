@@ -648,9 +648,9 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   submitButton: {
-    backgroundColor: '#93E9BE',
+    backgroundColor: '#004225',
     borderWidth: 3,
-    borderColor: '#004225',
+    borderColor: '#93E9BE',
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
@@ -659,11 +659,11 @@ const styles = StyleSheet.create({
   submitButtonDisabled: {
     backgroundColor: '#93E9BE',
     borderColor: '#004225',
-    opacity: 0.5,
+    opacity: 0.4,
   },
   submitButtonText: {
     fontSize: 20,
-    color: '#004225',
+    color: '#93E9BE',
     fontWeight: 'bold',
   },
   nextButton: {
