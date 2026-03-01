@@ -210,7 +210,7 @@ const MiniMonth = ({ year, month, data, cellSize, todayInfo, onDayPress }) => {
     cells.push({ type: 'day', day, isToday, isFuture, tasks: data[day] || null, key: `d-${day}` });
   }
 
-  const starSize = Math.max(cellSize * 0.55, 10);
+  const starSize = Math.max(cellSize * 0.80, 14);
 
   return (
     <View style={styles.miniMonth}>
@@ -238,7 +238,7 @@ const MiniMonth = ({ year, month, data, cellSize, todayInfo, onDayPress }) => {
             }}
             style={[
               styles.calendarCell,
-              { width: cellSize, height: cellSize + 6 },
+              { width: cellSize, height: cellSize + 14 },
               cell.type === 'day' && cell.isToday && styles.todayCell,
             ]}
           >
@@ -748,9 +748,9 @@ const styles = StyleSheet.create({
 
   // Legend
   legendCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 254, 190, 0.25)',
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: '#b18630',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
@@ -790,7 +790,7 @@ const styles = StyleSheet.create({
   },
   sideArrowText: {
     fontSize: 16,
-    color: '#FFD700',
+    color: '#b18630',
   },
   sideArrowTextDisabled: {
     color: '#555',
@@ -800,9 +800,9 @@ const styles = StyleSheet.create({
   monthsSideBySide: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 254, 190, 0.25)',
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: '#b18630',
     borderRadius: 10,
     paddingVertical: 6,
     paddingHorizontal: 4,
@@ -812,7 +812,7 @@ const styles = StyleSheet.create({
   },
   monthGap: {
     width: 6,
-    backgroundColor: '#333',
+    backgroundColor: '#b18630',
     marginVertical: 4,
   },
 
@@ -857,7 +857,7 @@ const styles = StyleSheet.create({
   },
   dayNumber: {
     fontSize: 7,
-    color: '#CCCCCC',
+    color: '#FFD700',
     marginBottom: 0,
   },
   todayNumber: {
@@ -891,9 +891,9 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 254, 190, 0.25)',
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#b18630',
     borderRadius: 10,
     paddingVertical: 12,
     paddingHorizontal: 6,
@@ -920,10 +920,10 @@ const styles = StyleSheet.create({
     padding: 30,
   },
   dayModalCard: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgba(255, 254, 190, 0.25)',
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#b18630',
     padding: 20,
     width: '100%',
     maxWidth: 340,
@@ -940,12 +940,12 @@ const styles = StyleSheet.create({
   },
   dayNavArrowText: {
     fontSize: 20,
-    color: '#FFD700',
+    color: '#b18630',
   },
   dayModalDate: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#b18630',
     textAlign: 'center',
   },
   dayModalProgress: {
@@ -956,7 +956,7 @@ const styles = StyleSheet.create({
   dayModalGuidance: {
     marginTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#333',
+    borderTopColor: '#b18630',
     paddingTop: 12,
   },
   guidanceRow: {
@@ -988,12 +988,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#FFD700',
-    backgroundColor: '#2a1a0a',
+    borderColor: '#b18630',
+    backgroundColor: 'rgba(255, 254, 190, 0.25)',
   },
   dayModalCloseText: {
     fontSize: 14,
-    color: '#FFD700',
+    color: '#b18630',
     fontWeight: '600',
   },
 });

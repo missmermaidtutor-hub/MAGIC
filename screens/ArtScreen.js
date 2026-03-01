@@ -801,7 +801,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   challengeCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 236, 211, 0.5)',
     borderWidth: 3,
     borderColor: '#FFD700',
     borderRadius: 12,
@@ -822,7 +822,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   timerCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 236, 211, 0.5)',
     borderWidth: 3,
     borderColor: '#FFD700',
     borderRadius: 12,
@@ -831,7 +831,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   weeklyCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 236, 211, 0.5)',
     borderWidth: 3,
     borderColor: '#FFD700',
     borderRadius: 12,
@@ -966,7 +966,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sketchIcon: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 236, 211, 0.5)',
     borderWidth: 3,
     borderColor: '#FFD700',
     borderRadius: 8,
@@ -986,7 +986,7 @@ const styles = StyleSheet.create({
   },
   privateUploadButton: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 236, 211, 0.5)',
     borderWidth: 3,
     borderColor: '#FFD700',
     borderRadius: 12,
@@ -995,7 +995,7 @@ const styles = StyleSheet.create({
   },
   courageUploadButton: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 236, 211, 0.5)',
     borderWidth: 3,
     borderColor: '#FFD700',
     borderRadius: 12,
@@ -1022,7 +1022,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   writeModalCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 236, 211, 0.5)',
     borderWidth: 3,
     borderColor: '#FFD700',
     borderRadius: 16,
@@ -1044,11 +1044,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   writeTextInput: {
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'rgba(255, 236, 211, 0.5)',
     borderWidth: 2,
-    borderColor: '#333',
+    borderColor: '#f7bc6e',
     borderRadius: 10,
-    color: '#fff',
+    color: '#333',
     fontSize: 16,
     padding: 15,
     minHeight: 200,
@@ -1062,7 +1062,7 @@ const styles = StyleSheet.create({
   },
   writePersonalBtn: {
     flex: 1,
-    backgroundColor: '#2a2a4a',
+    backgroundColor: 'rgba(255, 236, 211, 0.5)',
     borderWidth: 2,
     borderColor: '#FFD700',
     borderRadius: 10,
@@ -1071,7 +1071,7 @@ const styles = StyleSheet.create({
   },
   writeCourageBtn: {
     flex: 1,
-    backgroundColor: '#4a2a2a',
+    backgroundColor: 'rgba(255, 236, 211, 0.5)',
     borderWidth: 2,
     borderColor: '#FFD700',
     borderRadius: 10,

@@ -63,7 +63,12 @@ export default function AboutYouScreen({ navigation }) {
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.header}>About You</Text>
-          <View style={styles.backButtonPlaceholder} />
+          <TouchableOpacity
+            style={styles.hamburgerButton}
+            onPress={() => navigation.navigate('Menu')}
+          >
+            <Text style={styles.hamburgerText}>☰</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.card}>
@@ -312,5 +317,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#87CEEB',
     fontStyle: 'italic',
+  },
+  hamburgerButton: {
+    width: 44,
+    height: 44,
+    backgroundColor: '#050d61',
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#B8860B',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hamburgerText: {
+    fontSize: 24,
+    color: '#FFD700',
+    fontWeight: 'bold',
   },
 });

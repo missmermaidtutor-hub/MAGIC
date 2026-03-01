@@ -848,7 +848,7 @@ export default function CommunityScreen() {
           >
             <Text style={styles.tabIcon}>🖼️</Text>
             <Text style={[styles.tabLabel, activeGallery === 'newsfeed' && styles.tabLabelActive]}>
-              Visit{'\n'}Curations
+              Visit Community{'\n'}Curations
             </Text>
           </TouchableOpacity>
 
@@ -891,28 +891,6 @@ export default function CommunityScreen() {
           {renderGalleryContent()}
         </View>
 
-        {/* Research & Articles */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionIcon}>📚</Text>
-            <Text style={styles.sectionTitle}>Research & Articles</Text>
-          </View>
-          <Text style={styles.sectionDescription}>
-            Science behind creativity and mental health
-          </Text>
-          {researchArticles.map((article, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.articleCard}
-              onPress={() => handleResearchArticle(article.url, article.title)}
-            >
-              <Text style={styles.articleTitle}>{article.title}</Text>
-              <Text style={styles.articleDescription}>{article.description}</Text>
-              <Text style={styles.articleLink}>Read More →</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
         {/* Boutique */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
@@ -941,7 +919,7 @@ export default function CommunityScreen() {
             </View>
           </View>
           <TouchableOpacity style={styles.boutiqueButton} onPress={handleBoutique}>
-            <Text style={styles.boutiqueButtonText}>Browse Boutique</Text>
+            <Text style={styles.boutiqueButtonText}>Coming Soon</Text>
           </TouchableOpacity>
         </View>
 
@@ -1012,14 +990,14 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#6366F1',
+    color: '#050d61',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 18,
-    color: '#818CF8',
+    color: '#050d61',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
@@ -1038,10 +1016,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
   },
   tabActive: {
-    backgroundColor: '#2a1a0a',
+    backgroundColor: 'rgba(184, 200, 232, 0.75)',
   },
   tabIcon: {
     fontSize: 20,
@@ -1049,22 +1027,22 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 10,
-    color: '#888',
+    color: '#050d61',
     fontWeight: '600',
     textAlign: 'center',
   },
   tabLabelActive: {
-    color: '#FFD700',
+    color: '#050d61',
   },
   tabCount: {
     fontSize: 10,
-    color: '#FFD700',
+    color: '#050d61',
     marginTop: 2,
     fontWeight: 'bold',
   },
   galleryDescription: {
     fontSize: 13,
-    color: '#DDA0DD',
+    color: '#050d61',
     textAlign: 'center',
     marginBottom: 15,
     fontStyle: 'italic',
@@ -1072,7 +1050,7 @@ const styles = StyleSheet.create({
 
   // Gallery Section
   gallerySection: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 2,
     borderColor: '#FFD700',
     borderRadius: 12,
@@ -1104,7 +1082,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
   },
   placeholderEmoji: {
     fontSize: 40,
@@ -1112,7 +1090,7 @@ const styles = StyleSheet.create({
   },
   placeholderLabel: {
     fontSize: 12,
-    color: '#888',
+    color: '#050d61',
   },
 
   // Artwork Actions
@@ -1130,16 +1108,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#555',
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
     alignItems: 'center',
   },
   curateBtnActive: {
-    borderColor: '#FFD700',
-    backgroundColor: '#2a1a0a',
+    borderColor: '#6366F1',
+    backgroundColor: 'rgba(184, 200, 232, 0.75)',
   },
   curateBtnText: {
     fontSize: 10,
-    color: '#DDA0DD',
+    color: '#050d61',
   },
   pendingBadge: {
     paddingHorizontal: 6,
@@ -1151,7 +1129,7 @@ const styles = StyleSheet.create({
   },
   pendingBadgeText: {
     fontSize: 9,
-    color: '#DDA0DD',
+    color: '#050d61',
     fontWeight: 'bold',
   },
   deleteBtn: {
@@ -1169,7 +1147,7 @@ const styles = StyleSheet.create({
   },
   artworkDate: {
     fontSize: 10,
-    color: '#666',
+    color: '#050d61',
     marginTop: 3,
   },
 
@@ -1177,7 +1155,7 @@ const styles = StyleSheet.create({
   privateSubheader: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#050d61',
     marginBottom: 12,
     marginTop: 5,
   },
@@ -1194,7 +1172,7 @@ const styles = StyleSheet.create({
 
   // Upload
   uploadButton: {
-    backgroundColor: '#2a1a0a',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 2,
     borderColor: '#FFD700',
     borderStyle: 'dashed',
@@ -1204,7 +1182,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   uploadButtonText: {
-    color: '#FFD700',
+    color: '#050d61',
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -1219,7 +1197,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyText: {
-    color: '#888',
+    color: '#050d61',
     fontSize: 14,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -1228,7 +1206,7 @@ const styles = StyleSheet.create({
 
   // Section Cards
   sectionCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 3,
     borderColor: '#DDA0DD',
     borderRadius: 12,
@@ -1247,35 +1225,35 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#050d61',
   },
   sectionDescription: {
     fontSize: 14,
-    color: '#DDA0DD',
+    color: '#050d61',
     marginBottom: 15,
   },
   articleCard: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderRadius: 8,
     padding: 15,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#6366F1',
   },
   articleTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#050d61',
     marginBottom: 5,
   },
   articleDescription: {
     fontSize: 14,
-    color: '#DDA0DD',
+    color: '#050d61',
     marginBottom: 8,
   },
   articleLink: {
     fontSize: 14,
-    color: '#87CEEB',
+    color: '#050d61',
     fontWeight: '600',
   },
   boutiqueItems: {
@@ -1292,7 +1270,7 @@ const styles = StyleSheet.create({
   },
   boutiqueLabel: {
     fontSize: 12,
-    color: '#DDA0DD',
+    color: '#050d61',
   },
   boutiqueButton: {
     backgroundColor: '#FFD700',
@@ -1308,7 +1286,7 @@ const styles = StyleSheet.create({
 
   // Stats
   statsCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 3,
     borderColor: '#FFD700',
     borderRadius: 12,
@@ -1318,7 +1296,7 @@ const styles = StyleSheet.create({
   statsTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#050d61',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -1332,12 +1310,12 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#DDA0DD',
+    color: '#050d61',
     marginBottom: 5,
   },
   statLabel: {
     fontSize: 12,
-    color: '#87CEEB',
+    color: '#050d61',
   },
 
   // Full-screen modal
@@ -1376,7 +1354,7 @@ const styles = StyleSheet.create({
 
   // Newsfeed Styles
   newsfeedCard: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 2,
     borderColor: '#FFD700',
     borderRadius: 14,
@@ -1402,11 +1380,11 @@ const styles = StyleSheet.create({
   newsfeedUsername: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#050d61',
   },
   newsfeedArtCount: {
     fontSize: 11,
-    color: '#888',
+    color: '#050d61',
     marginTop: 2,
   },
   followBtn: {
@@ -1414,16 +1392,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#93a0b9',
     backgroundColor: 'transparent',
   },
   followBtnActive: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#93a0b9',
   },
   followBtnText: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#050d61',
   },
   followBtnTextActive: {
     color: '#0a0e27',
@@ -1431,7 +1409,7 @@ const styles = StyleSheet.create({
   newsfeedArtContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
     paddingVertical: 8,
   },
   navArrow: {
@@ -1446,7 +1424,7 @@ const styles = StyleSheet.create({
   },
   navArrowText: {
     fontSize: 36,
-    color: '#FFD700',
+    color: '#050d61',
     fontWeight: 'bold',
   },
   navArrowTextDisabled: {
@@ -1485,11 +1463,11 @@ const styles = StyleSheet.create({
   newsfeedArtTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#DDA0DD',
+    color: '#050d61',
   },
   newsfeedArtDate: {
     fontSize: 12,
-    color: '#666',
+    color: '#050d61',
     marginTop: 2,
   },
   newsfeedEnvelope: {

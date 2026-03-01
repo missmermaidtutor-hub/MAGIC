@@ -13,7 +13,12 @@ export default function LegalScreen({ navigation }) {
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.header}>Legal</Text>
-          <View style={styles.backButtonPlaceholder} />
+          <TouchableOpacity
+            style={styles.hamburgerButton}
+            onPress={() => navigation.navigate('Menu')}
+          >
+            <Text style={styles.hamburgerText}>☰</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.card}>
@@ -41,4 +46,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: '#1a1a1a', borderWidth: 3, borderColor: '#FFD700', borderRadius: 12, padding: 20, marginBottom: 20 },
   title: { fontSize: 20, fontWeight: 'bold', color: '#87CEEB', marginBottom: 10 },
   text: { fontSize: 16, color: '#DDA0DD', lineHeight: 24 },
+  hamburgerButton: { width: 44, height: 44, backgroundColor: '#050d61', borderRadius: 22, borderWidth: 2, borderColor: '#B8860B', justifyContent: 'center', alignItems: 'center' },
+  hamburgerText: { fontSize: 24, color: '#FFD700', fontWeight: 'bold' },
 });

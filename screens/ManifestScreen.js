@@ -489,7 +489,7 @@ export default function ManifestScreen() {
   return (
     <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Manifest</Text>
+        <View style={{ marginTop: 40 }} />
         <Text style={styles.subtitle}>Today</Text>
         
         {/* Quote of the Day */}
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 16,
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#ff7795',
     position: 'relative',
   },
   quoteText: {
@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#ff7795',
     position: 'relative',
   },
   viewPastButton: {
@@ -698,17 +698,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   journalCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(255, 228, 237, 0.5)',
     borderRadius: 12,
     padding: 20,
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#ff7795',
     marginBottom: 20,
   },
   journalTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#DC143C',
+    color: '#ff7795',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -718,7 +718,7 @@ const styles = StyleSheet.create({
   },
   promptNumber: {
     fontSize: 18,
-    color: '#9C9FFF',
+    color: '#ff7795',
     fontWeight: 'bold',
     marginRight: 10,
     marginTop: 5,
@@ -728,39 +728,39 @@ const styles = StyleSheet.create({
   },
   promptLabel: {
     fontSize: 16,
-    color: '#9C9FFF',
+    color: '#ff7795',
     marginBottom: 8,
     fontWeight: '600',
   },
   shortInput: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#ffe4ed',
     borderRadius: 8,
     padding: 12,
-    color: 'white',
+    color: '#333',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#ff7795',
   },
   longInput: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#ffe4ed',
     borderRadius: 8,
     padding: 12,
-    color: 'white',
+    color: '#333',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#ff7795',
     minHeight: 100,
     textAlignVertical: 'top',
   },
   saveButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#ff7795',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginTop: 10,
   },
   saveButtonText: {
-    color: '#000',
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },

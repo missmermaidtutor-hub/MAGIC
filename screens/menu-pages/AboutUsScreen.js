@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground, Linking, Alert } from 'react-native';
 
 export default function AboutUsScreen({ navigation }) {
   return (
@@ -14,7 +14,12 @@ export default function AboutUsScreen({ navigation }) {
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.header}>About Us</Text>
-          <View style={styles.backButtonPlaceholder} />
+          <TouchableOpacity
+            style={styles.hamburgerButton}
+            onPress={() => navigation.navigate('Menu')}
+          >
+            <Text style={styles.hamburgerText}>☰</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.card}>
@@ -42,6 +47,35 @@ export default function AboutUsScreen({ navigation }) {
             <Text style={styles.text}>
               Studies show that 120 minutes of creative activity per week significantly improves mental health outcomes. MAGIC Tracker makes it easy to reach this goal through daily practice.
             </Text>
+
+            <View style={styles.articlesContainer}>
+              <TouchableOpacity
+                style={styles.articleCard}
+                onPress={() => Linking.openURL('https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4937104/')}
+              >
+                <Text style={styles.articleTitle}>120 Minutes of Art Per Week</Text>
+                <Text style={styles.articleDescription}>Study shows creative activities improve mental health</Text>
+                <Text style={styles.articleLink}>Read More →</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.articleCard}
+                onPress={() => Linking.openURL('https://www.psychologytoday.com/us/basics/creativity')}
+              >
+                <Text style={styles.articleTitle}>The Psychology of Creativity</Text>
+                <Text style={styles.articleDescription}>How creative expression affects wellbeing</Text>
+                <Text style={styles.articleLink}>Read More →</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.articleCard}
+                onPress={() => Linking.openURL('https://www.arttherapy.org/research/')}
+              >
+                <Text style={styles.articleTitle}>Art Therapy Research</Text>
+                <Text style={styles.articleDescription}>Benefits of regular artistic practice</Text>
+                <Text style={styles.articleLink}>Read More →</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.section}>
@@ -151,5 +185,47 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: 'bold',
     color: '#FFD700',
+  },
+  hamburgerButton: {
+    width: 44,
+    height: 44,
+    backgroundColor: '#050d61',
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#B8860B',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hamburgerText: {
+    fontSize: 24,
+    color: '#FFD700',
+    fontWeight: 'bold',
+  },
+  articlesContainer: {
+    marginTop: 15,
+  },
+  articleCard: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#444',
+  },
+  articleTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 5,
+  },
+  articleDescription: {
+    fontSize: 14,
+    color: '#DDA0DD',
+    marginBottom: 8,
+  },
+  articleLink: {
+    fontSize: 14,
+    color: '#87CEEB',
+    fontWeight: '600',
   },
 });

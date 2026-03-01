@@ -974,10 +974,8 @@ export default function HomeScreen({ navigation }) {
     <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
 
-        {/* Header */}
-        <View style={styles.headerContainer}>
-          <Text style={styles.header}>Home</Text>
-        </View>
+        {/* Header spacer */}
+        <View style={styles.headerContainer} />
 
         {/* ===== STREAK STAR ARROW ===== */}
         <View style={styles.starSection}>
@@ -1024,9 +1022,9 @@ export default function HomeScreen({ navigation }) {
         {/* Quote & Goal side by side */}
         <View style={styles.cardRow}>
           {/* Quote Box - Clickable to Manifest */}
+          <View style={[styles.cardHalf, styles.manifestBorder]}>
           <GoldFrame
             style={styles.purpleCard}
-            containerStyle={styles.cardHalf}
             onPress={() => navigation.navigate('Manifest')}
           >
             <View style={styles.cardInnerCompact}>
@@ -1044,11 +1042,12 @@ export default function HomeScreen({ navigation }) {
               </View>
             </View>
           </GoldFrame>
+          </View>
 
           {/* Goal Box */}
+          <View style={[styles.cardHalf, styles.goalBorder]}>
           <GoldFrame
             style={styles.redCard}
-            containerStyle={styles.cardHalf}
           >
             <View style={styles.cardInnerCompact}>
               {!goalAcknowledged ? (
@@ -1133,10 +1132,12 @@ export default function HomeScreen({ navigation }) {
               </View>
             </View>
           </GoldFrame>
+          </View>
         </View>
 
         {/* Art Challenge Box - Center third, double frame */}
         <View style={styles.artBoxRow}>
+          <View style={styles.artBorder}>
           <GoldFrame
             containerStyle={styles.artBoxOuter}
             onPress={() => navigation.navigate('Art')}
@@ -1150,6 +1151,7 @@ export default function HomeScreen({ navigation }) {
               </GoldFrame>
             </View>
           </GoldFrame>
+          </View>
         </View>
 
         <View style={styles.divider} />
@@ -1160,6 +1162,7 @@ export default function HomeScreen({ navigation }) {
             See Today's Rank Criterion and{'\n'}
             <Text style={styles.underline}>Cast Your Vote Here</Text>
           </Text>
+          <Text style={styles.rankSubtext}>or browse yesterday's Courage below without voting</Text>
         </TouchableOpacity>
 
         {/* Gallery buttons aligned to art box edges, above artwork */}
@@ -1299,24 +1302,40 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   purpleCard: {
-    backgroundColor: '#0a0e27',
+    backgroundColor: '#ffe4ed',
+  },
+  manifestBorder: {
+    borderWidth: 5,
+    borderColor: '#ff7795',
+    borderRadius: 11,
   },
   redCard: {
-    backgroundColor: '#0a0e27',
+    backgroundColor: '#faf5b5',
+  },
+  goalBorder: {
+    borderWidth: 5,
+    borderColor: '#b4924a',
+    borderRadius: 11,
   },
   artCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#ffecd3',
+  },
+  artBorder: {
+    borderWidth: 5,
+    borderColor: '#f7bc6e',
+    borderRadius: 11,
+    width: '60%',
   },
   artBoxRow: {
     alignItems: 'center',
     marginBottom: 16,
   },
   artBoxOuter: {
-    width: '60%',
+    width: '100%',
   },
   artFrameGap: {
     padding: 15,
-    backgroundColor: '#0a0e27',
+    backgroundColor: '#ffecd3',
   },
   frameSpacing: {
     marginBottom: 16,
@@ -1349,28 +1368,28 @@ const styles = StyleSheet.create({
   },
   quoteTextSmall: {
     fontSize: 15,
-    color: '#9C9FFF',
+    color: '#ff7795',
     marginBottom: 6,
     lineHeight: 20,
   },
   authorText: {
     fontSize: 13,
-    color: '#9C9FFF',
+    color: '#ff7795',
     fontStyle: 'italic',
     marginBottom: 15,
   },
   manifestText: {
     fontSize: 16,
-    color: '#4FC3F7',
+    color: '#ff7795',
     fontWeight: '600',
   },
   manifestTextSmall: {
     fontSize: 14,
-    color: '#9C9FFF',
+    color: '#ff7795',
     fontWeight: '600',
   },
   manifestHighlight: {
-    color: '#FFD700',
+    color: '#ff7795',
   },
   heartRight: {
     position: 'absolute',
@@ -1390,23 +1409,23 @@ const styles = StyleSheet.create({
   },
   goalTitleSmall: {
     fontSize: 16,
-    color: '#FF8A80',
+    color: '#b4924a',
     fontWeight: '600',
     marginBottom: 4,
   },
   goalSubtext: {
     fontSize: 14,
-    color: '#FFCDD2',
+    color: '#b4924a',
     marginBottom: 5,
   },
   goalSubtextSmall: {
     fontSize: 13,
-    color: '#F48FB1',
+    color: '#b4924a',
     marginBottom: 4,
   },
   goalDisplay: {
     fontSize: 16,
-    color: 'white',
+    color: '#b4924a',
     fontWeight: '500',
     marginTop: 10,
     marginRight: 50,
@@ -1414,7 +1433,7 @@ const styles = StyleSheet.create({
   },
   goalDisplaySmall: {
     fontSize: 14,
-    color: '#FFAB91',
+    color: '#b4924a',
     fontWeight: '500',
     marginTop: 6,
     marginRight: 30,
@@ -1422,13 +1441,13 @@ const styles = StyleSheet.create({
   },
   goalAckText: {
     fontSize: 16,
-    color: '#FF8A80',
+    color: '#b4924a',
     fontWeight: '600',
     marginTop: 8,
   },
   goalLabel: {
     fontSize: 14,
-    color: '#F48FB1',
+    color: '#b4924a',
     marginTop: 8,
     fontWeight: '600',
   },
@@ -1473,23 +1492,30 @@ const styles = StyleSheet.create({
   },
   artLabel: {
     fontSize: 24,
-    color: '#FFD700',
+    color: '#7c8b77',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
   },
   artChallenge: {
     fontSize: 32,
-    color: '#FFD700',
+    color: '#7c8b77',
     fontWeight: 'bold',
     textAlign: 'center',
   },
   rankTitle: {
     fontSize: 22,
-    color: '#FFD700',
+    color: '#7c8b77',
     fontWeight: 'bold',
     textAlign: 'center',
+    marginBottom: 5,
+  },
+  rankSubtext: {
+    fontSize: 14,
+    color: '#7c8b77',
+    textAlign: 'center',
     marginBottom: 15,
+    fontStyle: 'italic',
   },
   underline: {
     textDecorationLine: 'underline',
@@ -1564,12 +1590,12 @@ const styles = StyleSheet.create({
   },
   inspiredText: {
     fontSize: 20,
-    color: '#FFD700',
+    color: '#7c8b77',
     fontWeight: 'bold',
   },
   inspiredSubtext: {
     fontSize: 12,
-    color: '#86EFAC',
+    color: '#7c8b77',
     marginTop: 2,
   },
 });

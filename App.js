@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 // Import screens
@@ -24,12 +24,28 @@ import ContactScreen from './screens/menu-pages/ContactScreen';
 
 const Tab = createBottomTabNavigator();
 
-// Custom Tab Bar Icon Component
-function TabIcon({ color, focused, emoji }) {
+// Flower images for tab icons
+const flowerImages = {
+  Home: require('./Cliparts/flower_purple.jpg'),
+  Manifest: require('./Cliparts/flower_red.jpg'),
+  Art: require('./Cliparts/flower-orange.png'),
+  Grow: require('./Cliparts/flower_yellow.jpg'),
+  Inspire: require('./Cliparts/flower_green.jpg'),
+  Connect: require('./Cliparts/flower_Blue.jpeg'),
+};
+
+// Custom Tab Bar Icon Component — round flower button
+function TabIcon({ tabName, focused }) {
   return (
-    <View style={[styles.tabIcon, { backgroundColor: color }]}>
-      <View style={styles.tabIconInner} />
+    <View style={styles.tabIconWrapper}>
       {focused && <View style={styles.tabIconGlow} />}
+      <View style={styles.tabIcon}>
+        <Image
+          source={flowerImages[tabName]}
+          style={styles.tabIconImage}
+          resizeMode="cover"
+        />
+      </View>
     </View>
   );
 }
@@ -57,8 +73,8 @@ export default function App() {
                 </TouchableOpacity>
               ) : undefined,
               tabBarStyle: styles.tabBar,
-              tabBarActiveTintColor: '#FFD700',
-              tabBarInactiveTintColor: '#666',
+              tabBarActiveTintColor: '#B8860B',
+              tabBarInactiveTintColor: '#888',
               tabBarLabelStyle: styles.tabLabel,
             };
           }}
@@ -67,8 +83,8 @@ export default function App() {
             name="Home"
             component={HomeScreen}
             options={{
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#C4B5FD" focused={focused} />
+              tabBarIcon: ({ focused }) => (
+                <TabIcon tabName="Home" focused={focused} />
               ),
             }}
           />
@@ -76,8 +92,8 @@ export default function App() {
             name="Manifest"
             component={ManifestScreen}
             options={{
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#DC143C" focused={focused} />
+              tabBarIcon: ({ focused }) => (
+                <TabIcon tabName="Manifest" focused={focused} />
               ),
             }}
           />
@@ -85,8 +101,8 @@ export default function App() {
             name="Art"
             component={ArtScreen}
             options={{
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#FF7F00" focused={focused} />
+              tabBarIcon: ({ focused }) => (
+                <TabIcon tabName="Art" focused={focused} />
               ),
             }}
           />
@@ -94,8 +110,8 @@ export default function App() {
             name="Grow"
             component={StreakScreen}
             options={{
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#FFD700" focused={focused} />
+              tabBarIcon: ({ focused }) => (
+                <TabIcon tabName="Grow" focused={focused} />
               ),
             }}
           />
@@ -103,8 +119,8 @@ export default function App() {
             name="Inspire"
             component={InspireScreen}
             options={{
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#22C55E" focused={focused} />
+              tabBarIcon: ({ focused }) => (
+                <TabIcon tabName="Inspire" focused={focused} />
               ),
             }}
           />
@@ -112,8 +128,8 @@ export default function App() {
             name="Connect"
             component={CommunityScreen}
             options={{
-              tabBarIcon: ({ color, focused }) => (
-                <TabIcon color="#6366F1" focused={focused} />
+              tabBarIcon: ({ focused }) => (
+                <TabIcon tabName="Connect" focused={focused} />
               ),
             }}
           />
@@ -174,50 +190,53 @@ export default function App() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#fffaec',
     borderTopWidth: 2,
     borderTopColor: '#B8860B',
-    height: 80,
+    height: 85,
     paddingBottom: 10,
-    paddingTop: 10,
+    paddingTop: 5,
   },
   tabLabel: {
     fontSize: 10,
     fontWeight: '600',
-    marginTop: 5,
+    marginTop: 2,
+    color: '#333',
   },
-  tabIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  tabIconWrapper: {
+    width: 54,
+    height: 54,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  tabIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#B8860B',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 8,
   },
-  tabIconInner: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'white',
-    opacity: 0.4,
+  tabIconImage: {
+    width: '100%',
+    height: '100%',
   },
   tabIconGlow: {
     position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-    top: -5,
-    left: -5,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 215, 0, 0.35)',
   },
   hamburgerButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#050d61',
     borderRadius: 22,
     borderWidth: 2,
     borderColor: '#B8860B',

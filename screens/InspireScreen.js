@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   criterionCard: {
-    backgroundColor: '#93E9BE',
+    backgroundColor: 'rgba(207, 232, 199, 0.5)',
     borderWidth: 3,
     borderColor: '#004225',
     borderRadius: 12,
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
   criterionText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#004225',
     textAlign: 'center',
   },
   progressContainer: {
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#93E9BE',
+    backgroundColor: 'rgba(207, 232, 199, 0.5)',
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -538,9 +538,9 @@ const styles = StyleSheet.create({
   },
   artworkCard: {
     width: '48%',
-    backgroundColor: '#93E9BE',
+    backgroundColor: 'rgba(207, 232, 199, 0.5)',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#004225',
     borderRadius: 12,
     padding: 10,
     marginBottom: 15,
@@ -566,19 +566,19 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 5,
     right: 5,
-    backgroundColor: '#FFD700',
+    backgroundColor: '#004225',
     borderRadius: 20,
     width: 35,
     height: 35,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#000',
+    borderColor: '#004225',
   },
   rankBadgeText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#fff',
   },
   artistInfo: {
     alignItems: 'center',
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   },
   artistName: {
     fontSize: 12,
-    color: '#FFD700',
+    color: '#004225',
     fontWeight: '600',
   },
   artworkTitle: {
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   actionButtonSmall: {
-    backgroundColor: '#93E9BE',
+    backgroundColor: 'rgba(207, 232, 199, 0.5)',
     borderWidth: 1,
     borderColor: '#666',
     borderRadius: 6,
@@ -627,18 +627,18 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 17.5,
-    backgroundColor: '#93E9BE',
+    backgroundColor: 'rgba(207, 232, 199, 0.5)',
     borderWidth: 2,
     borderColor: '#004225',
     justifyContent: 'center',
     alignItems: 'center',
   },
   rankButtonSelected: {
-    backgroundColor: '#FFD700',
-    borderColor: '#FFD700',
+    backgroundColor: '#004225',
+    borderColor: '#004225',
   },
   rankButtonDisabled: {
-    backgroundColor: '#93E9BE',
+    backgroundColor: 'rgba(207, 232, 199, 0.5)',
     borderColor: '#004225',
     opacity: 0.4,
   },
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   rankButtonTextSelected: {
-    color: '#000',
+    color: '#fff',
   },
   rankButtonTextDisabled: {
     color: '#555',
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: '#004225',
     borderWidth: 3,
-    borderColor: '#93E9BE',
+    borderColor: '#cfe8c7',
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     fontSize: 20,
-    color: '#93E9BE',
+    color: '#cfe8c7',
     fontWeight: 'bold',
   },
   nextButton: {
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   freeScrollBanner: {
-    backgroundColor: '#93E9BE',
+    backgroundColor: 'rgba(207, 232, 199, 0.5)',
     borderWidth: 2,
     borderColor: '#004225',
     borderRadius: 12,
@@ -697,9 +697,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   completeCard: {
-    backgroundColor: '#93E9BE',
+    backgroundColor: 'rgba(207, 232, 199, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#004225',
     borderRadius: 12,
     padding: 30,
     alignItems: 'center',
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
   },
   completeText: {
     fontSize: 20,
-    color: '#FFD700',
+    color: '#004225',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 20,
-    color: '#FFD700',
+    color: '#004225',
     fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
@@ -761,16 +761,16 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#93E9BE',
+    backgroundColor: 'rgba(207, 232, 199, 0.5)',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#004225',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
   },
   modalCloseText: {
     fontSize: 20,
-    color: '#FFD700',
+    color: '#004225',
     fontWeight: 'bold',
   },
   modalContent: {
@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     maxHeight: SCREEN_WIDTH,
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#004225',
     borderRadius: 8,
   },
   zoomContainer: {
@@ -798,7 +798,7 @@ const styles = StyleSheet.create({
   },
   modalArtist: {
     fontSize: 22,
-    color: '#FFD700',
+    color: '#004225',
     fontWeight: 'bold',
     marginTop: 15,
     marginBottom: 5,

@@ -46,7 +46,12 @@ export default function QuotesScreen({ navigation }) {
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.header}>Quotes</Text>
-          <View style={styles.backButtonPlaceholder} />
+          <TouchableOpacity
+            style={styles.hamburgerButton}
+            onPress={() => navigation.navigate('Menu')}
+          >
+            <Text style={styles.hamburgerText}>☰</Text>
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.subtitle}>Your Favorite Quotes</Text>
@@ -198,5 +203,20 @@ const styles = StyleSheet.create({
     color: '#87CEEB',
     textAlign: 'center',
     lineHeight: 22,
+  },
+  hamburgerButton: {
+    width: 44,
+    height: 44,
+    backgroundColor: '#050d61',
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: '#B8860B',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  hamburgerText: {
+    fontSize: 24,
+    color: '#FFD700',
+    fontWeight: 'bold',
   },
 });

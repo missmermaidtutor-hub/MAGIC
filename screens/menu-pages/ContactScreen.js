@@ -17,7 +17,12 @@ export default function ContactScreen({ navigation }) {
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.header}>Contact</Text>
-          <View style={styles.backButtonPlaceholder} />
+          <TouchableOpacity
+            style={styles.hamburgerButton}
+            onPress={() => navigation.navigate('Menu')}
+          >
+            <Text style={styles.hamburgerText}>☰</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.card}>
@@ -54,4 +59,6 @@ const styles = StyleSheet.create({
   contactButton: { backgroundColor: '#4A148C', borderRadius: 8, padding: 20, alignItems: 'center', marginVertical: 20, borderWidth: 2, borderColor: '#9C27B0' },
   contactIcon: { fontSize: 32, marginBottom: 10 },
   contactText: { fontSize: 16, color: '#DDA0DD', fontWeight: 'bold' },
+  hamburgerButton: { width: 44, height: 44, backgroundColor: '#050d61', borderRadius: 22, borderWidth: 2, borderColor: '#B8860B', justifyContent: 'center', alignItems: 'center' },
+  hamburgerText: { fontSize: 24, color: '#FFD700', fontWeight: 'bold' },
 });
