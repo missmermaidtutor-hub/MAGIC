@@ -403,13 +403,10 @@ export default function InspireScreen() {
             {/* Submit Button */}
             {!isSubmitted && (
               <TouchableOpacity
-                style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
+                style={styles.submitButton}
                 onPress={handleSubmit}
-                disabled={!canSubmit}
               >
-                <Text style={styles.submitButtonText}>
-                  {canSubmit ? 'Submit Rankings' : `Rank All ${currentArtworks.length} to Submit`}
-                </Text>
+                <Text style={styles.submitButtonText}>Submit Rankings</Text>
               </TouchableOpacity>
             )}
 
@@ -655,11 +652,6 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     marginBottom: 20,
-  },
-  submitButtonDisabled: {
-    backgroundColor: '#93E9BE',
-    borderColor: '#004225',
-    opacity: 0.4,
   },
   submitButtonText: {
     fontSize: 20,
