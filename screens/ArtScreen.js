@@ -38,6 +38,10 @@ export default function ArtScreen() {
   const [writeText, setWriteText] = useState('');
   const [writeMode, setWriteMode] = useState('write');
   
+  // Alarm repeating state
+  const [alarmRinging, setAlarmRinging] = useState(false);
+  const alarmRepeatRef = useRef(null);
+
   // Refs for intervals
   const dailyIntervalRef = useRef(null);
   const weeklyIntervalRef = useRef(null);
@@ -55,6 +59,7 @@ export default function ArtScreen() {
     return () => {
       if (dailyIntervalRef.current) clearInterval(dailyIntervalRef.current);
       if (weeklyIntervalRef.current) clearInterval(weeklyIntervalRef.current);
+      if (alarmRepeatRef.current) clearInterval(alarmRepeatRef.current);
       if (alarmSoundRef.current) {
         alarmSoundRef.current.unloadAsync();
       }
@@ -72,8 +77,8 @@ export default function ArtScreen() {
         setDailyTime(0);
         dailyEndTimeRef.current = null;
         saveDailyArtTime(timerSetting * 60);
-        playAlarmSound();
-        Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!`);
+        startRepeatingAlarm();
+        Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!\n\nBowl will chime every 5 minutes until stopped.`);
       } else {
         setDailyTime(remaining);
       }
@@ -98,8 +103,8 @@ export default function ArtScreen() {
     return () => sub.remove();
   }, [isDailyRunning, isWeeklyRunning]);
 
-  // Play rain sound when timer reaches 0
-  const playAlarmSound = async () => {
+  // Play a single singing bowl chime
+  const playSingleBowl = async () => {
     try {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
@@ -110,23 +115,43 @@ export default function ArtScreen() {
         playThroughEarpieceAndroid: false,
       });
       const { sound } = await Audio.Sound.createAsync(
-        { uri: 'https://actions.google.com/sounds/v1/weather/rain_on_roof.ogg' },
-        { shouldPlay: true, volume: 1.0, isMuted: false }
+        require('../assets/singing-bowl.wav'),
+        { shouldPlay: true, volume: 1.0 }
       );
       alarmSoundRef.current = sound;
-      // Play it loud — set volume again after creation
       await sound.setVolumeAsync(1.0);
-      // Stop after 8 seconds
-      setTimeout(async () => {
-        try {
-          await sound.stopAsync();
-          await sound.unloadAsync();
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.didJustFinish) {
+          sound.unloadAsync();
           alarmSoundRef.current = null;
-        } catch (e) {}
-      }, 8000);
+        }
+      });
     } catch (error) {
-      console.log('Could not play rain sound:', error);
+      console.log('Could not play singing bowl sound:', error);
     }
+  };
+
+  // Start repeating alarm — plays immediately, then every 5 minutes
+  const startRepeatingAlarm = () => {
+    playSingleBowl();
+    setAlarmRinging(true);
+    alarmRepeatRef.current = setInterval(() => {
+      playSingleBowl();
+    }, 5 * 60 * 1000); // every 5 minutes
+  };
+
+  // Stop the repeating alarm
+  const stopAlarm = () => {
+    if (alarmRepeatRef.current) {
+      clearInterval(alarmRepeatRef.current);
+      alarmRepeatRef.current = null;
+    }
+    if (alarmSoundRef.current) {
+      alarmSoundRef.current.stopAsync().catch(() => {});
+      alarmSoundRef.current.unloadAsync().catch(() => {});
+      alarmSoundRef.current = null;
+    }
+    setAlarmRinging(false);
   };
 
   // Load weekly time from storage
@@ -232,8 +257,8 @@ export default function ArtScreen() {
           setDailyTime(0);
           dailyEndTimeRef.current = null;
           saveDailyArtTime(timerSetting * 60);
-          playAlarmSound();
-          Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!`);
+          startRepeatingAlarm();
+          Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!\n\nBowl will chime every 5 minutes until stopped.`);
         } else {
           setDailyTime(remaining);
         }
@@ -245,6 +270,7 @@ export default function ArtScreen() {
     clearInterval(dailyIntervalRef.current);
     setIsDailyRunning(false);
     dailyEndTimeRef.current = null;
+    stopAlarm();
     setDailyTime(timerSetting * 60);
   };
 
@@ -551,41 +577,58 @@ export default function ArtScreen() {
             <Text style={styles.timerEmoji}>⏱️</Text>
           </View>
 
-          {/* Timer adjuster */}
-          <View style={styles.timerAdjustRow}>
-            <TouchableOpacity
-              style={styles.timerAdjustButton}
-              onPress={() => adjustTimer(-1)}
-              disabled={isDailyRunning}
-            >
-              <Text style={[styles.timerAdjustText, isDailyRunning && styles.timerAdjustDisabled]}>−</Text>
-            </TouchableOpacity>
+          {/* Editable minutes input */}
+          {!isDailyRunning && !alarmRinging ? (
+            <View style={styles.timerInputRow}>
+              <TextInput
+                style={styles.timerInput}
+                keyboardType="number-pad"
+                value={String(timerSetting)}
+                onChangeText={(text) => {
+                  const num = parseInt(text) || 0;
+                  setTimerSetting(num);
+                  setDailyTime(num * 60);
+                }}
+                onBlur={() => {
+                  const clamped = Math.max(MIN_TIMER_MINUTES, Math.min(MAX_TIMER_MINUTES, timerSetting));
+                  setTimerSetting(clamped);
+                  setDailyTime(clamped * 60);
+                }}
+                maxLength={3}
+                selectTextOnFocus
+              />
+              <Text style={styles.timerInputLabel}>minutes</Text>
+            </View>
+          ) : (
             <Text style={styles.timerDisplay}>{formatTime(dailyTime)}</Text>
-            <TouchableOpacity
-              style={styles.timerAdjustButton}
-              onPress={() => adjustTimer(1)}
-              disabled={isDailyRunning}
-            >
-              <Text style={[styles.timerAdjustText, isDailyRunning && styles.timerAdjustDisabled]}>+</Text>
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.timerLabel}>{timerSetting} min daily timer</Text>
+          )}
 
           <View style={styles.timerButtons}>
-            <TouchableOpacity
-              style={[styles.timerButton, isDailyRunning && styles.timerButtonStop]}
-              onPress={toggleDailyTimer}
-            >
-              <Text style={styles.timerButtonText}>
-                {isDailyRunning ? 'Pause' : 'Start'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.timerButtonSecondary}
-              onPress={resetDailyTimer}
-            >
-              <Text style={styles.timerButtonText}>Reset</Text>
-            </TouchableOpacity>
+            {!alarmRinging ? (
+              <>
+                <TouchableOpacity
+                  style={[styles.timerButton, isDailyRunning && styles.timerButtonStop]}
+                  onPress={toggleDailyTimer}
+                >
+                  <Text style={styles.timerButtonText}>
+                    {isDailyRunning ? 'Pause' : 'Start'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.timerButtonSecondary}
+                  onPress={resetDailyTimer}
+                >
+                  <Text style={styles.timerButtonText}>Reset</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <TouchableOpacity
+                style={styles.timerButtonAlarmStop}
+                onPress={stopAlarm}
+              >
+                <Text style={styles.timerButtonText}>Stop Sound</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -801,39 +844,38 @@ const styles = StyleSheet.create({
   timerEmoji: {
     fontSize: 40,
   },
-  timerAdjustRow: {
+  timerInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 15,
+    gap: 12,
+    marginBottom: 15,
   },
-  timerAdjustButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#333',
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  timerAdjustText: {
-    fontSize: 28,
+  timerInput: {
+    fontSize: 48,
     color: '#FFD700',
     fontWeight: 'bold',
+    textAlign: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: '#FFD700',
+    minWidth: 100,
+    paddingVertical: 4,
   },
-  timerAdjustDisabled: {
-    color: '#555',
+  timerInputLabel: {
+    fontSize: 20,
+    color: '#FFA500',
   },
   timerDisplay: {
     fontSize: 56,
     color: 'white',
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 15,
   },
-  timerLabel: {
-    fontSize: 16,
-    color: '#FFA500',
-    marginBottom: 20,
+  timerButtonAlarmStop: {
+    backgroundColor: '#FF6B6B',
+    paddingHorizontal: 40,
+    paddingVertical: 14,
+    borderRadius: 8,
+    minWidth: 160,
   },
   stopwatchDisplay: {
     fontSize: 48,
