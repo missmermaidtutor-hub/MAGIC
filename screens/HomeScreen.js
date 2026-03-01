@@ -581,13 +581,14 @@ const getTodaysTasks = async () => {
   // --- I: Inspire (voted on one set) ---
   const hasInspire = (await AsyncStorage.getItem(`ranked_${today}`)) === 'true';
 
-  // --- C: Connect (browsed after voting, sent email, or saved inspiration) ---
-  const browsedAfterVoting = (await AsyncStorage.getItem(`browsed_${today}`)) === 'true';
+  // --- C: Connect (visited Connect tab, clicked arrows, sent email, or saved inspiration) ---
+  const browsedConnect = (await AsyncStorage.getItem(`browsed_${today}`)) === 'true';
+  const interactedConnect = (await AsyncStorage.getItem(`connected_${today}`)) === 'true';
   const sentEmail = (await AsyncStorage.getItem(`email_sent_${today}`)) === 'true';
   const favoriteArtworksRaw = await AsyncStorage.getItem('favorite_artworks');
   const favoriteArtworks = favoriteArtworksRaw ? JSON.parse(favoriteArtworksRaw) : [];
   const savedInspirationToday = favoriteArtworks.some(a => a.date === today);
-  const hasConnect = (hasInspire && browsedAfterVoting) || sentEmail || savedInspirationToday;
+  const hasConnect = browsedConnect || interactedConnect || sentEmail || savedInspirationToday;
 
   return {
     manifest: hasManifest,
@@ -638,10 +639,11 @@ export default function HomeScreen({ navigation }) {
     loadQuoteHeartedState();
   }, []);
 
-  // Reload hearted state every time this screen gets focus (syncs with Manifest)
+  // Reload hearted state and star data every time this screen gets focus
   useFocusEffect(
     useCallback(() => {
       loadQuoteHeartedState();
+      loadStreakData();
     }, [todayQuote])
   );
 

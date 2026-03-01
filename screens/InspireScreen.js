@@ -151,25 +151,33 @@ export default function InspireScreen() {
   };
 
   const handleSubmit = async () => {
-    if (Object.keys(rankings).length < currentArtworks.length) {
-      Alert.alert('Incomplete', 'Please rank all artworks before submitting.');
-      return;
-    }
-    // Check for duplicate ranks on submit
-    const usedRanks = Object.values(rankings);
-    const uniqueRanks = new Set(usedRanks);
-    if (uniqueRanks.size !== usedRanks.length) {
-      Alert.alert('Duplicate Ranks', 'Each artwork must have a unique rank. Please adjust before submitting.');
-      return;
-    }
     try {
+      // Only check rankings for the current batch's artworks
+      const currentIds = currentArtworks.map(a => String(a.id));
+      const batchRankings = {};
+      currentIds.forEach(id => {
+        if (rankings[id] !== undefined) batchRankings[id] = rankings[id];
+      });
+
+      if (Object.keys(batchRankings).length < currentArtworks.length) {
+        Alert.alert('Incomplete', 'Please rank all artworks before submitting.');
+        return;
+      }
+      // Check for duplicate ranks on submit
+      const usedRanks = Object.values(batchRankings);
+      const uniqueRanks = new Set(usedRanks);
+      if (uniqueRanks.size !== usedRanks.length) {
+        Alert.alert('Duplicate Ranks', 'Each artwork must have a unique rank. Please adjust before submitting.');
+        return;
+      }
+
       const today = new Date().toISOString().split('T')[0];
       const allRankings = await AsyncStorage.getItem('all_rankings');
       const rankingsData = allRankings ? JSON.parse(allRankings) : {};
       if (!rankingsData[today]) rankingsData[today] = [];
       rankingsData[today].push({
         batch: currentBatch,
-        rankings: rankings,
+        rankings: batchRankings,
         criterion: todaysCriterion,
         timestamp: new Date().toISOString()
       });
@@ -186,6 +194,7 @@ export default function InspireScreen() {
         Alert.alert('Submitted!', 'Your rankings have been recorded! Tap "Next Batch" to rank more.');
       }
     } catch (error) {
+      Alert.alert('Error', 'Something went wrong submitting rankings. Please try again.');
       console.log('Error submitting rankings:', error);
     }
   };

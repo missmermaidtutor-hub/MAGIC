@@ -171,12 +171,15 @@ export default function CommunityScreen() {
     promotePendingVotingArtworks();
   }, []);
 
-  // Reload galleries when screen comes into focus
+  // Reload galleries when screen comes into focus & mark as browsed for Connect star
   useFocusEffect(
     useCallback(() => {
       loadAllGalleries();
       loadSavedArt();
       promotePendingVotingArtworks();
+      // Mark browsed for today's Connect (C) star point
+      const today = new Date().toISOString().split('T')[0];
+      AsyncStorage.setItem(`browsed_${today}`, 'true');
     }, [])
   );
 
@@ -299,6 +302,9 @@ export default function CommunityScreen() {
   };
 
   const navigateNewsfeed = (userId, direction) => {
+    // Mark as connected for today's Connect (C) star point
+    const today = new Date().toISOString().split('T')[0];
+    AsyncStorage.setItem(`connected_${today}`, 'true');
     setNewsfeedImageIndex(prev => {
       const currentIndex = prev[userId] || 0;
       const user = getNewsfeedUsers().find(u => u.id === userId);
