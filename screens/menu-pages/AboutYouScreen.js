@@ -10,9 +10,18 @@ import {
   ImageBackground
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../context/AuthContext';
+import {
+  updateUserProfile,
+  checkPseudonymAvailable,
+  claimPseudonym,
+  releasePseudonym,
+} from '../../services/firestoreService';
 
 export default function AboutYouScreen({ navigation }) {
+  const { user, userProfile, refreshProfile } = useAuth();
   const [username, setUsername] = useState('');
+  const [originalUsername, setOriginalUsername] = useState('');
   const [bio, setBio] = useState('');
   const [favoritePrompt, setFavoritePrompt] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -21,14 +30,27 @@ export default function AboutYouScreen({ navigation }) {
     loadProfile();
   }, []);
 
+  // Sync from context when available
+  useEffect(() => {
+    if (userProfile) {
+      setUsername(userProfile.pseudonym || '');
+      setOriginalUsername(userProfile.pseudonym || '');
+      setBio(userProfile.bio || '');
+      setFavoritePrompt(userProfile.favoritePrompt || '');
+    }
+  }, [userProfile]);
+
   const loadProfile = async () => {
     try {
       const profile = await AsyncStorage.getItem('user_profile');
       if (profile) {
         const data = JSON.parse(profile);
-        setUsername(data.username || '');
-        setBio(data.bio || '');
-        setFavoritePrompt(data.favoritePrompt || '');
+        if (!userProfile) {
+          setUsername(data.username || '');
+          setOriginalUsername(data.username || '');
+          setBio(data.bio || '');
+          setFavoritePrompt(data.favoritePrompt || '');
+        }
       }
     } catch (error) {
       console.log('Error loading profile:', error);
@@ -37,17 +59,50 @@ export default function AboutYouScreen({ navigation }) {
 
   const saveProfile = async () => {
     try {
+      // Handle pseudonym change
+      const newName = username.trim();
+      if (newName && newName !== originalUsername && user) {
+        const available = await checkPseudonymAvailable(newName);
+        if (!available) {
+          Alert.alert('Pseudonym Taken', 'Please choose a different pseudonym.');
+          return;
+        }
+        if (originalUsername) {
+          await releasePseudonym(originalUsername);
+        }
+        await claimPseudonym(newName, user.uid);
+        await updateUserProfile(user.uid, { pseudonym: newName });
+        setOriginalUsername(newName);
+      }
+
+      // Save bio and favoritePrompt to Firestore
+      if (user) {
+        await updateUserProfile(user.uid, {
+          bio,
+          favoritePrompt,
+        });
+      }
+
+      // Also save to AsyncStorage
       const profile = {
-        username,
+        username: newName || username,
         bio,
         favoritePrompt,
         updatedAt: new Date().toISOString()
       };
       await AsyncStorage.setItem('user_profile', JSON.stringify(profile));
+
+      // Also update app_settings username for consistency
+      const settingsRaw = await AsyncStorage.getItem('app_settings');
+      const settings = settingsRaw ? JSON.parse(settingsRaw) : {};
+      settings.username = newName || username;
+      await AsyncStorage.setItem('app_settings', JSON.stringify(settings));
+
+      await refreshProfile();
       setIsEditing(false);
       Alert.alert('Saved!', 'Your profile has been updated.');
     } catch (error) {
-      Alert.alert('Error', 'Could not save profile.');
+      Alert.alert('Error', error.message || 'Could not save profile.');
     }
   };
 

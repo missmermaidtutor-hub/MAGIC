@@ -16,6 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../context/AuthContext';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -155,6 +156,7 @@ const Candle = ({ lit = false, onPress, size = 40 }) => (
 );
 
 export default function CommunityScreen({ route }) {
+  const { userProfile } = useAuth();
   const [curatedArtworks, setCuratedArtworks] = useState([]);
   const [personalArtworks, setPersonalArtworks] = useState([]);
   const [inspirationArtworks, setInspirationArtworks] = useState([]);
@@ -165,6 +167,14 @@ export default function CommunityScreen({ route }) {
   const [savedNewsfeedArt, setSavedNewsfeedArt] = useState(new Set());
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [userPseudonym, setUserPseudonym] = useState('');
+
+  // Sync from auth context
+  useEffect(() => {
+    if (userProfile) {
+      setUserPseudonym(userProfile.pseudonym || '');
+      setIsAnonymous(userProfile.anonymous ?? false);
+    }
+  }, [userProfile]);
 
   useEffect(() => {
     loadAllGalleries();
@@ -201,16 +211,20 @@ export default function CommunityScreen({ route }) {
 
   const loadUserIdentity = async () => {
     try {
-      const settingsRaw = await AsyncStorage.getItem('app_settings');
-      const profileRaw = await AsyncStorage.getItem('user_profile');
-      if (settingsRaw) {
-        const settings = JSON.parse(settingsRaw);
-        setIsAnonymous(settings.anonymous ?? false);
-        if (settings.username) setUserPseudonym(settings.username);
-      }
-      if (profileRaw) {
-        const profile = JSON.parse(profileRaw);
-        if (profile.username && !userPseudonym) setUserPseudonym(profile.username);
+      // Context is primary source (set via useEffect above)
+      // AsyncStorage as fallback for offline
+      if (!userProfile) {
+        const settingsRaw = await AsyncStorage.getItem('app_settings');
+        const profileRaw = await AsyncStorage.getItem('user_profile');
+        if (settingsRaw) {
+          const settings = JSON.parse(settingsRaw);
+          setIsAnonymous(settings.anonymous ?? false);
+          if (settings.username) setUserPseudonym(settings.username);
+        }
+        if (profileRaw) {
+          const profile = JSON.parse(profileRaw);
+          if (profile.username && !userPseudonym) setUserPseudonym(profile.username);
+        }
       }
     } catch (error) {
       console.log('Error loading user identity:', error);

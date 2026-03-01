@@ -3,6 +3,7 @@
     "name": "magic-tracker",
     "slug": "magic-tracker",
     "version": "1.0.0",
+    "scheme": "magic-tracker",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "splash": {
@@ -12,7 +13,9 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cejafi.magictracker",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {

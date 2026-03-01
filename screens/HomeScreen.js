@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../context/AuthContext';
 import quotesData from '../quotes.json';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
@@ -638,6 +639,7 @@ const getTodaysTasks = async () => {
 // ============================================================
 
 export default function HomeScreen({ navigation }) {
+  const { userProfile } = useAuth();
   const [goalAcknowledged, setGoalAcknowledged] = useState(false);
   const [goalMetYes, setGoalMetYes] = useState(false); // true = yes, false = no/not yet
   const [goalLocked, setGoalLocked] = useState(false);
@@ -672,6 +674,13 @@ export default function HomeScreen({ navigation }) {
     loadSavedArtworks();
     loadQuoteHeartedState();
   }, []);
+
+  // Re-sync pseudonym when userProfile updates
+  useEffect(() => {
+    if (userProfile?.pseudonym) {
+      setPseudonym(userProfile.pseudonym);
+    }
+  }, [userProfile]);
 
   // Reload hearted state and star data every time this screen gets focus
   useFocusEffect(
@@ -734,6 +743,11 @@ export default function HomeScreen({ navigation }) {
 
   const loadPseudonym = async () => {
     try {
+      // Prefer context pseudonym from Firestore
+      if (userProfile?.pseudonym) {
+        setPseudonym(userProfile.pseudonym);
+        return;
+      }
       const profile = await AsyncStorage.getItem('user_profile');
       if (profile) {
         const parsed = JSON.parse(profile);
@@ -1205,14 +1219,14 @@ export default function HomeScreen({ navigation }) {
         {/* Gallery buttons aligned to art box edges, above artwork */}
         <View style={styles.galleryButtonRow}>
           <View style={styles.galleryButtonLeft}>
-            <GoldFrame onPress={() => {}}>
+            <GoldFrame onPress={() => setCurrentImageIndex(0)}>
               <View style={styles.galleryButtonInner}>
                 <Text style={styles.galleryButtonText}>Show Current{'\n'}Winner</Text>
               </View>
             </GoldFrame>
           </View>
           <View style={styles.galleryButtonRight}>
-            <GoldFrame onPress={() => {}}>
+            <GoldFrame onPress={() => navigation.navigate('Connect', { gallery: 'private' })}>
               <View style={styles.galleryButtonInner}>
                 <Text style={styles.galleryButtonText}>show gallery</Text>
               </View>
@@ -1233,7 +1247,7 @@ export default function HomeScreen({ navigation }) {
 
         {/* Artwork display */}
         <View style={styles.imageContainer}>
-          <TouchableOpacity onPress={() => setCurrentImageIndex(Math.max(0, currentImageIndex - 1))} style={styles.arrowButton}>
+          <TouchableOpacity onPress={() => setCurrentImageIndex(Math.min(artworkImages.length - 1, currentImageIndex + 1))} style={styles.arrowButton}>
             <Image source={goldArrowImage} style={[styles.arrowImage, { transform: [{ scaleX: -1 }] }]} resizeMode="contain" />
           </TouchableOpacity>
 
@@ -1247,7 +1261,7 @@ export default function HomeScreen({ navigation }) {
             </View>
           </GoldFrame>
 
-          <TouchableOpacity onPress={() => setCurrentImageIndex((currentImageIndex + 1) % artworkImages.length)} style={styles.arrowButton}>
+          <TouchableOpacity onPress={() => setCurrentImageIndex(Math.max(0, currentImageIndex - 1))} style={styles.arrowButton}>
             <Image source={goldArrowImage} style={styles.arrowImage} resizeMode="contain" />
           </TouchableOpacity>
         </View>
@@ -1335,7 +1349,7 @@ const styles = StyleSheet.create({
   },
   streakCount: {
     fontSize: 14,
-    color: '#4FC3F7',
+    color: '#143fb8',
     textAlign: 'center',
     marginTop: 8,
     fontWeight: '600',
@@ -1348,7 +1362,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 18,
-    color: '#4FC3F7',
+    color: '#143fb8',
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: 20,

@@ -1,8 +1,17 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+
+// Auth
+import { AuthProvider, useAuth } from './context/AuthContext';
+
+// Auth screens
+import LoginScreen from './screens/auth/LoginScreen';
+import SignUpScreen from './screens/auth/SignUpScreen';
+import ForgotPasswordScreen from './screens/auth/ForgotPasswordScreen';
 
 // Import screens
 import HomeScreen from './screens/HomeScreen';
@@ -23,6 +32,7 @@ import LegalScreen from './screens/menu-pages/LegalScreen';
 import ContactScreen from './screens/menu-pages/ContactScreen';
 
 const Tab = createBottomTabNavigator();
+const AuthStack = createNativeStackNavigator();
 
 // Flower images for tab icons
 const flowerImages = {
@@ -50,145 +60,192 @@ function TabIcon({ tabName, focused }) {
   );
 }
 
+function AuthNavigator() {
+  return (
+    <AuthStack.Navigator screenOptions={{ headerShown: false }}>
+      <AuthStack.Screen name="Login" component={LoginScreen} />
+      <AuthStack.Screen name="SignUp" component={SignUpScreen} />
+      <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+    </AuthStack.Navigator>
+  );
+}
+
+function MainTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ navigation, route }) => {
+        const visibleTabs = ['Home', 'Manifest', 'Art', 'Grow', 'Inspire', 'Connect'];
+        const isVisibleTab = visibleTabs.includes(route.name);
+        return {
+          headerShown: isVisibleTab,
+          headerTransparent: true,
+          headerTitle: '',
+          headerStyle: { backgroundColor: 'transparent', borderBottomWidth: 0, elevation: 0, shadowOpacity: 0 },
+          headerRight: isVisibleTab ? () => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Menu')}
+              style={styles.hamburgerButton}
+            >
+              <Text style={styles.hamburgerText}>☰</Text>
+            </TouchableOpacity>
+          ) : undefined,
+          tabBarStyle: styles.tabBar,
+          tabBarActiveTintColor: '#B8860B',
+          tabBarInactiveTintColor: '#888',
+          tabBarLabelStyle: styles.tabLabel,
+        };
+      }}
+    >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon tabName="Home" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Manifest"
+        component={ManifestScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon tabName="Manifest" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Art"
+        component={ArtScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon tabName="Art" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Grow"
+        component={StreakScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon tabName="Grow" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Inspire"
+        component={InspireScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon tabName="Inspire" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Connect"
+        component={CommunityScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon tabName="Connect" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Menu"
+        component={MenuScreen}
+        options={{
+          tabBarButton: () => null, // Hides from tab bar
+        }}
+      />
+      <Tab.Screen
+        name="AboutUs"
+        component={AboutUsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="AboutYou"
+        component={AboutYouScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="Quotes"
+        component={QuotesScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="Legal"
+        component={LegalScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="Contact"
+        component={ContactScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+function AppContent() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FFD700" />
+        <Text style={styles.loadingText}>MAGIC</Text>
+      </View>
+    );
+  }
+
+  return (
+    <NavigationContainer>
+      {user ? <MainTabs /> : <AuthNavigator />}
+    </NavigationContainer>
+  );
+}
+
 export default function App() {
   return (
     <>
       <StatusBar style="light" />
-      <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={({ navigation, route }) => {
-            const visibleTabs = ['Home', 'Manifest', 'Art', 'Grow', 'Inspire', 'Connect'];
-            const isVisibleTab = visibleTabs.includes(route.name);
-            return {
-              headerShown: isVisibleTab,
-              headerTransparent: true,
-              headerTitle: '',
-              headerStyle: { backgroundColor: 'transparent', borderBottomWidth: 0, elevation: 0, shadowOpacity: 0 },
-              headerRight: isVisibleTab ? () => (
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('Menu')}
-                  style={styles.hamburgerButton}
-                >
-                  <Text style={styles.hamburgerText}>☰</Text>
-                </TouchableOpacity>
-              ) : undefined,
-              tabBarStyle: styles.tabBar,
-              tabBarActiveTintColor: '#B8860B',
-              tabBarInactiveTintColor: '#888',
-              tabBarLabelStyle: styles.tabLabel,
-            };
-          }}
-        >
-          <Tab.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{
-              tabBarIcon: ({ focused }) => (
-                <TabIcon tabName="Home" focused={focused} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Manifest"
-            component={ManifestScreen}
-            options={{
-              tabBarIcon: ({ focused }) => (
-                <TabIcon tabName="Manifest" focused={focused} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Art"
-            component={ArtScreen}
-            options={{
-              tabBarIcon: ({ focused }) => (
-                <TabIcon tabName="Art" focused={focused} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Grow"
-            component={StreakScreen}
-            options={{
-              tabBarIcon: ({ focused }) => (
-                <TabIcon tabName="Grow" focused={focused} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Inspire"
-            component={InspireScreen}
-            options={{
-              tabBarIcon: ({ focused }) => (
-                <TabIcon tabName="Inspire" focused={focused} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Connect"
-            component={CommunityScreen}
-            options={{
-              tabBarIcon: ({ focused }) => (
-                <TabIcon tabName="Connect" focused={focused} />
-              ),
-            }}
-          />
-          <Tab.Screen 
-            name="Menu" 
-            component={MenuScreen}
-            options={{
-              tabBarButton: () => null, // Hides from tab bar
-            }}
-          />
-          <Tab.Screen 
-            name="AboutUs" 
-            component={AboutUsScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-          <Tab.Screen 
-            name="AboutYou" 
-            component={AboutYouScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-          <Tab.Screen 
-            name="Quotes" 
-            component={QuotesScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-          <Tab.Screen 
-            name="Settings" 
-            component={SettingsScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-          <Tab.Screen 
-            name="Legal" 
-            component={LegalScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-          <Tab.Screen 
-            name="Contact" 
-            component={ContactScreen}
-            options={{
-              tabBarButton: () => null,
-            }}
-          />
-        </Tab.Navigator>
-      </NavigationContainer>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#0a0e27',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginTop: 20,
+  },
   tabBar: {
     backgroundColor: '#fffaec',
     borderTopWidth: 2,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,9 +8,19 @@ import {
   Switch,
   Alert,
   TextInput,
-  ImageBackground
+  ImageBackground,
+  ActivityIndicator
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../../config/firebase';
+import { useAuth } from '../../context/AuthContext';
+import {
+  updateUserProfile,
+  checkPseudonymAvailable,
+  claimPseudonym,
+  releasePseudonym,
+} from '../../services/firestoreService';
 import mediumsData from '../../mediums.json';
 
 const TIMEZONES = [
@@ -51,24 +61,35 @@ const TIMEZONE_LABELS = {
   'Australia/Sydney': 'Sydney (AEST/AEDT)',
 };
 
-const ACCOUNT_METHODS = [
-  { key: 'apple', label: 'Apple ID' },
-  { key: 'google', label: 'Google' },
-  { key: 'email', label: 'Email' },
+const NOTIFICATION_OPTIONS = [
+  { key: 'daily', label: 'Daily Reminder' },
+  { key: 'weekly', label: 'Weekly Reminder' },
+  { key: 'none', label: 'No Notifications' },
 ];
 
 const MEDIUM_CATEGORIES = Object.keys(mediumsData);
 
 export default function SettingsScreen({ navigation }) {
-  // Preferences (existing)
-  const [notifications, setNotifications] = useState(true);
-  const [dailyReminder, setDailyReminder] = useState(true);
-  const [anonymous, setAnonymous] = useState(true);
+  const { user, userProfile, refreshProfile } = useAuth();
 
-  // Account
+  // Preferences
+  const [notificationPreference, setNotificationPreference] = useState('daily');
+  const [showNotificationList, setShowNotificationList] = useState(false);
+  const [anonymous, setAnonymous] = useState(true);
+  const [allowWorkBoutique, setAllowWorkBoutique] = useState(false);
+
+  // Account (read-only from auth)
   const [accountMethod, setAccountMethod] = useState('');
   const [email, setEmail] = useState('');
+
+  // Pseudonym
   const [username, setUsername] = useState('');
+  const [originalUsername, setOriginalUsername] = useState('');
+  const [pseudonymAvailable, setPseudonymAvailable] = useState(null);
+  const [checkingPseudonym, setCheckingPseudonym] = useState(false);
+
+  // Birthdate
+  const [birthdate, setBirthdate] = useState('');
 
   // Timezone
   const [timezone, setTimezone] = useState('America/New_York');
@@ -86,35 +107,136 @@ export default function SettingsScreen({ navigation }) {
     loadSettings();
   }, []);
 
+  // Sync from userProfile context when it changes
+  useEffect(() => {
+    if (userProfile) {
+      setAccountMethod(userProfile.accountMethod || '');
+      setEmail(userProfile.email || user?.email || '');
+      setUsername(userProfile.pseudonym || '');
+      setOriginalUsername(userProfile.pseudonym || '');
+      setBirthdate(userProfile.birthdate || '');
+      setTimezone(userProfile.timezone || 'America/New_York');
+      setCurrentLocation(userProfile.currentLocation || { country: '', state: '', city: '' });
+      setHeartLocation(userProfile.heartLocation || { country: '', state: '', city: '' });
+      setFavoriteMediums(userProfile.favoriteMediums || []);
+      setNotificationPreference(userProfile.notificationPreference || 'daily');
+      setAllowWorkBoutique(userProfile.allowWorkBoutique ?? false);
+      setAnonymous(userProfile.anonymous ?? true);
+    }
+  }, [userProfile]);
+
   const loadSettings = async () => {
     try {
       const raw = await AsyncStorage.getItem('app_settings');
       if (raw) {
         const data = JSON.parse(raw);
-        setNotifications(data.notifications ?? true);
-        setDailyReminder(data.dailyReminder ?? true);
-        setAnonymous(data.anonymous ?? true);
-        setAccountMethod(data.accountMethod ?? '');
-        setEmail(data.email ?? '');
-        setUsername(data.username ?? '');
-        setTimezone(data.timezone ?? 'America/New_York');
-        setCurrentLocation(data.currentLocation ?? { country: '', state: '', city: '' });
-        setHeartLocation(data.heartLocation ?? { country: '', state: '', city: '' });
-        setFavoriteMediums(data.favoriteMediums ?? []);
+        // Use AsyncStorage as fallback, Firestore profile (via useEffect above) takes priority
+        if (!userProfile) {
+          setNotificationPreference(
+            data.dailyReminder === false ? 'none' :
+            data.notifications === false ? 'none' : 'daily'
+          );
+          setAnonymous(data.anonymous ?? true);
+          setAccountMethod(data.accountMethod ?? '');
+          setEmail(data.email ?? '');
+          setUsername(data.username ?? '');
+          setOriginalUsername(data.username ?? '');
+          setTimezone(data.timezone ?? 'America/New_York');
+          setCurrentLocation(data.currentLocation ?? { country: '', state: '', city: '' });
+          setHeartLocation(data.heartLocation ?? { country: '', state: '', city: '' });
+          setFavoriteMediums(data.favoriteMediums ?? []);
+        }
       }
     } catch (error) {
       console.log('Error loading settings:', error);
     }
   };
 
+  // Dual save: AsyncStorage + Firestore
   const saveSettings = async (key, value) => {
     try {
+      // AsyncStorage
       const current = await AsyncStorage.getItem('app_settings');
       const settings = current ? JSON.parse(current) : {};
       settings[key] = value;
       await AsyncStorage.setItem('app_settings', JSON.stringify(settings));
+
+      // Firestore
+      if (user) {
+        await updateUserProfile(user.uid, { [key]: value });
+      }
     } catch (error) {
       console.log('Error saving settings:', error);
+    }
+  };
+
+  // Debounced pseudonym check
+  useEffect(() => {
+    if (!username.trim() || username.trim() === originalUsername) {
+      setPseudonymAvailable(null);
+      return;
+    }
+    setCheckingPseudonym(true);
+    const timer = setTimeout(async () => {
+      try {
+        const available = await checkPseudonymAvailable(username);
+        setPseudonymAvailable(available);
+      } catch {
+        setPseudonymAvailable(null);
+      }
+      setCheckingPseudonym(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [username]);
+
+  const handleSavePseudonym = async () => {
+    const newName = username.trim();
+    if (!newName) return;
+    if (newName === originalUsername) return;
+    if (pseudonymAvailable === false) {
+      Alert.alert('Unavailable', 'This pseudonym is already taken.');
+      return;
+    }
+
+    try {
+      // Release old pseudonym
+      if (originalUsername) {
+        await releasePseudonym(originalUsername);
+      }
+      // Claim new one
+      await claimPseudonym(newName, user.uid);
+      // Update Firestore profile
+      await updateUserProfile(user.uid, { pseudonym: newName });
+      // Update AsyncStorage
+      const current = await AsyncStorage.getItem('app_settings');
+      const settings = current ? JSON.parse(current) : {};
+      settings.username = newName;
+      await AsyncStorage.setItem('app_settings', JSON.stringify(settings));
+      // Also update user_profile in AsyncStorage
+      const profileRaw = await AsyncStorage.getItem('user_profile');
+      const profile = profileRaw ? JSON.parse(profileRaw) : {};
+      profile.username = newName;
+      await AsyncStorage.setItem('user_profile', JSON.stringify(profile));
+
+      setOriginalUsername(newName);
+      setPseudonymAvailable(null);
+      await refreshProfile();
+      Alert.alert('Saved', 'Pseudonym updated successfully.');
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Could not update pseudonym.');
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      Alert.alert('No Email', 'No email address associated with this account.');
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert('Email Sent', `A password reset link has been sent to ${email}.`);
+    } catch (error) {
+      Alert.alert('Error', 'Could not send password reset email.');
     }
   };
 
@@ -168,6 +290,15 @@ export default function SettingsScreen({ navigation }) {
     );
   };
 
+  const getAccountMethodLabel = () => {
+    switch (accountMethod) {
+      case 'apple': return 'Apple ID';
+      case 'google': return 'Google';
+      case 'email': return 'Email';
+      default: return accountMethod || 'Not set';
+    }
+  };
+
   return (
     <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
@@ -193,55 +324,62 @@ export default function SettingsScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Account</Text>
 
           <Text style={styles.settingLabel}>Sign-in Method</Text>
-          <View style={styles.methodRow}>
-            {ACCOUNT_METHODS.map(method => (
-              <TouchableOpacity
-                key={method.key}
-                style={[
-                  styles.methodButton,
-                  accountMethod === method.key && styles.methodButtonActive,
-                ]}
-                onPress={() => {
-                  setAccountMethod(method.key);
-                  saveSettings('accountMethod', method.key);
-                }}
-              >
-                <Text style={[
-                  styles.methodButtonText,
-                  accountMethod === method.key && styles.methodButtonTextActive,
-                ]}>{method.label}</Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.readOnlyField}>
+            <Text style={styles.readOnlyText}>{getAccountMethodLabel()}</Text>
           </View>
 
           <Text style={styles.inputLabel}>Email</Text>
-          <TextInput
-            style={styles.textInput}
-            value={email}
-            onChangeText={setEmail}
-            onEndEditing={() => saveSettings('email', email)}
-            placeholder="your@email.com"
-            placeholderTextColor="#555"
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+          <View style={styles.readOnlyField}>
+            <Text style={styles.readOnlyText}>{email || 'Not set'}</Text>
+          </View>
 
-          <Text style={styles.inputLabel}>Username</Text>
+          <Text style={styles.inputLabel}>Pseudonym</Text>
           <TextInput
-            style={styles.textInput}
+            style={[
+              styles.textInput,
+              pseudonymAvailable === true && styles.inputValid,
+              pseudonymAvailable === false && styles.inputInvalid,
+            ]}
             value={username}
             onChangeText={setUsername}
-            onEndEditing={() => saveSettings('username', username)}
-            placeholder="ArtistName"
+            placeholder="Your creative name"
             placeholderTextColor="#555"
           />
+          {checkingPseudonym && <Text style={styles.checkingText}>Checking availability...</Text>}
+          {!checkingPseudonym && pseudonymAvailable === true && (
+            <Text style={styles.availableText}>Available!</Text>
+          )}
+          {!checkingPseudonym && pseudonymAvailable === false && (
+            <Text style={styles.takenText}>Already taken</Text>
+          )}
+          {username.trim() !== originalUsername && pseudonymAvailable === true && (
+            <TouchableOpacity style={styles.saveNameButton} onPress={handleSavePseudonym}>
+              <Text style={styles.saveNameButtonText}>Save Pseudonym</Text>
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => Alert.alert('Coming Soon', 'Password reset will be available in a future update.')}
-          >
-            <Text style={styles.secondaryButtonText}>Password Reset</Text>
-          </TouchableOpacity>
+          <Text style={styles.inputLabel}>Birthdate (mm/dd/yyyy)</Text>
+          <TextInput
+            style={styles.textInput}
+            value={birthdate}
+            onChangeText={(v) => {
+              setBirthdate(v);
+            }}
+            onEndEditing={() => saveSettings('birthdate', birthdate)}
+            placeholder="01/15/1990"
+            placeholderTextColor="#555"
+            keyboardType="numeric"
+            maxLength={10}
+          />
+
+          {accountMethod === 'email' && (
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handlePasswordReset}
+            >
+              <Text style={styles.secondaryButtonText}>Password Reset</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* ===== B. TIMEZONE ===== */}
@@ -422,37 +560,41 @@ export default function SettingsScreen({ navigation }) {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Preferences</Text>
 
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Enable Notifications</Text>
-              <Text style={styles.settingDescription}>Get updates and reminders</Text>
-            </View>
-            <Switch
-              value={notifications}
-              onValueChange={(value) => {
-                setNotifications(value);
-                saveSettings('notifications', value);
-              }}
-              trackColor={{ false: '#333', true: '#9C27B0' }}
-              thumbColor={notifications ? '#FFD700' : '#666'}
-            />
-          </View>
+          {/* Notification Preference Dropdown */}
+          <Text style={styles.settingLabel}>Notification Preference</Text>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => setShowNotificationList(!showNotificationList)}
+          >
+            <Text style={styles.dropdownText}>
+              {NOTIFICATION_OPTIONS.find(o => o.key === notificationPreference)?.label || 'Daily Reminder'}
+            </Text>
+            <Text style={styles.dropdownArrow}>{showNotificationList ? '▲' : '▼'}</Text>
+          </TouchableOpacity>
 
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Daily Reminder</Text>
-              <Text style={styles.settingDescription}>Remind me to practice MAGIC</Text>
+          {showNotificationList && (
+            <View style={styles.dropdownList}>
+              {NOTIFICATION_OPTIONS.map(opt => (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={[
+                    styles.dropdownItem,
+                    notificationPreference === opt.key && styles.dropdownItemActive,
+                  ]}
+                  onPress={() => {
+                    setNotificationPreference(opt.key);
+                    saveSettings('notificationPreference', opt.key);
+                    setShowNotificationList(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.dropdownItemText,
+                    notificationPreference === opt.key && styles.dropdownItemTextActive,
+                  ]}>{opt.label}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <Switch
-              value={dailyReminder}
-              onValueChange={(value) => {
-                setDailyReminder(value);
-                saveSettings('dailyReminder', value);
-              }}
-              trackColor={{ false: '#333', true: '#9C27B0' }}
-              thumbColor={dailyReminder ? '#FFD700' : '#666'}
-            />
-          </View>
+          )}
 
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>
@@ -467,6 +609,22 @@ export default function SettingsScreen({ navigation }) {
               }}
               trackColor={{ false: '#333', true: '#9C27B0' }}
               thumbColor={anonymous ? '#FFD700' : '#666'}
+            />
+          </View>
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Allow Work Boutique</Text>
+              <Text style={styles.settingDescription}>Enable boutique features for your work</Text>
+            </View>
+            <Switch
+              value={allowWorkBoutique}
+              onValueChange={(value) => {
+                setAllowWorkBoutique(value);
+                saveSettings('allowWorkBoutique', value);
+              }}
+              trackColor={{ false: '#333', true: '#9C27B0' }}
+              thumbColor={allowWorkBoutique ? '#FFD700' : '#666'}
             />
           </View>
         </View>
@@ -529,9 +687,6 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontWeight: 'bold',
   },
-  backButtonPlaceholder: {
-    width: 44,
-  },
   header: {
     fontSize: 32,
     fontWeight: 'bold',
@@ -555,32 +710,17 @@ const styles = StyleSheet.create({
   },
 
   // Account section
-  methodRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  methodButton: {
-    flex: 1,
-    backgroundColor: '#2a2a3a',
+  readOnlyField: {
+    backgroundColor: '#1e1e2e',
     borderRadius: 8,
     padding: 12,
-    alignItems: 'center',
-    borderWidth: 2,
+    marginBottom: 16,
+    borderWidth: 1,
     borderColor: '#333',
   },
-  methodButtonActive: {
-    borderColor: '#FFD700',
-    backgroundColor: '#2a2a1a',
-  },
-  methodButtonText: {
-    color: '#888',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  methodButtonTextActive: {
-    color: '#FFD700',
+  readOnlyText: {
+    color: '#999',
+    fontSize: 16,
   },
   inputLabel: {
     fontSize: 14,
@@ -597,6 +737,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#444',
+  },
+  inputValid: {
+    borderColor: '#22C55E',
+  },
+  inputInvalid: {
+    borderColor: '#FF6B6B',
+  },
+  checkingText: {
+    color: '#87CEEB',
+    fontSize: 12,
+    marginTop: 4,
+  },
+  availableText: {
+    color: '#22C55E',
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  takenText: {
+    color: '#FF6B6B',
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  saveNameButton: {
+    backgroundColor: '#22C55E',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  saveNameButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   secondaryButton: {
     backgroundColor: '#2a2a3a',
@@ -760,7 +936,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Preferences (existing styles)
+  // Preferences
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
