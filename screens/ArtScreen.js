@@ -16,12 +16,23 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { Audio } from 'expo-av';
+import * as ImagePicker from 'expo-image-picker';
 import promptsData from '../prompts.json';
+import { useAuth } from '../context/AuthContext';
+import {
+  getUserCourageForDate,
+  uploadCourage,
+  uploadMediaToStorage,
+} from '../services/firestoreService';
+import { getESTDate } from '../utils/dateUtils';
 
 const MIN_TIMER_MINUTES = 1;
 const MAX_TIMER_MINUTES = 180;
 
 export default function ArtScreen() {
+  const { user, userProfile } = useAuth();
+  const [courageUploadedToday, setCourageUploadedToday] = useState(false);
+
   // Daily timer (adjustable, default 20 minutes)
   const [timerSetting, setTimerSetting] = useState(20); // minutes
   const [dailyTime, setDailyTime] = useState(20 * 60); // seconds remaining
@@ -52,6 +63,17 @@ export default function ArtScreen() {
   const dailyEndTimeRef = useRef(null);   // timestamp when daily timer should finish
   const weeklyStartTimeRef = useRef(null); // timestamp when weekly stopwatch was started
   const weeklyBaseRef = useRef(0);         // accumulated weekly seconds before current run
+
+  // Check if courage already uploaded today
+  useEffect(() => {
+    const checkCourage = async () => {
+      if (user?.uid) {
+        const existing = await getUserCourageForDate(user.uid, getESTDate());
+        setCourageUploadedToday(!!existing);
+      }
+    };
+    checkCourage();
+  }, [user]);
 
   // Load saved weekly time on mount
   useEffect(() => {
@@ -430,50 +452,67 @@ export default function ArtScreen() {
       Alert.alert('Empty', 'Add something first!');
       return;
     }
+    if (courageUploadedToday) {
+      Alert.alert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
+      return;
+    }
     Alert.alert(
       'Upload with COURAGE',
-      `Your ${modeLabels[writeMode].toLowerCase()} will be submitted for voting. Ready to share?`,
+      `Your ${modeLabels[writeMode].toLowerCase()} will be submitted for anonymous voting. Ready to share?`,
       [
         { text: 'Not Yet', style: 'cancel' },
         {
           text: 'Share!',
           onPress: async () => {
             try {
-              const today = new Date().toISOString().split('T')[0];
+              const today = getESTDate();
               const label = modeLabels[writeMode] || 'Art';
-              const artwork = {
+              const title = todaysChallenge || `${label} from ${today}`;
+
+              // For text-based courage, upload as a text blob to Storage
+              const textBlob = new Blob([writeText.trim()], { type: 'text/plain' });
+              const storagePath = `courages/${user.uid}/${today}_${Date.now()}.txt`;
+              // For text courages, store the text directly (no media URL needed)
+              // We'll use mediaType 'image' with an empty URL and store text in title
+
+              await uploadCourage(user.uid, {
+                pseudonym: userProfile?.pseudonym || '',
+                title: `${title}: ${writeText.trim().substring(0, 200)}`,
+                mediaType: 'image',
+                mediaUrl: '',
+                date: today,
+                anonymous: userProfile?.anonymous ?? false,
+              });
+
+              setCourageUploadedToday(true);
+
+              // Save to personal gallery locally
+              const personalRaw = await AsyncStorage.getItem('personal_artworks');
+              const personal = personalRaw ? JSON.parse(personalRaw) : [];
+              personal.push({
                 id: Date.now(),
                 type: writeMode,
                 text: writeText.trim(),
-                artist: 'Anonymous',
-                title: todaysChallenge || `${label} from ${today}`,
-                prompt: todaysChallenge,
+                artist: 'You',
+                title,
                 date: today,
                 isPublic: false,
                 pendingVoting: true,
-                votingSubmitDate: today,
-                rankings: []
-              };
-              // Save to voting queue
-              const pendingRaw = await AsyncStorage.getItem('pending_voting_artworks');
-              const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
-              pending.push(artwork);
-              await AsyncStorage.setItem('pending_voting_artworks', JSON.stringify(pending));
-              // Also save to personal
-              const personalRaw = await AsyncStorage.getItem('personal_artworks');
-              const personal = personalRaw ? JSON.parse(personalRaw) : [];
-              personal.push({ ...artwork, pendingVoting: true });
+              });
               await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
+
               // Mark art done for today
+              await AsyncStorage.setItem(`art_created_${today}`, 'true');
               const existing = await AsyncStorage.getItem(`art_time_${today}`);
               if (!existing || parseInt(existing) === 0) {
                 await AsyncStorage.setItem(`art_time_${today}`, '1');
               }
-              await AsyncStorage.setItem(`art_created_${today}`, 'true');
+
               setWriteModalVisible(false);
-              Alert.alert('Courage!', `${label} submitted for voting and saved to your personal gallery.`);
+              Alert.alert('Courage!', `${label} submitted for voting!`);
             } catch (e) {
-              Alert.alert('Error', 'Could not upload writing.');
+              console.log('Courage text upload error:', e);
+              Alert.alert('Error', 'Could not upload. Please try again.');
             }
           }
         }
@@ -485,90 +524,132 @@ export default function ArtScreen() {
 
   const handleCapture = () => openArtModal('capture');
 
-  // Simulate image selection (in real app, this would use image picker)
-  const simulateImageSelection = () => {
-    // Random sample images for demo
-    const sampleImages = [
-      'https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1545551816-c691d80f8e31?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1580674285054-bed31e145f59?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=400&h=400&fit=crop'
-    ];
-    return sampleImages[Math.floor(Math.random() * sampleImages.length)];
+  // Pick an image from the media library
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (result.canceled) return null;
+    return { uri: result.assets[0].uri, mediaType: 'image' };
+  };
+
+  // Pick audio (use document picker approach or audio recording)
+  const pickAudio = async () => {
+    // For now, use image picker with all media types and filter
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      quality: 0.8,
+    });
+    if (result.canceled) return null;
+    const asset = result.assets[0];
+    // Reject video
+    if (asset.type === 'video') {
+      Alert.alert('Not Accepted', 'Video recordings are not accepted at this time. Please upload an image or audio recording.');
+      return null;
+    }
+    const isAudio = asset.uri?.match(/\.(mp3|wav|m4a|aac|ogg)$/i);
+    return { uri: asset.uri, mediaType: isAudio ? 'audio' : 'image' };
   };
 
   // Handle uploads
   const handlePrivateUpload = async () => {
     try {
-      const imageUrl = simulateImageSelection();
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Create artwork object
+      const picked = await pickImage();
+      if (!picked) return;
+
+      const today = getESTDate();
       const artwork = {
         id: Date.now(),
-        imageUrl: imageUrl,
+        imageUrl: picked.uri,
         artist: 'You',
         title: `Art from ${today}`,
         prompt: todaysChallenge,
         date: today,
-        isPublic: false
+        isPublic: false,
       };
 
-      // Save to private gallery
       const existingPrivate = await AsyncStorage.getItem('private_artworks');
       const privateArtworks = existingPrivate ? JSON.parse(existingPrivate) : [];
       privateArtworks.push(artwork);
       await AsyncStorage.setItem('private_artworks', JSON.stringify(privateArtworks));
 
-      Alert.alert('Success!', 'Artwork saved to your private gallery! 🎨\n\nOnly you can see it.');
+      // Mark art done for today
+      await AsyncStorage.setItem(`art_created_${today}`, 'true');
+      const existing = await AsyncStorage.getItem(`art_time_${today}`);
+      if (!existing || parseInt(existing) === 0) {
+        await AsyncStorage.setItem(`art_time_${today}`, '1');
+      }
+
+      Alert.alert('Saved!', 'Artwork saved to your private gallery. Only you can see it.');
     } catch (error) {
       Alert.alert('Error', 'Could not save artwork');
     }
   };
 
   const handleCourageUpload = async () => {
+    if (courageUploadedToday) {
+      Alert.alert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
+      return;
+    }
+
+    const picked = await pickAudio(); // allows images and audio, rejects video
+    if (!picked) return;
+
     Alert.alert(
       'Upload with COURAGE',
-      'Your artwork will be submitted for voting. It will appear in public galleries after voting day. Ready to share your creativity?',
+      'Your artwork will be submitted for anonymous voting. Ready to share?',
       [
         { text: 'Not Yet', style: 'cancel' },
         {
           text: 'Share!',
           onPress: async () => {
             try {
-              const imageUrl = simulateImageSelection();
-              const today = new Date().toISOString().split('T')[0];
+              const today = getESTDate();
+              const title = todaysChallenge || `Art from ${today}`;
 
-              // Create artwork object
-              const artwork = {
+              // Upload media to Firebase Storage
+              const storagePath = `courages/${user.uid}/${today}_${Date.now()}`;
+              const mediaUrl = await uploadMediaToStorage(picked.uri, storagePath);
+
+              // Create courage in Firestore
+              await uploadCourage(user.uid, {
+                pseudonym: userProfile?.pseudonym || '',
+                title,
+                mediaType: picked.mediaType,
+                mediaUrl,
+                date: today,
+                anonymous: userProfile?.anonymous ?? false,
+              });
+
+              setCourageUploadedToday(true);
+
+              // Also save locally for personal reference
+              const personalRaw = await AsyncStorage.getItem('personal_artworks');
+              const personal = personalRaw ? JSON.parse(personalRaw) : [];
+              personal.push({
                 id: Date.now(),
-                imageUrl: imageUrl,
-                artist: 'Anonymous',
-                title: `${todaysChallenge}`,
-                prompt: todaysChallenge,
+                imageUrl: picked.uri,
+                artist: 'You',
+                title,
                 date: today,
                 isPublic: false,
                 pendingVoting: true,
-                votingSubmitDate: today,
-                rankings: []
-              };
+              });
+              await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
 
-              // Save to pending voting queue (held until after voting day)
-              const existingPending = await AsyncStorage.getItem('pending_voting_artworks');
-              const pendingArtworks = existingPending ? JSON.parse(existingPending) : [];
-              pendingArtworks.push(artwork);
-              await AsyncStorage.setItem('pending_voting_artworks', JSON.stringify(pendingArtworks));
+              // Mark art done for today
+              await AsyncStorage.setItem(`art_created_${today}`, 'true');
+              const existing = await AsyncStorage.getItem(`art_time_${today}`);
+              if (!existing || parseInt(existing) === 0) {
+                await AsyncStorage.setItem(`art_time_${today}`, '1');
+              }
 
-              // Also save to personal gallery
-              const existingPersonal = await AsyncStorage.getItem('personal_artworks');
-              const personalArtworks = existingPersonal ? JSON.parse(existingPersonal) : [];
-              personalArtworks.push({ ...artwork, pendingVoting: true });
-              await AsyncStorage.setItem('personal_artworks', JSON.stringify(personalArtworks));
-
-              Alert.alert('Courage!', 'Artwork submitted for voting! It will appear in public galleries after voting day.\n\nAlso saved to your private gallery.');
+              Alert.alert('Courage!', 'Your artwork has been submitted for voting!');
             } catch (error) {
-              Alert.alert('Error', 'Could not upload artwork');
+              console.log('Courage upload error:', error);
+              Alert.alert('Error', 'Could not upload artwork. Please try again.');
             }
           }
         }

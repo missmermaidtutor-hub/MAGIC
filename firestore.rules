@@ -52,6 +52,44 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ===== DAILY COURAGES COLLECTION =====
+    match /dailyCourages/{courageId} {
+      // All authenticated users can read courages (for voting)
+      allow read: if request.auth != null;
+
+      // Authenticated users can create their own courage
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+
+    // ===== VOTES COLLECTION =====
+    match /votes/{voteId} {
+      // Users can read their own votes
+      allow read: if request.auth != null;
+
+      // Authenticated users can create votes (not for their own courage)
+      allow create: if request.auth != null
+                    && request.resource.data.voterUid == request.auth.uid;
+
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+
+    // ===== DAILY WINNERS COLLECTION =====
+    match /dailyWinners/{dateId} {
+      // All authenticated users can read winners
+      allow read: if request.auth != null;
+
+      // Any authenticated user can create a winner (first-writer wins via transaction)
+      allow create: if request.auth != null;
+
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+
     // Deny everything else by default
     match /{document=**} {
       allow read, write: if false;

@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Alert, Linking, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Linking, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Audio } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
+import { calculateAndSetWinner, getRecentWinners } from '../services/firestoreService';
+import { getESTYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
@@ -389,68 +392,6 @@ const Heart = ({ size = 24, filled = false, onPress }) => (
 // Gold arrow image
 const goldArrowImage = require('../Cliparts/Gold arrow.jpg');
 
-// Artwork images from ARTOWORKS folder
-const artworkImages = [
-  require('../Cliparts/ARTOWORKS/10-18.jpg'),
-  require('../Cliparts/ARTOWORKS/513903252_10162679994762264_6498884796748588977_n.jpg'),
-  require('../Cliparts/ARTOWORKS/522639533_10162839591557264_4592564046517411659_n.jpg'),
-  require('../Cliparts/ARTOWORKS/523124927_10171872896690024_6576685918562285664_n.jpg'),
-  require('../Cliparts/ARTOWORKS/524144317_10162839591567264_3907841676702630020_n.jpg'),
-  require('../Cliparts/ARTOWORKS/524290019_10171872894275024_1704301799494258943_n.jpg'),
-  require('../Cliparts/ARTOWORKS/524578717_10171872892030024_3575163892748854717_n.jpg'),
-  require('../Cliparts/ARTOWORKS/524793848_10162839591502264_8318629657123426505_n.jpg'),
-  require('../Cliparts/ARTOWORKS/540119055_10162967375152264_4178779566219057526_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555085754_10237876767528314_2990466336443851643_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555101659_10237876767848322_6863063159995933424_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555445926_10237876768368335_6592243084014250211_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555447442_10237876768088328_2178101301320484529_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555501898_10163095270207264_8889387783471590897_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555507844_10162396307819195_4266799133058546729_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555573460_10237876768008326_7582047112777369094_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555583717_10163109406592264_4681170089551922231_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555617493_10237876767448312_7739267849925085879_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555723306_10162396307829195_1291367652875471158_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555724480_10163095270022264_908624543671562245_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555867320_10237876768648342_1296041638859570596_n.jpg'),
-  require('../Cliparts/ARTOWORKS/555895196_10163095270007264_5602747509153560487_n.jpg'),
-  require('../Cliparts/ARTOWORKS/556444952_10237876768448337_3573269262335540923_n.jpg'),
-  require('../Cliparts/ARTOWORKS/556489754_10163095269937264_3934142205780901707_n.jpg'),
-  require('../Cliparts/ARTOWORKS/1st Profile Pic.jpg'),
-];
-
-// Winner pseudonyms for daily winners
-const WINNER_PSEUDONYMS = [
-  'Luna Starweaver', 'Oak Thornberry', 'Coral Reef', 'Blaze Phoenix',
-  'Sage Moonwhisper', 'River Stone', 'Ember Glow', 'Willow Creek',
-  'Azure Bloom', 'Jade Whisper', 'Crimson Tide', 'Frost Petal',
-  'Storm Dancer', 'Golden Vine', 'Silver Mist', 'Dawn Breaker',
-  'Echo Star', 'Fern Hollow', 'Dusk Weaver', 'Iris Moon',
-  'Pearl Harbor', 'Raven Song', 'Maple Shade', 'Cobalt Sky',
-  'Ivy Rose',
-];
-
-// Generate one winner per day going backwards from today
-const generateWinners = () => {
-  const winners = [];
-  const today = new Date();
-  for (let i = 0; i < artworkImages.length; i++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    const year = date.getFullYear();
-    winners.push({
-      date: dateStr,
-      displayDate: `${month}/${day}/${year}`,
-      imageIndex: i,
-      pseudonym: WINNER_PSEUDONYMS[i % WINNER_PSEUDONYMS.length],
-    });
-  }
-  return winners;
-};
-
-const dailyWinners = generateWinners();
 
 // Candle component — lights up when clicked
 const Candle = ({ lit = false, onPress, size = 40 }) => (
@@ -649,7 +590,10 @@ export default function HomeScreen({ navigation }) {
   const [quoteHearted, setQuoteHearted] = useState(false); // synced with hearted_quotes in AsyncStorage
   const goalLockTimerRef = useRef(null);
   const [savedArtworks, setSavedArtworks] = useState(new Set());
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [winners, setWinners] = useState([]);
+  const [currentWinnerIndex, setCurrentWinnerIndex] = useState(0);
+  const [winnerSound, setWinnerSound] = useState(null);
+  const [isPlayingWinner, setIsPlayingWinner] = useState(false);
   const [todayQuote, setTodayQuote] = useState({ quote: '', author: '' });
   const [todaysChallenge, setTodaysChallenge] = useState('');
   const [todaysCriterion, setTodaysCriterion] = useState('');
@@ -673,6 +617,7 @@ export default function HomeScreen({ navigation }) {
     loadGoals();
     loadSavedArtworks();
     loadQuoteHeartedState();
+    loadWinners();
   }, []);
 
   // Re-sync pseudonym when userProfile updates
@@ -682,15 +627,25 @@ export default function HomeScreen({ navigation }) {
     }
   }, [userProfile]);
 
-  // Reload hearted state, star data, and pseudonym every time this screen gets focus
+  // Reload hearted state, star data, pseudonym, and winners every time this screen gets focus
   useFocusEffect(
     useCallback(() => {
       loadQuoteHeartedState();
       loadStreakData();
       loadPseudonym();
       refreshProfile();
+      loadWinners();
     }, [todayQuote, userProfile])
   );
+
+  // Cleanup winner audio on unmount
+  useEffect(() => {
+    return () => {
+      if (winnerSound) {
+        winnerSound.unloadAsync();
+      }
+    };
+  }, [winnerSound]);
 
   const loadQuoteHeartedState = async () => {
     try {
@@ -925,14 +880,14 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // Save currently displayed artwork to personal archive on Connect page
+  // Load saved/favorited winner artworks (by courageId)
   const loadSavedArtworks = async () => {
     try {
       const existingRaw = await AsyncStorage.getItem('favorite_artworks');
       if (existingRaw) {
         const existing = JSON.parse(existingRaw);
-        const indices = new Set(existing.map(a => a.index));
-        setSavedArtworks(indices);
+        const ids = new Set(existing.map(a => a.courageId).filter(Boolean));
+        setSavedArtworks(ids);
       }
     } catch (error) {
       console.log('Error loading saved artworks:', error);
@@ -940,36 +895,96 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleFavoriteArtwork = async () => {
+    const currentWinner = winners[currentWinnerIndex];
+    if (!currentWinner) return;
+
     try {
       const existingRaw = await AsyncStorage.getItem('favorite_artworks');
       const existing = existingRaw ? JSON.parse(existingRaw) : [];
 
-      if (savedArtworks.has(currentImageIndex)) {
+      if (savedArtworks.has(currentWinner.courageId)) {
         // Remove from favorites
-        const filtered = existing.filter(a => a.index !== currentImageIndex);
+        const filtered = existing.filter(a => a.courageId !== currentWinner.courageId);
         await AsyncStorage.setItem('favorite_artworks', JSON.stringify(filtered));
         setSavedArtworks(prev => {
           const next = new Set(prev);
-          next.delete(currentImageIndex);
+          next.delete(currentWinner.courageId);
           return next;
         });
       } else {
         // Add to favorites
         const artwork = {
           id: `fav_${Date.now()}`,
-          index: currentImageIndex,
-          title: `Artwork ${currentImageIndex + 1}`,
+          courageId: currentWinner.courageId,
+          title: currentWinner.title || 'Untitled',
+          pseudonym: currentWinner.pseudonym || 'Anonymous',
+          mediaType: currentWinner.mediaType,
+          mediaUrl: currentWinner.mediaUrl,
+          winnerDate: currentWinner.date,
           source: 'home',
           date: getDateString(new Date()),
           savedAt: new Date().toISOString(),
         };
         existing.push(artwork);
         await AsyncStorage.setItem('favorite_artworks', JSON.stringify(existing));
-        setSavedArtworks(prev => new Set([...prev, currentImageIndex]));
+        setSavedArtworks(prev => new Set([...prev, currentWinner.courageId]));
       }
     } catch (error) {
       console.log('Error toggling favorite:', error);
     }
+  };
+
+  // Load winners from Firestore
+  const loadWinners = async () => {
+    try {
+      // Calculate yesterday's winner if not already done
+      const yesterday = getESTYesterday();
+      await calculateAndSetWinner(yesterday);
+
+      // Fetch recent winners for browsing
+      const recent = await getRecentWinners(25);
+      setWinners(recent);
+      if (recent.length > 0 && currentWinnerIndex >= recent.length) {
+        setCurrentWinnerIndex(0);
+      }
+    } catch (error) {
+      console.log('Error loading winners:', error);
+    }
+  };
+
+  // Play/pause audio for audio-type winners
+  const playWinnerAudio = async (url) => {
+    try {
+      if (winnerSound) {
+        await winnerSound.unloadAsync();
+        setWinnerSound(null);
+      }
+      if (isPlayingWinner) {
+        setIsPlayingWinner(false);
+        return;
+      }
+      const { sound } = await Audio.Sound.createAsync({ uri: url });
+      setWinnerSound(sound);
+      setIsPlayingWinner(true);
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.didJustFinish) {
+          setIsPlayingWinner(false);
+        }
+      });
+      await sound.playAsync();
+    } catch (error) {
+      console.log('Error playing winner audio:', error);
+    }
+  };
+
+  // Stop audio when switching winners
+  const switchWinner = async (newIndex) => {
+    if (winnerSound) {
+      await winnerSound.unloadAsync();
+      setWinnerSound(null);
+      setIsPlayingWinner(false);
+    }
+    setCurrentWinnerIndex(newIndex);
   };
 
   const loadStreakData = async () => {
@@ -1243,7 +1258,7 @@ export default function HomeScreen({ navigation }) {
         {/* Gallery buttons aligned to art box edges, above artwork */}
         <View style={styles.galleryButtonRow}>
           <View style={styles.galleryButtonLeft}>
-            <GoldFrame onPress={() => setCurrentImageIndex(0)}>
+            <GoldFrame onPress={() => switchWinner(0)}>
               <View style={styles.galleryButtonInner}>
                 <Text style={styles.galleryButtonText}>Show Current{'\n'}Winner</Text>
               </View>
@@ -1263,29 +1278,51 @@ export default function HomeScreen({ navigation }) {
           <GoldFrame>
             <View style={styles.winnerDateInner}>
               <Text style={styles.winnerDateText}>
-                {dailyWinners[currentImageIndex % dailyWinners.length]?.displayDate} winner
+                {winners.length > 0
+                  ? `${formatDisplayDate(winners[currentWinnerIndex]?.date)} winner`
+                  : 'No winners yet'}
               </Text>
             </View>
           </GoldFrame>
         </View>
 
-        {/* Artwork display */}
+        {/* Winner artwork display */}
         <View style={styles.imageContainer}>
-          <TouchableOpacity onPress={() => setCurrentImageIndex(Math.min(artworkImages.length - 1, currentImageIndex + 1))} style={styles.arrowButton}>
+          <TouchableOpacity
+            onPress={() => winners.length > 1 && switchWinner(Math.min(winners.length - 1, currentWinnerIndex + 1))}
+            style={styles.arrowButton}
+          >
             <Image source={goldArrowImage} style={[styles.arrowImage, { transform: [{ scaleX: -1 }] }]} resizeMode="contain" />
           </TouchableOpacity>
 
           <GoldFrame thickness={50}>
             <View style={styles.imageFrameInner}>
-              <Image
-                source={artworkImages[currentImageIndex % artworkImages.length]}
-                style={styles.artworkImage}
-                resizeMode="cover"
-              />
+              {winners.length === 0 ? (
+                <View style={styles.noWinnerPlaceholder}>
+                  <Text style={styles.noWinnerText}>Winners will{'\n'}appear here</Text>
+                </View>
+              ) : winners[currentWinnerIndex]?.mediaType === 'audio' ? (
+                <TouchableOpacity
+                  style={styles.audioWinnerFrame}
+                  onPress={() => playWinnerAudio(winners[currentWinnerIndex]?.mediaUrl)}
+                >
+                  <Text style={styles.audioPlayIcon}>{isPlayingWinner ? '⏸' : '▶'}</Text>
+                  <Text style={styles.audioWinnerTitle}>{winners[currentWinnerIndex]?.title || 'Audio Courage'}</Text>
+                </TouchableOpacity>
+              ) : (
+                <Image
+                  source={{ uri: winners[currentWinnerIndex]?.mediaUrl }}
+                  style={styles.artworkImage}
+                  resizeMode="cover"
+                />
+              )}
             </View>
           </GoldFrame>
 
-          <TouchableOpacity onPress={() => setCurrentImageIndex(Math.max(0, currentImageIndex - 1))} style={styles.arrowButton}>
+          <TouchableOpacity
+            onPress={() => winners.length > 1 && switchWinner(Math.max(0, currentWinnerIndex - 1))}
+            style={styles.arrowButton}
+          >
             <Image source={goldArrowImage} style={styles.arrowImage} resizeMode="contain" />
           </TouchableOpacity>
         </View>
@@ -1295,7 +1332,9 @@ export default function HomeScreen({ navigation }) {
           <GoldFrame>
             <View style={styles.winnerNameInner}>
               <Text style={styles.winnerNameText}>
-                {dailyWinners[currentImageIndex % dailyWinners.length]?.pseudonym}
+                {winners.length > 0
+                  ? (winners[currentWinnerIndex]?.pseudonym || 'Anonymous')
+                  : '---'}
               </Text>
             </View>
           </GoldFrame>
@@ -1320,7 +1359,7 @@ export default function HomeScreen({ navigation }) {
           </View>
 
           <Candle
-            lit={savedArtworks.has(currentImageIndex)}
+            lit={winners.length > 0 && savedArtworks.has(winners[currentWinnerIndex]?.courageId)}
             onPress={() => handleFavoriteArtwork()}
             size={44}
           />
@@ -1730,5 +1769,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#7c8b77',
     marginTop: 2,
+  },
+  noWinnerPlaceholder: {
+    width: 240,
+    height: 240,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a2e',
+  },
+  noWinnerText: {
+    color: '#4a5a7a',
+    fontSize: 16,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  audioWinnerFrame: {
+    width: 240,
+    height: 240,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a2e',
+  },
+  audioPlayIcon: {
+    fontSize: 48,
+    color: '#FFD700',
+    marginBottom: 12,
+  },
+  audioWinnerTitle: {
+    fontSize: 14,
+    color: '#cfe8c7',
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });

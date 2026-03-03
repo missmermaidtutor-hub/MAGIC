@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,77 +7,63 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  Share,
   Modal,
   Dimensions,
-  ImageBackground
+  ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import { Audio } from 'expo-av';
 import rankingCriteria from '../ranking-criteria.json';
+import { useAuth } from '../context/AuthContext';
+import {
+  getCouragesForDate,
+  getUserVotesForDate,
+  submitVoteBatch,
+} from '../services/firestoreService';
+import { getESTDate, getESTYesterday, getESTDayBeforeYesterday } from '../utils/dateUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export default function InspireScreen({ navigation }) {
+  const { user } = useAuth();
   const [todaysCriterion, setTodaysCriterion] = useState('');
-  const [rankings, setRankings] = useState({});
-  const [favorites, setFavorites] = useState(new Set());
-  const [hasRankedToday, setHasRankedToday] = useState(false);
-  const [allArtworks, setAllArtworks] = useState([]);
-  const [currentBatch, setCurrentBatch] = useState(0);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [batchesCompleted, setBatchesCompleted] = useState(0);
+  const [rankings, setRankings] = useState({}); // { courageId: score }
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [allDone, setAllDone] = useState(false);
+  const [currentSet, setCurrentSet] = useState([]); // 4 courages to vote on
+  const [votedCourageIds, setVotedCourageIds] = useState(new Set());
+  const [availableCourages, setAvailableCourages] = useState([]); // all eligible, minus own
+  const [fillerIds, setFillerIds] = useState(new Set()); // IDs from previous day (not eligible for winner)
   const [fullViewArtwork, setFullViewArtwork] = useState(null);
+  const [playingAudioId, setPlayingAudioId] = useState(null);
+  const soundRef = useRef(null);
 
-  const MAX_VOTING_BATCHES = 2;
-
-  useEffect(() => {
-    loadArtworks();
-  }, []);
-
-  const loadArtworks = async () => {
-    try {
-      const publicData = await AsyncStorage.getItem('public_artworks');
-      if (publicData) {
-        const artworks = JSON.parse(publicData);
-        const shuffled = artworks.sort(() => Math.random() - 0.5);
-        setAllArtworks(shuffled);
-      } else {
-        setAllArtworks(getSampleArtworks());
-      }
-    } catch (error) {
-      console.log('Error loading artworks:', error);
-      setAllArtworks(getSampleArtworks());
-    }
-  };
-
-  const getSampleArtworks = () => {
-    return [
-      { id: 1, imageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=400&fit=crop', artist: 'Artist A', title: 'Abstract Thoughts', prompt: 'Sample artwork' },
-      { id: 2, imageUrl: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=400&fit=crop', artist: 'Artist B', title: 'Color Study', prompt: 'Sample artwork' },
-      { id: 3, imageUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=400&fit=crop', artist: 'Artist C', title: 'Geometric Form', prompt: 'Sample artwork' },
-      { id: 4, imageUrl: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=400&h=400&fit=crop', artist: 'Artist D', title: 'Expression', prompt: 'Sample artwork' },
-      { id: 5, imageUrl: 'https://images.unsplash.com/photo-1549887534-1541e9326642?w=400&h=400&fit=crop', artist: 'Artist E', title: 'Movement', prompt: 'Sample artwork' },
-      { id: 6, imageUrl: 'https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=400&h=400&fit=crop', artist: 'Artist F', title: 'Flow', prompt: 'Sample artwork' },
-      { id: 7, imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop', artist: 'Artist G', title: 'Energy', prompt: 'Sample artwork' },
-      { id: 8, imageUrl: 'https://images.unsplash.com/photo-1545551816-c691d80f8e31?w=400&h=400&fit=crop', artist: 'Artist H', title: 'Harmony', prompt: 'Sample artwork' },
-    ];
-  };
-
-  const currentArtworks = allArtworks.slice(currentBatch * 4, (currentBatch * 4) + 4);
-  const hasMore = (currentBatch * 4) + 4 < allArtworks.length;
-  const inFreeScrollMode = batchesCompleted >= MAX_VOTING_BATCHES;
-  const remainingArtworks = allArtworks; // show all artworks for free browsing after voting
-
+  // Load criterion
   useEffect(() => {
     loadTodaysCriterion();
-    loadRankings();
-    loadFavorites();
-    checkIfRankedToday();
   }, []);
+
+  // Load courages and votes when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      loadVotingData();
+      return () => {
+        // Cleanup audio on unfocus
+        if (soundRef.current) {
+          soundRef.current.unloadAsync();
+          soundRef.current = null;
+          setPlayingAudioId(null);
+        }
+      };
+    }, [user])
+  );
 
   const loadTodaysCriterion = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getESTDate();
       const savedDate = await AsyncStorage.getItem('criterion_date');
       const savedCriterion = await AsyncStorage.getItem('todays_criterion');
       if (savedDate === today && savedCriterion) {
@@ -96,168 +82,231 @@ export default function InspireScreen({ navigation }) {
     }
   };
 
-  const loadRankings = async () => {
+  const loadVotingData = async () => {
+    if (!user?.uid) return;
+    setLoading(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const saved = await AsyncStorage.getItem(`rankings_${today}`);
-      if (saved) setRankings(JSON.parse(saved));
+      // Voting date = yesterday EST (courages uploaded yesterday are today's voting pool)
+      const votingDate = getESTYesterday();
+      const prevDate = getESTDayBeforeYesterday();
+
+      // Fetch all courages for the voting date
+      const courages = await getCouragesForDate(votingDate);
+
+      // Filter out user's own courage
+      const eligible = courages.filter(c => c.uid !== user.uid);
+
+      // Get user's existing votes for this voting date
+      const existingVotes = await getUserVotesForDate(user.uid, votingDate);
+      const alreadyVotedIds = new Set(existingVotes.map(v => v.courageId));
+
+      setAvailableCourages(eligible);
+      setVotedCourageIds(alreadyVotedIds);
+
+      // Check if all eligible courages have been voted on
+      const unvoted = eligible.filter(c => !alreadyVotedIds.has(c.id));
+
+      if (unvoted.length === 0 && eligible.length > 0) {
+        // All voted on
+        setAllDone(true);
+        setCurrentSet([]);
+      } else if (unvoted.length >= 4) {
+        // Pick 4 random unvoted courages
+        const shuffled = [...unvoted].sort(() => Math.random() - 0.5);
+        setCurrentSet(shuffled.slice(0, 4));
+        setAllDone(false);
+      } else if (unvoted.length > 0 && unvoted.length < 4) {
+        // Need fillers from previous day
+        const prevCourages = await getCouragesForDate(prevDate);
+        const prevEligible = prevCourages.filter(c => c.uid !== user.uid);
+        const shuffledPrev = [...prevEligible].sort(() => Math.random() - 0.5);
+        const fillersNeeded = 4 - unvoted.length;
+        const fillers = shuffledPrev.slice(0, Math.min(fillersNeeded, 3));
+        const newFillerIds = new Set(fillers.map(f => f.id));
+        setFillerIds(newFillerIds);
+
+        if (unvoted.length + fillers.length >= 4) {
+          setCurrentSet([...unvoted, ...fillers].slice(0, 4));
+          setAllDone(false);
+        } else {
+          // Can't make a set of 4
+          setAllDone(true);
+          setCurrentSet([]);
+        }
+      } else {
+        // No courages available at all
+        setCurrentSet([]);
+        setAllDone(eligible.length > 0);
+      }
     } catch (error) {
-      console.log('Error loading rankings:', error);
+      console.log('Error loading voting data:', error);
     }
+    setLoading(false);
   };
 
-  const loadFavorites = async () => {
-    try {
-      const saved = await AsyncStorage.getItem('favorite_artworks');
-      if (saved) setFavorites(new Set(JSON.parse(saved)));
-    } catch (error) {
-      console.log('Error loading favorites:', error);
-    }
-  };
-
-  const checkIfRankedToday = async () => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const ranked = await AsyncStorage.getItem(`ranked_${today}`);
-      setHasRankedToday(ranked === 'true');
-    } catch (error) {
-      console.log('Error checking ranked status:', error);
-    }
-  };
-
-  const saveRankings = async (newRankings) => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      await AsyncStorage.setItem(`rankings_${today}`, JSON.stringify(newRankings));
-      setRankings(newRankings);
-    } catch (error) {
-      console.log('Error saving rankings:', error);
-    }
-  };
-
-  const saveFavorites = async (newFavorites) => {
-    try {
-      await AsyncStorage.setItem('favorite_artworks', JSON.stringify([...newFavorites]));
-      setFavorites(newFavorites);
-    } catch (error) {
-      console.log('Error saving favorites:', error);
-    }
-  };
-
-  const handleRank = (artworkId, score) => {
-    if (isSubmitted) return;
-    const newRankings = { ...rankings, [artworkId]: score };
-    saveRankings(newRankings);
+  const handleRank = (courageId, score) => {
+    setRankings(prev => ({ ...prev, [courageId]: score }));
   };
 
   const handleSubmit = async () => {
+    // Validate all 4 ranked
+    const currentIds = currentSet.map(c => c.id);
+    const batchRankings = {};
+    currentIds.forEach(id => {
+      if (rankings[id] !== undefined) batchRankings[id] = rankings[id];
+    });
+
+    if (Object.keys(batchRankings).length < 4) {
+      Alert.alert('Incomplete', 'Please rank all artworks before submitting.');
+      return;
+    }
+
+    // Check for duplicate ranks
+    const usedRanks = Object.values(batchRankings);
+    if (new Set(usedRanks).size !== usedRanks.length) {
+      Alert.alert('Duplicate Ranks', 'Each artwork must have a unique rank. Please adjust before submitting.');
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      // Only check rankings for the current batch's artworks
-      const currentIds = currentArtworks.map(a => String(a.id));
-      const batchRankings = {};
-      currentIds.forEach(id => {
-        if (rankings[id] !== undefined) batchRankings[id] = rankings[id];
-      });
+      const votingDate = getESTYesterday();
+      const today = getESTDate();
 
-      if (Object.keys(batchRankings).length < currentArtworks.length) {
-        Alert.alert('Incomplete', 'Please rank all artworks before submitting.');
-        return;
-      }
-      // Check for duplicate ranks on submit
-      const usedRanks = Object.values(batchRankings);
-      const uniqueRanks = new Set(usedRanks);
-      if (uniqueRanks.size !== usedRanks.length) {
-        Alert.alert('Duplicate Ranks', 'Each artwork must have a unique rank. Please adjust before submitting.');
-        return;
-      }
+      // Build vote objects
+      const votes = currentIds.map(id => ({
+        courageId: id,
+        courageDate: votingDate,
+        score: batchRankings[id],
+      }));
 
-      const today = new Date().toISOString().split('T')[0];
-      const allRankings = await AsyncStorage.getItem('all_rankings');
-      const rankingsData = allRankings ? JSON.parse(allRankings) : {};
-      if (!rankingsData[today]) rankingsData[today] = [];
-      rankingsData[today].push({
-        batch: currentBatch,
-        rankings: batchRankings,
-        criterion: todaysCriterion,
-        timestamp: new Date().toISOString()
-      });
-      await AsyncStorage.setItem('all_rankings', JSON.stringify(rankingsData));
-      setIsSubmitted(true);
-      const newBatchesCompleted = batchesCompleted + 1;
-      setBatchesCompleted(newBatchesCompleted);
+      // Submit to Firestore
+      await submitVoteBatch(user.uid, votes);
 
-      if (newBatchesCompleted >= MAX_VOTING_BATCHES) {
-        await AsyncStorage.setItem(`ranked_${today}`, 'true');
-        setHasRankedToday(true);
-        Alert.alert('Rankings Complete!', 'You can now freely browse remaining Courage posts.');
+      // Mark ranked for today (for MAGIC star)
+      await AsyncStorage.setItem(`ranked_${today}`, 'true');
+
+      // Update voted IDs
+      const newVotedIds = new Set(votedCourageIds);
+      currentIds.forEach(id => newVotedIds.add(id));
+      setVotedCourageIds(newVotedIds);
+
+      // Reset rankings and auto-load next set
+      setRankings({});
+
+      // Find next set of unvoted courages
+      const unvoted = availableCourages.filter(c => !newVotedIds.has(c.id));
+
+      if (unvoted.length === 0) {
+        setAllDone(true);
+        setCurrentSet([]);
+      } else if (unvoted.length >= 4) {
+        const shuffled = [...unvoted].sort(() => Math.random() - 0.5);
+        setCurrentSet(shuffled.slice(0, 4));
       } else {
-        Alert.alert('Submitted!', 'Your rankings have been recorded! Tap "Next Batch" to rank more.');
+        // Need fillers from previous day
+        const prevDate = getESTDayBeforeYesterday();
+        const prevCourages = await getCouragesForDate(prevDate);
+        const prevEligible = prevCourages.filter(c => c.uid !== user.uid);
+        const shuffledPrev = [...prevEligible].sort(() => Math.random() - 0.5);
+        const fillersNeeded = 4 - unvoted.length;
+        const fillers = shuffledPrev.slice(0, Math.min(fillersNeeded, 3));
+        const newFillerIds = new Set(fillers.map(f => f.id));
+        setFillerIds(newFillerIds);
+
+        if (unvoted.length + fillers.length >= 4) {
+          setCurrentSet([...unvoted, ...fillers].slice(0, 4));
+        } else {
+          setAllDone(true);
+          setCurrentSet([]);
+        }
       }
     } catch (error) {
-      Alert.alert('Error', 'Something went wrong submitting rankings. Please try again.');
-      console.log('Error submitting rankings:', error);
+      console.log('Error submitting votes:', error);
+      Alert.alert('Error', 'Could not submit votes. Please try again.');
     }
+    setSubmitting(false);
   };
 
-  const loadNextBatch = () => {
-    setCurrentBatch(prev => prev + 1);
-    setRankings({});
-    setIsSubmitted(false);
-  };
-
-  const toggleFavorite = (artworkId) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(artworkId)) {
-      newFavorites.delete(artworkId);
-    } else {
-      newFavorites.add(artworkId);
-    }
-    saveFavorites(newFavorites);
-  };
-
-  const shareArtwork = async (artwork) => {
+  // Audio playback
+  const playAudio = async (courage) => {
     try {
-      await Share.share({
-        message: `Check out this amazing artwork: "${artwork.title}" by ${artwork.artist}`,
-        title: artwork.title
+      // Stop current audio if playing
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+
+      if (playingAudioId === courage.id) {
+        setPlayingAudioId(null);
+        return;
+      }
+
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
+
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: courage.mediaUrl },
+        { shouldPlay: true }
+      );
+      soundRef.current = sound;
+      setPlayingAudioId(courage.id);
+
+      sound.setOnPlaybackStatusUpdate((status) => {
+        if (status.didJustFinish) {
+          sound.unloadAsync();
+          soundRef.current = null;
+          setPlayingAudioId(null);
+        }
       });
     } catch (error) {
-      Alert.alert('Error', 'Could not share artwork');
+      console.log('Error playing audio:', error);
+      Alert.alert('Error', 'Could not play audio.');
     }
   };
 
   const rankedCount = Object.keys(rankings).length;
-  const progressPercent = currentArtworks.length > 0 ? (rankedCount / currentArtworks.length) * 100 : 0;
-  const canSubmit = rankedCount === currentArtworks.length && !isSubmitted && currentArtworks.length > 0;
+  const progressPercent = currentSet.length > 0 ? (rankedCount / currentSet.length) * 100 : 0;
 
-  const isRankAvailable = (rank, artworkId) => {
-    return !Object.entries(rankings).some(
-      ([id, assignedRank]) => assignedRank === rank && parseInt(id) !== artworkId
-    );
-  };
-
-  // Render a single artwork card (used in both voting and free scroll modes)
-  const renderArtworkCard = (artwork, votingEnabled, index) => {
-    const currentRank = rankings[artwork.id];
-    const isFavorited = favorites.has(artwork.id);
-    const canTapToView = index < 4 || !votingEnabled;
+  // Render a courage card for voting (anonymous - title only)
+  const renderCourageCard = (courage) => {
+    const currentRank = rankings[courage.id];
+    const isAudio = courage.mediaType === 'audio';
+    const isPlaying = playingAudioId === courage.id;
 
     return (
-      <View key={artwork.id} style={[
-        styles.artworkCard,
-        isSubmitted && votingEnabled && styles.artworkCardSubmitted
-      ]}>
-        {/* Image — tappable for full view */}
+      <View key={courage.id} style={styles.artworkCard}>
+        {/* Image or Audio Player */}
         <TouchableOpacity
           style={styles.imageFrame}
-          onPress={() => canTapToView ? setFullViewArtwork(artwork) : null}
-          activeOpacity={canTapToView ? 0.7 : 1}
+          onPress={() => {
+            if (isAudio) {
+              playAudio(courage);
+            } else if (courage.mediaUrl) {
+              setFullViewArtwork(courage);
+            }
+          }}
         >
-          <Image
-            source={{ uri: artwork.imageUrl }}
-            style={styles.artworkImage}
-            resizeMode="cover"
-          />
+          {isAudio ? (
+            <View style={styles.audioFrame}>
+              <Text style={styles.audioIcon}>{isPlaying ? '⏸' : '▶️'}</Text>
+              <Text style={styles.audioLabel}>{isPlaying ? 'Playing...' : 'Tap to Play'}</Text>
+            </View>
+          ) : courage.mediaUrl ? (
+            <Image
+              source={{ uri: courage.mediaUrl }}
+              style={styles.artworkImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.textCourageFrame}>
+              <Text style={styles.textCourageContent} numberOfLines={6}>
+                {courage.title}
+              </Text>
+            </View>
+          )}
           {currentRank && (
             <View style={styles.rankBadge}>
               <Text style={styles.rankBadgeText}>#{currentRank}</Text>
@@ -265,71 +314,58 @@ export default function InspireScreen({ navigation }) {
           )}
         </TouchableOpacity>
 
-        {/* Artist Info */}
+        {/* Title only — anonymous, no artist name */}
         <View style={styles.artistInfo}>
-          <Text style={styles.artistName}>{artwork.artist}</Text>
-          <Text style={styles.artworkTitle}>{artwork.title}</Text>
+          <Text style={styles.artworkTitle} numberOfLines={2}>
+            {courage.title || 'Untitled'}
+          </Text>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.actionButtonSmall, isFavorited && styles.actionButtonActive]}
-            onPress={() => toggleFavorite(artwork.id)}
-          >
-            <Text style={styles.actionIconSmall}>{isFavorited ? '💜' : '🤍'}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButtonSmall} onPress={() => shareArtwork(artwork)}>
-            <Text style={styles.actionIconSmall}>📤</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Ranking Buttons — only in voting mode */}
-        {votingEnabled && (
-          <View style={styles.rankingContainer}>
-            <View style={styles.rankingButtons}>
-              {[1, 2, 3, 4].map((score) => {
-                const isSelected = currentRank === score;
-                return (
-                  <TouchableOpacity
-                    key={score}
-                    style={[
-                      styles.rankButton,
-                      isSelected && styles.rankButtonSelected,
-                      isSubmitted && styles.rankButtonDisabled
-                    ]}
-                    onPress={() => handleRank(artwork.id, score)}
-                    disabled={isSubmitted}
-                  >
-                    <Text style={[
-                      styles.rankButtonText,
-                      isSelected && styles.rankButtonTextSelected,
-                      isSubmitted && styles.rankButtonTextDisabled
-                    ]}>
-                      {score}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+        {/* Ranking Buttons */}
+        <View style={styles.rankingContainer}>
+          <View style={styles.rankingButtons}>
+            {[1, 2, 3, 4].map((score) => {
+              const isSelected = currentRank === score;
+              return (
+                <TouchableOpacity
+                  key={score}
+                  style={[
+                    styles.rankButton,
+                    isSelected && styles.rankButtonSelected,
+                  ]}
+                  onPress={() => handleRank(courage.id, score)}
+                >
+                  <Text style={[
+                    styles.rankButtonText,
+                    isSelected && styles.rankButtonTextSelected,
+                  ]}>
+                    {score}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
-        )}
+        </View>
       </View>
     );
   };
 
-  if (allArtworks.length === 0) {
+  // "Thank you for voting" card
+  const renderThankYouCard = () => (
+    <View style={styles.artworkCard}>
+      <View style={[styles.imageFrame, styles.thankYouFrame]}>
+        <Text style={styles.thankYouText}>Thank you{'\n'}for voting!</Text>
+      </View>
+    </View>
+  );
+
+  if (loading) {
     return (
       <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.header}>Inspire</Text>
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No artworks to rank yet!</Text>
-            <Text style={styles.emptySubtext}>
-              Go to Art Studio and upload some COURAGE posts to see them here!
-            </Text>
-          </View>
-        </ScrollView>
+        <View style={[styles.content, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" color="#004225" />
+          <Text style={[styles.subtitle, { marginTop: 15 }]}>Loading courages...</Text>
+        </View>
       </ImageBackground>
     );
   }
@@ -362,12 +398,11 @@ export default function InspireScreen({ navigation }) {
                 style={styles.zoomScroll}
               >
                 <Image
-                  source={{ uri: fullViewArtwork.imageUrl }}
+                  source={{ uri: fullViewArtwork.mediaUrl }}
                   style={styles.modalImage}
                   resizeMode="contain"
                 />
               </ScrollView>
-              <Text style={styles.modalArtist}>{fullViewArtwork.artist}</Text>
               <Text style={styles.modalTitle}>{fullViewArtwork.title}</Text>
               <Text style={styles.modalHint}>Pinch to zoom, drag to pan</Text>
             </View>
@@ -377,7 +412,7 @@ export default function InspireScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Inspire</Text>
-        <Text style={styles.subtitle}>View & Rank Community Art</Text>
+        <Text style={styles.subtitle}>Vote on Community Courage</Text>
 
         {/* Today's Ranking Criterion */}
         <View style={styles.criterionCard}>
@@ -385,13 +420,37 @@ export default function InspireScreen({ navigation }) {
           <Text style={styles.criterionText}>{todaysCriterion}</Text>
         </View>
 
-        {/* Voting Mode — batches 1 and 2 */}
-        {!inFreeScrollMode && (
+        {/* All Done State */}
+        {allDone && (
           <>
-            {/* Progress Indicator */}
+            <View style={styles.artworksGrid}>
+              {renderThankYouCard()}
+              {renderThankYouCard()}
+              {renderThankYouCard()}
+              {renderThankYouCard()}
+            </View>
+            <View style={styles.completeCard}>
+              <Text style={styles.completeText}>
+                {availableCourages.length === 0
+                  ? 'No courages available for voting yet!'
+                  : 'You have voted on all available courages!'}
+              </Text>
+              <Text style={styles.completeSubtext}>
+                {availableCourages.length === 0
+                  ? 'Check back after others have uploaded their daily courage.'
+                  : 'Come back tomorrow for new submissions!'}
+              </Text>
+            </View>
+          </>
+        )}
+
+        {/* Voting Mode */}
+        {!allDone && currentSet.length === 4 && (
+          <>
+            {/* Progress */}
             <View style={styles.progressContainer}>
               <Text style={styles.progressText}>
-                Ranked {rankedCount} of {currentArtworks.length} artworks (Set {currentBatch + 1} of {MAX_VOTING_BATCHES})
+                Ranked {rankedCount} of 4 artworks
               </Text>
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
@@ -399,60 +458,32 @@ export default function InspireScreen({ navigation }) {
             </View>
 
             <Text style={styles.instructionText}>
-              {isSubmitted
-                ? 'Submitted! Tap "Next Batch" for more.'
-                : 'Tap artwork for full view. Rank 1-4 (1=best). Each rank used once.'}
+              Rank 1-4 (1=best). Each rank used once. Title only — anonymous voting.
             </Text>
 
             {/* Artworks Grid */}
             <View style={styles.artworksGrid}>
-              {currentArtworks.map((artwork, index) => renderArtworkCard(artwork, true, index))}
+              {currentSet.map(courage => renderCourageCard(courage))}
             </View>
 
             {/* Submit Button */}
-            {!isSubmitted && (
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmit}
-              >
+            <TouchableOpacity
+              style={[styles.submitButton, (submitting || rankedCount < 4) && styles.submitButtonDisabled]}
+              onPress={handleSubmit}
+              disabled={submitting || rankedCount < 4}
+            >
+              {submitting ? (
+                <ActivityIndicator color="#cfe8c7" />
+              ) : (
                 <Text style={styles.submitButtonText}>Submit Rankings</Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Next Batch Button */}
-            {isSubmitted && batchesCompleted < MAX_VOTING_BATCHES && hasMore && (
-              <TouchableOpacity style={styles.nextButton} onPress={loadNextBatch}>
-                <Text style={styles.nextButtonText}>Next Batch →</Text>
-              </TouchableOpacity>
-            )}
+              )}
+            </TouchableOpacity>
           </>
         )}
 
-        {/* Free Scroll Mode — after 2 voting sets */}
-        {inFreeScrollMode && (
-          <>
-            <View style={styles.freeScrollBanner}>
-              <Text style={styles.freeScrollText}>Voting complete! Browse remaining Courage posts freely.</Text>
-            </View>
-
-            {remainingArtworks.length > 0 ? (
-              <View style={styles.artworksGrid}>
-                {remainingArtworks.map((artwork, index) => renderArtworkCard(artwork, false, index))}
-              </View>
-            ) : (
-              <View style={styles.completeCard}>
-                <Text style={styles.completeText}>You've seen all available artworks!</Text>
-                <Text style={styles.completeSubtext}>Come back tomorrow for new submissions!</Text>
-              </View>
-            )}
-          </>
-        )}
-
-        {/* View Galleries Button */}
+        {/* Gallery Button */}
         <TouchableOpacity style={styles.galleryButton} onPress={() => navigation.navigate('Connect', { gallery: 'private' })}>
-          <Text style={styles.galleryButtonText}>
-            View My Inspiration Gallery ({favorites.size} saved)
-          </Text>
+          <Text style={styles.galleryButtonText}>View My Inspiration Gallery</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />
@@ -545,9 +576,6 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 15,
   },
-  artworkCardSubmitted: {
-    opacity: 0.7,
-  },
   imageFrame: {
     width: '100%',
     aspectRatio: 1,
@@ -561,6 +589,45 @@ const styles = StyleSheet.create({
   artworkImage: {
     width: '100%',
     height: '100%',
+  },
+  audioFrame: {
+    flex: 1,
+    backgroundColor: '#1a2a1a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  audioIcon: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  audioLabel: {
+    fontSize: 14,
+    color: '#cfe8c7',
+    fontWeight: '600',
+  },
+  textCourageFrame: {
+    flex: 1,
+    backgroundColor: '#1a2a1a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+  },
+  textCourageContent: {
+    fontSize: 12,
+    color: '#cfe8c7',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  thankYouFrame: {
+    backgroundColor: 'rgba(207, 232, 199, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  thankYouText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#004225',
+    textAlign: 'center',
   },
   rankBadge: {
     position: 'absolute',
@@ -584,36 +651,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  artistName: {
-    fontSize: 12,
-    color: '#004225',
-    fontWeight: '600',
-  },
   artworkTitle: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#004225',
     fontStyle: 'italic',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 10,
-  },
-  actionButtonSmall: {
-    backgroundColor: 'rgba(207, 232, 199, 0.5)',
-    borderWidth: 1,
-    borderColor: '#666',
-    borderRadius: 6,
-    padding: 8,
-    alignItems: 'center',
-    minWidth: 50,
-  },
-  actionButtonActive: {
-    borderColor: '#9C27B0',
-    backgroundColor: '#4A148C',
-  },
-  actionIconSmall: {
-    fontSize: 20,
+    textAlign: 'center',
   },
   rankingContainer: {
     alignItems: 'center',
@@ -637,11 +679,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#004225',
     borderColor: '#004225',
   },
-  rankButtonDisabled: {
-    backgroundColor: 'rgba(207, 232, 199, 0.5)',
-    borderColor: '#004225',
-    opacity: 0.4,
-  },
   rankButtonText: {
     fontSize: 16,
     color: '#004225',
@@ -649,9 +686,6 @@ const styles = StyleSheet.create({
   },
   rankButtonTextSelected: {
     color: '#fff',
-  },
-  rankButtonTextDisabled: {
-    color: '#555',
   },
   submitButton: {
     backgroundColor: '#004225',
@@ -662,39 +696,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  submitButtonDisabled: {
+    opacity: 0.5,
+  },
   submitButtonText: {
     fontSize: 20,
     color: '#cfe8c7',
     fontWeight: 'bold',
-  },
-  nextButton: {
-    backgroundColor: '#4A148C',
-    borderWidth: 3,
-    borderColor: '#9C27B0',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  nextButtonText: {
-    fontSize: 18,
-    color: '#DDA0DD',
-    fontWeight: 'bold',
-  },
-  freeScrollBanner: {
-    backgroundColor: 'rgba(207, 232, 199, 0.5)',
-    borderWidth: 2,
-    borderColor: '#004225',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  freeScrollText: {
-    fontSize: 16,
-    color: '#004225',
-    textAlign: 'center',
-    fontWeight: '600',
   },
   completeCard: {
     backgroundColor: 'rgba(207, 232, 199, 0.5)',
@@ -716,23 +724,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#004225',
     textAlign: 'center',
-  },
-  emptyState: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 20,
-    color: '#004225',
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: 16,
-    color: '#004225',
-    textAlign: 'center',
-    lineHeight: 24,
   },
   galleryButton: {
     backgroundColor: '#4A148C',
@@ -796,17 +787,11 @@ const styles = StyleSheet.create({
     height: SCREEN_WIDTH - 6,
     borderRadius: 5,
   },
-  modalArtist: {
-    fontSize: 22,
-    color: '#004225',
-    fontWeight: 'bold',
-    marginTop: 15,
-    marginBottom: 5,
-  },
   modalTitle: {
     fontSize: 18,
-    color: '#004225',
+    color: '#cfe8c7',
     fontStyle: 'italic',
+    marginTop: 15,
   },
   modalHint: {
     fontSize: 12,
