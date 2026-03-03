@@ -639,7 +639,7 @@ const getTodaysTasks = async () => {
 // ============================================================
 
 export default function HomeScreen({ navigation }) {
-  const { userProfile } = useAuth();
+  const { userProfile, refreshProfile } = useAuth();
   const [goalAcknowledged, setGoalAcknowledged] = useState(false);
   const [goalMetYes, setGoalMetYes] = useState(false); // true = yes, false = no/not yet
   const [goalLocked, setGoalLocked] = useState(false);
@@ -682,12 +682,14 @@ export default function HomeScreen({ navigation }) {
     }
   }, [userProfile]);
 
-  // Reload hearted state and star data every time this screen gets focus
+  // Reload hearted state, star data, and pseudonym every time this screen gets focus
   useFocusEffect(
     useCallback(() => {
       loadQuoteHeartedState();
       loadStreakData();
-    }, [todayQuote])
+      loadPseudonym();
+      refreshProfile();
+    }, [todayQuote, userProfile])
   );
 
   const loadQuoteHeartedState = async () => {
@@ -743,15 +745,37 @@ export default function HomeScreen({ navigation }) {
 
   const loadPseudonym = async () => {
     try {
-      // Prefer context pseudonym from Firestore
+      // 1. Prefer context pseudonym from Firestore
       if (userProfile?.pseudonym) {
         setPseudonym(userProfile.pseudonym);
         return;
       }
+      // 2. Try cached Firestore profile
+      const cached = await AsyncStorage.getItem('cached_user_profile');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.pseudonym) {
+          setPseudonym(parsed.pseudonym);
+          return;
+        }
+      }
+      // 3. Try user_profile (set during signup)
       const profile = await AsyncStorage.getItem('user_profile');
       if (profile) {
         const parsed = JSON.parse(profile);
-        if (parsed.username) setPseudonym(parsed.username);
+        if (parsed.username) {
+          setPseudonym(parsed.username);
+          return;
+        }
+      }
+      // 4. Try app_settings
+      const settings = await AsyncStorage.getItem('app_settings');
+      if (settings) {
+        const parsed = JSON.parse(settings);
+        if (parsed.username) {
+          setPseudonym(parsed.username);
+          return;
+        }
       }
     } catch (error) {
       console.log('Error loading profile:', error);
@@ -1441,28 +1465,28 @@ const styles = StyleSheet.create({
   },
   quoteTextSmall: {
     fontSize: 15,
-    color: '#ff7795',
+    color: '#660008',
     marginBottom: 6,
     lineHeight: 20,
   },
   authorText: {
     fontSize: 13,
-    color: '#ff7795',
+    color: '#660008',
     fontStyle: 'italic',
     marginBottom: 15,
   },
   manifestText: {
     fontSize: 16,
-    color: '#ff7795',
+    color: '#660008',
     fontWeight: '600',
   },
   manifestTextSmall: {
     fontSize: 14,
-    color: '#ff7795',
+    color: '#660008',
     fontWeight: '600',
   },
   manifestHighlight: {
-    color: '#ff7795',
+    color: '#660008',
   },
   heartRight: {
     position: 'absolute',

@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== USERS COLLECTION =====
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Users can create their own profile (on signup)
+      allow create: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.uid == userId;
+
+      // Users can update their own profile
+      // Cannot change uid, email, or accountMethod after creation
+      allow update: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.email == resource.data.email
+                    && request.resource.data.accountMethod == resource.data.accountMethod;
+
+      // No deletes allowed
+      allow delete: if false;
+    }
+
+    // ===== PSEUDONYMS COLLECTION =====
+    match /pseudonyms/{pseudonymId} {
+      // Anyone authenticated can check if a pseudonym is available
+      allow read: if request.auth != null;
+
+      // Authenticated users can claim an unclaimed pseudonym
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.released == false;
+
+      // Only the owner can update (release) their pseudonym
+      // Or reclaim a released pseudonym
+      allow update: if request.auth != null
+                    && (
+                      // Owner releasing their pseudonym
+                      (resource.data.uid == request.auth.uid)
+                      ||
+                      // Someone claiming a released pseudonym
+                      (resource.data.released == true
+                       && request.resource.data.uid == request.auth.uid
+                       && request.resource.data.released == false)
+                    );
+
+      // Pseudonyms are never deleted
+      allow delete: if false;
+    }
+
+    // Deny everything else by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

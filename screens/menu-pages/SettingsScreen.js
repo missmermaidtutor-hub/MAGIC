@@ -164,6 +164,7 @@ export default function SettingsScreen({ navigation }) {
       // Firestore
       if (user) {
         await updateUserProfile(user.uid, { [key]: value });
+        await refreshProfile();
       }
     } catch (error) {
       console.log('Error saving settings:', error);

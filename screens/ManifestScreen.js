@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 24,
-    color: '#9C9FFF',
+    color: '#660008',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   journalTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#ff7795',
+    color: '#660008',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -718,7 +718,7 @@ const styles = StyleSheet.create({
   },
   promptNumber: {
     fontSize: 18,
-    color: '#ff7795',
+    color: '#660008',
     fontWeight: 'bold',
     marginRight: 10,
     marginTop: 5,
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
   },
   promptLabel: {
     fontSize: 16,
-    color: '#ff7795',
+    color: '#660008',
     marginBottom: 8,
     fontWeight: '600',
   },
