@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Linking, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Linking, ImageBackground, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -624,6 +624,24 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     if (userProfile?.pseudonym) {
       setPseudonym(userProfile.pseudonym);
+    }
+  }, [userProfile]);
+
+  // First-time login prompt — nudge new users to complete their profile settings
+  const profilePromptShown = useRef(false);
+  useEffect(() => {
+    if (profilePromptShown.current || !userProfile) return;
+    const isIncomplete = !userProfile.pseudonym || !userProfile.birthdate || !userProfile.timezone;
+    if (isIncomplete) {
+      profilePromptShown.current = true;
+      Alert.alert(
+        'Complete Your Profile',
+        'Welcome to MAGIC! Set up your pseudonym, birthdate, and preferences to get the most out of your creative journey.',
+        [
+          { text: 'Later', style: 'cancel' },
+          { text: 'Go to Settings', onPress: () => navigation.navigate('AboutYou') },
+        ]
+      );
     }
   }, [userProfile]);
 
