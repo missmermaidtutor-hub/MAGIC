@@ -993,7 +993,10 @@ const styles = StyleSheet.create({
   },
   dayModalCloseText: {
     fontSize: 14,
-    color: '#b18630',
+    color: '#ffffff',
     fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
 });

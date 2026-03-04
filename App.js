@@ -27,7 +27,8 @@ import StreakScreen from './screens/StreakScreen';
 import AboutUsScreen from './screens/menu-pages/AboutUsScreen';
 import AboutYouScreen from './screens/menu-pages/AboutYouScreen';
 import QuotesScreen from './screens/menu-pages/QuotesScreen';
-import SettingsScreen from './screens/menu-pages/SettingsScreen';
+// Settings now merged into AboutYou — keep route for backwards compatibility
+const SettingsScreen = AboutYouScreen;
 import LegalScreen from './screens/menu-pages/LegalScreen';
 import ContactScreen from './screens/menu-pages/ContactScreen';
 

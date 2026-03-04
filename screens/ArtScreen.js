@@ -320,11 +320,16 @@ export default function ArtScreen() {
     if (isWeeklyRunning) {
       clearInterval(weeklyIntervalRef.current);
       setIsWeeklyRunning(false);
-      const elapsed = weeklyBaseRef.current + Math.round((Date.now() - weeklyStartTimeRef.current) / 1000);
+      const sessionElapsed = Math.round((Date.now() - weeklyStartTimeRef.current) / 1000);
+      const elapsed = weeklyBaseRef.current + sessionElapsed;
       weeklyBaseRef.current = elapsed;
       weeklyStartTimeRef.current = null;
       setWeeklyTime(elapsed);
       saveWeeklyTime(elapsed);
+      // Also record this session toward today's art star point
+      if (sessionElapsed > 0) {
+        saveDailyArtTime(sessionElapsed);
+      }
     } else {
       if (weeklyTime === 0) retroactiveFiredRef.current = false;
       weeklyBaseRef.current = weeklyTime;
@@ -430,10 +435,10 @@ export default function ArtScreen() {
         date: today,
         isPublic: false
       };
-      const existingRaw = await AsyncStorage.getItem('private_artworks');
+      const existingRaw = await AsyncStorage.getItem('personal_artworks');
       const artworks = existingRaw ? JSON.parse(existingRaw) : [];
       artworks.push(artwork);
-      await AsyncStorage.setItem('private_artworks', JSON.stringify(artworks));
+      await AsyncStorage.setItem('personal_artworks', JSON.stringify(artworks));
       // Mark art done for today
       const existing = await AsyncStorage.getItem(`art_time_${today}`);
       if (!existing || parseInt(existing) === 0) {
@@ -441,7 +446,7 @@ export default function ArtScreen() {
       }
       await AsyncStorage.setItem(`art_created_${today}`, 'true');
       setWriteModalVisible(false);
-      Alert.alert('Saved!', `Your ${modeLabels[writeMode].toLowerCase()} has been saved to your personal gallery.`);
+      Alert.alert('Saved!', `Your ${modeLabels[writeMode].toLowerCase()} has been saved to your private gallery.`);
     } catch (e) {
       Alert.alert('Error', 'Could not save.');
     }
@@ -509,7 +514,7 @@ export default function ArtScreen() {
               }
 
               setWriteModalVisible(false);
-              Alert.alert('Courage!', `${label} submitted for voting!`);
+              Alert.alert('Congratulations on your COURAGE!', 'Upload is ready for tomorrow\'s vote.');
             } catch (e) {
               console.log('Courage text upload error:', e);
               Alert.alert('Error', 'Could not upload. Please try again.');
@@ -570,10 +575,10 @@ export default function ArtScreen() {
         isPublic: false,
       };
 
-      const existingPrivate = await AsyncStorage.getItem('private_artworks');
+      const existingPrivate = await AsyncStorage.getItem('personal_artworks');
       const privateArtworks = existingPrivate ? JSON.parse(existingPrivate) : [];
       privateArtworks.push(artwork);
-      await AsyncStorage.setItem('private_artworks', JSON.stringify(privateArtworks));
+      await AsyncStorage.setItem('personal_artworks', JSON.stringify(privateArtworks));
 
       // Mark art done for today
       await AsyncStorage.setItem(`art_created_${today}`, 'true');
@@ -646,7 +651,7 @@ export default function ArtScreen() {
                 await AsyncStorage.setItem(`art_time_${today}`, '1');
               }
 
-              Alert.alert('Courage!', 'Your artwork has been submitted for voting!');
+              Alert.alert('Congratulations on your COURAGE!', 'Upload is ready for tomorrow\'s vote.');
             } catch (error) {
               console.log('Courage upload error:', error);
               Alert.alert('Error', 'Could not upload artwork. Please try again.');
@@ -823,6 +828,7 @@ export default function ArtScreen() {
           >
             <Text style={styles.courageUploadText}>Upload</Text>
             <Text style={styles.courageUploadText}>COURAGE</Text>
+            <Text style={styles.courageSubtext}>(add to tomorrow's voting)</Text>
           </TouchableOpacity>
         </View>
 
@@ -879,15 +885,15 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#FF7F00',
+    color: '#F3CB82',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 20,
   },
   challengeCard: {
-    backgroundColor: 'rgba(255, 236, 211, 0.5)',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#f2990a',
     borderRadius: 12,
     padding: 30,
     marginBottom: 20,
@@ -895,29 +901,29 @@ const styles = StyleSheet.create({
   },
   challengeLabel: {
     fontSize: 20,
-    color: '#FFA500',
+    color: '#332100',
     fontWeight: 'bold',
     marginBottom: 10,
   },
   challengeText: {
     fontSize: 32,
-    color: '#FFD700',
+    color: '#332100',
     fontWeight: 'bold',
     textAlign: 'center',
   },
   timerCard: {
-    backgroundColor: 'rgba(255, 236, 211, 0.5)',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#f2990a',
     borderRadius: 12,
     padding: 25,
     marginBottom: 20,
     alignItems: 'center',
   },
   weeklyCard: {
-    backgroundColor: 'rgba(255, 236, 211, 0.5)',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#f2990a',
     borderRadius: 12,
     padding: 25,
     marginBottom: 20,
@@ -932,13 +938,13 @@ const styles = StyleSheet.create({
   },
   weeklyText: {
     fontSize: 14,
-    color: '#FFA500',
+    color: '#332100',
     textAlign: 'center',
     marginRight: 10,
   },
   goalBadge: {
     fontSize: 16,
-    color: '#FFD700',
+    color: '#332100',
     fontWeight: 'bold',
   },
   progressBar: {
@@ -951,7 +957,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FFD700',
+    backgroundColor: '#f2990a',
   },
   timerIcon: {
     marginBottom: 10,
@@ -967,23 +973,23 @@ const styles = StyleSheet.create({
   },
   timerInput: {
     fontSize: 44,
-    color: '#FFD700',
+    color: '#332100',
     fontWeight: 'bold',
     textAlign: 'center',
     borderBottomWidth: 2,
-    borderBottomColor: '#FFD700',
+    borderBottomColor: '#332100',
     width: 70,
     paddingVertical: 4,
   },
   timerColon: {
     fontSize: 44,
-    color: '#FFD700',
+    color: '#332100',
     fontWeight: 'bold',
     marginHorizontal: 4,
   },
   timerDisplay: {
     fontSize: 56,
-    color: 'white',
+    color: '#332100',
     fontWeight: 'bold',
     marginBottom: 15,
   },
@@ -996,13 +1002,13 @@ const styles = StyleSheet.create({
   },
   stopwatchDisplay: {
     fontSize: 48,
-    color: 'white',
+    color: '#332100',
     fontWeight: 'bold',
     marginBottom: 5,
   },
   stopwatchLabel: {
     fontSize: 16,
-    color: '#FFA500',
+    color: '#332100',
     marginBottom: 20,
   },
   timerButtons: {
@@ -1010,7 +1016,7 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   timerButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#f2990a',
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 8,
@@ -1043,16 +1049,16 @@ const styles = StyleSheet.create({
   toolIconContainer: {
     width: 100,
     height: 100,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
   },
   sketchIcon: {
-    backgroundColor: 'rgba(255, 236, 211, 0.5)',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#f2990a',
     borderRadius: 8,
   },
   toolIcon: {
@@ -1060,7 +1066,7 @@ const styles = StyleSheet.create({
   },
   toolLabel: {
     fontSize: 18,
-    color: '#FFA500',
+    color: '#332100',
     fontWeight: '600',
   },
   uploadContainer: {
@@ -1070,34 +1076,40 @@ const styles = StyleSheet.create({
   },
   privateUploadButton: {
     flex: 1,
-    backgroundColor: 'rgba(255, 236, 211, 0.5)',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#f2990a',
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
   },
   courageUploadButton: {
     flex: 1,
-    backgroundColor: 'rgba(255, 236, 211, 0.5)',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#f2990a',
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   uploadButtonText: {
-    color: '#FF7F00',
+    color: '#332100',
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
   },
   courageUploadText: {
-    color: '#FF7F00',
+    color: '#332100',
     fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  courageSubtext: {
+    color: '#332100',
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 2,
   },
   writeModalOverlay: {
     flex: 1,
@@ -1106,9 +1118,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   writeModalCard: {
-    backgroundColor: 'rgba(255, 236, 211, 0.5)',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#f2990a',
     borderRadius: 16,
     padding: 20,
     maxHeight: '80%',
@@ -1134,23 +1146,23 @@ const styles = StyleSheet.create({
   writeModalTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FF7F00',
+    color: '#332100',
     textAlign: 'center',
     marginBottom: 8,
   },
   writeModalPrompt: {
     fontSize: 16,
-    color: '#FFA500',
+    color: '#332100',
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: 16,
   },
   writeTextInput: {
-    backgroundColor: 'rgba(255, 236, 211, 0.5)',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderWidth: 2,
     borderColor: '#f7bc6e',
     borderRadius: 10,
-    color: '#333',
+    color: '#332100',
     fontSize: 16,
     padding: 15,
     minHeight: 200,
@@ -1164,24 +1176,24 @@ const styles = StyleSheet.create({
   },
   writePersonalBtn: {
     flex: 1,
-    backgroundColor: 'rgba(255, 236, 211, 0.5)',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#f2990a',
     borderRadius: 10,
     padding: 14,
     alignItems: 'center',
   },
   writeCourageBtn: {
     flex: 1,
-    backgroundColor: 'rgba(255, 236, 211, 0.5)',
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#f2990a',
     borderRadius: 10,
     padding: 14,
     alignItems: 'center',
   },
   writeBtnText: {
-    color: '#FFD700',
+    color: '#332100',
     fontSize: 15,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -1192,7 +1204,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
   },
   writeCloseBtnText: {
-    color: '#888',
+    color: '#ffffff',
     fontSize: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
 });

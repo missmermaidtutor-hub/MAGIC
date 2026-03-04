@@ -35,11 +35,11 @@ export default function AboutUsScreen({ navigation }) {
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>What is MAGIC?</Text>
-            <Text style={styles.magicItem}>📝 <Text style={styles.bold}>M</Text>anifest - Daily journaling and goal setting</Text>
-            <Text style={styles.magicItem}>🎨 <Text style={styles.bold}>A</Text>rt - 20 minutes of creative practice</Text>
-            <Text style={styles.magicItem}>🎯 <Text style={styles.bold}>G</Text>oal - Set and track growth goals</Text>
-            <Text style={styles.magicItem}>✨ <Text style={styles.bold}>I</Text>nspire - Rank and appreciate community art</Text>
-            <Text style={styles.magicItem}>💪 <Text style={styles.bold}>C</Text>ourage - Share your creativity publicly</Text>
+            <Text style={styles.magicItem}>📝 <Text style={styles.boldM}>M</Text>anifest - Daily journaling and goal setting</Text>
+            <Text style={styles.magicItem}>🎨 <Text style={styles.boldA}>A</Text>rt - 20 minutes of creative practice</Text>
+            <Text style={styles.magicItem}>🎯 <Text style={styles.boldG}>G</Text>oal - Set and track growth goals</Text>
+            <Text style={styles.magicItem}>✨ <Text style={styles.boldI}>I</Text>nspire - Rank and appreciate community art</Text>
+            <Text style={styles.magicItem}>💪 <Text style={styles.boldC}>C</Text>ourage - Share your creativity publicly</Text>
           </View>
 
           <View style={styles.section}>
@@ -119,16 +119,16 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#8E0DD3',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonText: {
     fontSize: 24,
-    color: '#FFD700',
+    color: '#8E0DD3',
     fontWeight: 'bold',
   },
   backButtonPlaceholder: {
@@ -137,27 +137,27 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#8E0DD3',
     textAlign: 'center',
     flex: 1,
   },
   card: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#8E0DD3',
     borderRadius: 12,
     padding: 20,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#8E0DD3',
     textAlign: 'center',
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#DDA0DD',
+    color: '#061679',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
@@ -168,23 +168,39 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#87CEEB',
+    color: '#061679',
     marginBottom: 10,
   },
   text: {
     fontSize: 16,
-    color: '#DDA0DD',
+    color: '#061679',
     lineHeight: 24,
   },
   magicItem: {
     fontSize: 16,
-    color: '#DDA0DD',
+    color: '#061679',
     marginBottom: 8,
     lineHeight: 24,
   },
-  bold: {
+  boldM: {
+    fontWeight: 'bold',
+    color: '#DC143C',
+  },
+  boldA: {
+    fontWeight: 'bold',
+    color: '#FF7F00',
+  },
+  boldG: {
     fontWeight: 'bold',
     color: '#FFD700',
+  },
+  boldI: {
+    fontWeight: 'bold',
+    color: '#22C55E',
+  },
+  boldC: {
+    fontWeight: 'bold',
+    color: '#6366F1',
   },
   hamburgerButton: {
     width: 44,
@@ -198,14 +214,14 @@ const styles = StyleSheet.create({
   },
   hamburgerText: {
     fontSize: 24,
-    color: '#FFD700',
+    color: '#8E0DD3',
     fontWeight: 'bold',
   },
   articlesContainer: {
     marginTop: 15,
   },
   articleCard: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 8,
     padding: 15,
     marginBottom: 10,
@@ -215,17 +231,17 @@ const styles = StyleSheet.create({
   articleTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#8E0DD3',
     marginBottom: 5,
   },
   articleDescription: {
     fontSize: 14,
-    color: '#DDA0DD',
+    color: '#061679',
     marginBottom: 8,
   },
   articleLink: {
     fontSize: 14,
-    color: '#87CEEB',
+    color: '#061679',
     fontWeight: '600',
   },
 });

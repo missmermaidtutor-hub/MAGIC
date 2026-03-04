@@ -113,16 +113,16 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#8E0DD3',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonText: {
     fontSize: 24,
-    color: '#FFD700',
+    color: '#8E0DD3',
     fontWeight: 'bold',
   },
   backButtonPlaceholder: {
@@ -131,13 +131,13 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#8E0DD3',
     textAlign: 'center',
     flex: 1,
   },
   subtitle: {
     fontSize: 18,
-    color: '#DDA0DD',
+    color: '#061679',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   searchInput: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 8,
     padding: 12,
     color: 'white',
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     borderColor: '#9C27B0',
   },
   quoteCard: {
-    backgroundColor: '#4A148C',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   quoteAuthor: {
     fontSize: 14,
-    color: '#E1BEE7',
+    color: '#061679',
     fontStyle: 'italic',
   },
   heartBadge: {
@@ -193,14 +193,14 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 20,
-    color: '#DDA0DD',
+    color: '#061679',
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#87CEEB',
+    color: '#061679',
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   hamburgerText: {
     fontSize: 24,
-    color: '#FFD700',
+    color: '#8E0DD3',
     fontWeight: 'bold',
   },
 });

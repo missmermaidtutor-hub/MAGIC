@@ -104,7 +104,13 @@ export default function LoginScreen({ navigation }) {
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.appTitle}>MAGIC</Text>
+          <Text style={styles.appTitle}>
+            <Text style={{ color: '#DC143C' }}>M</Text>
+            <Text style={{ color: '#FF7F00' }}>A</Text>
+            <Text style={{ color: '#FFD700' }}>G</Text>
+            <Text style={{ color: '#22C55E' }}>I</Text>
+            <Text style={{ color: '#6366F1' }}>C</Text>
+          </Text>
           <Text style={styles.appSubtitle}>Daily Creative Practice</Text>
 
           <View style={styles.card}>
@@ -209,33 +215,33 @@ const styles = StyleSheet.create({
   },
   appSubtitle: {
     fontSize: 16,
-    color: '#87CEEB',
+    color: '#6366F1',
     textAlign: 'center',
     marginBottom: 30,
     fontStyle: 'italic',
   },
   card: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#6366F1',
     borderRadius: 12,
     padding: 24,
   },
   cardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#6366F1',
     textAlign: 'center',
     marginBottom: 24,
   },
   inputLabel: {
     fontSize: 14,
-    color: '#DDA0DD',
+    color: '#6366F1',
     marginBottom: 6,
     fontWeight: '600',
   },
   textInput: {
-    backgroundColor: '#2a2a3a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 8,
     padding: 14,
     color: 'white',
@@ -257,7 +263,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   linkText: {
-    color: '#87CEEB',
+    color: '#ffffff',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 16,
@@ -273,12 +279,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#444',
   },
   dividerText: {
-    color: '#888',
+    color: '#ffffff',
     paddingHorizontal: 12,
     fontSize: 14,
   },
   appleButton: {
-    backgroundColor: '#000',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
@@ -308,11 +314,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   signUpText: {
-    color: '#888',
+    color: '#ffffff',
     fontSize: 14,
   },
   signUpLink: {
-    color: '#FFD700',
+    color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
   },

@@ -537,11 +537,11 @@ const getTodaysTasks = async () => {
   const dailyTimerUsed = !!(dailyArtTime && parseInt(dailyArtTime) > 0);
   const weeklyArtTime = await AsyncStorage.getItem('weekly_art_time');
   const weeklyTimerUsed = !!(weeklyArtTime && parseInt(weeklyArtTime) > 0);
-  const privateArtworksRaw = await AsyncStorage.getItem('private_artworks');
-  const privateArtworks = privateArtworksRaw ? JSON.parse(privateArtworksRaw) : [];
+  const personalArtworksRaw = await AsyncStorage.getItem('personal_artworks');
+  const personalArtworks = personalArtworksRaw ? JSON.parse(personalArtworksRaw) : [];
   const publicArtworksRaw = await AsyncStorage.getItem('public_artworks');
   const publicArtworks = publicArtworksRaw ? JSON.parse(publicArtworksRaw) : [];
-  const uploadedToday = privateArtworks.some(a => a.date === today) || publicArtworks.some(a => a.date === today);
+  const uploadedToday = personalArtworks.some(a => a.date === today) || publicArtworks.some(a => a.date === today);
   const artCreated = (await AsyncStorage.getItem(`art_created_${today}`)) === 'true';
   const hasArt = dailyTimerUsed || weeklyTimerUsed || uploadedToday || artCreated;
 
@@ -1391,7 +1391,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#8E0DD3',
     textAlign: 'center',
     textShadowColor: 'rgba(255, 215, 0, 0.5)',
     textShadowOffset: { width: 0, height: 0 },
@@ -1593,20 +1593,20 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   keepGoalYes: {
-    backgroundColor: '#2a2a1a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: '#90EE90',
+    borderColor: '#061679',
   },
   keepGoalYesText: {
-    color: '#90EE90',
+    color: '#061679',
     fontSize: 13,
     fontWeight: '600',
   },
   keepGoalNo: {
-    backgroundColor: '#2a2a1a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 6,
@@ -1628,14 +1628,14 @@ const styles = StyleSheet.create({
   },
   artLabel: {
     fontSize: 24,
-    color: '#7c8b77',
+    color: '#061679',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
   },
   artChallenge: {
     fontSize: 32,
-    color: '#7c8b77',
+    color: '#061679',
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -1675,12 +1675,15 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   galleryButtonInner: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     paddingHorizontal: 15,
     paddingVertical: 8,
   },
   galleryButtonText: {
-    color: '#FFE082',
+    color: '#ffffff',
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -1695,7 +1698,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   winnerDateText: {
-    color: '#cfe8c7',
+    color: '#ffffff',
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
     fontSize: 14,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -1710,7 +1716,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   winnerNameText: {
-    color: '#cfe8c7',
+    color: '#ffffff',
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -1735,7 +1744,7 @@ const styles = StyleSheet.create({
   imageFrameInner: {
     width: 240,
     height: 240,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     overflow: 'hidden',
   },
   artworkImage: {
@@ -1750,7 +1759,7 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   iconButtonInner: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     padding: 10,
   },
   iconEmoji: {
@@ -1762,12 +1771,12 @@ const styles = StyleSheet.create({
   },
   inspiredText: {
     fontSize: 20,
-    color: '#7c8b77',
+    color: '#061679',
     fontWeight: 'bold',
   },
   inspiredSubtext: {
     fontSize: 12,
-    color: '#7c8b77',
+    color: '#061679',
     marginTop: 2,
   },
   noWinnerPlaceholder: {
@@ -1775,10 +1784,13 @@ const styles = StyleSheet.create({
     height: 240,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
   },
   noWinnerText: {
-    color: '#4a5a7a',
+    color: '#ffffff',
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
     fontSize: 16,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -1788,16 +1800,16 @@ const styles = StyleSheet.create({
     height: 240,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
   },
   audioPlayIcon: {
     fontSize: 48,
-    color: '#FFD700',
+    color: '#1226A1',
     marginBottom: 12,
   },
   audioWinnerTitle: {
     fontSize: 14,
-    color: '#cfe8c7',
+    color: '#061679',
     textAlign: 'center',
     paddingHorizontal: 20,
   },

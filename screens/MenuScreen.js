@@ -10,7 +10,6 @@ export default function MenuScreen({ navigation }) {
     { name: 'About You', screen: 'AboutYou' },
     { name: 'Streak', screen: 'Grow' },
     { name: 'Quotes', screen: 'Quotes' },
-    { name: 'Settings', screen: 'Settings' },
     { name: 'Legal Policies', screen: 'Legal' },
     { name: 'Contact Us', screen: 'Contact' },
     { name: 'Log Out', screen: null }
@@ -70,16 +69,16 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#8E0DD3',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 30,
   },
   menuContainer: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#8E0DD3',
     overflow: 'hidden',
   },
   menuItem: {
@@ -92,11 +91,11 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 18,
-    color: '#90EE90',
+    color: '#061679',
     fontWeight: '500',
   },
   arrow: {
     fontSize: 24,
-    color: '#FFD700',
+    color: '#1226A1',
   },
 });

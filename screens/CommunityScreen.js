@@ -1038,7 +1038,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#050d61',
   },
   tab: {
     flex: 1,
@@ -1080,7 +1080,7 @@ const styles = StyleSheet.create({
   gallerySection: {
     backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#050d61',
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
@@ -1216,7 +1216,7 @@ const styles = StyleSheet.create({
   uploadButton: {
     backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#050d61',
     borderStyle: 'dashed',
     borderRadius: 10,
     padding: 18,
@@ -1330,7 +1330,7 @@ const styles = StyleSheet.create({
   statsCard: {
     backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#050d61',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
@@ -1398,7 +1398,7 @@ const styles = StyleSheet.create({
   newsfeedCard: {
     backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#050d61',
     borderRadius: 14,
     marginBottom: 20,
     overflow: 'hidden',
