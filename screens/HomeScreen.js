@@ -607,7 +607,13 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-    const quoteIndex = dayOfYear % quotesData.length;
+    let quoteIndex = dayOfYear % quotesData.length;
+    // Avoid same author on consecutive days
+    const yesterdayIndex = (dayOfYear - 1 + quotesData.length) % quotesData.length;
+    const yesterdayAuthor = quotesData[yesterdayIndex]?.author;
+    while (quotesData[quoteIndex]?.author === yesterdayAuthor && quotesData.length > 1) {
+      quoteIndex = (quoteIndex + 1) % quotesData.length;
+    }
     setTodayQuote(quotesData[quoteIndex]);
 
     loadTodaysChallenge();
@@ -1250,8 +1256,9 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.artFrameGap}>
               <GoldFrame style={styles.artCard} thickness={3}>
                 <View style={styles.cardInnerArt}>
-                  <Text style={styles.artLabel}>Art:</Text>
+                  <Text style={styles.artLabel}>Be Creative:</Text>
                   <Text style={styles.artChallenge}>{todaysChallenge || 'Loading...'}</Text>
+                  <Text style={styles.artStudioLink}>Straight to Art Studio</Text>
                 </View>
               </GoldFrame>
             </View>
@@ -1656,6 +1663,14 @@ const styles = StyleSheet.create({
     color: '#061679',
     fontWeight: 'bold',
     textAlign: 'center',
+  },
+  artStudioLink: {
+    fontSize: 14,
+    color: '#061679',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 10,
+    textDecorationLine: 'underline',
   },
   rankBorder: {
     borderWidth: 5,

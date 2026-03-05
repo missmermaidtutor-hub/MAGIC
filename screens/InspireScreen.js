@@ -11,6 +11,7 @@ import {
   Dimensions,
   ImageBackground,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -22,9 +23,73 @@ import {
   getUserVotesForDate,
   submitVoteBatch,
 } from '../services/firestoreService';
-import { getESTDate, getESTYesterday, getESTDayBeforeYesterday } from '../utils/dateUtils';
+import { getESTDate, getESTYesterday } from '../utils/dateUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+
+// Stock artwork images from ARTOWORKS folder for voting
+const ARTOWORKS_IMAGES = [
+  { id: 'artowork_1', source: require('../Cliparts/ARTOWORKS/10-18.jpg'), title: 'Sunset Reflections', isFiller: true },
+  { id: 'artowork_2', source: require('../Cliparts/ARTOWORKS/540119055_10162967375152264_4178779566219057526_n.jpg'), title: 'Morning Light', isFiller: true },
+  { id: 'artowork_3', source: require('../Cliparts/ARTOWORKS/555501898_10163095270207264_8889387783471590897_n.jpg'), title: 'Color Study', isFiller: true },
+  { id: 'artowork_4', source: require('../Cliparts/ARTOWORKS/555085754_10237876767528314_2990466336443851643_n.jpg'), title: 'Abstract Dreams', isFiller: true },
+  { id: 'artowork_5', source: require('../Cliparts/ARTOWORKS/513903252_10162679994762264_6498884796748588977_n.jpg'), title: 'Quiet Moments', isFiller: true },
+  { id: 'artowork_6', source: require('../Cliparts/ARTOWORKS/524578717_10171872892030024_3575163892748854717_n.jpg'), title: 'Deep Perspective', isFiller: true },
+  { id: 'artowork_7', source: require('../Cliparts/ARTOWORKS/555617493_10237876767448312_7739267849925085879_n.jpg'), title: 'Inner Landscape', isFiller: true },
+  { id: 'artowork_8', source: require('../Cliparts/ARTOWORKS/555447442_10237876768088328_2178101301320484529_n.jpg'), title: 'Free Expression', isFiller: true },
+  { id: 'artowork_9', source: require('../Cliparts/ARTOWORKS/524793848_10162839591502264_8318629657123426505_n.jpg'), title: 'Bold Strokes', isFiller: true },
+  { id: 'artowork_10', source: require('../Cliparts/ARTOWORKS/555583717_10163109406592264_4681170089551922231_n.jpg'), title: 'Creative Vision', isFiller: true },
+  { id: 'artowork_11', source: require('../Cliparts/ARTOWORKS/555573460_10237876768008326_7582047112777369094_n.jpg'), title: 'Peaceful Flow', isFiller: true },
+  { id: 'artowork_12', source: require('../Cliparts/ARTOWORKS/556489754_10163095269937264_3934142205780901707_n.jpg'), title: 'Nature\'s Pattern', isFiller: true },
+];
+
+// Candle component for saving inspirations
+const Candle = ({ lit = false, onPress, size = 36 }) => (
+  <TouchableOpacity onPress={onPress} style={{ alignItems: 'center' }}>
+    {lit && (
+      <View style={{
+        width: size * 0.3,
+        height: size * 0.4,
+        borderRadius: size * 0.15,
+        backgroundColor: '#FF8C00',
+        marginBottom: -4,
+        shadowColor: '#FFD700',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 12,
+        transform: [{ scaleX: 0.7 }],
+      }}>
+        <View style={{
+          width: size * 0.15,
+          height: size * 0.2,
+          borderRadius: size * 0.1,
+          backgroundColor: '#FFFF00',
+          alignSelf: 'center',
+          marginTop: size * 0.08,
+        }} />
+      </View>
+    )}
+    {!lit && <View style={{ height: size * 0.4 - 4 }} />}
+    <View style={{
+      width: 2,
+      height: size * 0.15,
+      backgroundColor: lit ? '#333' : '#666',
+      marginBottom: -1,
+    }} />
+    <View style={{
+      width: size * 0.35,
+      height: size * 0.5,
+      backgroundColor: lit ? '#FFF8DC' : '#8B8682',
+      borderRadius: 3,
+      borderWidth: 1,
+      borderColor: lit ? '#FFD700' : '#555',
+      shadowColor: lit ? '#FFD700' : 'transparent',
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: lit ? 0.8 : 0,
+      shadowRadius: 8,
+    }} />
+  </TouchableOpacity>
+);
 
 export default function InspireScreen({ navigation }) {
   const { user } = useAuth();
@@ -36,14 +101,15 @@ export default function InspireScreen({ navigation }) {
   const [currentSet, setCurrentSet] = useState([]); // 4 courages to vote on
   const [votedCourageIds, setVotedCourageIds] = useState(new Set());
   const [availableCourages, setAvailableCourages] = useState([]); // all eligible, minus own
-  const [fillerIds, setFillerIds] = useState(new Set()); // IDs from previous day (not eligible for winner)
   const [fullViewArtwork, setFullViewArtwork] = useState(null);
   const [playingAudioId, setPlayingAudioId] = useState(null);
+  const [savedInspirations, setSavedInspirations] = useState(new Set());
   const soundRef = useRef(null);
 
-  // Load criterion
+  // Load criterion + saved inspirations
   useEffect(() => {
     loadTodaysCriterion();
+    loadSavedInspirations();
   }, []);
 
   // Load courages and votes when screen gains focus
@@ -82,64 +148,153 @@ export default function InspireScreen({ navigation }) {
     }
   };
 
+  // Load which artworks the user has saved as inspirations
+  const loadSavedInspirations = async () => {
+    try {
+      const data = await AsyncStorage.getItem('favorite_artworks');
+      if (data) {
+        const favs = JSON.parse(data);
+        setSavedInspirations(new Set(favs.map(a => a.id)));
+      }
+    } catch (e) {
+      console.log('Error loading saved inspirations:', e);
+    }
+  };
+
+  // Candle save — adds/removes from inspiration gallery + fills Connect star
+  const handleCandleSave = async (courage) => {
+    try {
+      const existing = await AsyncStorage.getItem('favorite_artworks');
+      let favorites = existing ? JSON.parse(existing) : [];
+      const alreadySaved = favorites.some(a => a.id === courage.id);
+
+      if (alreadySaved) {
+        favorites = favorites.filter(a => a.id !== courage.id);
+        setSavedInspirations(prev => {
+          const next = new Set(prev);
+          next.delete(courage.id);
+          return next;
+        });
+      } else {
+        favorites.push({
+          id: courage.id,
+          imageUrl: courage.mediaUrl || null,
+          title: courage.title || 'Untitled',
+          source: 'candle_save',
+          date: getESTDate(),
+          savedAt: new Date().toISOString(),
+        });
+        setSavedInspirations(prev => new Set(prev).add(courage.id));
+        // Mark Connect star point for today
+        const today = getESTDate();
+        await AsyncStorage.setItem(`inspiration_saved_${today}`, 'true');
+      }
+      await AsyncStorage.setItem('favorite_artworks', JSON.stringify(favorites));
+    } catch (e) {
+      console.log('Error toggling candle:', e);
+    }
+  };
+
+  // Email share — opens email compose + fills Connect star
+  const handleEmailShare = async (courage) => {
+    const subject = encodeURIComponent('Something that inspired me');
+    const body = encodeURIComponent(
+      'This inspired me to send to you!\n\n' +
+      (courage.title ? `"${courage.title}"\n\n` : '') +
+      '[Add your message here]\n\n— Sent from MAGIC Tracker'
+    );
+    Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
+    const today = getESTDate();
+    await AsyncStorage.setItem(`email_sent_${today}`, 'true');
+  };
+
+  // Pick 4 random stock images the user hasn't voted on today
+  const pickStockSet = (alreadyVotedIds) => {
+    const available = ARTOWORKS_IMAGES.filter(img => !alreadyVotedIds.has(img.id));
+    const shuffled = [...available].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 4);
+  };
+
   const loadVotingData = async () => {
     if (!user?.uid) return;
     setLoading(true);
     try {
-      // Voting date = yesterday EST (courages uploaded yesterday are today's voting pool)
       const votingDate = getESTYesterday();
-      const prevDate = getESTDayBeforeYesterday();
 
-      // Fetch all courages for the voting date
-      const courages = await getCouragesForDate(votingDate);
+      // Try to fetch real courages
+      let courages = [];
+      try {
+        courages = await getCouragesForDate(votingDate);
+      } catch (e) {
+        console.log('Could not fetch courages, using stock images:', e);
+      }
 
       // Filter out user's own courage
       const eligible = courages.filter(c => c.uid !== user.uid);
 
-      // Get user's existing votes for this voting date
-      const existingVotes = await getUserVotesForDate(user.uid, votingDate);
-      const alreadyVotedIds = new Set(existingVotes.map(v => v.courageId));
+      // Get user's existing votes
+      let alreadyVotedIds = new Set();
+      try {
+        const existingVotes = await getUserVotesForDate(user.uid, votingDate);
+        alreadyVotedIds = new Set(existingVotes.map(v => v.courageId));
+      } catch (e) {
+        console.log('Could not fetch votes:', e);
+      }
+
+      // Also check locally-voted stock image IDs for today
+      const today = getESTDate();
+      try {
+        const localVoted = await AsyncStorage.getItem(`stock_voted_${today}`);
+        if (localVoted) {
+          JSON.parse(localVoted).forEach(id => alreadyVotedIds.add(id));
+        }
+      } catch (e) {}
 
       setAvailableCourages(eligible);
       setVotedCourageIds(alreadyVotedIds);
 
-      // Check if all eligible courages have been voted on
-      const unvoted = eligible.filter(c => !alreadyVotedIds.has(c.id));
-
-      if (unvoted.length === 0 && eligible.length > 0) {
-        // All voted on
-        setAllDone(true);
-        setCurrentSet([]);
-      } else if (unvoted.length >= 4) {
-        // Pick 4 random unvoted courages
-        const shuffled = [...unvoted].sort(() => Math.random() - 0.5);
-        setCurrentSet(shuffled.slice(0, 4));
-        setAllDone(false);
-      } else if (unvoted.length > 0 && unvoted.length < 4) {
-        // Need fillers from previous day
-        const prevCourages = await getCouragesForDate(prevDate);
-        const prevEligible = prevCourages.filter(c => c.uid !== user.uid);
-        const shuffledPrev = [...prevEligible].sort(() => Math.random() - 0.5);
-        const fillersNeeded = 4 - unvoted.length;
-        const fillers = shuffledPrev.slice(0, Math.min(fillersNeeded, 3));
-        const newFillerIds = new Set(fillers.map(f => f.id));
-        setFillerIds(newFillerIds);
-
-        if (unvoted.length + fillers.length >= 4) {
-          setCurrentSet([...unvoted, ...fillers].slice(0, 4));
+      if (eligible.length >= 4) {
+        // Enough real courages — use them
+        const unvoted = eligible.filter(c => !alreadyVotedIds.has(c.id));
+        if (unvoted.length === 0) {
+          setAllDone(true);
+          setCurrentSet([]);
+        } else if (unvoted.length >= 4) {
+          const shuffled = [...unvoted].sort(() => Math.random() - 0.5);
+          setCurrentSet(shuffled.slice(0, 4));
           setAllDone(false);
         } else {
-          // Can't make a set of 4
+          // Mix real courages + stock to reach 4
+          const stockFill = pickStockSet(new Set([...alreadyVotedIds, ...unvoted.map(c => c.id)]));
+          const mixed = [...unvoted, ...stockFill].slice(0, 4);
+          if (mixed.length >= 4) {
+            setCurrentSet(mixed);
+            setAllDone(false);
+          } else {
+            setAllDone(true);
+            setCurrentSet([]);
+          }
+        }
+      } else {
+        // Not enough real courages — use stock images
+        const stockSet = pickStockSet(alreadyVotedIds);
+        if (stockSet.length >= 4) {
+          setCurrentSet(stockSet);
+          setAllDone(false);
+        } else {
+          // All stock images voted on today
           setAllDone(true);
           setCurrentSet([]);
         }
-      } else {
-        // No courages available at all
-        setCurrentSet([]);
-        setAllDone(eligible.length > 0);
       }
     } catch (error) {
       console.log('Error loading voting data:', error);
+      // Fallback: show stock images even if everything fails
+      const stockSet = pickStockSet(new Set());
+      if (stockSet.length >= 4) {
+        setCurrentSet(stockSet);
+        setAllDone(false);
+      }
     }
     setLoading(false);
   };
@@ -173,15 +328,40 @@ export default function InspireScreen({ navigation }) {
       const votingDate = getESTYesterday();
       const today = getESTDate();
 
-      // Build vote objects
-      const votes = currentIds.map(id => ({
-        courageId: id,
-        courageDate: votingDate,
-        score: batchRankings[id],
-      }));
+      // Separate real courages from stock images
+      const realVotes = [];
+      const stockIds = [];
+      currentIds.forEach(id => {
+        const item = currentSet.find(c => c.id === id);
+        if (item?.isFiller) {
+          stockIds.push(id);
+        } else {
+          realVotes.push({
+            courageId: id,
+            courageDate: votingDate,
+            score: batchRankings[id],
+          });
+        }
+      });
 
-      // Submit to Firestore
-      await submitVoteBatch(user.uid, votes);
+      // Submit real votes to Firestore (if any)
+      if (realVotes.length > 0) {
+        try {
+          await submitVoteBatch(user.uid, realVotes);
+        } catch (e) {
+          console.log('Firestore vote submit error:', e);
+        }
+      }
+
+      // Save stock image votes locally so they don't repeat today
+      if (stockIds.length > 0) {
+        try {
+          const existing = await AsyncStorage.getItem(`stock_voted_${today}`);
+          const prev = existing ? JSON.parse(existing) : [];
+          const merged = [...new Set([...prev, ...stockIds])];
+          await AsyncStorage.setItem(`stock_voted_${today}`, JSON.stringify(merged));
+        } catch (e) {}
+      }
 
       // Mark ranked for today (for MAGIC star)
       await AsyncStorage.setItem(`ranked_${today}`, 'true');
@@ -191,35 +371,25 @@ export default function InspireScreen({ navigation }) {
       currentIds.forEach(id => newVotedIds.add(id));
       setVotedCourageIds(newVotedIds);
 
-      // Reset rankings and auto-load next set
+      // Reset rankings
       setRankings({});
 
-      // Find next set of unvoted courages
-      const unvoted = availableCourages.filter(c => !newVotedIds.has(c.id));
+      // Show thank you popup
+      Alert.alert('Thank You for Voting!', 'Your votes have been submitted.');
 
-      if (unvoted.length === 0) {
+      // Load next set — check stock images available
+      const nextStock = pickStockSet(newVotedIds);
+      const unvotedReal = availableCourages.filter(c => !newVotedIds.has(c.id));
+
+      if (unvotedReal.length >= 4) {
+        const shuffled = [...unvotedReal].sort(() => Math.random() - 0.5);
+        setCurrentSet(shuffled.slice(0, 4));
+      } else if (nextStock.length >= 4) {
+        // More stock images to vote on
+        setCurrentSet(nextStock);
+      } else {
         setAllDone(true);
         setCurrentSet([]);
-      } else if (unvoted.length >= 4) {
-        const shuffled = [...unvoted].sort(() => Math.random() - 0.5);
-        setCurrentSet(shuffled.slice(0, 4));
-      } else {
-        // Need fillers from previous day
-        const prevDate = getESTDayBeforeYesterday();
-        const prevCourages = await getCouragesForDate(prevDate);
-        const prevEligible = prevCourages.filter(c => c.uid !== user.uid);
-        const shuffledPrev = [...prevEligible].sort(() => Math.random() - 0.5);
-        const fillersNeeded = 4 - unvoted.length;
-        const fillers = shuffledPrev.slice(0, Math.min(fillersNeeded, 3));
-        const newFillerIds = new Set(fillers.map(f => f.id));
-        setFillerIds(newFillerIds);
-
-        if (unvoted.length + fillers.length >= 4) {
-          setCurrentSet([...unvoted, ...fillers].slice(0, 4));
-        } else {
-          setAllDone(true);
-          setCurrentSet([]);
-        }
       }
     } catch (error) {
       console.log('Error submitting votes:', error);
@@ -275,44 +445,71 @@ export default function InspireScreen({ navigation }) {
     const currentRank = rankings[courage.id];
     const isAudio = courage.mediaType === 'audio';
     const isPlaying = playingAudioId === courage.id;
+    const isSaved = savedInspirations.has(courage.id);
 
     return (
       <View key={courage.id} style={styles.artworkCard}>
-        {/* Image or Audio Player */}
-        <TouchableOpacity
-          style={styles.imageFrame}
-          onPress={() => {
-            if (isAudio) {
-              playAudio(courage);
-            } else if (courage.mediaUrl) {
-              setFullViewArtwork(courage);
-            }
-          }}
-        >
-          {isAudio ? (
-            <View style={styles.audioFrame}>
-              <Text style={styles.audioIcon}>{isPlaying ? '⏸' : '▶️'}</Text>
-              <Text style={styles.audioLabel}>{isPlaying ? 'Playing...' : 'Tap to Play'}</Text>
-            </View>
-          ) : courage.mediaUrl ? (
-            <Image
-              source={{ uri: courage.mediaUrl }}
-              style={styles.artworkImage}
-              resizeMode="cover"
+        {/* Image row: envelope | image | candle */}
+        <View style={styles.imageActionRow}>
+          {/* Email envelope on the left */}
+          <TouchableOpacity
+            style={styles.sideAction}
+            onPress={() => handleEmailShare(courage)}
+          >
+            <Text style={styles.envelopeIcon}>✉️</Text>
+          </TouchableOpacity>
+
+          {/* Image or Audio Player */}
+          <TouchableOpacity
+            style={styles.imageFrame}
+            onPress={() => {
+              if (isAudio) {
+                playAudio(courage);
+              } else if (courage.mediaUrl || courage.source) {
+                setFullViewArtwork(courage);
+              }
+            }}
+          >
+            {courage.source ? (
+              <Image
+                source={courage.source}
+                style={styles.artworkImage}
+                resizeMode="cover"
+              />
+            ) : isAudio ? (
+              <View style={styles.audioFrame}>
+                <Text style={styles.audioIcon}>{isPlaying ? '⏸' : '▶️'}</Text>
+                <Text style={styles.audioLabel}>{isPlaying ? 'Playing...' : 'Tap to Play'}</Text>
+              </View>
+            ) : courage.mediaUrl ? (
+              <Image
+                source={{ uri: courage.mediaUrl }}
+                style={styles.artworkImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={styles.textCourageFrame}>
+                <Text style={styles.textCourageContent} numberOfLines={6}>
+                  {courage.title}
+                </Text>
+              </View>
+            )}
+            {currentRank && (
+              <View style={styles.rankBadge}>
+                <Text style={styles.rankBadgeText}>#{currentRank}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {/* Candle on the right */}
+          <View style={styles.sideAction}>
+            <Candle
+              lit={isSaved}
+              onPress={() => handleCandleSave(courage)}
+              size={32}
             />
-          ) : (
-            <View style={styles.textCourageFrame}>
-              <Text style={styles.textCourageContent} numberOfLines={6}>
-                {courage.title}
-              </Text>
-            </View>
-          )}
-          {currentRank && (
-            <View style={styles.rankBadge}>
-              <Text style={styles.rankBadgeText}>#{currentRank}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Title only — anonymous, no artist name */}
         <View style={styles.artistInfo}>
@@ -398,7 +595,7 @@ export default function InspireScreen({ navigation }) {
                 style={styles.zoomScroll}
               >
                 <Image
-                  source={{ uri: fullViewArtwork.mediaUrl }}
+                  source={fullViewArtwork.source || { uri: fullViewArtwork.mediaUrl }}
                   style={styles.modalImage}
                   resizeMode="contain"
                 />
@@ -573,15 +770,27 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#004225',
     borderRadius: 12,
-    padding: 10,
+    padding: 6,
     marginBottom: 15,
   },
+  imageActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  sideAction: {
+    width: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  envelopeIcon: {
+    fontSize: 18,
+  },
   imageFrame: {
-    width: '100%',
+    flex: 1,
     aspectRatio: 1,
     borderRadius: 8,
     overflow: 'hidden',
-    marginBottom: 10,
     borderWidth: 2,
     borderColor: '#004225',
     position: 'relative',

@@ -172,7 +172,10 @@ const loadMonthData = async (year, month) => {
 
       const ranked = await AsyncStorage.getItem(`ranked_${dateStr}`);
       const hasInspire = ranked === 'true';
-      const hasCourage = publicArtworks.some(a => a.date === dateStr);
+      const hasCourageUpload = publicArtworks.some(a => a.date === dateStr);
+      const inspirationSaved = await AsyncStorage.getItem(`inspiration_saved_${dateStr}`);
+      const emailSent = await AsyncStorage.getItem(`email_sent_${dateStr}`);
+      const hasCourage = hasCourageUpload || inspirationSaved === 'true' || emailSent === 'true';
       const hasAny = !!(hasManifest && manifestRaw) || hasArt || hasGoal || hasInspire || hasCourage;
 
       if (hasAny) {
@@ -702,7 +705,7 @@ export default function StreakScreen() {
                           }]} />
                           <View style={{ flex: 1 }}>
                             <Text style={[styles.guidanceLabel, {
-                              color: done ? MAGIC_COLOR_ARRAY[i] : '#1a1a1a',
+                              color: done ? MAGIC_COLOR_ARRAY[i] : '#ffffff',
                             }]}>
                               {done ? '✓ ' : ''}{MAGIC_LABELS[i]}
                             </Text>
@@ -977,7 +980,7 @@ const styles = StyleSheet.create({
   },
   guidanceHint: {
     fontSize: 12,
-    color: '#333',
+    color: '#ffffff',
     marginTop: 2,
     fontStyle: 'italic',
   },

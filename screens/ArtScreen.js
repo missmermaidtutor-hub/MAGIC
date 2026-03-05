@@ -17,7 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
-import promptsData from '../prompts.json';
+import promptsData from '../prompts-data.json';
 import { useAuth } from '../context/AuthContext';
 import {
   getUserCourageForDate,
@@ -34,8 +34,8 @@ export default function ArtScreen() {
   const [courageUploadedToday, setCourageUploadedToday] = useState(false);
 
   // Daily timer (adjustable, default 20 minutes)
-  const [timerSetting, setTimerSetting] = useState(20); // minutes
-  const [dailyTime, setDailyTime] = useState(20 * 60); // seconds remaining
+  const [timerSetting, setTimerSetting] = useState(5); // minutes
+  const [dailyTime, setDailyTime] = useState(5 * 60); // seconds remaining
   const [isDailyRunning, setIsDailyRunning] = useState(false);
   
   // Weekly stopwatch
@@ -44,6 +44,8 @@ export default function ArtScreen() {
   
   // Challenge
   const [todaysChallenge, setTodaysChallenge] = useState('');
+  const [todaysPromptData, setTodaysPromptData] = useState(null);
+  const [nudgeModalVisible, setNudgeModalVisible] = useState(false);
 
   // Art input modal
   const [writeModalVisible, setWriteModalVisible] = useState(false);
@@ -215,29 +217,39 @@ export default function ArtScreen() {
     }
   };
 
-  // Load or generate daily challenge
+  // Load or generate daily challenge — picks from a different category each day
   const loadDailyChallenge = async () => {
     try {
       const today = new Date().toISOString().split('T')[0];
       const savedDate = await AsyncStorage.getItem('challenge_date');
       const savedChallenge = await AsyncStorage.getItem('todays_challenge');
-      
-      if (savedDate === today && savedChallenge) {
+      const savedPromptData = await AsyncStorage.getItem('todays_prompt_data');
+
+      if (savedDate === today && savedChallenge && savedPromptData) {
         setTodaysChallenge(savedChallenge);
+        setTodaysPromptData(JSON.parse(savedPromptData));
       } else {
-        // New day, generate new challenge from prompts
+        // Get unique categories and rotate through them by day
+        const categories = [...new Set(promptsData.map(p => p.category))].sort();
         const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-        const promptIndex = dayOfYear % promptsData.length;
-        const newChallenge = promptsData[promptIndex];
-        
-        setTodaysChallenge(newChallenge);
+        const todaysCategory = categories[dayOfYear % categories.length];
+
+        // Filter prompts for today's category, then pick one
+        const categoryPrompts = promptsData.filter(p => p.category === todaysCategory);
+        const pickIndex = Math.floor(dayOfYear / categories.length) % categoryPrompts.length;
+        const chosen = categoryPrompts[pickIndex];
+
+        setTodaysChallenge(chosen.prompt);
+        setTodaysPromptData(chosen);
         await AsyncStorage.setItem('challenge_date', today);
-        await AsyncStorage.setItem('todays_challenge', newChallenge);
+        await AsyncStorage.setItem('todays_challenge', chosen.prompt);
+        await AsyncStorage.setItem('todays_prompt_data', JSON.stringify(chosen));
       }
     } catch (error) {
       console.log('Error loading challenge:', error);
-      // Fallback to first prompt
-      setTodaysChallenge(promptsData[0] || 'Create something beautiful');
+      const fallback = promptsData[0];
+      setTodaysChallenge(fallback?.prompt || 'Create something beautiful');
+      setTodaysPromptData(fallback || null);
     }
   };
 
@@ -378,7 +390,7 @@ export default function ArtScreen() {
 
   // Parse editable timer fields
   const [editHrs, setEditHrs] = useState('00');
-  const [editMins, setEditMins] = useState('20');
+  const [editMins, setEditMins] = useState('05');
   const [editSecs, setEditSecs] = useState('00');
 
   const applyEditedTime = () => {
@@ -469,29 +481,12 @@ export default function ArtScreen() {
         {
           text: 'Share!',
           onPress: async () => {
+            const today = getESTDate();
+            const label = modeLabels[writeMode] || 'Art';
+            const title = todaysChallenge || `${label} from ${today}`;
+
+            // Save to personal gallery locally first
             try {
-              const today = getESTDate();
-              const label = modeLabels[writeMode] || 'Art';
-              const title = todaysChallenge || `${label} from ${today}`;
-
-              // For text-based courage, upload as a text blob to Storage
-              const textBlob = new Blob([writeText.trim()], { type: 'text/plain' });
-              const storagePath = `courages/${user.uid}/${today}_${Date.now()}.txt`;
-              // For text courages, store the text directly (no media URL needed)
-              // We'll use mediaType 'image' with an empty URL and store text in title
-
-              await uploadCourage(user.uid, {
-                pseudonym: userProfile?.pseudonym || '',
-                title: `${title}: ${writeText.trim().substring(0, 200)}`,
-                mediaType: 'image',
-                mediaUrl: '',
-                date: today,
-                anonymous: userProfile?.anonymous ?? false,
-              });
-
-              setCourageUploadedToday(true);
-
-              // Save to personal gallery locally
               const personalRaw = await AsyncStorage.getItem('personal_artworks');
               const personal = personalRaw ? JSON.parse(personalRaw) : [];
               personal.push({
@@ -512,12 +507,32 @@ export default function ArtScreen() {
               if (!existing || parseInt(existing) === 0) {
                 await AsyncStorage.setItem(`art_time_${today}`, '1');
               }
+            } catch (localError) {
+              console.log('Local save error:', localError);
+            }
 
-              setWriteModalVisible(false);
+            // Mark as uploaded immediately so button disables
+            setCourageUploadedToday(true);
+            setWriteModalVisible(false);
+
+            // Now attempt Firestore upload
+            try {
+              await uploadCourage(user.uid, {
+                pseudonym: userProfile?.pseudonym || '',
+                title: `${title}: ${writeText.trim().substring(0, 200)}`,
+                mediaType: 'image',
+                mediaUrl: '',
+                date: today,
+                anonymous: userProfile?.anonymous ?? false,
+              });
+
               Alert.alert('Congratulations on your COURAGE!', 'Upload is ready for tomorrow\'s vote.');
             } catch (e) {
               console.log('Courage text upload error:', e);
-              Alert.alert('Error', 'Could not upload. Please try again.');
+              Alert.alert(
+                'Saved Locally',
+                'Your work was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
+              );
             }
           }
         }
@@ -531,31 +546,18 @@ export default function ArtScreen() {
 
   // Pick an image from the media library
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (result.canceled) return null;
-    return { uri: result.assets[0].uri, mediaType: 'image' };
-  };
-
-  // Pick audio (use document picker approach or audio recording)
-  const pickAudio = async () => {
-    // For now, use image picker with all media types and filter
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      quality: 0.8,
-    });
-    if (result.canceled) return null;
-    const asset = result.assets[0];
-    // Reject video
-    if (asset.type === 'video') {
-      Alert.alert('Not Accepted', 'Video recordings are not accepted at this time. Please upload an image or audio recording.');
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+      });
+      if (!result || result.canceled || !result.assets || result.assets.length === 0) return null;
+      return { uri: result.assets[0].uri, mediaType: 'image' };
+    } catch (err) {
+      console.log('Image picker error:', err);
+      Alert.alert('Error', 'Could not open image picker.');
       return null;
     }
-    const isAudio = asset.uri?.match(/\.(mp3|wav|m4a|aac|ogg)$/i);
-    return { uri: asset.uri, mediaType: isAudio ? 'audio' : 'image' };
   };
 
   // Handle uploads
@@ -589,7 +591,8 @@ export default function ArtScreen() {
 
       Alert.alert('Saved!', 'Artwork saved to your private gallery. Only you can see it.');
     } catch (error) {
-      Alert.alert('Error', 'Could not save artwork');
+      console.log('Save error:', error);
+      Alert.alert('Error', 'Could not save artwork: ' + error.message);
     }
   };
 
@@ -599,7 +602,7 @@ export default function ArtScreen() {
       return;
     }
 
-    const picked = await pickAudio(); // allows images and audio, rejects video
+    const picked = await pickImage();
     if (!picked) return;
 
     Alert.alert(
@@ -610,27 +613,11 @@ export default function ArtScreen() {
         {
           text: 'Share!',
           onPress: async () => {
+            const today = getESTDate();
+            const title = todaysChallenge || `Art from ${today}`;
+
+            // Save locally to private gallery first (always works)
             try {
-              const today = getESTDate();
-              const title = todaysChallenge || `Art from ${today}`;
-
-              // Upload media to Firebase Storage
-              const storagePath = `courages/${user.uid}/${today}_${Date.now()}`;
-              const mediaUrl = await uploadMediaToStorage(picked.uri, storagePath);
-
-              // Create courage in Firestore
-              await uploadCourage(user.uid, {
-                pseudonym: userProfile?.pseudonym || '',
-                title,
-                mediaType: picked.mediaType,
-                mediaUrl,
-                date: today,
-                anonymous: userProfile?.anonymous ?? false,
-              });
-
-              setCourageUploadedToday(true);
-
-              // Also save locally for personal reference
               const personalRaw = await AsyncStorage.getItem('personal_artworks');
               const personal = personalRaw ? JSON.parse(personalRaw) : [];
               personal.push({
@@ -650,11 +637,45 @@ export default function ArtScreen() {
               if (!existing || parseInt(existing) === 0) {
                 await AsyncStorage.setItem(`art_time_${today}`, '1');
               }
+            } catch (localError) {
+              console.log('Local save error:', localError);
+            }
+
+            // Mark as uploaded immediately so button disables
+            setCourageUploadedToday(true);
+
+            // Now attempt Firebase upload
+            try {
+              const storagePath = `courages/${user.uid}/${today}_${Date.now()}`;
+              const mediaUrl = await uploadMediaToStorage(picked.uri, storagePath);
+
+              await uploadCourage(user.uid, {
+                pseudonym: userProfile?.pseudonym || '',
+                title,
+                mediaType: picked.mediaType,
+                mediaUrl,
+                date: today,
+                anonymous: userProfile?.anonymous ?? false,
+              });
+
+              // Update local gallery entry with Firebase URL for persistence
+              try {
+                const personalRaw = await AsyncStorage.getItem('personal_artworks');
+                const personal = personalRaw ? JSON.parse(personalRaw) : [];
+                const lastEntry = personal[personal.length - 1];
+                if (lastEntry && lastEntry.date === today && lastEntry.pendingVoting) {
+                  lastEntry.imageUrl = mediaUrl;
+                  await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
+                }
+              } catch (e) { /* silent */ }
 
               Alert.alert('Congratulations on your COURAGE!', 'Upload is ready for tomorrow\'s vote.');
             } catch (error) {
               console.log('Courage upload error:', error);
-              Alert.alert('Error', 'Could not upload artwork. Please try again.');
+              Alert.alert(
+                'Saved Locally',
+                'Your artwork was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
+              );
             }
           }
         }
@@ -673,8 +694,11 @@ export default function ArtScreen() {
         
         {/* Today's Challenge */}
         <View style={styles.challengeCard}>
-          <Text style={styles.challengeLabel}>Today's Challenge:</Text>
+          <Text style={styles.challengeLabel}>Be Creative:</Text>
           <Text style={styles.challengeText}>{todaysChallenge}</Text>
+          <TouchableOpacity onPress={() => setNudgeModalVisible(true)}>
+            <Text style={styles.nudgeLink}>Click for a nudge</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Daily Timer (adjustable) */}
@@ -812,7 +836,7 @@ export default function ArtScreen() {
 
         {/* Upload Buttons */}
         <View style={styles.uploadContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.privateUploadButton}
             onPress={handlePrivateUpload}
           >
@@ -822,13 +846,14 @@ export default function ArtScreen() {
             <Text style={styles.uploadButtonText}>ONLY</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.courageUploadButton}
-            onPress={handleCourageUpload}
+          <TouchableOpacity
+            style={styles.privateUploadButton}
+            onPress={handlePrivateUpload}
           >
-            <Text style={styles.courageUploadText}>Upload</Text>
-            <Text style={styles.courageUploadText}>COURAGE</Text>
-            <Text style={styles.courageSubtext}>(add to tomorrow's voting)</Text>
+            <Text style={styles.uploadButtonText}>SHARE WITH</Text>
+            <Text style={styles.uploadButtonText}>COURAGE</Text>
+            <Text style={styles.uploadButtonText}>(voting)</Text>
+            <Text style={styles.uploadButtonText}>once per day</Text>
           </TouchableOpacity>
         </View>
 
@@ -869,6 +894,23 @@ export default function ArtScreen() {
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Nudge Modal */}
+      <Modal visible={nudgeModalVisible} transparent animationType="fade">
+        <View style={styles.nudgeOverlay}>
+          <View style={styles.nudgeCard}>
+            <TouchableOpacity style={styles.modalXButton} onPress={() => setNudgeModalVisible(false)}>
+              <Text style={styles.modalXText}>✕</Text>
+            </TouchableOpacity>
+            {todaysPromptData?.encouragement ? (
+              <Text style={styles.nudgeEncouragement}>{todaysPromptData.encouragement}</Text>
+            ) : null}
+            {todaysPromptData?.explained ? (
+              <Text style={styles.nudgeExplained}>{todaysPromptData.explained}</Text>
+            ) : null}
+          </View>
+        </View>
       </Modal>
     </ImageBackground>
   );
@@ -1093,6 +1135,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  courageUploadButtonDone: {
+    backgroundColor: 'rgba(200, 200, 200, 0.3)',
+    borderColor: '#999',
+    opacity: 0.7,
+  },
   uploadButtonText: {
     color: '#332100',
     fontSize: 14,
@@ -1209,5 +1256,50 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.7)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
+  },
+  nudgeLink: {
+    fontSize: 14,
+    color: '#332100',
+    fontStyle: 'italic',
+    marginTop: 12,
+    textDecorationLine: 'underline',
+  },
+  nudgeOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  nudgeCard: {
+    backgroundColor: 'rgba(243, 203, 130, 0.95)',
+    borderWidth: 3,
+    borderColor: '#f2990a',
+    borderRadius: 12,
+    padding: 24,
+    width: '100%',
+    maxWidth: 380,
+  },
+  nudgeTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#332100',
+    textAlign: 'center',
+    marginBottom: 16,
+    marginTop: 10,
+  },
+  nudgeEncouragement: {
+    fontSize: 18,
+    color: '#5a3800',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 12,
+    marginTop: 10,
+  },
+  nudgeExplained: {
+    fontSize: 16,
+    color: '#332100',
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });

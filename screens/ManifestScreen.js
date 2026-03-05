@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getESTDate, msUntilESTMidnight } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
 
 export default function ManifestScreen() {
@@ -59,23 +60,18 @@ export default function ManifestScreen() {
     });
   };
 
-  // Get today's date as a string
+  // Get today's date as a string in EST
   const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    return getESTDate();
   };
 
-  // Schedule a timer to fire at midnight
+  // Schedule a timer to fire at midnight EST
   const scheduleMidnightReset = () => {
     if (midnightTimerRef.current) clearTimeout(midnightTimerRef.current);
-    const now = new Date();
-    const midnight = new Date(now);
-    midnight.setHours(24, 0, 0, 0);
-    const msUntilMidnight = midnight - now;
 
     midnightTimerRef.current = setTimeout(() => {
       handleMidnightReset();
-    }, msUntilMidnight);
+    }, msUntilESTMidnight());
   };
 
   // Called exactly at midnight
@@ -207,7 +203,13 @@ export default function ManifestScreen() {
   useEffect(() => {
     // Use date as seed for consistent daily quote
     const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-    const quoteIndex = dayOfYear % quotesData.length;
+    let quoteIndex = dayOfYear % quotesData.length;
+    // Avoid same author on consecutive days
+    const yesterdayIndex = (dayOfYear - 1 + quotesData.length) % quotesData.length;
+    const yesterdayAuthor = quotesData[yesterdayIndex]?.author;
+    while (quotesData[quoteIndex]?.author === yesterdayAuthor && quotesData.length > 1) {
+      quoteIndex = (quoteIndex + 1) % quotesData.length;
+    }
     setTodayQuote(quotesData[quoteIndex]);
 
     entryDateRef.current = getTodayDate();
