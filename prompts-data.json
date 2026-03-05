@@ -1,2420 +1,1166 @@
 [
   {
-    "prompt": "Allow chance to influence the outcome.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "PLAY & RANDOMNESS"
+    "prompt": "Swatch Book",
+    "encouragement": "We've got all night",
+    "explained": "\u2014  Create a palette of 6 swatches, each named after a memory. What color is your childhood kitchen?",
+    "category": "\u25c8  COLOR & PALETTE"
   },
   {
-    "prompt": "Distort something familiar.",
+    "prompt": "The Grey Area",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "\u2014  Work entirely in grey. Resist the urge to add color or to be definitive.",
+    "category": "\u25c8  COLOR & PALETTE"
+  },
+  {
+    "prompt": "Warm to Cool",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Start warm (reds, oranges, loud, fast, angry) and end cool (blues, greens, quiet, slow, calm).",
+    "category": "\u25c8  COLOR & PALETTE"
+  },
+  {
+    "prompt": "Borrowed Palette",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Use the exact colors (or tones, or vocabulary) from your favorite book cover, album art, or film still.",
+    "category": "\u25c8  COLOR & PALETTE"
+  },
+  {
+    "prompt": "Color as Emotion",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Assign a color to a feeling. Then build the piece so the viewer feels the color without seeing it named.",
+    "category": "\u25c8  COLOR & PALETTE"
+  },
+  {
+    "prompt": "Black on Black",
     "encouragement": "Touching Souls",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Work with subtle variations on a dark background \u2014 texture instead of contrast.",
+    "category": "\u25c8  COLOR & PALETTE"
   },
   {
-    "prompt": "Hide the main idea.",
+    "prompt": "Rough vs. Smooth",
+    "encouragement": "Let's put our heads together",
+    "explained": "Contrast rough and smooth in a drawing, a poem with jarring vs. flowing lines, or music with harsh vs. gentle tones.",
+    "category": "\u2726  TEXTURE & SURFACE"
+  },
+  {
+    "prompt": "Primary Only",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Strict limits: red, yellow, blue \u2014 no mixing. What's made of fundamentals?",
+    "category": "\u25c8  COLOR & PALETTE"
+  },
+  {
+    "prompt": "Field Recording",
     "encouragement": "We've got all night",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Step outside for 2 minutes and write down or sketch every sound you hear in sequence.",
+    "category": "\u266a  SOUND & SILENCE"
   },
   {
-    "prompt": "Ignore the boundary.",
+    "prompt": "The Rest",
     "encouragement": "Two hearts are better than one.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Compose or write something where silence or blank space is the main event.",
+    "category": "\u266a  SOUND & SILENCE"
   },
   {
-    "prompt": "Interpret \u201calignment.\u201d",
+    "prompt": "Onomatopoeia",
     "encouragement": "Helping Hand Committee:",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Build a piece entirely from words (or marks, or movements) that sound like what they describe.",
+    "category": "\u266a  SOUND & SILENCE"
   },
   {
-    "prompt": "Interpret \u201carrival home.\u201d",
+    "prompt": "Reverb",
     "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Create an echo effect \u2014 a phrase, image, or note that repeats with diminishing intensity.",
+    "category": "\u266a  SOUND & SILENCE"
   },
   {
-    "prompt": "Interpret \u201carrival.\u201d",
+    "prompt": "White Noise",
     "encouragement": "Swing your partner round and round",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Create something continuous, undifferentiated, and oddly soothing.",
+    "category": "\u266a  SOUND & SILENCE"
   },
   {
-    "prompt": "Interpret \u201cbecoming again.\u201d",
+    "prompt": "The Drop",
     "encouragement": "Touching Souls",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Build to a single, decisive moment. Everything before it is anticipation. Everything after is resolution.",
+    "category": "\u266a  SOUND & SILENCE"
   },
   {
-    "prompt": "Interpret \u201cbecoming.\u201d",
+    "prompt": "Whisper",
     "encouragement": "Let's put our heads together",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Make something so quiet it almost isn't there. Force the audience to lean in.",
+    "category": "\u266a  SOUND & SILENCE"
   },
   {
-    "prompt": "Interpret \u201cbelonging.\u201d",
+    "prompt": "Dissonance",
     "encouragement": "You've got a friend in me.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONNECTION & BELONGING"
+    "explained": "Put two things that clash uncomfortably close together. Don't resolve it.",
+    "category": "\u266a  SOUND & SILENCE"
   },
   {
-    "prompt": "Interpret \u201cchaos.\u201d",
+    "prompt": "Lullaby Logic",
     "encouragement": "We've got all night",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Create something repetitive, gentle, and slightly hypnotic \u2014 designed to slow the nervous system.",
+    "category": "\u266a  SOUND & SILENCE"
   },
   {
-    "prompt": "Interpret \u201ccontainment.\u201d",
+    "prompt": "Layers",
     "encouragement": "Two hearts are better than one.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Build something in layers \u2014 tissue paper collage, a chord stacked note by note, a poem where each stanza adds depth.",
+    "category": "\u2726  TEXTURE & SURFACE"
   },
   {
-    "prompt": "Interpret \u201ccrossroads.\u201d",
+    "prompt": "The Last Note",
     "encouragement": "Helping Hand Committee:",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "End something. Really end it. The final word, mark, or sound that closes a door.",
+    "category": "\u266a  SOUND & SILENCE"
   },
   {
-    "prompt": "Interpret \u201cdeparture.\u201d",
+    "prompt": "First Memory",
     "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Recreate your earliest memory as vividly as possible \u2014 in any medium. Don't verify it. Just trust it.",
+    "category": "\u25ce  MEMORY & NOSTALGIA"
   },
   {
-    "prompt": "Interpret \u201cdevotion.\u201d",
+    "prompt": "Smell Triggers",
     "encouragement": "Swing your partner round and round",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Name a smell and what it instantly transports you to. Build something from that moment.",
+    "category": "\u25ce  MEMORY & NOSTALGIA"
   },
   {
-    "prompt": "Interpret \u201cenough.\u201d",
-    "encouragement": "Let's put our heads together",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Interpret \u201cenoughness.\u201d",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Interpret \u201cexpansion.\u201d",
-    "encouragement": "We've got all night",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Interpret \u201cflight.\u201d",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "Interpret \u201cgravity.\u201d",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Interpret \u201charmony.\u201d",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Interpret \u201chome.\u201d",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Interpret \u201cintegration.\u201d",
+    "prompt": "Photograph in Words",
     "encouragement": "Touching Souls",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Describe a photograph you don't have \u2014 a scene you remember but never captured.",
+    "category": "\u25ce  MEMORY & NOSTALGIA"
   },
   {
-    "prompt": "Interpret \u201cinterruption.\u201d",
+    "prompt": "The House",
     "encouragement": "Let's put our heads together",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Draw, describe, or score the first home you remember clearly. Every room. Every detail.",
+    "category": "\u25ce  MEMORY & NOSTALGIA"
   },
   {
-    "prompt": "Interpret \u201cliberation.\u201d",
+    "prompt": "Object Biography",
     "encouragement": "You've got a friend in me.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Choose an everyday object you've owned for years. Tell its whole life story.",
+    "category": "\u25ce  MEMORY & NOSTALGIA"
   },
   {
-    "prompt": "Interpret \u201corder.\u201d",
+    "prompt": "Old Song",
     "encouragement": "We've got all night",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Pick a song from your childhood. Transcribe your memory of it \u2014 wrong lyrics, misremembered melody, all of it.",
+    "category": "\u25ce  MEMORY & NOSTALGIA"
   },
   {
-    "prompt": "Interpret \u201coverflow.\u201d",
+    "prompt": "Postcards Home",
     "encouragement": "Two hearts are better than one.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Write a postcard from a past version of yourself to a present one.",
+    "category": "\u25ce  MEMORY & NOSTALGIA"
   },
   {
-    "prompt": "Interpret \u201cpossibility.\u201d",
+    "prompt": "The Before",
     "encouragement": "Helping Hand Committee:",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Capture the world as it existed before something changed it permanently.",
+    "category": "\u25ce  MEMORY & NOSTALGIA"
   },
   {
-    "prompt": "Interpret \u201cquiet strength.\u201d",
+    "prompt": "Faded Edges",
     "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "SOUND & SILENCE"
+    "explained": "Make something deliberately blurry, incomplete \u2014 memory's way of filling in gaps.",
+    "category": "\u25ce  MEMORY & NOSTALGIA"
   },
   {
-    "prompt": "Interpret \u201crelease.\u201d",
+    "prompt": "Crosshatch",
     "encouragement": "Swing your partner round and round",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Use overlapping lines (marks, words, sounds) to build density \u2014 darker where they cross.",
+    "category": "\u2726  TEXTURE & SURFACE"
   },
   {
-    "prompt": "Interpret \u201crenewal.\u201d",
+    "prompt": "Heirloom",
     "encouragement": "Touching Souls",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Create something designed to be passed down. What would you leave behind?",
+    "category": "\u25ce  MEMORY & NOSTALGIA"
   },
   {
-    "prompt": "Interpret \u201creturning.\u201d",
+    "prompt": "Stranger on a Train",
     "encouragement": "Let's put our heads together",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Invent the life story of someone you briefly observed. Don't ask \u2014 just imagine.",
+    "category": "\u27e1  OTHER PEOPLE"
   },
   {
-    "prompt": "Interpret \u201csacred ordinary.\u201d",
+    "prompt": "Borrowed Hands",
     "encouragement": "You've got a friend in me.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "THE EVERYDAY & OVERLOOKED"
+    "explained": "Create something imagining you have someone else's hands, voice, or skill set entirely.",
+    "category": "\u27e1  OTHER PEOPLE"
   },
   {
-    "prompt": "Interpret \u201csecond chance.\u201d",
+    "prompt": "Conversation Overheard",
     "encouragement": "We've got all night",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "PLAY & RANDOMNESS"
+    "explained": "Take a fragment of conversation you overheard recently and build a whole world from it.",
+    "category": "\u27e1  OTHER PEOPLE"
   },
   {
-    "prompt": "Interpret \u201cthreshold crossing.\u201d",
+    "prompt": "Portrait Without a Face",
     "encouragement": "Two hearts are better than one.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Capture someone's essence without showing or stating who they are.",
+    "category": "\u27e1  OTHER PEOPLE"
   },
   {
-    "prompt": "Interpret \u201cthreshold.\u201d",
+    "prompt": "Apology",
     "encouragement": "Helping Hand Committee:",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Write, compose, or create the apology you never gave (or never received).",
+    "category": "\u27e1  OTHER PEOPLE"
   },
   {
-    "prompt": "Interpret \u201cwaiting.\u201d",
+    "prompt": "What They Carry",
     "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Focus on what a person carries \u2014 literally or metaphorically. That's the whole piece.",
+    "category": "\u27e1  OTHER PEOPLE"
   },
   {
-    "prompt": "Interpret \u201cwild.\u201d",
+    "prompt": "Crowd of One",
     "encouragement": "Swing your partner round and round",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Be inside a crowd. Feel everyone and no one. The loneliness of proximity.",
+    "category": "\u27e1  OTHER PEOPLE"
   },
   {
-    "prompt": "Interrupt yourself halfway.",
+    "prompt": "Thank You Note",
     "encouragement": "Touching Souls",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Write a genuine thank-you to someone who doesn't know they helped you.",
+    "category": "\u27e1  OTHER PEOPLE"
   },
   {
-    "prompt": "Leave something unresolved.",
+    "prompt": "Teach It",
     "encouragement": "Let's put our heads together",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Explain something you love to someone who knows nothing about it. Make them love it too.",
+    "category": "\u27e1  OTHER PEOPLE"
   },
   {
-    "prompt": "Reduce something complex.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Reverse the expected order.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Shrink something vast.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Suggest something unseen.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Tell a story without a protagonist.",
+    "prompt": "Bubble Wrap",
     "encouragement": "You've got a friend in me.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "WORDS & LANGUAGE"
+    "explained": "Fill a page with bubbles. Each bubble holds a worry, a wish, or a word. Pop them in order of importance.",
+    "category": "\u2726  TEXTURE & SURFACE"
   },
   {
-    "prompt": "Tell a story without a setting.",
+    "prompt": "The Witness",
     "encouragement": "We've got all night",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "WORDS & LANGUAGE"
+    "explained": "Put yourself in the background. Someone else is the subject. You only watch.",
+    "category": "\u27e1  OTHER PEOPLE"
   },
   {
-    "prompt": "Tell a story without resolution.",
+    "prompt": "Metamorphosis",
     "encouragement": "Two hearts are better than one.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "WORDS & LANGUAGE"
+    "explained": "Show something mid-transformation \u2014 half what it was, half what it's becoming.",
+    "category": "\u27c1  TRANSFORMATION & CHANGE"
   },
   {
-    "prompt": "Use density.",
+    "prompt": "Shedding",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "What have you outgrown? Create the moment of releasing it.",
+    "category": "\u27c1  TRANSFORMATION & CHANGE"
+  },
+  {
+    "prompt": "The Turning Point",
     "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Identify the exact moment everything changed and hold it up to the light.",
+    "category": "\u27c1  TRANSFORMATION & CHANGE"
   },
   {
-    "prompt": "Use interruption as focal point.",
+    "prompt": "Growth Rings",
     "encouragement": "Swing your partner round and round",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
+    "explained": "Like a tree's rings \u2014 layers that mark time. Show the rings inside something.",
+    "category": "\u27c1  TRANSFORMATION & CHANGE"
+  },
+  {
+    "prompt": "Broken and Repaired",
+    "encouragement": "Touching Souls",
+    "explained": "Kintsugi logic: make the breakage the most beautiful part of the repair.",
+    "category": "\u27c1  TRANSFORMATION & CHANGE"
+  },
+  {
+    "prompt": "Becoming",
+    "encouragement": "Let's put our heads together",
+    "explained": "Not what something is, but what it's in the process of becoming.",
+    "category": "\u27c1  TRANSFORMATION & CHANGE"
+  },
+  {
+    "prompt": "Molt",
+    "encouragement": "You've got a friend in me.",
+    "explained": "The old skin left behind. What's the cast-off version of who you used to be?",
+    "category": "\u27c1  TRANSFORMATION & CHANGE"
+  },
+  {
+    "prompt": "Fermentation",
+    "encouragement": "We've got all night",
+    "explained": "Something left to transform on its own, over time. Capture the middle of that process.",
+    "category": "\u27c1  TRANSFORMATION & CHANGE"
+  },
+  {
+    "prompt": "Threshold",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Stand at the exact boundary between two states and describe both sides simultaneously.",
+    "category": "\u27c1  TRANSFORMATION & CHANGE"
+  },
+  {
+    "prompt": "Crumple & Flatten",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Crumple a page, flatten it, then work with the wrinkle lines as your composition guide.",
+    "category": "\u2726  TEXTURE & SURFACE"
+  },
+  {
+    "prompt": "Decay as Beauty",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Something rotting, fading, or dissolving \u2014 find what's gorgeous in its ending.",
+    "category": "\u27c1  TRANSFORMATION & CHANGE"
+  },
+  {
+    "prompt": "No Straight Lines",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Every mark, phrase, or movement must curve. Rigidity is forbidden.",
+    "category": "\u25a6  CONSTRAINT & FORM"
+  },
+  {
+    "prompt": "Only Verbs",
+    "encouragement": "Touching Souls",
+    "explained": "Write something using only action words. No nouns, no adjectives.",
+    "category": "\u25a6  CONSTRAINT & FORM"
+  },
+  {
+    "prompt": "One Sentence",
+    "encouragement": "Let's put our heads together",
+    "explained": "The whole piece is a single sentence. Make it count.",
+    "category": "\u25a6  CONSTRAINT & FORM"
+  },
+  {
+    "prompt": "7 Words Per Line",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Every line \u2014 of poetry, lyric, or list \u2014 must be exactly 7 words long.",
+    "category": "\u25a6  CONSTRAINT & FORM"
+  },
+  {
+    "prompt": "No Adjectives",
+    "encouragement": "We've got all night",
+    "explained": "Describe something complex and evocative without using a single descriptive modifier.",
+    "category": "\u25a6  CONSTRAINT & FORM"
+  },
+  {
+    "prompt": "The Palindrome",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Make something that reads the same forwards and backwards \u2014 in any medium.",
+    "category": "\u25a6  CONSTRAINT & FORM"
+  },
+  {
+    "prompt": "Box It",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Whatever you make must fit inside a 3-inch square. Nothing outside those borders.",
+    "category": "\u25a6  CONSTRAINT & FORM"
+  },
+  {
+    "prompt": "Three Acts, One Page",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Tell a complete story \u2014 setup, confrontation, resolution \u2014 in whatever fits on one side of a page.",
+    "category": "\u25a6  CONSTRAINT & FORM"
+  },
+  {
+    "prompt": "Acrostic",
+    "encouragement": "Swing your partner round and round",
+    "explained": "The first letter of each line spells a hidden word. Choose the word, then write to it.",
+    "category": "\u25a6  CONSTRAINT & FORM"
+  },
+  {
+    "prompt": "Velvet Underground",
+    "encouragement": "Touching Souls",
+    "explained": "Create something with hidden depth \u2014 a drawing with a secret layer, a lyric with a double meaning.",
+    "category": "\u2726  TEXTURE & SURFACE"
+  },
+  {
+    "prompt": "Negative Space Only",
+    "encouragement": "Let's put our heads together",
+    "explained": "You are only allowed to define what is NOT there. The absence creates the presence.",
+    "category": "\u25a6  CONSTRAINT & FORM"
+  },
+  {
+    "prompt": "The Mundane Sacred",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Treat the most ordinary part of your day as if it were a ritual. Capture the ceremony.",
+    "category": "\u25e6  THE EVERYDAY & OVERLOOKED"
+  },
+  {
+    "prompt": "Contents of a Drawer",
+    "encouragement": "We've got all night",
+    "explained": "Open a drawer. Describe or draw everything in it. Let the objects tell you who lives here.",
+    "category": "\u25e6  THE EVERYDAY & OVERLOOKED"
+  },
+  {
+    "prompt": "Tuesday",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Celebrate Tuesday. Not a holiday. Not a birthday. Just a Tuesday. Make it matter.",
+    "category": "\u25e6  THE EVERYDAY & OVERLOOKED"
+  },
+  {
+    "prompt": "The Queue",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Standing in a line. Waiting. Make a piece about waiting that doesn't make it feel like nothing.",
+    "category": "\u25e6  THE EVERYDAY & OVERLOOKED"
+  },
+  {
+    "prompt": "Junk Mail",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Use junk mail, spam, or a boring email as your raw material.",
+    "category": "\u25e6  THE EVERYDAY & OVERLOOKED"
+  },
+  {
+    "prompt": "The Back of Things",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Draw the back of your phone, your chair, your hand, your house. What do backs reveal?",
+    "category": "\u25e6  THE EVERYDAY & OVERLOOKED"
+  },
+  {
+    "prompt": "Leftovers",
+    "encouragement": "Touching Souls",
+    "explained": "Make something from what remains \u2014 leftover ingredients, spare words, unused ideas.",
+    "category": "\u25e6  THE EVERYDAY & OVERLOOKED"
+  },
+  {
+    "prompt": "The Commute Ritual",
+    "encouragement": "Let's put our heads together",
+    "explained": "That thing you do automatically every day without noticing \u2014 capture it before it disappears.",
+    "category": "\u25e6  THE EVERYDAY & OVERLOOKED"
+  },
+  {
+    "prompt": "Grocery List",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Turn a shopping list into a poem, a score, or a performance piece.",
+    "category": "\u25e6  THE EVERYDAY & OVERLOOKED"
+  },
+  {
+    "prompt": "Sandpaper",
+    "encouragement": "We've got all night",
+    "explained": "Make something abrasive on purpose \u2014 intentionally rough edges, dissonant chords, uncomfortable word choices.",
+    "category": "\u2726  TEXTURE & SURFACE"
+  },
+  {
+    "prompt": "A Wednesday in March",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Extremely ordinary. Hyper-specific. No drama. Find the beauty in its mediocrity.",
+    "category": "\u25e6  THE EVERYDAY & OVERLOOKED"
+  },
+  {
+    "prompt": "Invent a Creature",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Design something that has never existed. Give it a name, a habitat, a reason.",
+    "category": "\u221e  IMAGINATION & THE IMPOSSIBLE"
+  },
+  {
+    "prompt": "Weather That Doesn't Exist",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Describe a type of weather no one has ever experienced \u2014 warm snow, horizontal rain that falls up.",
+    "category": "\u221e  IMAGINATION & THE IMPOSSIBLE"
+  },
+  {
+    "prompt": "A Colour That Isn't",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Create something that represents a color the human eye cannot perceive. What would it feel like?",
+    "category": "\u221e  IMAGINATION & THE IMPOSSIBLE"
+  },
+  {
+    "prompt": "Gravity Reversed",
+    "encouragement": "Touching Souls",
+    "explained": "Everything falls upward. Redesign one aspect of daily life for this world.",
+    "category": "\u221e  IMAGINATION & THE IMPOSSIBLE"
+  },
+  {
+    "prompt": "Second Sun",
+    "encouragement": "Let's put our heads together",
+    "explained": "There are now two suns. How does everything change \u2014 the light, the shadows, the seasons?",
+    "category": "\u221e  IMAGINATION & THE IMPOSSIBLE"
+  },
+  {
+    "prompt": "Dream Logic",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Make something that follows the internal consistency of a dream \u2014 non-linear, emotionally true.",
+    "category": "\u221e  IMAGINATION & THE IMPOSSIBLE"
+  },
+  {
+    "prompt": "The Museum of Lost Things",
+    "encouragement": "We've got all night",
+    "explained": "Curate an exhibition of things that no longer exist. Write the placard for one exhibit.",
+    "category": "\u221e  IMAGINATION & THE IMPOSSIBLE"
+  },
+  {
+    "prompt": "Translate the Untranslatable",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Describe in your medium what it feels like to sneeze, to forget a word, to fall asleep.",
+    "category": "\u221e  IMAGINATION & THE IMPOSSIBLE"
+  },
+  {
+    "prompt": "If Objects Could Testify",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Your most-used object takes the stand. What does it say about you?",
+    "category": "\u221e  IMAGINATION & THE IMPOSSIBLE"
+  },
+  {
+    "prompt": "Glass Surface",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Capture translucency \u2014 watercolor wash, a delicate melody, a poem about something half-seen.",
+    "category": "\u2726  TEXTURE & SURFACE"
+  },
+  {
+    "prompt": "The Map of a Feeling",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Draw a map \u2014 with roads, landmarks, and a legend \u2014 of what anxiety, joy, or grief looks like as a place.",
+    "category": "\u221e  IMAGINATION & THE IMPOSSIBLE"
+  },
+  {
+    "prompt": "Show Your Work",
+    "encouragement": "Touching Souls",
+    "explained": "Document the making, not just the made. The sketch, the mistake, the revision.",
+    "category": "\u2295  PROCESS & PRACTICE"
+  },
+  {
+    "prompt": "The Ugly Draft",
+    "encouragement": "Let's put our heads together",
+    "explained": "Make a deliberately rough first attempt and then show it, unpolished, as the final piece.",
+    "category": "\u2295  PROCESS & PRACTICE"
+  },
+  {
+    "prompt": "Start in the Middle",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Begin at the most dramatic, complex point. Work outward from there.",
+    "category": "\u2295  PROCESS & PRACTICE"
+  },
+  {
+    "prompt": "Throw One Away",
+    "encouragement": "We've got all night",
+    "explained": "Make something only to destroy it. The destruction is the practice.",
+    "category": "\u2295  PROCESS & PRACTICE"
+  },
+  {
+    "prompt": "Iteration",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Make the same thing 5 times. Each version slightly different. Compare them.",
+    "category": "\u2295  PROCESS & PRACTICE"
+  },
+  {
+    "prompt": "Collaboration with Yesterday",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Look at something you made months ago and respond to it \u2014 agree, argue, build on it.",
+    "category": "\u2295  PROCESS & PRACTICE"
+  },
+  {
+    "prompt": "The Constraint Jar",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Write 5 constraints on slips of paper, draw one blind, and work within it for 10 minutes.",
+    "category": "\u2295  PROCESS & PRACTICE"
+  },
+  {
+    "prompt": "Teach Through Making",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Create something designed to show someone else how to do what you do.",
+    "category": "\u2295  PROCESS & PRACTICE"
+  },
+  {
+    "prompt": "Public Practice",
+    "encouragement": "Touching Souls",
+    "explained": "Make something in public (or imagining eyes on you). Notice how it changes your choices.",
+    "category": "\u2295  PROCESS & PRACTICE"
+  },
+  {
+    "prompt": "Mosaic",
+    "encouragement": "Let's put our heads together",
+    "explained": "Build a larger image or idea from tiny fragments \u2014 torn paper, single words, short phrases, beats.",
+    "category": "\u2726  TEXTURE & SURFACE"
+  },
+  {
+    "prompt": "The Finishing Ritual",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Define what 'done' means for you. Then make something and do that ritual at the end.",
+    "category": "\u2295  PROCESS & PRACTICE"
+  },
+  {
+    "prompt": "Common Ground",
+    "encouragement": "We've got all night",
+    "explained": "Find something that connects you to a person you thought you had nothing in common with.",
+    "category": "\u223e  CONNECTION & BELONGING"
+  },
+  {
+    "prompt": "Inheritance",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "What did you inherit that you didn't choose? Make something that holds it.",
+    "category": "\u223e  CONNECTION & BELONGING"
+  },
+  {
+    "prompt": "The Gathering",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Capture the energy of people coming together \u2014 a meal, a concert, a protest, a wake.",
+    "category": "\u223e  CONNECTION & BELONGING"
+  },
+  {
+    "prompt": "Alone Together",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Two separate things existing in the same space without interacting. The tension of nearness.",
+    "category": "\u223e  CONNECTION & BELONGING"
+  },
+  {
+    "prompt": "Signal & Noise",
+    "encouragement": "Swing your partner round and round",
+    "explained": "What's the message beneath all the interference? Isolate it.",
+    "category": "\u223e  CONNECTION & BELONGING"
+  },
+  {
+    "prompt": "The Handoff",
+    "encouragement": "Touching Souls",
+    "explained": "Something passed from one person to another. A tradition, a skill, a secret, a burden.",
+    "category": "\u223e  CONNECTION & BELONGING"
+  },
+  {
+    "prompt": "We",
+    "encouragement": "Let's put our heads together",
+    "explained": "Make something that could only have been made collectively \u2014 or imagine what that would look like.",
+    "category": "\u223e  CONNECTION & BELONGING"
+  },
+  {
+    "prompt": "Diaspora",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Something scattered that still belongs together. Show both the scatter and the belonging.",
+    "category": "\u223e  CONNECTION & BELONGING"
+  },
+  {
+    "prompt": "Bridge",
+    "encouragement": "We've got all night",
+    "explained": "Build a connection between two things that aren't usually connected. That bridge is the piece.",
+    "category": "\u223e  CONNECTION & BELONGING"
+  },
+  {
+    "prompt": "Zigzag",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Create a zigzag design, compose a melody that zigzags up and down, or describe a journey with sharp turns.",
     "category": "SHAPES & GEOMETRY"
   },
   {
-    "prompt": "Use silence.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "Use sparseness.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Work in one uninterrupted flow.",
-    "encouragement": "We've got all night",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Work in phases.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Work in silence.",
+    "prompt": "Woven",
     "encouragement": "Helping Hand Committee:",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "SOUND & SILENCE"
+    "explained": "Interweave two themes \u2014 alternate lines in a poem, interlock two melodic ideas, weave two colors.",
+    "category": "\u2726  TEXTURE & SURFACE"
   },
   {
-    "prompt": "Work with distraction.",
+    "prompt": "The Last to Know",
     "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Someone finds out something everyone else already knew. What was the moment of discovery?",
+    "category": "\u223e  CONNECTION & BELONGING"
   },
   {
-    "prompt": "Work within a strict boundary.",
+    "prompt": "Golden Hour",
     "encouragement": "Swing your partner round and round",
-    "explained": "Apply this concept across disciplines \u2014 as visual composition, sonic structure, written form, physical sequence, or combinatory process.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Capture the feeling of late afternoon light \u2014 warm colors, a nostalgic lyric, slow movement, amber tones.",
+    "category": "\u2600  LIGHT & SHADOW"
   },
   {
-    "prompt": "Emphasize edges.",
+    "prompt": "Silhouette",
+    "encouragement": "Touching Souls",
+    "explained": "Show the shape without the detail \u2014 black outline drawing, a lyric that implies without stating, a pose.",
+    "category": "\u2600  LIGHT & SHADOW"
+  },
+  {
+    "prompt": "Shadow Self",
     "encouragement": "Let's put our heads together",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
+    "explained": "Draw or write about the part of you that only emerges in private.",
+    "category": "\u2600  LIGHT & SHADOW"
+  },
+  {
+    "prompt": "Spotlight",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Put exactly one thing in the center of attention. Everything else disappears.",
+    "category": "\u2600  LIGHT & SHADOW"
+  },
+  {
+    "prompt": "Dappled Light",
+    "encouragement": "We've got all night",
+    "explained": "Broken, flickering light \u2014 a sketch of forest shadows, a syncopated rhythm, a poem of interrupted thoughts.",
+    "category": "\u2600  LIGHT & SHADOW"
+  },
+  {
+    "prompt": "Candlelight",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Create something warm, flickering, intimate, and slightly unsteady.",
+    "category": "\u2600  LIGHT & SHADOW"
+  },
+  {
+    "prompt": "Eclipse",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Something obscures something else. What is hidden? What is revealed at the edges?",
+    "category": "\u2600  LIGHT & SHADOW"
+  },
+  {
+    "prompt": "Dawn",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "The first moment of light \u2014 a sketch of the horizon, the first note of a piece, the opening word of a story.",
+    "category": "\u2600  LIGHT & SHADOW"
+  },
+  {
+    "prompt": "Moonlit",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Cool, soft, reflected light. Create something that glows quietly rather than blazes.",
+    "category": "\u2600  LIGHT & SHADOW"
+  },
+  {
+    "prompt": "Spiral Inward",
+    "encouragement": "Touching Souls",
+    "explained": "Write 3 things you're proud of starting in the center and spiraling outward. Any discipline, same idea.",
     "category": "SHAPES & GEOMETRY"
   },
   {
-    "prompt": "Emphasize the background.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "Focus on accumulation.",
-    "encouragement": "Touching Souls",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Focus on harmony.",
+    "prompt": "Neon Sign",
     "encouragement": "Let's put our heads together",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Bold, bright, slightly buzzing. Write in neon \u2014 vivid colors, short punchy words, electric energy.",
+    "category": "\u2600  LIGHT & SHADOW"
   },
   {
-    "prompt": "Focus on negative space.",
+    "prompt": "One Minute",
     "encouragement": "You've got a friend in me.",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "SPACE & SCALE"
+    "explained": "Set a timer for 60 seconds. Create something \u2014 anything \u2014 before it ends. No editing.",
+    "category": "\u23f1  TIME & SEQUENCE"
   },
   {
-    "prompt": "Focus on rhythm.",
+    "prompt": "Before & After",
     "encouragement": "We've got all night",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Show transformation in two panels, two stanzas, two musical phrases.",
+    "category": "\u23f1  TIME & SEQUENCE"
   },
   {
-    "prompt": "Focus on subtraction.",
+    "prompt": "Slow Motion",
     "encouragement": "Two hearts are better than one.",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Capture a single second stretched out \u2014 describe every micro-detail of one moment.",
+    "category": "\u23f1  TIME & SEQUENCE"
   },
   {
-    "prompt": "Focus on tension.",
+    "prompt": "Time Lapse",
     "encouragement": "Helping Hand Committee:",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Compress time \u2014 a sketch of something growing, a lyric about years passing in a breath.",
+    "category": "\u23f1  TIME & SEQUENCE"
   },
   {
-    "prompt": "Focus on texture (conceptually).",
+    "prompt": "Flashback",
     "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "TEXTURE & SURFACE"
+    "explained": "Jump backward. Start at the end and work toward the beginning.",
+    "category": "\u23f1  TIME & SEQUENCE"
   },
   {
-    "prompt": "Focus on the invisible.",
+    "prompt": "Countdown",
     "encouragement": "Swing your partner round and round",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Create something that counts down \u2014 10 lines shrinking to 1, a melody losing notes, a drawing dissolving.",
+    "category": "\u23f1  TIME & SEQUENCE"
   },
   {
-    "prompt": "Focus on the ordinary.",
+    "prompt": "Pause",
     "encouragement": "Touching Souls",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "THE EVERYDAY & OVERLOOKED"
+    "explained": "Create something about stillness in the middle of movement. A rest. A held breath.",
+    "category": "\u23f1  TIME & SEQUENCE"
   },
   {
-    "prompt": "Focus on the overlooked.",
+    "prompt": "Repeat After Me",
     "encouragement": "Let's put our heads together",
-    "explained": "Center attention here \u2014 isolate in the frame, feature in the mix, spotlight in the text, accentuate in movement, hero in the dish.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Use repetition as your structure \u2014 a pattern that repeats with tiny variations each time.",
+    "category": "\u23f1  TIME & SEQUENCE"
   },
   {
-    "prompt": "Build from the inside outward.",
+    "prompt": "The Long Game",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Start something you won't finish today \u2014 the first line of something big.",
+    "category": "\u23f1  TIME & SEQUENCE"
+  },
+  {
+    "prompt": "Triangle Rules",
     "encouragement": "We've got all night",
-    "explained": "Construct using this approach \u2014 layer paint, stack harmonies, arrange words, sequence movements, combine flavors, assemble materials.",
+    "explained": "Make something using only triangles \u2014 a drawing, a song with 3 notes, a 3-line poem, or a 3-pose sequence.",
     "category": "SHAPES & GEOMETRY"
   },
   {
-    "prompt": "Build from the outside inward.",
+    "prompt": "Rewind",
     "encouragement": "Two hearts are better than one.",
-    "explained": "Construct using this approach \u2014 layer paint, stack harmonies, arrange words, sequence movements, combine flavors, assemble materials.",
+    "explained": "Write, draw, or play something \u2014 then recreate it backwards.",
+    "category": "\u23f1  TIME & SEQUENCE"
+  },
+  {
+    "prompt": "Rainstorm",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Capture a downpour \u2014 quick marks, percussive sounds, rapid-fire words, sudden movement.",
+    "category": "\ud83c\udf3f  NATURE & THE ELEMENTS"
+  },
+  {
+    "prompt": "Root System",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Draw roots spreading underground, or map the invisible support system beneath something in your life.",
+    "category": "\ud83c\udf3f  NATURE & THE ELEMENTS"
+  },
+  {
+    "prompt": "Petal by Petal",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Build something one small piece at a time, adding each piece delicately.",
+    "category": "\ud83c\udf3f  NATURE & THE ELEMENTS"
+  },
+  {
+    "prompt": "Stone",
+    "encouragement": "Touching Souls",
+    "explained": "Create something as solid, ancient, and unyielding as a stone.",
+    "category": "\ud83c\udf3f  NATURE & THE ELEMENTS"
+  },
+  {
+    "prompt": "Wildfire",
+    "encouragement": "Let's put our heads together",
+    "explained": "Fast, consuming, transformative. Make something with urgency and heat.",
+    "category": "\ud83c\udf3f  NATURE & THE ELEMENTS"
+  },
+  {
+    "prompt": "Fog",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Create something unclear, soft-edged, half-hidden. Let ambiguity be the point.",
+    "category": "\ud83c\udf3f  NATURE & THE ELEMENTS"
+  },
+  {
+    "prompt": "Tide",
+    "encouragement": "We've got all night",
+    "explained": "Something that comes and goes in a rhythm. Capture one full cycle.",
+    "category": "\ud83c\udf3f  NATURE & THE ELEMENTS"
+  },
+  {
+    "prompt": "Seed",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Plant the smallest possible idea \u2014 a word, a dot, a single note. That's the whole piece.",
+    "category": "\ud83c\udf3f  NATURE & THE ELEMENTS"
+  },
+  {
+    "prompt": "Canopy",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Create something that gives shelter \u2014 a protective phrase, a sheltering melody, a drawing of overhead leaves.",
+    "category": "\ud83c\udf3f  NATURE & THE ELEMENTS"
+  },
+  {
+    "prompt": "Square Frame",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Fill a square border with words, sounds, movements, or marks. Nothing outside the frame counts.",
     "category": "SHAPES & GEOMETRY"
   },
   {
-    "prompt": "Create a hidden narrative.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Construct using this approach \u2014 layer paint, stack harmonies, arrange words, sequence movements, combine flavors, assemble materials.",
-    "category": "CONSTRAINT & FORM"
+    "prompt": "Erosion",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Show what happens when something is slowly worn away \u2014 marks, words, silence.",
+    "category": "\ud83c\udf3f  NATURE & THE ELEMENTS"
   },
   {
-    "prompt": "Create a pattern.",
+    "prompt": "Homesick",
+    "encouragement": "Touching Souls",
+    "explained": "Capture the ache of missing a place, person, or time.",
+    "category": "\u2661  EMOTION & INNER LIFE"
+  },
+  {
+    "prompt": "Overflow",
+    "encouragement": "Let's put our heads together",
+    "explained": "Something too big to contain. Let it spill over the edges \u2014 of the page, the bar, the stanza.",
+    "category": "\u2661  EMOTION & INNER LIFE"
+  },
+  {
+    "prompt": "Numb",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Create something deliberately flat, grey, and without peaks. Monotony as an artistic choice.",
+    "category": "\u2661  EMOTION & INNER LIFE"
+  },
+  {
+    "prompt": "Wild Joy",
+    "encouragement": "We've got all night",
+    "explained": "Pure, uncomplicated happiness. Make something that doesn't apologize for being happy.",
+    "category": "\u2661  EMOTION & INNER LIFE"
+  },
+  {
+    "prompt": "Doubt",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "A piece that questions itself \u2014 lines crossed out, a melody that hesitates, words that trail off.",
+    "category": "\u2661  EMOTION & INNER LIFE"
+  },
+  {
+    "prompt": "Anticipation",
     "encouragement": "Helping Hand Committee:",
-    "explained": "Construct using this approach \u2014 layer paint, stack harmonies, arrange words, sequence movements, combine flavors, assemble materials.",
+    "explained": "The feeling before something happens. The inhale. The pause before the drop.",
+    "category": "\u2661  EMOTION & INNER LIFE"
+  },
+  {
+    "prompt": "Grief in 5 Objects",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Name or draw 5 physical objects associated with someone or something lost.",
+    "category": "\u2661  EMOTION & INNER LIFE"
+  },
+  {
+    "prompt": "Fury",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Make something angry. Don't soften it. Let it have edges.",
+    "category": "\u2661  EMOTION & INNER LIFE"
+  },
+  {
+    "prompt": "Tenderness",
+    "encouragement": "Touching Souls",
+    "explained": "The softest thing you can make. Handle it carefully.",
+    "category": "\u2661  EMOTION & INNER LIFE"
+  },
+  {
+    "prompt": "Dotted Line",
+    "encouragement": "Let's put our heads together",
+    "explained": "Connect dots (literal or metaphorical) \u2014 a connect-the-dots sketch, a melody built on staccato notes, or a poem about following signs.",
     "category": "SHAPES & GEOMETRY"
   },
   {
-    "prompt": "Create depth without perspective.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Construct using this approach \u2014 layer paint, stack harmonies, arrange words, sequence movements, combine flavors, assemble materials.",
-    "category": "SPACE & SCALE"
+    "prompt": "Awe",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Something so much bigger than you that all you can do is witness it.",
+    "category": "\u2661  EMOTION & INNER LIFE"
   },
   {
-    "prompt": "Create symmetry.",
+    "prompt": "Found Poem",
+    "encouragement": "We've got all night",
+    "explained": "Cut words from a magazine, receipt, or menu. Arrange them into something new.",
+    "category": "\u270d  WORDS & LANGUAGE"
+  },
+  {
+    "prompt": "One Word, Big",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Write one word as large as it will go. Fill the whole space. Let the word BE the piece.",
+    "category": "\u270d  WORDS & LANGUAGE"
+  },
+  {
+    "prompt": "Erasure",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Take an existing text and erase most of it, leaving only the words that create a new poem.",
+    "category": "\u270d  WORDS & LANGUAGE"
+  },
+  {
+    "prompt": "Backwards Alphabet",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Write a sentence where each word starts with the next letter of the alphabet \u2014 or backwards.",
+    "category": "\u270d  WORDS & LANGUAGE"
+  },
+  {
+    "prompt": "Recipe for",
     "encouragement": "Swing your partner round and round",
-    "explained": "Construct using this approach \u2014 layer paint, stack harmonies, arrange words, sequence movements, combine flavors, assemble materials.",
+    "explained": "Write a recipe for something that can't be cooked: courage, silence, a good day.",
+    "category": "\u270d  WORDS & LANGUAGE"
+  },
+  {
+    "prompt": "Dictionary Entry",
+    "encouragement": "Touching Souls",
+    "explained": "Define a made-up word. Include pronunciation, etymology, and two example sentences.",
+    "category": "\u270d  WORDS & LANGUAGE"
+  },
+  {
+    "prompt": "Six Word Story",
+    "encouragement": "Let's put our heads together",
+    "explained": "Tell a complete story \u2014 beginning, middle, end \u2014 in exactly six words.",
+    "category": "\u270d  WORDS & LANGUAGE"
+  },
+  {
+    "prompt": "Dear Past Self",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Write one sentence of advice to yourself five years ago.",
+    "category": "\u270d  WORDS & LANGUAGE"
+  },
+  {
+    "prompt": "Untranslatable",
+    "encouragement": "We've got all night",
+    "explained": "Find a word from another language with no English equivalent. Build something around its meaning.",
+    "category": "\u270d  WORDS & LANGUAGE"
+  },
+  {
+    "prompt": "Wave Form",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Capture a wave: an ocean sketch, a sound that rises and falls, a sentence that builds to a climax then softens.",
     "category": "SHAPES & GEOMETRY"
   },
   {
-    "prompt": "Make it continuous.",
-    "encouragement": "We've got all night",
-    "explained": "Construct using this approach \u2014 layer paint, stack harmonies, arrange words, sequence movements, combine flavors, assemble materials.",
-    "category": "CONSTRAINT & FORM"
+    "prompt": "Concrete Poetry",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Arrange words on the page so their shape illustrates their meaning \u2014 a spiral for confusion, stairs for growth.",
+    "category": "\u270d  WORDS & LANGUAGE"
   },
   {
-    "prompt": "Make it modular.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Construct using this approach \u2014 layer paint, stack harmonies, arrange words, sequence movements, combine flavors, assemble materials.",
-    "category": "CONSTRAINT & FORM"
+    "prompt": "Walk Map",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Draw the path of a walk you take often from memory. Mark what you notice, feel, or think at each point.",
+    "category": "\u25cc  BODY & MOVEMENT"
   },
   {
-    "prompt": "Reimagine a memory.",
+    "prompt": "Breath Rhythm",
     "encouragement": "Swing your partner round and round",
-    "explained": "Create from invention \u2014 sketch the imagined, score the unheard, write the unsaid, choreograph the unseen, design the unprecedented.",
-    "category": "MEMORY & NOSTALGIA"
+    "explained": "Use your breathing as a metronome \u2014 create a piece timed to one full breath cycle.",
+    "category": "\u25cc  BODY & MOVEMENT"
   },
   {
-    "prompt": "Reimagine a mistake.",
+    "prompt": "OTHER Hand Only",
     "encouragement": "Touching Souls",
-    "explained": "Create from invention \u2014 sketch the imagined, score the unheard, write the unsaid, choreograph the unseen, design the unprecedented.",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
+    "explained": "Draw, write, or play using only your non-dominant hand. Embrace what happens.",
+    "category": "\u25cc  BODY & MOVEMENT"
   },
   {
-    "prompt": "Reimagine a rule.",
+    "prompt": "Balance",
     "encouragement": "Let's put our heads together",
-    "explained": "Create from invention \u2014 sketch the imagined, score the unheard, write the unsaid, choreograph the unseen, design the unprecedented.",
-    "category": "PLAY & RANDOMNESS"
+    "explained": "Create something that holds perfectly still \u2014 visual, sonic, or written equilibrium.",
+    "category": "\u25cc  BODY & MOVEMENT"
   },
   {
-    "prompt": "Reimagine a tradition.",
+    "prompt": "Falling",
     "encouragement": "You've got a friend in me.",
-    "explained": "Create from invention \u2014 sketch the imagined, score the unheard, write the unsaid, choreograph the unseen, design the unprecedented.",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
+    "explained": "Capture the sensation of falling \u2014 in marks, in sound, in language.",
+    "category": "\u25cc  BODY & MOVEMENT"
   },
   {
-    "prompt": "Color You Can't See",
-    "encouragement": "Let's put our heads together",
-    "explained": "Create something based on a color that doesn't exist \u2014 a sound that's 'octarine,' a poem that's 'blurple.'",
-    "category": "COLOR & PALETTE"
+    "prompt": "Posture",
+    "encouragement": "We've got all night",
+    "explained": "Draw someone from the back, paying attention only to how they're holding their body.",
+    "category": "\u25cc  BODY & MOVEMENT"
   },
   {
-    "prompt": "Break symmetry.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Deliberately disrupt the pattern \u2014 vary the rhythm, interrupt the line, shift the structure, change the expected sequence across any discipline.",
+    "prompt": "Hands",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Trace your own hand. Fill the outline with words, patterns, or markings that represent you.",
+    "category": "\u25cc  BODY & MOVEMENT"
+  },
+  {
+    "prompt": "The Commute",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "Capture one commute in whatever medium you use. What changes? What's always the same?",
+    "category": "\u25cc  BODY & MOVEMENT"
+  },
+  {
+    "prompt": "Running",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "Create something with the rhythm and urgency of running \u2014 breathless, propulsive, forward.",
+    "category": "\u25cc  BODY & MOVEMENT"
+  },
+  {
+    "prompt": "Hexagon Grid",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Fill a honeycomb pattern \u2014 each cell holds a word, a color, a note, or a tiny drawing.",
     "category": "SHAPES & GEOMETRY"
   },
   {
-    "prompt": "Break the pattern intentionally.",
+    "prompt": "Rest",
+    "encouragement": "Touching Souls",
+    "explained": "Make something about rest that itself feels restful to engage with.",
+    "category": "\u25cc  BODY & MOVEMENT"
+  },
+  {
+    "prompt": "Tiny World",
+    "encouragement": "Let's put our heads together",
+    "explained": "Create something the size of a postage stamp \u2014 a complete, detailed miniature.",
+    "category": "\u2727  SPACE & SCALE"
+  },
+  {
+    "prompt": "Fill the Page",
     "encouragement": "You've got a friend in me.",
-    "explained": "Deliberately disrupt the pattern \u2014 vary the rhythm, interrupt the line, shift the structure, change the expected sequence across any discipline.",
+    "explained": "Use every single inch. Nothing blank. No white space allowed.",
+    "category": "\u2727  SPACE & SCALE"
+  },
+  {
+    "prompt": "Empty Space",
+    "encouragement": "We've got all night",
+    "explained": "Use emptiness as your main material. What does the blank communicate?",
+    "category": "\u2727  SPACE & SCALE"
+  },
+  {
+    "prompt": "Map of Nowhere",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Draw a map of a fictional place \u2014 include terrain, a legend, place names.",
+    "category": "\u2727  SPACE & SCALE"
+  },
+  {
+    "prompt": "Bird's Eye",
+    "encouragement": "Helping Hand Committee:",
+    "explained": "See from directly above. Draw a room, a town, a crowd from a bird's-eye view.",
+    "category": "\u2727  SPACE & SCALE"
+  },
+  {
+    "prompt": "Underground",
+    "encouragement": "Congratulations! It can be hard to ask for help",
+    "explained": "What's beneath the surface? Draw, describe, or score the hidden layer beneath something familiar.",
+    "category": "\u2727  SPACE & SCALE"
+  },
+  {
+    "prompt": "Horizon Line",
+    "encouragement": "Swing your partner round and round",
+    "explained": "Put the horizon exactly in the center. Fill the top half and bottom half differently.",
+    "category": "\u2727  SPACE & SCALE"
+  },
+  {
+    "prompt": "Corner",
+    "encouragement": "Touching Souls",
+    "explained": "Work only in a corner of your page or space. Constraint as creative force.",
+    "category": "\u2727  SPACE & SCALE"
+  },
+  {
+    "prompt": "Infinite Zoom",
+    "encouragement": "Let's put our heads together",
+    "explained": "A drawing that could be zoomed in forever \u2014 patterns within patterns.",
+    "category": "\u2727  SPACE & SCALE"
+  },
+  {
+    "prompt": "The Infinite Loop",
+    "encouragement": "You've got a friend in me.",
+    "explained": "Create something with no clear beginning or end \u2014 a round song, a looping animation, a circular poem.",
     "category": "SHAPES & GEOMETRY"
   },
   {
-    "prompt": "Show something almost breaking.",
+    "prompt": "The In-Between",
     "encouragement": "We've got all night",
-    "explained": "Deliberately disrupt the pattern \u2014 vary the rhythm, interrupt the line, shift the structure, change the expected sequence across any discipline.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Focus on the threshold \u2014 a doorway, a shoreline, an ellipsis. The space between two states.",
+    "category": "\u2727  SPACE & SCALE"
   },
   {
-    "prompt": "Spinning Circles",
+    "prompt": "Dice Roll",
+    "encouragement": "Two hearts are better than one.",
+    "explained": "Roll a die. The number = how many elements you must include. Roll again for a constraint.",
+    "category": "\u2682  PLAY & RANDOMNESS"
+  },
+  {
+    "prompt": "Steal Like an Artist",
     "encouragement": "Helping Hand Committee:",
-    "explained": "Draw circles, spin plates, write looping sound effects, craft a poem about circles, or do spins across a floor.",
-    "category": "SHAPES & GEOMETRY"
+    "explained": "Recreate something you admire in your own medium \u2014 a painting as a poem, a song as a sketch.",
+    "category": "\u2682  PLAY & RANDOMNESS"
   },
   {
-    "prompt": "Capture a fleeting moment.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "Capture a pause in motion.",
+    "prompt": "Constraint Game",
     "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "TIME & SEQUENCE"
+    "explained": "Give yourself one ridiculous rule (no vowels, only blue, must include 'lemon') and make it work.",
+    "category": "\u2682  PLAY & RANDOMNESS"
   },
   {
-    "prompt": "Capture a private truth.",
+    "prompt": "Collide Two Ideas",
     "encouragement": "Swing your partner round and round",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "EMOTION & INNER LIFE"
+    "explained": "Pick two things that have nothing in common. Smash them together and see what emerges.",
+    "category": "\u2682  PLAY & RANDOMNESS"
   },
   {
-    "prompt": "Capture a quiet interaction.",
+    "prompt": "Speed Run",
     "encouragement": "Touching Souls",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "SOUND & SILENCE"
+    "explained": "Make something in 3 minutes flat. No stopping. Whatever comes out is the piece.",
+    "category": "\u2682  PLAY & RANDOMNESS"
   },
   {
-    "prompt": "Capture a secret.",
+    "prompt": "Remix Yourself",
     "encouragement": "Let's put our heads together",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "EMOTION & INNER LIFE"
+    "explained": "Take something old you've made and transform it \u2014 change the medium, the tone, the perspective.",
+    "category": "\u2682  PLAY & RANDOMNESS"
   },
   {
-    "prompt": "Capture a turning point.",
+    "prompt": "Wrong Tool",
     "encouragement": "You've got a friend in me.",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "SHAPES & GEOMETRY"
+    "explained": "Use the wrong tool for the job. Write with a paintbrush, draw with your finger, play a toy instrument.",
+    "category": "\u2682  PLAY & RANDOMNESS"
   },
   {
-    "prompt": "Capture an inner conflict.",
+    "prompt": "Worst on Purpose",
     "encouragement": "We've got all night",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "CONSTRAINT & FORM"
+    "explained": "Make the worst version of something deliberately. Notice what 'bad' teaches you about 'good.'",
+    "category": "\u2682  PLAY & RANDOMNESS"
   },
   {
-    "prompt": "Capture anticipation before change.",
+    "prompt": "Flip It",
     "encouragement": "Two hearts are better than one.",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "Capture emotional weather.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "Capture hesitation before action.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Capture relief after pressure.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Capture self-trust.",
-    "encouragement": "Touching Souls",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Capture something being held back.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Capture something breaking open.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Capture something outgrown.",
-    "encouragement": "We've got all night",
-    "explained": "Freeze this in your medium \u2014 sketch what you see, write what you feel, compose the sound of it, choreograph the gesture, photograph the instant.",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "Explore adaptation.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore awakening.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore boundaries.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore collective memory.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "Explore containment.",
-    "encouragement": "Touching Souls",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore contradiction.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore contrast in time.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "Explore contrast.",
-    "encouragement": "We've got all night",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore convergence.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore cycles.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore depth.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore distance.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "Explore distortion.",
-    "encouragement": "Touching Souls",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore divergence.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore duality.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore echo.",
-    "encouragement": "We've got all night",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore exaggeration.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore expansion.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore forgiveness.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore fragility.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore illusion.",
-    "encouragement": "Touching Souls",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore inherited patterns.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "Explore interruption.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore intimacy.",
-    "encouragement": "We've got all night",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore magnetism.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore metaphor without naming it.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore minimalism.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore mirroring.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore movement.",
-    "encouragement": "Touching Souls",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "Explore nostalgia.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "Explore orbit.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore paradox.",
-    "encouragement": "We've got all night",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore personal mythology.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "Explore reflection.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore resilience.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore resistance.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore resonance.",
-    "encouragement": "Touching Souls",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore rhythm.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore scale.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "Explore softness.",
-    "encouragement": "We've got all night",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore stillness.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore surface.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "Explore tension and release.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore tension.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore transition.",
-    "encouragement": "Touching Souls",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "Explore truth.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "Explore weight.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Explore wholeness.",
-    "encouragement": "We've got all night",
-    "explained": "Investigate through making \u2014 draw to understand form, write to clarify thought, move to feel space, cook to know ingredients, compose to hear relationships.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Express \u201cending.\u201d",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Express \u201cpause.\u201d",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "Express \u201creturn.\u201d",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Express \u201cshift.\u201d",
-    "encouragement": "Touching Souls",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "Express anticipation.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Express courage.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Express longing.",
-    "encouragement": "We've got all night",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Express pride quietly.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "Express relief.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Express surrender.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Express trust.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show a loop.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show a moment of recognition.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "Show a quiet revolution.",
-    "encouragement": "Touching Souls",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "Show an invisible boundary.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show an unseen force.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show cause and effect.",
-    "encouragement": "We've got all night",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show clarity.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show commitment.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show curiosity.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show detachment.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show devotion without figures.",
-    "encouragement": "Touching Souls",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show growth over time.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "Show growth.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "Show hesitation.",
-    "encouragement": "We've got all night",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show inner and outer.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show overwhelm.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show protection.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show public vs private.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "Show quiet power.",
-    "encouragement": "Touching Souls",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "Show reclamation.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show resilience.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show something barely holding.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show something dissolving.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show something emerging.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show something misunderstood.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show something reassembled.",
-    "encouragement": "Touching Souls",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show something unraveling.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show surface vs depth.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "Show tension between two forces.",
-    "encouragement": "We've got all night",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Show vulnerability.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Make this visible/audible/tangible \u2014 paint the feeling, sing the emotion, write the subtext, dance the meaning, plate the concept.",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "Exaggerate contrast.",
-    "encouragement": "We've got all night",
-    "explained": "Place opposites together \u2014 light and dark in image, loud and soft in sound, long and short in text, tense and relaxed in movement.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Soften all contrast.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Place opposites together \u2014 light and dark in image, loud and soft in sound, long and short in text, tense and relaxed in movement.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Use contrast in scale.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Place opposites together \u2014 light and dark in image, loud and soft in sound, long and short in text, tense and relaxed in movement.",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "Yes, And...",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Start with any idea and say 'yes, and...' ten times in a row, building on it each time.  (If you still can't start, try making one square and add 10 things to it",
-    "category": "PLAY & RANDOMNESS"
-  },
-  {
-    "prompt": "Begin with a point.",
-    "encouragement": "Touching Souls",
-    "explained": "Start your piece here \u2014 a drawing from this point, a melody from A note, a poem from this word, a movement from this position, a dish from one ingredient.",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "Begin at the edge.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Start your piece here \u2014 a drawing from this point, a melody from this note, a poem from this word, a movement from this position, a dish from this ingredient.",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "Begin in the middle.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Start your piece here \u2014 a drawing from this point, a melody from this note, a poem from this word, a movement from this position, a dish from this ingredient.",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "Express \u201cbeginning.\u201d",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Start your piece here \u2014 a drawing from this point, a melody from this note, a poem from this word, a movement from this position, a dish from this ingredient.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Start minimal and complicate.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Start your piece here \u2014 a drawing from this point, a melody from this note, a poem from this word, a movement from this position, a dish from this ingredient.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Start with chaos and refine.",
-    "encouragement": "Touching Souls",
-    "explained": "Start your piece here \u2014 a drawing from this point, a melody from this note, a poem from this word, a movement from this position, a dish from this ingredient.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "103. Ugly Beautiful  \u2014  Use colors (or sounds, or words) that shouldn't work together \u2014 and make them work anyway.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "COLOR & PALETTE"
-  },
-  {
-    "prompt": "Interpret \u201cecho.\u201d",
-    "encouragement": "Touching Souls",
-    "explained": "Use repetition as structure \u2014 recurring motif in visual, repeating phrase in music, refrain in writing, looping gesture in dance.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Remove something essential.",
-    "encouragement": "We've got all night",
-    "explained": "Work by taking away \u2014 erase lines, drop beats, cut words, simplify movement, reduce ingredients to essentials.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Remove the center.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Work by taking away \u2014 erase lines, drop beats, cut words, simplify movement, reduce ingredients to essentials.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Monochrome",
-    "encouragement": "Touching Souls",
-    "explained": "Work in a single color (or a single mood, a single instrument, a single grammatical tense) \u2014 only shades of one thing.",
-    "category": "COLOR & PALETTE"
-  },
-  {
-    "prompt": "Parallel Lines",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Work in parallel \u2014 two melodies at once, a two-column poem where lines rhyme across, two drawings side by side.",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "Focus only on edges.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Work within this constraint \u2014 one color only, single note repeated, three words maximum, minimal movement, two ingredients.",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "Limit to three elements.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Work within this constraint \u2014 one color only, single note repeated, three words maximum, minimal movement, two ingredients.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "Use only one dominant element.",
-    "encouragement": "Touching Souls",
-    "explained": "Work within this constraint \u2014 one color only, single note repeated, three words maximum, minimal movement, two ingredients.",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "104. Swatch Book  \u2014  Create a palette of 6 swatches, each named after a memory. What color is your childhood kitchen?",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "COLOR & PALETTE"
-  },
-  {
-    "prompt": "105. The Grey Area  \u2014  Work entirely in grey. Resist the urge to add color or to be definitive.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "COLOR & PALETTE"
-  },
-  {
-    "prompt": "106. Warm to Cool  \u2014  Start warm (reds, oranges, loud, fast, angry) and end cool (blues, greens, quiet, slow, calm).",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "COLOR & PALETTE"
-  },
-  {
-    "prompt": "107. Borrowed Palette  \u2014  Use the exact colors (or tones, or vocabulary) from your favorite book cover, album art, or film still.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "COLOR & PALETTE"
-  },
-  {
-    "prompt": "108. Color as Emotion  \u2014  Assign a color to a feeling. Then build the piece so the viewer feels the color without seeing it named.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "COLOR & PALETTE"
-  },
-  {
-    "prompt": "109. Black on Black  \u2014  Work with subtle variations on a dark background \u2014 texture instead of contrast.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "COLOR & PALETTE"
-  },
-  {
-    "prompt": "11. Rough vs. Smooth  \u2014  Contrast rough and smooth in a drawing, a poem with jarring vs. flowing lines, or music with harsh vs. gentle tones.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "110. Primary Only  \u2014  Strict limits: red, yellow, blue \u2014 no mixing. What's made of fundamentals?",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "COLOR & PALETTE"
-  },
-  {
-    "prompt": "111. Field Recording  \u2014  Step outside for 2 minutes and write down or sketch every sound you hear in sequence.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "112. The Rest  \u2014  Compose or write something where silence or blank space is the main event.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "113. Onomatopoeia  \u2014  Build a piece entirely from words (or marks, or movements) that sound like what they describe.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "114. Reverb  \u2014  Create an echo effect \u2014 a phrase, image, or note that repeats with diminishing intensity.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "115. White Noise  \u2014  Create something continuous, undifferentiated, and oddly soothing.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "116. The Drop  \u2014  Build to a single, decisive moment. Everything before it is anticipation. Everything after is resolution.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "117. Whisper  \u2014  Make something so quiet it almost isn't there. Force the audience to lean in.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "118. Dissonance  \u2014  Put two things that clash uncomfortably close together. Don't resolve it.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "119. Lullaby Logic  \u2014  Create something repetitive, gentle, and slightly hypnotic \u2014 designed to slow the nervous system.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "12. Layers  \u2014  Build something in layers \u2014 tissue paper collage, a chord stacked note by note, a poem where each stanza adds depth.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "120. The Last Note  \u2014  End something. Really end it. The final word, mark, or sound that closes a door.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "SOUND & SILENCE"
-  },
-  {
-    "prompt": "121. First Memory  \u2014  Recreate your earliest memory as vividly as possible \u2014 in any medium. Don't verify it. Just trust it.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "122. Smell Triggers  \u2014  Name a smell and what it instantly transports you to. Build something from that moment.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "123. Photograph in Words  \u2014  Describe a photograph you don't have \u2014 a scene you remember but never captured.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "124. The House  \u2014  Draw, describe, or score the first home you remember clearly. Every room. Every detail.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "125. Object Biography  \u2014  Choose an everyday object you've owned for years. Tell its whole life story.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "126. Old Song  \u2014  Pick a song from your childhood. Transcribe your memory of it \u2014 wrong lyrics, misremembered melody, all of it.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "127. Postcards Home  \u2014  Write a postcard from a past version of yourself to a present one.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "128. The Before  \u2014  Capture the world as it existed before something changed it permanently.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "129. Faded Edges  \u2014  Make something deliberately blurry, incomplete \u2014 memory's way of filling in gaps.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "13. Crosshatch  \u2014  Use overlapping lines (marks, words, sounds) to build density \u2014 darker where they cross.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "130. Heirloom  \u2014  Create something designed to be passed down. What would you leave behind?",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "MEMORY & NOSTALGIA"
-  },
-  {
-    "prompt": "131. Stranger on a Train  \u2014  Invent the life story of someone you briefly observed. Don't ask \u2014 just imagine.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "132. Borrowed Hands  \u2014  Create something imagining you have someone else's hands, voice, or skill set entirely.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "133. Conversation Overheard  \u2014  Take a fragment of conversation you overheard recently and build a whole world from it.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "134. Portrait Without a Face  \u2014  Capture someone's essence without showing or stating who they are.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "135. Apology  \u2014  Write, compose, or create the apology you never gave (or never received).",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "136. What They Carry  \u2014  Focus on what a person carries \u2014 literally or metaphorically. That's the whole piece.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "137. Crowd of One  \u2014  Be inside a crowd. Feel everyone and no one. The loneliness of proximity.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "138. Thank You Note  \u2014  Write a genuine thank-you to someone who doesn't know they helped you.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "139. Teach It  \u2014  Explain something you love to someone who knows nothing about it. Make them love it too.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "14. Bubble Wrap  \u2014  Fill a page with bubbles. Each bubble holds a worry, a wish, or a word. Pop them in order of importance.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "140. The Witness  \u2014  Put yourself in the background. Someone else is the subject. You only watch.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "OTHER PEOPLE"
-  },
-  {
-    "prompt": "141. Metamorphosis  \u2014  Show something mid-transformation \u2014 half what it was, half what it's becoming.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "142. Shedding  \u2014  What have you outgrown? Create the moment of releasing it.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "143. The Turning Point  \u2014  Identify the exact moment everything changed and hold it up to the light.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "144. Growth Rings  \u2014  Like a tree's rings \u2014 layers that mark time. Show the rings inside something.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "145. Broken and Repaired  \u2014  Kintsugi logic: make the breakage the most beautiful part of the repair.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "146. Becoming  \u2014  Not what something is, but what it's in the process of becoming.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "147. Molt  \u2014  The old skin left behind. What's the cast-off version of who you used to be?",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "148. Fermentation  \u2014  Something left to transform on its own, over time. Capture the middle of that process.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "149. Threshold  \u2014  Stand at the exact boundary between two states and describe both sides simultaneously.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "15. Crumple & Flatten  \u2014  Crumple a page, flatten it, then work with the wrinkle lines as your composition guide.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "150. Decay as Beauty  \u2014  Something rotting, fading, or dissolving \u2014 find what's gorgeous in its ending.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "TRANSFORMATION & CHANGE"
-  },
-  {
-    "prompt": "151. No Straight Lines  \u2014  Every mark, phrase, or movement must curve. Rigidity is forbidden.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "152. Only Verbs  \u2014  Write something using only action words. No nouns, no adjectives.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "153. One Sentence  \u2014  The whole piece is a single sentence. Make it count.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "154. 7 Words Per Line  \u2014  Every line \u2014 of poetry, lyric, or list \u2014 must be exactly 7 words long.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "155. No Adjectives  \u2014  Describe something complex and evocative without using a single descriptive modifier.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "156. The Palindrome  \u2014  Make something that reads the same forwards and backwards \u2014 in any medium.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "157. Box It  \u2014  Whatever you make must fit inside a 3-inch square. Nothing outside those borders.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "158. Three Acts, One Page  \u2014  Tell a complete story \u2014 setup, confrontation, resolution \u2014 in whatever fits on one side of a page.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "159. Acrostic  \u2014  The first letter of each line spells a hidden word. Choose the word, then write to it.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "16. Velvet Underground  \u2014  Create something with hidden depth \u2014 a drawing with a secret layer, a lyric with a double meaning.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "160. Negative Space Only  \u2014  You are only allowed to define what is NOT there. The absence creates the presence.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "CONSTRAINT & FORM"
-  },
-  {
-    "prompt": "161. The Mundane Sacred  \u2014  Treat the most ordinary part of your day as if it were a ritual. Capture the ceremony.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "THE EVERYDAY & OVERLOOKED"
-  },
-  {
-    "prompt": "162. Contents of a Drawer  \u2014  Open a drawer. Describe or draw everything in it. Let the objects tell you who lives here.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "THE EVERYDAY & OVERLOOKED"
-  },
-  {
-    "prompt": "163. Tuesday  \u2014  Celebrate Tuesday. Not a holiday. Not a birthday. Just a Tuesday. Make it matter.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "THE EVERYDAY & OVERLOOKED"
-  },
-  {
-    "prompt": "164. The Queue  \u2014  Standing in a line. Waiting. Make a piece about waiting that doesn't make it feel like nothing.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "THE EVERYDAY & OVERLOOKED"
-  },
-  {
-    "prompt": "165. Junk Mail  \u2014  Use junk mail, spam, or a boring email as your raw material.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "THE EVERYDAY & OVERLOOKED"
-  },
-  {
-    "prompt": "166. The Back of Things  \u2014  Draw the back of your phone, your chair, your hand, your house. What do backs reveal?",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "THE EVERYDAY & OVERLOOKED"
-  },
-  {
-    "prompt": "167. Leftovers  \u2014  Make something from what remains \u2014 leftover ingredients, spare words, unused ideas.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "THE EVERYDAY & OVERLOOKED"
-  },
-  {
-    "prompt": "168. The Commute Ritual  \u2014  That thing you do automatically every day without noticing \u2014 capture it before it disappears.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "THE EVERYDAY & OVERLOOKED"
-  },
-  {
-    "prompt": "169. Grocery List  \u2014  Turn a shopping list into a poem, a score, or a performance piece.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "THE EVERYDAY & OVERLOOKED"
-  },
-  {
-    "prompt": "17. Sandpaper  \u2014  Make something abrasive on purpose \u2014 intentionally rough edges, dissonant chords, uncomfortable word choices.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "170. A Wednesday in March  \u2014  Extremely ordinary. Hyper-specific. No drama. Find the beauty in its mediocrity.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "THE EVERYDAY & OVERLOOKED"
-  },
-  {
-    "prompt": "171. Invent a Creature  \u2014  Design something that has never existed. Give it a name, a habitat, a reason.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
-  },
-  {
-    "prompt": "172. Weather That Doesn't Exist  \u2014  Describe a type of weather no one has ever experienced \u2014 warm snow, horizontal rain that falls up.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
-  },
-  {
-    "prompt": "173. A Colour That Isn't  \u2014  Create something that represents a color the human eye cannot perceive. What would it feel like?",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
-  },
-  {
-    "prompt": "174. Gravity Reversed  \u2014  Everything falls upward. Redesign one aspect of daily life for this world.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
-  },
-  {
-    "prompt": "175. Second Sun  \u2014  There are now two suns. How does everything change \u2014 the light, the shadows, the seasons?",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
-  },
-  {
-    "prompt": "176. Dream Logic  \u2014  Make something that follows the internal consistency of a dream \u2014 non-linear, emotionally true.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
-  },
-  {
-    "prompt": "177. The Museum of Lost Things  \u2014  Curate an exhibition of things that no longer exist. Write the placard for one exhibit.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
-  },
-  {
-    "prompt": "178. Translate the Untranslatable  \u2014  Describe in your medium what it feels like to sneeze, to forget a word, to fall asleep.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
-  },
-  {
-    "prompt": "179. If Objects Could Testify  \u2014  Your most-used object takes the stand. What does it say about you?",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
-  },
-  {
-    "prompt": "18. Glass Surface  \u2014  Capture translucency \u2014 watercolor wash, a delicate melody, a poem about something half-seen.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "180. The Map of a Feeling  \u2014  Draw a map \u2014 with roads, landmarks, and a legend \u2014 of what anxiety, joy, or grief looks like as a place.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "IMAGINATION & THE IMPOSSIBLE"
-  },
-  {
-    "prompt": "181. Show Your Work  \u2014  Document the making, not just the made. The sketch, the mistake, the revision.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "PROCESS & PRACTICE"
-  },
-  {
-    "prompt": "182. The Ugly Draft  \u2014  Make a deliberately rough first attempt and then show it, unpolished, as the final piece.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "PROCESS & PRACTICE"
-  },
-  {
-    "prompt": "183. Start in the Middle  \u2014  Begin at the most dramatic, complex point. Work outward from there.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "PROCESS & PRACTICE"
-  },
-  {
-    "prompt": "184. Throw One Away  \u2014  Make something only to destroy it. The destruction is the practice.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "PROCESS & PRACTICE"
-  },
-  {
-    "prompt": "185. Iteration  \u2014  Make the same thing 5 times. Each version slightly different. Compare them.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "PROCESS & PRACTICE"
-  },
-  {
-    "prompt": "186. Collaboration with Yesterday  \u2014  Look at something you made months ago and respond to it \u2014 agree, argue, build on it.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "PROCESS & PRACTICE"
-  },
-  {
-    "prompt": "187. The Constraint Jar  \u2014  Write 5 constraints on slips of paper, draw one blind, and work within it for 10 minutes.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "PROCESS & PRACTICE"
-  },
-  {
-    "prompt": "188. Teach Through Making  \u2014  Create something designed to show someone else how to do what you do.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "PROCESS & PRACTICE"
-  },
-  {
-    "prompt": "189. Public Practice  \u2014  Make something in public (or imagining eyes on you). Notice how it changes your choices.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "PROCESS & PRACTICE"
-  },
-  {
-    "prompt": "19. Mosaic  \u2014  Build a larger image or idea from tiny fragments \u2014 torn paper, single words, short phrases, beats.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "190. The Finishing Ritual  \u2014  Define what 'done' means for you. Then make something and do that ritual at the end.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "PROCESS & PRACTICE"
-  },
-  {
-    "prompt": "191. Common Ground  \u2014  Find something that connects you to a person you thought you had nothing in common with.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "CONNECTION & BELONGING"
-  },
-  {
-    "prompt": "192. Inheritance  \u2014  What did you inherit that you didn't choose? Make something that holds it.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "CONNECTION & BELONGING"
-  },
-  {
-    "prompt": "193. The Gathering  \u2014  Capture the energy of people coming together \u2014 a meal, a concert, a protest, a wake.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "CONNECTION & BELONGING"
-  },
-  {
-    "prompt": "194. Alone Together  \u2014  Two separate things existing in the same space without interacting. The tension of nearness.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "CONNECTION & BELONGING"
-  },
-  {
-    "prompt": "195. Signal & Noise  \u2014  What's the message beneath all the interference? Isolate it.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "CONNECTION & BELONGING"
-  },
-  {
-    "prompt": "196. The Handoff  \u2014  Something passed from one person to another. A tradition, a skill, a secret, a burden.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "CONNECTION & BELONGING"
-  },
-  {
-    "prompt": "197. We  \u2014  Make something that could only have been made collectively \u2014 or imagine what that would look like.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "CONNECTION & BELONGING"
-  },
-  {
-    "prompt": "198. Diaspora  \u2014  Something scattered that still belongs together. Show both the scatter and the belonging.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "CONNECTION & BELONGING"
-  },
-  {
-    "prompt": "199. Bridge  \u2014  Build a connection between two things that aren't usually connected. That bridge is the piece.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "CONNECTION & BELONGING"
-  },
-  {
-    "prompt": "2. Zigzag  \u2014  Create a zigzag design, compose a melody that zigzags up and down, or describe a journey with sharp turns.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "20. Woven  \u2014  Interweave two themes \u2014 alternate lines in a poem, interlock two melodic ideas, weave two colors.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "TEXTURE & SURFACE"
-  },
-  {
-    "prompt": "200. The Last to Know  \u2014  Someone finds out something everyone else already knew. What was the moment of discovery?",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "CONNECTION & BELONGING"
-  },
-  {
-    "prompt": "21. Golden Hour  \u2014  Capture the feeling of late afternoon light \u2014 warm colors, a nostalgic lyric, slow movement, amber tones.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "22. Silhouette  \u2014  Show the shape without the detail \u2014 black outline drawing, a lyric that implies without stating, a pose.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "23. Shadow Self  \u2014  Draw or write about the part of you that only emerges in private.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "24. Spotlight  \u2014  Put exactly one thing in the center of attention. Everything else disappears.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "25. Dappled Light  \u2014  Broken, flickering light \u2014 a sketch of forest shadows, a syncopated rhythm, a poem of interrupted thoughts.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "26. Candlelight  \u2014  Create something warm, flickering, intimate, and slightly unsteady.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "27. Eclipse  \u2014  Something obscures something else. What is hidden? What is revealed at the edges?",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "28. Dawn  \u2014  The first moment of light \u2014 a sketch of the horizon, the first note of a piece, the opening word of a story.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "29. Moonlit  \u2014  Cool, soft, reflected light. Create something that glows quietly rather than blazes.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "3. Spiral Inward  \u2014  Write 3 things you're proud of starting in the center and spiraling outward. Any discipline, same idea.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "30. Neon Sign  \u2014  Bold, bright, slightly buzzing. Write in neon \u2014 vivid colors, short punchy words, electric energy.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "LIGHT & SHADOW"
-  },
-  {
-    "prompt": "31. One Minute  \u2014  Set a timer for 60 seconds. Create something \u2014 anything \u2014 before it ends. No editing.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "32. Before & After  \u2014  Show transformation in two panels, two stanzas, two musical phrases.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "33. Slow Motion  \u2014  Capture a single second stretched out \u2014 describe every micro-detail of one moment.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "34. Time Lapse  \u2014  Compress time \u2014 a sketch of something growing, a lyric about years passing in a breath.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "35. Flashback  \u2014  Jump backward. Start at the end and work toward the beginning.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "36. Countdown  \u2014  Create something that counts down \u2014 10 lines shrinking to 1, a melody losing notes, a drawing dissolving.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "37. Pause  \u2014  Create something about stillness in the middle of movement. A rest. A held breath.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "38. Repeat After Me  \u2014  Use repetition as your structure \u2014 a pattern that repeats with tiny variations each time.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "39. The Long Game  \u2014  Start something you won't finish today \u2014 the first line of something big.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "4. Triangle Rules  \u2014  Make something using only triangles \u2014 a drawing, a song with 3 notes, a 3-line poem, or a 3-pose sequence.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "40. Rewind  \u2014  Write, draw, or play something \u2014 then recreate it backwards.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "TIME & SEQUENCE"
-  },
-  {
-    "prompt": "41. Rainstorm  \u2014  Capture a downpour \u2014 quick marks, percussive sounds, rapid-fire words, sudden movement.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "42. Root System  \u2014  Draw roots spreading underground, or map the invisible support system beneath something in your life.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "43. Petal by Petal  \u2014  Build something one small piece at a time, adding each piece delicately.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "44. Stone  \u2014  Create something as solid, ancient, and unyielding as a stone.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "45. Wildfire  \u2014  Fast, consuming, transformative. Make something with urgency and heat.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "46. Fog  \u2014  Create something unclear, soft-edged, half-hidden. Let ambiguity be the point.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "47. Tide  \u2014  Something that comes and goes in a rhythm. Capture one full cycle.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "48. Seed  \u2014  Plant the smallest possible idea \u2014 a word, a dot, a single note. That's the whole piece.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "49. Canopy  \u2014  Create something that gives shelter \u2014 a protective phrase, a sheltering melody, a drawing of overhead leaves.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "5. Square Frame  \u2014  Fill a square border with words, sounds, movements, or marks. Nothing outside the frame counts.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "50. Erosion  \u2014  Show what happens when something is slowly worn away \u2014 marks, words, silence.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "NATURE & THE ELEMENTS"
-  },
-  {
-    "prompt": "51. Homesick  \u2014  Capture the ache of missing a place, person, or time.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "52. Overflow  \u2014  Something too big to contain. Let it spill over the edges \u2014 of the page, the bar, the stanza.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "53. Numb  \u2014  Create something deliberately flat, grey, and without peaks. Monotony as an artistic choice.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "54. Wild Joy  \u2014  Pure, uncomplicated happiness. Make something that doesn't apologize for being happy.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "55. Doubt  \u2014  A piece that questions itself \u2014 lines crossed out, a melody that hesitates, words that trail off.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "56. Anticipation  \u2014  The feeling before something happens. The inhale. The pause before the drop.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "57. Grief in 5 Objects  \u2014  Name or draw 5 physical objects associated with someone or something lost.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "58. Fury  \u2014  Make something angry. Don't soften it. Let it have edges.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "59. Tenderness  \u2014  The softest thing you can make. Handle it carefully.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "6. Dotted Line  \u2014  Connect dots (literal or metaphorical) \u2014 a connect-the-dots sketch, a melody built on staccato notes, or a poem about following signs.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "60. Awe  \u2014  Something so much bigger than you that all you can do is witness it.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "EMOTION & INNER LIFE"
-  },
-  {
-    "prompt": "61. Found Poem  \u2014  Cut words from a magazine, receipt, or menu. Arrange them into something new.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "WORDS & LANGUAGE"
-  },
-  {
-    "prompt": "62. One Word, Big  \u2014  Write one word as large as it will go. Fill the whole space. Let the word BE the piece.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "WORDS & LANGUAGE"
-  },
-  {
-    "prompt": "63. Erasure  \u2014  Take an existing text and erase most of it, leaving only the words that create a new poem.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "WORDS & LANGUAGE"
-  },
-  {
-    "prompt": "64. Backwards Alphabet  \u2014  Write a sentence where each word starts with the next letter of the alphabet \u2014 or backwards.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "WORDS & LANGUAGE"
-  },
-  {
-    "prompt": "65. Recipe for ___  \u2014  Write a recipe for something that can't be cooked: courage, silence, a good day.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "WORDS & LANGUAGE"
-  },
-  {
-    "prompt": "66. Dictionary Entry  \u2014  Define a made-up word. Include pronunciation, etymology, and two example sentences.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "WORDS & LANGUAGE"
-  },
-  {
-    "prompt": "67. Six Word Story  \u2014  Tell a complete story \u2014 beginning, middle, end \u2014 in exactly six words.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "WORDS & LANGUAGE"
-  },
-  {
-    "prompt": "68. Dear Past Self  \u2014  Write one sentence of advice to yourself five years ago.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "WORDS & LANGUAGE"
-  },
-  {
-    "prompt": "69. Untranslatable  \u2014  Find a word from another language with no English equivalent. Build something around its meaning.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "WORDS & LANGUAGE"
-  },
-  {
-    "prompt": "7. Wave Form  \u2014  Capture a wave: an ocean sketch, a sound that rises and falls, a sentence that builds to a climax then softens.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "70. Concrete Poetry  \u2014  Arrange words on the page so their shape illustrates their meaning \u2014 a spiral for confusion, stairs for growth.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "WORDS & LANGUAGE"
-  },
-  {
-    "prompt": "71. Walk Map  \u2014  Draw the path of a walk you take often from memory. Mark what you notice, feel, or think at each point.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "72. Breath Rhythm  \u2014  Use your breathing as a metronome \u2014 create a piece timed to one full breath cycle.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "73. Left Hand Only  \u2014  Draw, write, or play using only your non-dominant hand. Embrace what happens.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "74. Balance  \u2014  Create something that holds perfectly still \u2014 visual, sonic, or written equilibrium.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "75. Falling  \u2014  Capture the sensation of falling \u2014 in marks, in sound, in language.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "76. Posture  \u2014  Draw someone from the back, paying attention only to how they're holding their body.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "77. Hands  \u2014  Trace your own hand. Fill the outline with words, patterns, or markings that represent you.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "78. The Commute  \u2014  Capture one commute in whatever medium you use. What changes? What's always the same?",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "79. Running  \u2014  Create something with the rhythm and urgency of running \u2014 breathless, propulsive, forward.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "8. Hexagon Grid  \u2014  Fill a honeycomb pattern \u2014 each cell holds a word, a color, a note, or a tiny drawing.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "80. Rest  \u2014  Make something about rest that itself feels restful to engage with.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "BODY & MOVEMENT"
-  },
-  {
-    "prompt": "81. Tiny World  \u2014  Create something the size of a postage stamp \u2014 a complete, detailed miniature.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "82. Fill the Page  \u2014  Use every single inch. Nothing blank. No white space allowed.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "83. Empty Space  \u2014  Use emptiness as your main material. What does the blank communicate?",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "84. Map of Nowhere  \u2014  Draw a map of a fictional place \u2014 include terrain, a legend, place names.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "85. Bird's Eye  \u2014  See from directly above. Draw a room, a town, a crowd from a bird's-eye view.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "86. Underground  \u2014  What's beneath the surface? Draw, describe, or score the hidden layer beneath something familiar.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "87. Horizon Line  \u2014  Put the horizon exactly in the center. Fill the top half and bottom half differently.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "88. Corner  \u2014  Work only in a corner of your page or space. Constraint as creative force.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "89. Infinite Zoom  \u2014  A drawing that could be zoomed in forever \u2014 patterns within patterns.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "9. The Infinite Loop  \u2014  Create something with no clear beginning or end \u2014 a round song, a looping animation, a circular poem.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "SHAPES & GEOMETRY"
-  },
-  {
-    "prompt": "90. The In-Between  \u2014  Focus on the threshold \u2014 a doorway, a shoreline, an ellipsis. The space between two states.",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "SPACE & SCALE"
-  },
-  {
-    "prompt": "91. Dice Roll  \u2014  Roll a die. The number = how many elements you must include. Roll again for a constraint.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "PLAY & RANDOMNESS"
-  },
-  {
-    "prompt": "92. Steal Like an Artist  \u2014  Recreate something you admire in your own medium \u2014 a painting as a poem, a song as a sketch.",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "Testing 365",
-    "category": "PLAY & RANDOMNESS"
-  },
-  {
-    "prompt": "93. Constraint Game  \u2014  Give yourself one ridiculous rule (no vowels, only blue, must include 'lemon') and make it work.",
-    "encouragement": "Congratulations! It can be hard to ask for help",
-    "explained": "Testing 365",
-    "category": "PLAY & RANDOMNESS"
-  },
-  {
-    "prompt": "94. Collide Two Ideas  \u2014  Pick two things that have nothing in common. Smash them together and see what emerges.",
-    "encouragement": "Swing your partner round and round",
-    "explained": "Testing 365",
-    "category": "PLAY & RANDOMNESS"
-  },
-  {
-    "prompt": "95. Speed Run  \u2014  Make something in 3 minutes flat. No stopping. Whatever comes out is the piece.",
-    "encouragement": "Touching Souls",
-    "explained": "Testing 365",
-    "category": "PLAY & RANDOMNESS"
-  },
-  {
-    "prompt": "96. Remix Yourself  \u2014  Take something old you've made and transform it \u2014 change the medium, the tone, the perspective.",
-    "encouragement": "Let's put our heads together",
-    "explained": "Testing 365",
-    "category": "PLAY & RANDOMNESS"
-  },
-  {
-    "prompt": "97. Wrong Tool  \u2014  Use the wrong tool for the job. Write with a paintbrush, draw with your finger, play a toy instrument.",
-    "encouragement": "You've got a friend in me.",
-    "explained": "Testing 365",
-    "category": "PLAY & RANDOMNESS"
-  },
-  {
-    "prompt": "98. Worst on Purpose  \u2014  Make the worst version of something deliberately. Notice what 'bad' teaches you about 'good.'",
-    "encouragement": "We've got all night",
-    "explained": "Testing 365",
-    "category": "PLAY & RANDOMNESS"
-  },
-  {
-    "prompt": "99. Flip It  \u2014  Turn your page upside down, flip a melody upside down. Invert the premise of your idea.",
-    "encouragement": "Two hearts are better than one.",
-    "explained": "Testing 365",
-    "category": "PLAY & RANDOMNESS"
-  },
-  {
-    "prompt": "Prompt",
-    "encouragement": "Helping Hand Committee:",
-    "explained": "",
-    "category": "UNCATEGORIZED"
+    "explained": "Turn your page upside down, flip a melody upside down. Invert the premise of your idea.",
+    "category": "\u2682  PLAY & RANDOMNESS"
   }
 ]

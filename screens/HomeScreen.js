@@ -659,6 +659,7 @@ export default function HomeScreen({ navigation }) {
       loadPseudonym();
       refreshProfile();
       loadWinners();
+      loadTodaysChallenge();
     }, [todayQuote, userProfile])
   );
 
@@ -706,6 +707,7 @@ export default function HomeScreen({ navigation }) {
 
   const loadTodaysChallenge = async () => {
     try {
+      // Read from local cache (set by ArtScreen or this screen)
       const challenge = await AsyncStorage.getItem('todays_challenge');
       if (challenge) setTodaysChallenge(challenge);
     } catch (error) {

@@ -29,7 +29,19 @@ export default function AboutUsScreen({ navigation }) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Our Mission</Text>
             <Text style={styles.text}>
-              MAGIC Tracker helps you build a sustainable creative practice through daily activities that improve mental health and wellbeing.
+              We exist to help you reclaim your mind from noise, break anxious patterns, and step out of doom spirals — in just 13 nights.
+            </Text>
+            <Text style={styles.text}>
+              Through five simple, guided daily practices, we are committed to strengthening your attention, transforming emotion into expression, and building creative power from the inside out. Not every practice is art — but every practice is designed to expand your creativity.
+            </Text>
+            <Text style={styles.text}>
+              We believe creative breakthrough isn't a talent. It's a trained capacity.
+            </Text>
+            <Text style={styles.text}>
+              Whether you spend five minutes or twenty, whether you complete one practice or all five, we're here to support your momentum, your streak, and your growth.
+            </Text>
+            <Text style={styles.text}>
+              Our commitment is to help you grow clearer, grow braver, and create from a place that's fully yours — with the courage to share your work, even under a pseudonym, when you're ready.
             </Text>
           </View>
 

@@ -317,3 +317,14 @@ export const calculateAndSetWinner = async (dateStr) => {
 
   return winnerData;
 };
+
+// ─── Daily Prompt ─────────────────────────────────────────────────
+// Fetch today's prompt from Firestore (written externally)
+// Document path: dailyPrompts/{dateStr}
+// Expected fields: { prompt, encouragement, explained, category }
+export const getDailyPrompt = async (dateStr) => {
+  const ref = doc(db, 'dailyPrompts', dateStr);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data();
+  return null;
+};

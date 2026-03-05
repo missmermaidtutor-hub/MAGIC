@@ -655,7 +655,7 @@ export default function InspireScreen({ navigation }) {
             </View>
 
             <Text style={styles.instructionText}>
-              Rank 1-4 (1=best). Each rank used once. Title only — anonymous voting.
+              Rank 1=most  4=least meets the criteria of "{todaysCriterion}". Each rank used once.
             </Text>
 
             {/* Artworks Grid */}

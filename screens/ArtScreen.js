@@ -23,6 +23,7 @@ import {
   getUserCourageForDate,
   uploadCourage,
   uploadMediaToStorage,
+  getDailyPrompt,
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 
@@ -118,12 +119,16 @@ export default function ArtScreen() {
   useFocusEffect(
     React.useCallback(() => {
       syncTimers();
+      loadDailyChallenge();
     }, [isDailyRunning, isWeeklyRunning])
   );
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') syncTimers();
+      if (state === 'active') {
+        syncTimers();
+        loadDailyChallenge();
+      }
     });
     return () => sub.remove();
   }, [isDailyRunning, isWeeklyRunning]);
@@ -217,34 +222,44 @@ export default function ArtScreen() {
     }
   };
 
-  // Load or generate daily challenge — picks from a different category each day
+  // Load daily challenge — local prompts-data.json first, Firestore second
   const loadDailyChallenge = async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const savedDate = await AsyncStorage.getItem('challenge_date');
+      const today = getESTDate();
+      const savedDate = await AsyncStorage.getItem('prompt_date');
       const savedChallenge = await AsyncStorage.getItem('todays_challenge');
       const savedPromptData = await AsyncStorage.getItem('todays_prompt_data');
 
       if (savedDate === today && savedChallenge && savedPromptData) {
         setTodaysChallenge(savedChallenge);
         setTodaysPromptData(JSON.parse(savedPromptData));
-      } else {
-        // Get unique categories and rotate through them by day
-        const categories = [...new Set(promptsData.map(p => p.category))].sort();
-        const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-        const todaysCategory = categories[dayOfYear % categories.length];
-
-        // Filter prompts for today's category, then pick one
-        const categoryPrompts = promptsData.filter(p => p.category === todaysCategory);
-        const pickIndex = Math.floor(dayOfYear / categories.length) % categoryPrompts.length;
-        const chosen = categoryPrompts[pickIndex];
-
-        setTodaysChallenge(chosen.prompt);
-        setTodaysPromptData(chosen);
-        await AsyncStorage.setItem('challenge_date', today);
-        await AsyncStorage.setItem('todays_challenge', chosen.prompt);
-        await AsyncStorage.setItem('todays_prompt_data', JSON.stringify(chosen));
+        return;
       }
+
+      // Pick from local prompts-data.json by category rotation
+      let chosen = null;
+      const categories = [...new Set(promptsData.map(p => p.category))].sort();
+      const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+      const todaysCategory = categories[dayOfYear % categories.length];
+      const categoryPrompts = promptsData.filter(p => p.category === todaysCategory);
+      const pickIndex = Math.floor(dayOfYear / categories.length) % categoryPrompts.length;
+      chosen = categoryPrompts[pickIndex];
+
+      // Override with Firestore if available
+      try {
+        const firestorePrompt = await getDailyPrompt(today);
+        if (firestorePrompt && firestorePrompt.prompt) {
+          chosen = firestorePrompt;
+        }
+      } catch (e) {
+        console.log('Firestore prompt fetch skipped:', e);
+      }
+
+      setTodaysChallenge(chosen.prompt);
+      setTodaysPromptData(chosen);
+      await AsyncStorage.setItem('prompt_date', today);
+      await AsyncStorage.setItem('todays_challenge', chosen.prompt);
+      await AsyncStorage.setItem('todays_prompt_data', JSON.stringify(chosen));
     } catch (error) {
       console.log('Error loading challenge:', error);
       const fallback = promptsData[0];
