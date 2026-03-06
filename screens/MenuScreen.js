@@ -6,6 +6,7 @@ export default function MenuScreen({ navigation }) {
   const { signOut } = useAuth();
   const menuItems = [
     { name: 'Home Page', screen: 'Home' },
+    { name: 'Quick Launch Info', screen: 'QuickLaunch' },
     { name: 'About Us', screen: 'AboutUs' },
     { name: 'About You', screen: 'AboutYou' },
     { name: 'Streak', screen: 'Grow' },

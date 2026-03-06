@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Auth
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -31,6 +32,7 @@ import QuotesScreen from './screens/menu-pages/QuotesScreen';
 const SettingsScreen = AboutYouScreen;
 import LegalScreen from './screens/menu-pages/LegalScreen';
 import ContactScreen from './screens/menu-pages/ContactScreen';
+import QuickLaunchScreen from './screens/menu-pages/QuickLaunchScreen';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
@@ -71,9 +73,10 @@ function AuthNavigator() {
   );
 }
 
-function MainTabs() {
+function MainTabs({ initialRoute = 'Home' }) {
   return (
     <Tab.Navigator
+      initialRouteName={initialRoute}
       screenOptions={({ navigation, route }) => {
         const visibleTabs = ['Home', 'Manifest', 'Art', 'Grow', 'Inspire', 'Connect'];
         const isVisibleTab = visibleTabs.includes(route.name);
@@ -200,14 +203,36 @@ function MainTabs() {
           tabBarButton: () => null,
         }}
       />
+      <Tab.Screen
+        name="QuickLaunch"
+        component={QuickLaunchScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
     </Tab.Navigator>
   );
 }
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, userProfile, loading } = useAuth();
+  const [initialRoute, setInitialRoute] = useState(null);
+  const [checkingLaunch, setCheckingLaunch] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    const checkQuickLaunch = async () => {
+      try {
+        const dismissed = await AsyncStorage.getItem('quick_launch_dismissed');
+        setInitialRoute(dismissed === 'true' ? 'Home' : 'QuickLaunch');
+      } catch {
+        setInitialRoute('Home');
+      }
+      setCheckingLaunch(false);
+    };
+    checkQuickLaunch();
+  }, []);
+
+  if (loading || checkingLaunch) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#FFD700" />
@@ -218,7 +243,7 @@ function AppContent() {
 
   return (
     <NavigationContainer>
-      {user ? <MainTabs /> : <AuthNavigator />}
+      {user ? <MainTabs initialRoute={initialRoute} /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }
