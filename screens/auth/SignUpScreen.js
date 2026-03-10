@@ -115,12 +115,12 @@ export default function SignUpScreen({ navigation, route }) {
     setStep(2);
   };
 
-  const handleStep2 = async () => {
+  const handleStep2 = () => {
     if (!pseudonym.trim()) {
       Alert.alert('Missing Pseudonym', 'Please choose a pseudonym.');
       return;
     }
-    if (pseudonymAvailable === false) {
+    if (!checkingPseudonym && pseudonymAvailable === false) {
       Alert.alert('Pseudonym Taken', 'Please choose a different pseudonym.');
       return;
     }
@@ -129,7 +129,7 @@ export default function SignUpScreen({ navigation, route }) {
       return;
     }
     if (!validateBirthdate(birthdate)) {
-      Alert.alert('Invalid Date', 'Please enter birthdate as mm/dd/yyyy.');
+      Alert.alert('Invalid Date', 'Please enter birthdate as mm/dd/yyyy (with leading zeros, e.g. 03/05/1990).');
       return;
     }
     setStep(3);
@@ -310,9 +310,11 @@ export default function SignUpScreen({ navigation, route }) {
       )}
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(1)}>
-          <Text style={styles.secondaryButtonText}>Back</Text>
-        </TouchableOpacity>
+        {!skipCredentials && (
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(1)}>
+            <Text style={styles.secondaryButtonText}>Back</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.primaryButton} onPress={handleStep2}>
           <Text style={styles.primaryButtonText}>Next</Text>
         </TouchableOpacity>

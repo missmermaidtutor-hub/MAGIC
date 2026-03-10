@@ -40,7 +40,7 @@ const ARTOWORKS_IMAGES = [
   { id: 'artowork_9', source: require('../Cliparts/ARTOWORKS/524793848_10162839591502264_8318629657123426505_n.jpg'), title: 'Bold Strokes', isFiller: true },
   { id: 'artowork_10', source: require('../Cliparts/ARTOWORKS/555583717_10163109406592264_4681170089551922231_n.jpg'), title: 'Creative Vision', isFiller: true },
   { id: 'artowork_11', source: require('../Cliparts/ARTOWORKS/555573460_10237876768008326_7582047112777369094_n.jpg'), title: 'Peaceful Flow', isFiller: true },
-  { id: 'artowork_12', source: require('../Cliparts/ARTOWORKS/556489754_10163095269937264_3934142205780901707_n.jpg'), title: 'Nature\'s Pattern', isFiller: true },
+  { id: 'artowork_12', source: require('../Cliparts/ARTOWORKS/Moon.jpg'), title: 'Nature\'s Pattern', isFiller: true },
 ];
 
 // Candle component for saving inspirations

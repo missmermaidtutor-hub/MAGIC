@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground, Linking } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -73,7 +73,7 @@ export default function QuickLaunchScreen({ navigation }) {
         {/* Gold header text box */}
         <View style={styles.goldHeaderBox}>
           <Text style={styles.goldHeaderText}>
-            Every task will fill an arm of your daily streak star. Complete all 5 daily MAGIC tasks to earn a GOLD star. Start your streak with 13 nights then see how long you can keep it going!
+            Welcome to your first 13 magical nights. Come back everyday to connect to your creativity, ease your anxieties and crack the mindless time-suck scroll. See how long you can keep your streak alive, by doing any one of these MAGIC tasks. Earn a GOLD star for each day you do all five tasks.
           </Text>
         </View>
 
@@ -126,6 +126,18 @@ export default function QuickLaunchScreen({ navigation }) {
             <Text style={styles.inspireText}>
               Vote on today's artwork submissions. Rank them by the daily criterion and help choose the community winner. Your vote matters!
             </Text>
+            <View style={styles.inspireActions}>
+              <TouchableOpacity onPress={() => {
+                const subject = encodeURIComponent('Something that inspired me');
+                const body = encodeURIComponent('This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
+                Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
+              }}>
+                <Text style={styles.inspireActionText}>✉️ Send Inspiration</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('Connect', { gallery: 'private' })}>
+                <Text style={styles.inspireActionText}>Save to Your Inspiration Gallery ›</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -410,6 +422,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#004225',
     lineHeight: 21,
+  },
+  inspireActions: {
+    marginTop: 10,
+    gap: 8,
+  },
+  inspireActionText: {
+    fontSize: 15,
+    color: '#004225',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 
   // Winner showcase

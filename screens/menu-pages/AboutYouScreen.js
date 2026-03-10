@@ -364,7 +364,7 @@ export default function AboutYouScreen({ navigation }) {
             value={username}
             onChangeText={setUsername}
             placeholder="Your creative name"
-            placeholderTextColor="#555"
+            placeholderTextColor="rgba(255,255,255,0.6)"
           />
           {checkingPseudonym && <Text style={styles.checkingText}>Checking availability...</Text>}
           {!checkingPseudonym && pseudonymAvailable === true && (
@@ -386,7 +386,7 @@ export default function AboutYouScreen({ navigation }) {
             onChangeText={(v) => setBirthdate(v)}
             onEndEditing={() => saveSettings('birthdate', birthdate)}
             placeholder="01/15/1990"
-            placeholderTextColor="#555"
+            placeholderTextColor="rgba(255,255,255,0.6)"
             keyboardType="numeric"
             maxLength={10}
           />
@@ -412,7 +412,7 @@ export default function AboutYouScreen({ navigation }) {
             onChangeText={setBio}
             onEndEditing={handleSaveBio}
             placeholder="Tell us about yourself..."
-            placeholderTextColor="#555"
+            placeholderTextColor="rgba(255,255,255,0.6)"
             multiline
             numberOfLines={4}
           />
@@ -424,7 +424,7 @@ export default function AboutYouScreen({ navigation }) {
             onChangeText={setFavoritePrompt}
             onEndEditing={handleSaveFavoritePrompt}
             placeholder="Which prompt inspires you most?"
-            placeholderTextColor="#555"
+            placeholderTextColor="rgba(255,255,255,0.6)"
           />
         </View>
 
@@ -481,7 +481,7 @@ export default function AboutYouScreen({ navigation }) {
                 onChangeText={v => setCurrentLocation(prev => ({ ...prev, country: v }))}
                 onEndEditing={() => saveSettings('currentLocation', currentLocation)}
                 placeholder="US"
-                placeholderTextColor="#555"
+                placeholderTextColor="rgba(255,255,255,0.6)"
               />
             </View>
             <View style={styles.locationField}>
@@ -492,7 +492,7 @@ export default function AboutYouScreen({ navigation }) {
                 onChangeText={v => setCurrentLocation(prev => ({ ...prev, state: v }))}
                 onEndEditing={() => saveSettings('currentLocation', currentLocation)}
                 placeholder="New York"
-                placeholderTextColor="#555"
+                placeholderTextColor="rgba(255,255,255,0.6)"
               />
             </View>
             <View style={styles.locationField}>
@@ -503,7 +503,7 @@ export default function AboutYouScreen({ navigation }) {
                 onChangeText={v => setCurrentLocation(prev => ({ ...prev, city: v }))}
                 onEndEditing={() => saveSettings('currentLocation', currentLocation)}
                 placeholder="Brooklyn"
-                placeholderTextColor="#555"
+                placeholderTextColor="rgba(255,255,255,0.6)"
               />
             </View>
           </View>
@@ -518,7 +518,7 @@ export default function AboutYouScreen({ navigation }) {
                 onChangeText={v => setHeartLocation(prev => ({ ...prev, country: v }))}
                 onEndEditing={() => saveSettings('heartLocation', heartLocation)}
                 placeholder="Country"
-                placeholderTextColor="#555"
+                placeholderTextColor="rgba(255,255,255,0.6)"
               />
             </View>
             <View style={styles.locationField}>
@@ -529,7 +529,7 @@ export default function AboutYouScreen({ navigation }) {
                 onChangeText={v => setHeartLocation(prev => ({ ...prev, state: v }))}
                 onEndEditing={() => saveSettings('heartLocation', heartLocation)}
                 placeholder="State"
-                placeholderTextColor="#555"
+                placeholderTextColor="rgba(255,255,255,0.6)"
               />
             </View>
             <View style={styles.locationField}>
@@ -540,7 +540,7 @@ export default function AboutYouScreen({ navigation }) {
                 onChangeText={v => setHeartLocation(prev => ({ ...prev, city: v }))}
                 onEndEditing={() => saveSettings('heartLocation', heartLocation)}
                 placeholder="City"
-                placeholderTextColor="#555"
+                placeholderTextColor="rgba(255,255,255,0.6)"
               />
             </View>
           </View>
