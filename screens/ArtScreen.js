@@ -28,6 +28,7 @@ import {
   saveArtwork,
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
+import DrawingStudio from '../components/drawing/DrawingStudio';
 
 const MIN_TIMER_MINUTES = 1;
 const MAX_TIMER_MINUTES = 180;
@@ -53,7 +54,11 @@ export default function ArtScreen() {
   // Art input modal
   const [writeModalVisible, setWriteModalVisible] = useState(false);
   const [writeText, setWriteText] = useState('');
+  const [writeTitle, setWriteTitle] = useState('');
   const [writeMode, setWriteMode] = useState('write');
+
+  // Drawing studio modal
+  const [sketchModalVisible, setSketchModalVisible] = useState(false);
   
   // Alarm repeating state
   const [alarmRinging, setAlarmRinging] = useState(false);
@@ -474,7 +479,7 @@ export default function ArtScreen() {
         type: writeMode,
         text: writeText.trim(),
         artist: 'You',
-        title: `${label} from ${today}`,
+        title: writeTitle.trim() || `${label} from ${today}`,
         prompt: todaysChallenge,
         date: today,
         isPublic: false
@@ -496,6 +501,7 @@ export default function ArtScreen() {
         );
       }
       setWriteModalVisible(false);
+      setWriteTitle('');
       Alert.alert('Saved!', `Your ${modeLabels[writeMode].toLowerCase()} has been saved to your private gallery.`);
     } catch (e) {
       Alert.alert('Error', 'Could not save.');
@@ -521,7 +527,7 @@ export default function ArtScreen() {
           onPress: async () => {
             const today = getESTDate();
             const label = modeLabels[writeMode] || 'Art';
-            const title = todaysChallenge || `${label} from ${today}`;
+            const title = writeTitle.trim() || todaysChallenge || `${label} from ${today}`;
 
             // Save to personal gallery locally first
             try {
@@ -552,6 +558,7 @@ export default function ArtScreen() {
             // Mark as uploaded immediately so button disables
             setCourageUploadedToday(true);
             setWriteModalVisible(false);
+            setWriteTitle('');
 
             // Now attempt Firestore upload
             try {
@@ -578,7 +585,118 @@ export default function ArtScreen() {
     );
   };
 
-  const handleSketch = () => openArtModal('sketch');
+  // --- Drawing Studio save handlers ---
+
+  const saveSketchToPersonal = async (imageUri, sketchTitle) => {
+    try {
+      const today = getESTDate();
+      const artwork = {
+        id: Date.now(),
+        type: 'sketch',
+        imageUrl: imageUri,
+        artist: 'You',
+        title: sketchTitle || `Sketch from ${today}`,
+        prompt: todaysChallenge,
+        date: today,
+        isPublic: false,
+      };
+      const existingRaw = await AsyncStorage.getItem('personal_artworks');
+      const artworks = existingRaw ? JSON.parse(existingRaw) : [];
+      artworks.push(artwork);
+      await AsyncStorage.setItem('personal_artworks', JSON.stringify(artworks));
+
+      // Mark art done for today
+      const existing = await AsyncStorage.getItem(`art_time_${today}`);
+      if (!existing || parseInt(existing) === 0) {
+        await AsyncStorage.setItem(`art_time_${today}`, '1');
+      }
+      await AsyncStorage.setItem(`art_created_${today}`, 'true');
+
+      // Sync to Firestore
+      if (user) {
+        saveArtwork(user.uid, artwork).catch(err =>
+          console.log('Firestore sketch sync error:', err)
+        );
+      }
+      Alert.alert('Saved!', 'Your sketch has been saved to your private gallery.');
+    } catch (e) {
+      console.log('Sketch save error:', e);
+      Alert.alert('Error', 'Could not save sketch.');
+    }
+  };
+
+  const saveSketchToCourage = async (imageUri, sketchTitle) => {
+    if (courageUploadedToday) {
+      Alert.alert('Already Submitted', 'You can only upload one Courage per day.');
+      return;
+    }
+    Alert.alert(
+      'Upload with COURAGE',
+      'Your sketch will be submitted for anonymous voting. Ready to share?',
+      [
+        { text: 'Not Yet', style: 'cancel' },
+        {
+          text: 'Share!',
+          onPress: async () => {
+            const today = getESTDate();
+            const title = sketchTitle || `Sketch from ${today}`;
+
+            // Save locally first
+            try {
+              const personalRaw = await AsyncStorage.getItem('personal_artworks');
+              const personal = personalRaw ? JSON.parse(personalRaw) : [];
+              personal.push({
+                id: Date.now(),
+                type: 'sketch',
+                imageUrl: imageUri,
+                artist: 'You',
+                title,
+                prompt: todaysChallenge,
+                date: today,
+                isPublic: false,
+                pendingVoting: true,
+              });
+              await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
+              await AsyncStorage.setItem(`art_created_${today}`, 'true');
+              const existing = await AsyncStorage.getItem(`art_time_${today}`);
+              if (!existing || parseInt(existing) === 0) {
+                await AsyncStorage.setItem(`art_time_${today}`, '1');
+              }
+            } catch (localError) {
+              console.log('Local sketch save error:', localError);
+            }
+
+            setCourageUploadedToday(true);
+
+            // Upload image to Firebase Storage, then create courage entry
+            try {
+              const storagePath = `courages/${user.uid}/${today}_sketch_${Date.now()}.png`;
+              const downloadUrl = await uploadMediaToStorage(imageUri, storagePath);
+
+              await uploadCourage(user.uid, {
+                pseudonym: userProfile?.pseudonym || '',
+                title: title,
+                mediaType: 'image',
+                mediaUrl: downloadUrl,
+                date: today,
+                anonymous: userProfile?.anonymous ?? false,
+              });
+
+              Alert.alert('Congratulations on your COURAGE!', 'Your sketch is ready for tomorrow\'s vote.');
+            } catch (e) {
+              console.log('Courage sketch upload error:', e);
+              Alert.alert(
+                'Saved Locally',
+                'Your sketch was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
+              );
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleSketch = () => setSketchModalVisible(true);
 
   const handleCapture = () => openArtModal('capture');
 
@@ -918,6 +1036,14 @@ export default function ArtScreen() {
             <Text style={styles.writeModalTitle}>{modeLabels[writeMode] || 'Write'}</Text>
             <Text style={styles.writeModalPrompt}>{todaysChallenge}</Text>
             <TextInput
+              style={styles.titleInput}
+              placeholder="Title your work (optional)"
+              placeholderTextColor="#888"
+              value={writeTitle}
+              onChangeText={setWriteTitle}
+              maxLength={100}
+            />
+            <TextInput
               style={styles.writeTextInput}
               multiline
               placeholder={modePlaceholders[writeMode] || 'Start writing...'}
@@ -957,6 +1083,16 @@ export default function ArtScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Drawing Studio */}
+      <DrawingStudio
+        visible={sketchModalVisible}
+        onClose={() => setSketchModalVisible(false)}
+        onSaveToPersonal={saveSketchToPersonal}
+        onSaveToCourage={saveSketchToCourage}
+        prompt={todaysChallenge}
+        courageUploadedToday={courageUploadedToday}
+      />
     </ImageBackground>
   );
 }
@@ -1248,6 +1384,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: 16,
+  },
+  titleInput: {
+    backgroundColor: 'rgba(243, 203, 130, 0.5)',
+    borderWidth: 2,
+    borderColor: '#f7bc6e',
+    borderRadius: 10,
+    color: '#332100',
+    fontSize: 15,
+    padding: 10,
+    marginBottom: 10,
   },
   writeTextInput: {
     backgroundColor: 'rgba(243, 203, 130, 0.5)',
