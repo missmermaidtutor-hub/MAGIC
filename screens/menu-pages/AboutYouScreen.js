@@ -74,6 +74,7 @@ export default function AboutYouScreen({ navigation }) {
   // Account / Profile
   const [accountMethod, setAccountMethod] = useState('');
   const [email, setEmail] = useState('');
+  const [accountUsername, setAccountUsername] = useState('');
   const [username, setUsername] = useState('');
   const [originalUsername, setOriginalUsername] = useState('');
   const [pseudonymAvailable, setPseudonymAvailable] = useState(null);
@@ -109,6 +110,7 @@ export default function AboutYouScreen({ navigation }) {
     if (userProfile) {
       setAccountMethod(userProfile.accountMethod || '');
       setEmail(userProfile.email || user?.email || '');
+      setAccountUsername(userProfile.username || '');
       setUsername(userProfile.pseudonym || '');
       setOriginalUsername(userProfile.pseudonym || '');
       setBirthdate(userProfile.birthdate || '');
@@ -353,6 +355,12 @@ export default function AboutYouScreen({ navigation }) {
           <View style={styles.readOnlyField}>
             <Text style={styles.readOnlyText}>{email || 'Not set'}</Text>
           </View>
+
+          <Text style={styles.inputLabel}>Username</Text>
+          <View style={styles.readOnlyField}>
+            <Text style={styles.readOnlyText}>{accountUsername || 'Not set'}</Text>
+          </View>
+          <Text style={styles.fieldHint}>Username cannot be changed after creation</Text>
 
           <Text style={styles.inputLabel}>Pseudonym</Text>
           <TextInput
@@ -777,6 +785,13 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 12,
     fontWeight: '600',
+  },
+  fieldHint: {
+    fontSize: 11,
+    color: '#888',
+    marginTop: 2,
+    marginBottom: 4,
+    fontStyle: 'italic',
   },
   textInput: {
     backgroundColor: 'rgba(24, 112, 162, 0.5)',

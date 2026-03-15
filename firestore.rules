@@ -23,6 +23,47 @@ service cloud.firestore {
 
       // No deletes allowed
       allow delete: if false;
+
+      // ----- User Subcollections -----
+
+      // Artworks — owner read/write only
+      match /artworks/{artworkId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Inspirations — owner read/write only
+      match /inspirations/{inspirationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Curated — owner write, all authenticated users read
+      match /curated/{curatedId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Manifests — owner read/write only
+      match /manifests/{date} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Progress — owner read/write only
+      match /progress/{date} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Art Time — owner read/write only
+      match /artTime/{date} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // Goals — owner read/write only
+      match /goals/{date} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // ===== PSEUDONYMS COLLECTION =====
@@ -52,6 +93,31 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ===== USERNAMES COLLECTION =====
+    match /usernames/{usernameId} {
+      // Anyone authenticated can check if a username is available
+      allow read: if request.auth != null;
+
+      // Authenticated users can claim an unclaimed username
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.released == false;
+
+      // Only the owner can update (release) their username
+      // Or reclaim a released username
+      allow update: if request.auth != null
+                    && (
+                      (resource.data.uid == request.auth.uid)
+                      ||
+                      (resource.data.released == true
+                       && request.resource.data.uid == request.auth.uid
+                       && request.resource.data.released == false)
+                    );
+
+      // Usernames are never deleted
+      allow delete: if false;
+    }
+
     // ===== DAILY COURAGES COLLECTION =====
     match /dailyCourages/{courageId} {
       // All authenticated users can read courages (for voting)
@@ -63,6 +129,22 @@ service cloud.firestore {
 
       // No updates or deletes
       allow update, delete: if false;
+    }
+
+    // ===== VOTING GALLERY COLLECTION =====
+    match /votingGallery/{dateId} {
+      allow read: if request.auth != null;
+
+      match /entries/{entryId} {
+        // All authenticated users can read voting entries
+        allow read: if request.auth != null;
+
+        // Only authenticated users can create (transfer function)
+        allow create: if request.auth != null;
+
+        // No updates or deletes
+        allow update, delete: if false;
+      }
     }
 
     // ===== VOTES COLLECTION =====
@@ -88,6 +170,12 @@ service cloud.firestore {
 
       // No updates or deletes
       allow update, delete: if false;
+    }
+
+    // ===== DAILY PROMPTS COLLECTION =====
+    match /dailyPrompts/{dateId} {
+      allow read: if request.auth != null;
+      allow write: if false;
     }
 
     // Deny everything else by default

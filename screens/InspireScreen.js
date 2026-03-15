@@ -22,6 +22,8 @@ import {
   getCouragesForDate,
   getUserVotesForDate,
   submitVoteBatch,
+  saveInspiration,
+  deleteInspiration,
 } from '../services/firestoreService';
 import { getESTDate, getESTYesterday } from '../utils/dateUtils';
 
@@ -175,19 +177,32 @@ export default function InspireScreen({ navigation }) {
           next.delete(courage.id);
           return next;
         });
+        // Remove from Firestore
+        if (user) {
+          deleteInspiration(user.uid, courage.id).catch(err =>
+            console.log('Firestore delete inspiration error:', err)
+          );
+        }
       } else {
-        favorites.push({
+        const inspiration = {
           id: courage.id,
           imageUrl: courage.mediaUrl || null,
           title: courage.title || 'Untitled',
           source: 'candle_save',
           date: getESTDate(),
           savedAt: new Date().toISOString(),
-        });
+        };
+        favorites.push(inspiration);
         setSavedInspirations(prev => new Set(prev).add(courage.id));
         // Mark Connect star point for today
         const today = getESTDate();
         await AsyncStorage.setItem(`inspiration_saved_${today}`, 'true');
+        // Sync to Firestore
+        if (user) {
+          saveInspiration(user.uid, inspiration).catch(err =>
+            console.log('Firestore save inspiration error:', err)
+          );
+        }
       }
       await AsyncStorage.setItem('favorite_artworks', JSON.stringify(favorites));
     } catch (e) {

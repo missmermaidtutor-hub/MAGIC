@@ -24,6 +24,8 @@ import {
   uploadCourage,
   uploadMediaToStorage,
   getDailyPrompt,
+  saveArtTime,
+  saveArtwork,
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 
@@ -217,6 +219,14 @@ export default function ArtScreen() {
   const saveWeeklyTime = async (time) => {
     try {
       await AsyncStorage.setItem('weekly_art_time', time.toString());
+      // Sync weekly stopwatch time to Firestore
+      if (user) {
+        const today = new Date().toISOString().split('T')[0];
+        const weekStart = getWeekStart(new Date());
+        saveArtTime(user.uid, today, time, weekStart).catch(err =>
+          console.log('Firestore weekly time sync error:', err)
+        );
+      }
     } catch (error) {
       console.log('Error saving weekly time:', error);
     }
@@ -284,6 +294,13 @@ export default function ArtScreen() {
         const existing = await AsyncStorage.getItem(`art_time_${today}`);
         const total = (existing ? parseInt(existing) : 0) + elapsedSeconds;
         await AsyncStorage.setItem(`art_time_${today}`, total.toString());
+        // Sync to Firestore
+        if (user) {
+          const weekStart = getWeekStart(new Date());
+          saveArtTime(user.uid, today, total, weekStart).catch(err =>
+            console.log('Firestore art time sync error:', err)
+          );
+        }
       } catch (e) {}
     }
   };
@@ -472,6 +489,12 @@ export default function ArtScreen() {
         await AsyncStorage.setItem(`art_time_${today}`, '1');
       }
       await AsyncStorage.setItem(`art_created_${today}`, 'true');
+      // Sync to Firestore
+      if (user) {
+        saveArtwork(user.uid, artwork).catch(err =>
+          console.log('Firestore artwork sync error:', err)
+        );
+      }
       setWriteModalVisible(false);
       Alert.alert('Saved!', `Your ${modeLabels[writeMode].toLowerCase()} has been saved to your private gallery.`);
     } catch (e) {
@@ -602,6 +625,13 @@ export default function ArtScreen() {
       const existing = await AsyncStorage.getItem(`art_time_${today}`);
       if (!existing || parseInt(existing) === 0) {
         await AsyncStorage.setItem(`art_time_${today}`, '1');
+      }
+
+      // Sync to Firestore
+      if (user) {
+        saveArtwork(user.uid, artwork).catch(err =>
+          console.log('Firestore private upload sync error:', err)
+        );
       }
 
       Alert.alert('Saved!', 'Artwork saved to your private gallery. Only you can see it.');

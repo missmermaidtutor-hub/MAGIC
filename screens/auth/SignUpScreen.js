@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../config/firebase';
-import { createUserProfile, claimPseudonym, checkPseudonymAvailable } from '../../services/firestoreService';
+import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable } from '../../services/firestoreService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TIMEZONES = [
@@ -48,6 +48,9 @@ export default function SignUpScreen({ navigation, route }) {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Step 2: Required profile
+  const [username, setUsername] = useState('');
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [pseudonym, setPseudonym] = useState('');
   const [pseudonymAvailable, setPseudonymAvailable] = useState(null);
   const [checkingPseudonym, setCheckingPseudonym] = useState(false);
@@ -80,6 +83,26 @@ export default function SignUpScreen({ navigation, route }) {
 
     return () => clearTimeout(timer);
   }, [pseudonym]);
+
+  // Debounced username availability check
+  useEffect(() => {
+    if (!username.trim()) {
+      setUsernameAvailable(null);
+      return;
+    }
+    setCheckingUsername(true);
+    const timer = setTimeout(async () => {
+      try {
+        const available = await checkUsernameAvailable(username);
+        setUsernameAvailable(available);
+      } catch (error) {
+        setUsernameAvailable(null);
+      }
+      setCheckingUsername(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [username]);
 
   // Migrate existing AsyncStorage data into profile
   const getExistingData = async () => {
@@ -116,6 +139,14 @@ export default function SignUpScreen({ navigation, route }) {
   };
 
   const handleStep2 = () => {
+    if (!username.trim()) {
+      Alert.alert('Missing Username', 'Please choose a username.');
+      return;
+    }
+    if (!checkingUsername && usernameAvailable === false) {
+      Alert.alert('Username Taken', 'Please choose a different username.');
+      return;
+    }
     if (!pseudonym.trim()) {
       Alert.alert('Missing Pseudonym', 'Please choose a pseudonym.');
       return;
@@ -150,13 +181,15 @@ export default function SignUpScreen({ navigation, route }) {
       // Merge any existing AsyncStorage data
       const { settings, profile } = await getExistingData();
 
-      // Step 2: Claim pseudonym
+      // Step 2: Claim username and pseudonym
+      await claimUsername(username.trim(), uid);
       await claimPseudonym(pseudonym.trim(), uid);
 
       // Step 3: Create Firestore profile
       await createUserProfile(uid, {
         email: userEmail,
         accountMethod: existingMethod,
+        username: username.trim(),
         pseudonym: pseudonym.trim(),
         birthdate,
         timezone,
@@ -175,7 +208,8 @@ export default function SignUpScreen({ navigation, route }) {
         ...settings,
         accountMethod: existingMethod,
         email: userEmail,
-        username: pseudonym.trim(),
+        username: username.trim(),
+        pseudonym: pseudonym.trim(),
         timezone,
         anonymous,
       };
@@ -183,7 +217,8 @@ export default function SignUpScreen({ navigation, route }) {
 
       const updatedProfile = {
         ...profile,
-        username: pseudonym.trim(),
+        username: username.trim(),
+        pseudonym: pseudonym.trim(),
         bio: bio || profile.bio || '',
       };
       await AsyncStorage.setItem('user_profile', JSON.stringify(updatedProfile));
@@ -193,7 +228,7 @@ export default function SignUpScreen({ navigation, route }) {
       let message = 'Could not create account. Please try again.';
       if (error.code === 'auth/email-already-in-use') message = 'An account with this email already exists.';
       else if (error.code === 'auth/invalid-email') message = 'Invalid email address.';
-      else if (error.message?.includes('pseudonym')) message = error.message;
+      else if (error.message?.includes('username') || error.message?.includes('pseudonym')) message = error.message;
       Alert.alert('Sign Up Failed', message);
     }
     setLoading(false);
@@ -246,7 +281,30 @@ export default function SignUpScreen({ navigation, route }) {
       <Text style={styles.stepTitle}>Your Profile</Text>
       <Text style={styles.stepIndicator}>Step 2 of 3 — Required</Text>
 
+      <Text style={styles.inputLabel}>Username</Text>
+      <Text style={styles.fieldHint}>Your login identity (cannot be changed later)</Text>
+      <TextInput
+        style={[
+          styles.textInput,
+          usernameAvailable === true && styles.inputValid,
+          usernameAvailable === false && styles.inputInvalid,
+        ]}
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Choose a username"
+        placeholderTextColor="#555"
+        autoCapitalize="none"
+      />
+      {checkingUsername && <Text style={styles.checkingText}>Checking availability...</Text>}
+      {!checkingUsername && usernameAvailable === true && (
+        <Text style={styles.availableText}>Available!</Text>
+      )}
+      {!checkingUsername && usernameAvailable === false && (
+        <Text style={styles.takenText}>Already taken</Text>
+      )}
+
       <Text style={styles.inputLabel}>Pseudonym</Text>
+      <Text style={styles.fieldHint}>Your public artist name shown on art & voting</Text>
       <TextInput
         style={[
           styles.textInput,
@@ -490,6 +548,12 @@ const styles = StyleSheet.create({
     color: '#DDA0DD',
     marginBottom: 6,
     fontWeight: '600',
+  },
+  fieldHint: {
+    fontSize: 11,
+    color: '#888',
+    marginBottom: 8,
+    fontStyle: 'italic',
   },
   textInput: {
     backgroundColor: '#2a2a3a',

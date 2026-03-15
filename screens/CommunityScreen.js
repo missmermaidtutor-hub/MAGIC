@@ -17,6 +17,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
+import {
+  saveCuratedWork,
+  removeCuratedWork,
+  deleteArtwork,
+  deleteInspiration,
+} from '../services/firestoreService';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -156,7 +162,7 @@ const Candle = ({ lit = false, onPress, size = 40 }) => (
 );
 
 export default function CommunityScreen({ route }) {
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const [curatedArtworks, setCuratedArtworks] = useState([]);
   const [personalArtworks, setPersonalArtworks] = useState([]);
   const [inspirationArtworks, setInspirationArtworks] = useState([]);
@@ -424,6 +430,12 @@ export default function CommunityScreen({ route }) {
         const updatedCurated = curatedArtworks.filter(a => a.id !== artwork.id);
         setCuratedArtworks(updatedCurated);
         await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
+        // Remove from Firestore curated
+        if (user) {
+          removeCuratedWork(user.uid, String(artwork.id)).catch(err =>
+            console.log('Firestore remove curated error:', err)
+          );
+        }
 
         // Update flags in source gallery
         if (fromGallery === 'personal') {
@@ -440,6 +452,11 @@ export default function CommunityScreen({ route }) {
           await AsyncStorage.setItem('favorite_artworks', JSON.stringify(updated));
         }
       } else {
+        // Check curated limit (max 25)
+        if (curatedArtworks.length >= 25) {
+          Alert.alert('Curated Limit', 'You can only have 25 works in your curated gallery. Remove one first.');
+          return;
+        }
         // Add to curated
         const curatedArt = {
           ...artwork,
@@ -450,6 +467,12 @@ export default function CommunityScreen({ route }) {
         const updatedCurated = [...curatedArtworks, curatedArt];
         setCuratedArtworks(updatedCurated);
         await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
+        // Sync to Firestore curated
+        if (user) {
+          saveCuratedWork(user.uid, curatedArt).catch(err =>
+            console.log('Firestore save curated error:', err)
+          );
+        }
 
         // Update flags in source gallery
         if (fromGallery === 'personal') {
@@ -486,6 +509,11 @@ export default function CommunityScreen({ route }) {
                 const updated = personalArtworks.filter(a => a.id !== artwork.id);
                 setPersonalArtworks(updated);
                 await AsyncStorage.setItem('personal_artworks', JSON.stringify(updated));
+                if (user) {
+                  deleteArtwork(user.uid, String(artwork.id)).catch(err =>
+                    console.log('Firestore delete artwork error:', err)
+                  );
+                }
               } else if (fromGallery === 'inspiration') {
                 const updated = inspirationArtworks.filter(a => a.id !== artwork.id);
                 setInspirationArtworks(updated);
@@ -495,10 +523,20 @@ export default function CommunityScreen({ route }) {
                   next.delete(artwork.id);
                   return next;
                 });
+                if (user) {
+                  deleteInspiration(user.uid, String(artwork.id)).catch(err =>
+                    console.log('Firestore delete inspiration error:', err)
+                  );
+                }
               } else if (fromGallery === 'curated') {
                 const updated = curatedArtworks.filter(a => a.id !== artwork.id);
                 setCuratedArtworks(updated);
                 await AsyncStorage.setItem('public_artworks', JSON.stringify(updated));
+                if (user) {
+                  removeCuratedWork(user.uid, String(artwork.id)).catch(err =>
+                    console.log('Firestore delete curated error:', err)
+                  );
+                }
               }
               // Also remove from curated if it was there
               if (fromGallery !== 'curated') {
@@ -506,6 +544,11 @@ export default function CommunityScreen({ route }) {
                 if (updatedCurated.length !== curatedArtworks.length) {
                   setCuratedArtworks(updatedCurated);
                   await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
+                  if (user) {
+                    removeCuratedWork(user.uid, String(artwork.id)).catch(err =>
+                      console.log('Firestore remove curated error:', err)
+                    );
+                  }
                 }
               }
             } catch (error) {

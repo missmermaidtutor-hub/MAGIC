@@ -13,9 +13,12 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getESTDate, msUntilESTMidnight } from '../utils/dateUtils';
+import { useAuth } from '../context/AuthContext';
+import { saveManifest } from '../services/firestoreService';
 import quotesData from '../quotes.json';
 
 export default function ManifestScreen() {
+  const { user } = useAuth();
   const [todayQuote, setTodayQuote] = useState({ quote: '', author: '' });
   const [growthGoal, setGrowthGoal] = useState('');
   const [callMuse, setCallMuse] = useState('');
@@ -112,6 +115,11 @@ export default function ManifestScreen() {
         autoSaveNote: 'Session auto-saved after midnight grace period. May be continued on next day.',
       };
       await AsyncStorage.setItem(`manifest_${date}`, JSON.stringify(entry));
+      if (user) {
+        saveManifest(user.uid, date, entry).catch(err =>
+          console.log('Firestore auto-save sync error:', err)
+        );
+      }
     } catch (error) {
       console.log('Error auto-saving entry:', error);
     }
@@ -132,6 +140,11 @@ export default function ManifestScreen() {
         savedAt: new Date().toISOString(),
       };
       await AsyncStorage.setItem(`manifest_${date}`, JSON.stringify(entry));
+      if (user) {
+        saveManifest(user.uid, date, entry).catch(err =>
+          console.log('Firestore entry sync error:', err)
+        );
+      }
     } catch (error) {
       console.log('Error saving entry:', error);
     }
@@ -342,6 +355,14 @@ export default function ManifestScreen() {
       if (growthGoal.trim()) {
         await AsyncStorage.setItem('goal_set_date', today);
       }
+
+      // Sync to Firestore
+      if (user) {
+        saveManifest(user.uid, today, entry).catch(err =>
+          console.log('Firestore manifest sync error:', err)
+        );
+      }
+
       Alert.alert('Saved!', 'Your manifest entry has been saved.');
       loadPastEntries(); // Refresh past entries
     } catch (error) {

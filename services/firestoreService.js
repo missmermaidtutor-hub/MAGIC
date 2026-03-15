@@ -3,9 +3,11 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  deleteDoc,
   addDoc,
   getDocs,
   collection,
+  collectionGroup,
   query,
   where,
   orderBy,
@@ -327,4 +329,356 @@ export const getDailyPrompt = async (dateStr) => {
   const snap = await getDoc(ref);
   if (snap.exists()) return snap.data();
   return null;
+};
+
+// ============================================================
+// USERNAMES
+// ============================================================
+
+// Check if a username is available
+export const checkUsernameAvailable = async (username) => {
+  const key = username.toLowerCase().trim();
+  if (!key) return false;
+  const usernameRef = doc(db, 'usernames', key);
+  const snap = await getDoc(usernameRef);
+  if (!snap.exists()) return true;
+  const data = snap.data();
+  return data.released === true;
+};
+
+// Claim a username atomically using a transaction
+export const claimUsername = async (username, uid) => {
+  const key = username.toLowerCase().trim();
+  if (!key) throw new Error('Username cannot be empty');
+
+  const usernameRef = doc(db, 'usernames', key);
+
+  await runTransaction(db, async (transaction) => {
+    const snap = await transaction.get(usernameRef);
+
+    if (snap.exists()) {
+      const data = snap.data();
+      if (!data.released) {
+        if (data.uid === uid) return; // Same user already owns it
+        throw new Error('This username is already taken');
+      }
+    }
+
+    transaction.set(usernameRef, {
+      username: username.trim(),
+      uid,
+      claimedAt: serverTimestamp(),
+      released: false,
+    });
+  });
+};
+
+// Release a username (mark as released, never delete)
+export const releaseUsername = async (username) => {
+  const key = username.toLowerCase().trim();
+  if (!key) return;
+  const usernameRef = doc(db, 'usernames', key);
+  const snap = await getDoc(usernameRef);
+  if (snap.exists()) {
+    await updateDoc(usernameRef, { released: true });
+  }
+};
+
+// ============================================================
+// GOALS
+// ============================================================
+
+// Save or update a daily goal
+export const saveGoal = async (uid, dateStr, goalData) => {
+  const goalRef = doc(db, 'users', uid, 'goals', dateStr);
+  await setDoc(goalRef, {
+    ...goalData,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+};
+
+// Get goal for a specific date
+export const getGoal = async (uid, dateStr) => {
+  const goalRef = doc(db, 'users', uid, 'goals', dateStr);
+  const snap = await getDoc(goalRef);
+  if (snap.exists()) return snap.data();
+  return null;
+};
+
+// Get recent goal history ordered by date
+export const getGoalHistory = async (uid, limit = 30) => {
+  const q = query(
+    collection(db, 'users', uid, 'goals'),
+    orderBy('createdAt', 'desc'),
+    firestoreLimit(limit),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ date: d.id, ...d.data() }));
+};
+
+// Get goal completion stats
+export const getGoalStats = async (uid) => {
+  const q = query(collection(db, 'users', uid, 'goals'));
+  const snap = await getDocs(q);
+  let total = 0;
+  let completed = 0;
+  let currentStreak = 0;
+  let longestStreak = 0;
+
+  const goals = snap.docs.map(d => ({ date: d.id, ...d.data() }));
+  goals.sort((a, b) => a.date.localeCompare(b.date));
+
+  for (const goal of goals) {
+    total++;
+    if (goal.completed) {
+      completed++;
+      currentStreak++;
+      longestStreak = Math.max(longestStreak, currentStreak);
+    } else {
+      currentStreak = 0;
+    }
+  }
+
+  return {
+    total,
+    completed,
+    completionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+    currentStreak,
+    longestStreak,
+  };
+};
+
+// ============================================================
+// ARTWORKS (Private Gallery)
+// ============================================================
+
+// Save artwork to user's private gallery
+export const saveArtwork = async (uid, artwork) => {
+  const artRef = await addDoc(collection(db, 'users', uid, 'artworks'), {
+    ...artwork,
+    createdAt: serverTimestamp(),
+  });
+  return artRef.id;
+};
+
+// Get all artworks for a user
+export const getUserArtworks = async (uid) => {
+  const q = query(
+    collection(db, 'users', uid, 'artworks'),
+    orderBy('createdAt', 'desc'),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+// Update artwork fields
+export const updateArtwork = async (uid, artworkId, updates) => {
+  const artRef = doc(db, 'users', uid, 'artworks', artworkId);
+  await updateDoc(artRef, { ...updates, updatedAt: serverTimestamp() });
+};
+
+// Delete artwork
+export const deleteArtwork = async (uid, artworkId) => {
+  const artRef = doc(db, 'users', uid, 'artworks', artworkId);
+  await deleteDoc(artRef);
+};
+
+// ============================================================
+// INSPIRATIONS (Personal Inspiration Gallery)
+// ============================================================
+
+// Save an inspiration from voting gallery
+export const saveInspiration = async (uid, inspiration) => {
+  const ref = await addDoc(collection(db, 'users', uid, 'inspirations'), {
+    ...inspiration,
+    savedAt: serverTimestamp(),
+  });
+  return ref.id;
+};
+
+// Get all saved inspirations
+export const getUserInspirations = async (uid) => {
+  const q = query(
+    collection(db, 'users', uid, 'inspirations'),
+    orderBy('savedAt', 'desc'),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+// Remove inspiration
+export const deleteInspiration = async (uid, inspirationId) => {
+  const ref = doc(db, 'users', uid, 'inspirations', inspirationId);
+  await deleteDoc(ref);
+};
+
+// ============================================================
+// CURATED GALLERY (max 25 works)
+// ============================================================
+
+// Add to curated gallery (enforces max 25)
+export const saveCuratedWork = async (uid, work) => {
+  const existing = await getUserCurated(uid);
+  if (existing.length >= 25) {
+    throw new Error('Curated gallery is full (max 25). Remove a work first.');
+  }
+  const ref = await addDoc(collection(db, 'users', uid, 'curated'), {
+    ...work,
+    pseudonym: work.pseudonym || '',
+    curatedAt: serverTimestamp(),
+  });
+  return ref.id;
+};
+
+// Get user's curated gallery
+export const getUserCurated = async (uid) => {
+  const q = query(
+    collection(db, 'users', uid, 'curated'),
+    orderBy('curatedAt', 'desc'),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+// Remove from curated
+export const removeCuratedWork = async (uid, workId) => {
+  const ref = doc(db, 'users', uid, 'curated', workId);
+  await deleteDoc(ref);
+};
+
+// Get all users' curated works for "Visit Community Curations"
+export const getAllCuratedGalleries = async () => {
+  const q = query(collectionGroup(db, 'curated'));
+  const snap = await getDocs(q);
+  const works = snap.docs.map(d => {
+    const data = d.data();
+    // Extract uid from the document path: users/{uid}/curated/{id}
+    const pathParts = d.ref.path.split('/');
+    return { id: d.id, uid: pathParts[1], ...data };
+  });
+  return works;
+};
+
+// ============================================================
+// VOTING GALLERY (Courage → Voting Transfer)
+// ============================================================
+
+// Transfer daily courages to voting gallery for a date
+export const transferCouragesToVoting = async (dateStr) => {
+  // Get all courages for the date
+  const courages = await getCouragesForDate(dateStr);
+  if (courages.length === 0) return;
+
+  const batch = writeBatch(db);
+
+  // Copy each courage to votingGallery/{date}/entries/{id}
+  for (const courage of courages) {
+    const entryRef = doc(db, 'votingGallery', dateStr, 'entries', courage.id);
+    batch.set(entryRef, {
+      ...courage,
+      transferredAt: serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
+};
+
+// Get voting gallery entries for a date
+export const getVotingGallery = async (dateStr) => {
+  const q = query(collection(db, 'votingGallery', dateStr, 'entries'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+// ============================================================
+// MANIFEST (Journal Entries)
+// ============================================================
+
+// Save manifest journal entry
+export const saveManifest = async (uid, dateStr, data) => {
+  const ref = doc(db, 'users', uid, 'manifests', dateStr);
+  await setDoc(ref, {
+    ...data,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+};
+
+// Get manifest for a date
+export const getManifest = async (uid, dateStr) => {
+  const ref = doc(db, 'users', uid, 'manifests', dateStr);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data();
+  return null;
+};
+
+// ============================================================
+// PROGRESS (Daily MAGIC completion)
+// ============================================================
+
+// Save daily progress
+export const saveProgress = async (uid, dateStr, progress) => {
+  const ref = doc(db, 'users', uid, 'progress', dateStr);
+  await setDoc(ref, {
+    ...progress,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+};
+
+// Get progress for a date
+export const getProgress = async (uid, dateStr) => {
+  const ref = doc(db, 'users', uid, 'progress', dateStr);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data();
+  return null;
+};
+
+// Get progress for a date range (for streak calendar)
+export const getProgressRange = async (uid, startDate, endDate) => {
+  const q = query(
+    collection(db, 'users', uid, 'progress'),
+    where('__name__', '>=', startDate),
+    where('__name__', '<=', endDate),
+  );
+  const snap = await getDocs(q);
+  const result = {};
+  snap.docs.forEach(d => {
+    result[d.id] = d.data();
+  });
+  return result;
+};
+
+// ============================================================
+// ART TIME TRACKING
+// ============================================================
+
+// Save art timer data
+export const saveArtTime = async (uid, dateStr, seconds, weekStart) => {
+  const ref = doc(db, 'users', uid, 'artTime', dateStr);
+  await setDoc(ref, {
+    seconds,
+    weekStart: weekStart || '',
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+};
+
+// Get art time for a date
+export const getArtTime = async (uid, dateStr) => {
+  const ref = doc(db, 'users', uid, 'artTime', dateStr);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data();
+  return null;
+};
+
+// Get weekly art time (sum of all days in the week)
+export const getWeeklyArtTime = async (uid, weekStart) => {
+  const q = query(
+    collection(db, 'users', uid, 'artTime'),
+    where('weekStart', '==', weekStart),
+  );
+  const snap = await getDocs(q);
+  let total = 0;
+  snap.docs.forEach(d => {
+    total += d.data().seconds || 0;
+  });
+  return total;
 };

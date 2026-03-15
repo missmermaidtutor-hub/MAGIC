@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
-import { calculateAndSetWinner, getRecentWinners } from '../services/firestoreService';
+import { calculateAndSetWinner, getRecentWinners, saveProgress } from '../services/firestoreService';
 import { getESTYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
 
@@ -605,7 +605,7 @@ export default function HomeScreen({ navigation }) {
   const [todayTasks, setTodayTasks] = useState({ manifest: false, art: false, goal: false, inspire: false, courage: false });
   const [previewIndex, setPreviewIndex] = useState(-1); // -1 = real data
 
-  useEffect(() => {
+  const refreshQuote = useCallback(() => {
     const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
     let quoteIndex = dayOfYear % quotesData.length;
     // Avoid same author on consecutive days
@@ -615,7 +615,10 @@ export default function HomeScreen({ navigation }) {
       quoteIndex = (quoteIndex + 1) % quotesData.length;
     }
     setTodayQuote(quotesData[quoteIndex]);
+  }, []);
 
+  useEffect(() => {
+    refreshQuote();
     loadTodaysChallenge();
     loadTodaysCriterion();
     loadPseudonym();
@@ -651,9 +654,10 @@ export default function HomeScreen({ navigation }) {
     }
   }, [userProfile]);
 
-  // Reload hearted state, star data, pseudonym, and winners every time this screen gets focus
+  // Reload quote, hearted state, star data, pseudonym, and winners every time this screen gets focus
   useFocusEffect(
     useCallback(() => {
+      refreshQuote();
       loadQuoteHeartedState();
       loadStreakData();
       loadPseudonym();
@@ -1021,6 +1025,14 @@ export default function HomeScreen({ navigation }) {
       setRealStreakData(data);
       const tasks = await getTodaysTasks();
       setTodayTasks(tasks);
+
+      // Sync progress to Firestore
+      if (user) {
+        const today = new Date().toISOString().split('T')[0];
+        saveProgress(user.uid, today, tasks).catch(err =>
+          console.log('Firestore progress sync error:', err)
+        );
+      }
     } catch (error) {
       console.log('Error loading streak:', error);
     }
