@@ -11,7 +11,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   AppState,
-  ImageBackground
+  ImageBackground,
+  Image
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -59,6 +60,11 @@ export default function ArtScreen() {
 
   // Drawing studio modal
   const [sketchModalVisible, setSketchModalVisible] = useState(false);
+
+  // Capture modal
+  const [captureModalVisible, setCaptureModalVisible] = useState(false);
+  const [capturedImageUri, setCapturedImageUri] = useState(null);
+  const [captureTitle, setCaptureTitle] = useState('');
   
   // Alarm repeating state
   const [alarmRinging, setAlarmRinging] = useState(false);
@@ -698,94 +704,117 @@ export default function ArtScreen() {
 
   const handleSketch = () => setSketchModalVisible(true);
 
-  const handleCapture = () => openArtModal('capture');
+  // --- Capture flow ---
 
-  // Pick an image from the media library
-  const pickImage = async () => {
+  const captureFromCamera = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Needed', 'Camera access is required to take a photo.');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+      if (!result || result.canceled || !result.assets || result.assets.length === 0) return;
+      setCapturedImageUri(result.assets[0].uri);
+      setCaptureTitle('');
+      setCaptureModalVisible(true);
+    } catch (err) {
+      console.log('Camera error:', err);
+      Alert.alert('Error', 'Could not open camera.');
+    }
+  };
+
+  const captureFromLibrary = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         quality: 0.8,
       });
-      if (!result || result.canceled || !result.assets || result.assets.length === 0) return null;
-      return { uri: result.assets[0].uri, mediaType: 'image' };
+      if (!result || result.canceled || !result.assets || result.assets.length === 0) return;
+      setCapturedImageUri(result.assets[0].uri);
+      setCaptureTitle('');
+      setCaptureModalVisible(true);
     } catch (err) {
       console.log('Image picker error:', err);
       Alert.alert('Error', 'Could not open image picker.');
-      return null;
     }
   };
 
-  // Handle uploads
-  const handlePrivateUpload = async () => {
-    try {
-      const picked = await pickImage();
-      if (!picked) return;
+  const handleCapture = () => {
+    if (Platform.OS === 'web') {
+      // Web: skip camera option, go straight to file picker
+      captureFromLibrary();
+    } else {
+      Alert.alert('Capture', 'How would you like to capture?', [
+        { text: 'Take Photo', onPress: captureFromCamera },
+        { text: 'Choose from Library', onPress: captureFromLibrary },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    }
+  };
 
+  const saveCaptureToPersonal = async () => {
+    if (!capturedImageUri) return;
+    try {
       const today = getESTDate();
       const artwork = {
         id: Date.now(),
-        imageUrl: picked.uri,
+        type: 'capture',
+        imageUrl: capturedImageUri,
         artist: 'You',
-        title: `Art from ${today}`,
+        title: captureTitle.trim() || `Capture from ${today}`,
         prompt: todaysChallenge,
         date: today,
         isPublic: false,
       };
+      const existingRaw = await AsyncStorage.getItem('personal_artworks');
+      const artworks = existingRaw ? JSON.parse(existingRaw) : [];
+      artworks.push(artwork);
+      await AsyncStorage.setItem('personal_artworks', JSON.stringify(artworks));
 
-      const existingPrivate = await AsyncStorage.getItem('personal_artworks');
-      const privateArtworks = existingPrivate ? JSON.parse(existingPrivate) : [];
-      privateArtworks.push(artwork);
-      await AsyncStorage.setItem('personal_artworks', JSON.stringify(privateArtworks));
-
-      // Mark art done for today
       await AsyncStorage.setItem(`art_created_${today}`, 'true');
       const existing = await AsyncStorage.getItem(`art_time_${today}`);
       if (!existing || parseInt(existing) === 0) {
         await AsyncStorage.setItem(`art_time_${today}`, '1');
       }
 
-      // Sync to Firestore
       if (user) {
         saveArtwork(user.uid, artwork).catch(err =>
-          console.log('Firestore private upload sync error:', err)
+          console.log('Firestore capture sync error:', err)
         );
       }
-
-      Alert.alert('Saved!', 'Artwork saved to your private gallery. Only you can see it.');
-    } catch (error) {
-      console.log('Save error:', error);
-      Alert.alert('Error', 'Could not save artwork: ' + error.message);
+      setCaptureModalVisible(false);
+      Alert.alert('Saved!', 'Your capture has been saved to your private gallery.');
+    } catch (e) {
+      console.log('Capture save error:', e);
+      Alert.alert('Error', 'Could not save capture.');
     }
   };
 
-  const handleCourageUpload = async () => {
+  const saveCaptureToCourage = async () => {
+    if (!capturedImageUri) return;
     if (courageUploadedToday) {
-      Alert.alert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
+      Alert.alert('Already Submitted', 'You can only upload one Courage per day.');
       return;
     }
-
-    const picked = await pickImage();
-    if (!picked) return;
-
     Alert.alert(
       'Upload with COURAGE',
-      'Your artwork will be submitted for anonymous voting. Ready to share?',
+      'Your capture will be submitted for anonymous voting. Ready to share?',
       [
         { text: 'Not Yet', style: 'cancel' },
         {
           text: 'Share!',
           onPress: async () => {
             const today = getESTDate();
-            const title = todaysChallenge || `Art from ${today}`;
+            const title = captureTitle.trim() || `Capture from ${today}`;
 
-            // Save locally to private gallery first (always works)
             try {
               const personalRaw = await AsyncStorage.getItem('personal_artworks');
               const personal = personalRaw ? JSON.parse(personalRaw) : [];
               personal.push({
                 id: Date.now(),
-                imageUrl: picked.uri,
+                type: 'capture',
+                imageUrl: capturedImageUri,
                 artist: 'You',
                 title,
                 date: today,
@@ -793,57 +822,57 @@ export default function ArtScreen() {
                 pendingVoting: true,
               });
               await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
-
-              // Mark art done for today
               await AsyncStorage.setItem(`art_created_${today}`, 'true');
               const existing = await AsyncStorage.getItem(`art_time_${today}`);
               if (!existing || parseInt(existing) === 0) {
                 await AsyncStorage.setItem(`art_time_${today}`, '1');
               }
             } catch (localError) {
-              console.log('Local save error:', localError);
+              console.log('Local capture save error:', localError);
             }
 
-            // Mark as uploaded immediately so button disables
             setCourageUploadedToday(true);
+            setCaptureModalVisible(false);
 
-            // Now attempt Firebase upload
             try {
-              const storagePath = `courages/${user.uid}/${today}_${Date.now()}`;
-              const mediaUrl = await uploadMediaToStorage(picked.uri, storagePath);
+              const storagePath = `courages/${user.uid}/${today}_capture_${Date.now()}.png`;
+              const downloadUrl = await uploadMediaToStorage(capturedImageUri, storagePath);
 
               await uploadCourage(user.uid, {
                 pseudonym: userProfile?.pseudonym || '',
                 title,
-                mediaType: picked.mediaType,
-                mediaUrl,
+                mediaType: 'image',
+                mediaUrl: downloadUrl,
                 date: today,
                 anonymous: userProfile?.anonymous ?? false,
               });
 
-              // Update local gallery entry with Firebase URL for persistence
-              try {
-                const personalRaw = await AsyncStorage.getItem('personal_artworks');
-                const personal = personalRaw ? JSON.parse(personalRaw) : [];
-                const lastEntry = personal[personal.length - 1];
-                if (lastEntry && lastEntry.date === today && lastEntry.pendingVoting) {
-                  lastEntry.imageUrl = mediaUrl;
-                  await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
-                }
-              } catch (e) { /* silent */ }
-
-              Alert.alert('Congratulations on your COURAGE!', 'Upload is ready for tomorrow\'s vote.');
-            } catch (error) {
-              console.log('Courage upload error:', error);
+              Alert.alert('Congratulations on your COURAGE!', 'Your capture is ready for tomorrow\'s vote.');
+            } catch (e) {
+              console.log('Courage capture upload error:', e);
               Alert.alert(
                 'Saved Locally',
-                'Your artwork was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
+                'Your capture was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
               );
             }
           }
         }
       ]
     );
+  };
+
+  // Handle uploads (opens capture modal with image from library)
+  const handlePrivateUpload = async () => {
+    captureFromLibrary();
+  };
+
+  const handleCourageUpload = async () => {
+    if (courageUploadedToday) {
+      Alert.alert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
+      return;
+    }
+    // Opens capture modal — user can title + save from there
+    captureFromLibrary();
   };
 
   // Check if weekly goal met (120 minutes)
@@ -1080,6 +1109,52 @@ export default function ArtScreen() {
             {todaysPromptData?.explained ? (
               <Text style={styles.nudgeExplained}>{todaysPromptData.explained}</Text>
             ) : null}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Capture Preview Modal */}
+      <Modal visible={captureModalVisible} transparent animationType="slide">
+        <View style={styles.captureOverlay}>
+          <View style={styles.captureCard}>
+            <TouchableOpacity style={styles.modalXButton} onPress={() => setCaptureModalVisible(false)}>
+              <Text style={styles.modalXText}>✕</Text>
+            </TouchableOpacity>
+            <Text style={styles.captureModalTitle}>Your Capture</Text>
+            {capturedImageUri && (
+              <View style={styles.capturePreviewWrap}>
+                <Image
+                  source={{ uri: capturedImageUri }}
+                  style={styles.capturePreview}
+                  resizeMode="contain"
+                />
+              </View>
+            )}
+            <TextInput
+              style={styles.titleInput}
+              placeholder="Title your work (optional)"
+              placeholderTextColor="#888"
+              value={captureTitle}
+              onChangeText={setCaptureTitle}
+              maxLength={100}
+            />
+            <View style={styles.writeButtonRow}>
+              <TouchableOpacity style={styles.writePersonalBtn} onPress={saveCaptureToPersonal}>
+                <Text style={styles.writeBtnText}>Save to{'\n'}Personal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.writeCourageBtn, courageUploadedToday && { opacity: 0.4 }]}
+                onPress={saveCaptureToCourage}
+                disabled={courageUploadedToday}
+              >
+                <Text style={styles.writeBtnText}>
+                  {courageUploadedToday ? 'Courage\nSent' : 'Share as\nCourage'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity style={styles.writeCloseBtn} onPress={() => setCaptureModalVisible(false)}>
+              <Text style={styles.writeCloseBtnText}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1447,6 +1522,41 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.7)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
+  },
+  captureOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  captureCard: {
+    backgroundColor: '#1a1a2e',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    maxHeight: '90%',
+  },
+  captureModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  capturePreviewWrap: {
+    width: '100%',
+    maxHeight: 250,
+    borderRadius: 8,
+    marginBottom: 12,
+    backgroundColor: '#000',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  capturePreview: {
+    width: '100%',
+    height: 250,
   },
   nudgeLink: {
     fontSize: 14,

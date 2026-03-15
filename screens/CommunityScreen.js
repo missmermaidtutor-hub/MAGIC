@@ -168,6 +168,7 @@ export default function CommunityScreen({ route }) {
   const [inspirationArtworks, setInspirationArtworks] = useState([]);
   const [activeGallery, setActiveGallery] = useState(route?.params?.gallery || 'newsfeed');
   const [fullViewImage, setFullViewImage] = useState(null);
+  const [fullViewText, setFullViewText] = useState(null);
   const [followedUsers, setFollowedUsers] = useState([]);
   const [newsfeedImageIndex, setNewsfeedImageIndex] = useState({});
   const [savedNewsfeedArt, setSavedNewsfeedArt] = useState(new Set());
@@ -623,18 +624,36 @@ export default function CommunityScreen({ route }) {
   // ─── Gallery Item with candle + curate toggle ───
   const renderGalleryItem = (artwork, fromGallery) => {
     const imageSource = getArtworkImageSource(artwork);
+    const hasText = artwork.text && artwork.text.trim().length > 0;
     const isCurated = curatedArtworks.some(a => a.id === artwork.id);
     const isPrivateGallery = fromGallery === 'personal' || fromGallery === 'inspiration';
+
+    const handleFramePress = () => {
+      if (imageSource) {
+        setFullViewImage(imageSource);
+      } else if (hasText) {
+        setFullViewText({ text: artwork.text, title: artwork.title });
+      }
+    };
 
     return (
       <View key={artwork.id} style={styles.galleryItemContainer}>
         <GoldFrame
-          onPress={() => imageSource && setFullViewImage(imageSource)}
+          onPress={handleFramePress}
           thickness={3}
         >
           {imageSource ? (
             <View style={styles.galleryImageBg}>
               <Image source={imageSource} style={styles.galleryImage} resizeMode="contain" />
+            </View>
+          ) : hasText ? (
+            <View style={[styles.galleryImageBg, styles.textArtBg]}>
+              <ScrollView contentContainerStyle={styles.textArtScroll} showsVerticalScrollIndicator={false}>
+                <Text style={styles.textArtContent} numberOfLines={12}>{artwork.text}</Text>
+              </ScrollView>
+              {artwork.title ? (
+                <Text style={styles.textArtTitle}>{artwork.title}</Text>
+              ) : null}
             </View>
           ) : (
             <View style={[styles.galleryImageBg, styles.placeholderArt]}>
@@ -689,16 +708,31 @@ export default function CommunityScreen({ route }) {
   // ─── Curated gallery item (with candle, no curate toggle) ───
   const renderCuratedItem = (artwork) => {
     const imageSource = getArtworkImageSource(artwork);
+    const hasText = artwork.text && artwork.text.trim().length > 0;
+
+    const handleFramePress = () => {
+      if (imageSource) {
+        setFullViewImage(imageSource);
+      } else if (hasText) {
+        setFullViewText({ text: artwork.text, title: artwork.title });
+      }
+    };
 
     return (
       <View key={artwork.id} style={styles.galleryItemContainer}>
         <GoldFrame
-          onPress={() => imageSource && setFullViewImage(imageSource)}
+          onPress={handleFramePress}
           thickness={3}
         >
           {imageSource ? (
             <View style={styles.galleryImageBg}>
               <Image source={imageSource} style={styles.galleryImage} resizeMode="contain" />
+            </View>
+          ) : hasText ? (
+            <View style={[styles.galleryImageBg, styles.textArtBg]}>
+              <ScrollView contentContainerStyle={styles.textArtScroll} showsVerticalScrollIndicator={false}>
+                <Text style={styles.textArtContent} numberOfLines={12}>{artwork.text}</Text>
+              </ScrollView>
             </View>
           ) : (
             <View style={[styles.galleryImageBg, styles.placeholderArt]}>
@@ -787,12 +821,19 @@ export default function CommunityScreen({ route }) {
             <View style={styles.newsfeedFrameArea}>
               <GoldFrame
                 style={styles.newsfeedFrameInner}
-                onPress={() => imageSource && setFullViewImage(imageSource)}
+                onPress={() => {
+                  if (imageSource) setFullViewImage(imageSource);
+                  else if (artwork.text) setFullViewText({ text: artwork.text, title: artwork.title });
+                }}
                 thickness={6}
               >
                 {imageSource ? (
                   <View style={styles.newsfeedImageBg}>
                     <Image source={imageSource} style={styles.newsfeedImage} resizeMode="contain" />
+                  </View>
+                ) : artwork.text ? (
+                  <View style={[styles.newsfeedImageBg, styles.textArtBg]}>
+                    <Text style={styles.textArtContent} numberOfLines={8}>{artwork.text}</Text>
                   </View>
                 ) : (
                   <View style={[styles.newsfeedImageBg, styles.placeholderArt]}>
@@ -1046,6 +1087,29 @@ export default function CommunityScreen({ route }) {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* Full view text modal */}
+      <Modal
+        visible={fullViewText !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setFullViewText(null)}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setFullViewText(null)}
+          >
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+          <ScrollView style={styles.fullTextScroll} contentContainerStyle={styles.fullTextContainer}>
+            {fullViewText?.title ? (
+              <Text style={styles.fullTextTitle}>{fullViewText.title}</Text>
+            ) : null}
+            <Text style={styles.fullTextContent}>{fullViewText?.text}</Text>
+          </ScrollView>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -1144,6 +1208,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0e27',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   galleryImage: {
     width: '100%',
@@ -1162,6 +1227,50 @@ const styles = StyleSheet.create({
   placeholderLabel: {
     fontSize: 12,
     color: '#050d61',
+  },
+
+  // Text artwork in gallery frame
+  textArtBg: {
+    backgroundColor: '#fdf6e3',
+    padding: 8,
+  },
+  textArtScroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  textArtContent: {
+    fontSize: 11,
+    color: '#332100',
+    lineHeight: 16,
+    textAlign: 'center',
+  },
+  textArtTitle: {
+    fontSize: 10,
+    color: '#999',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+
+  // Full view text modal
+  fullTextScroll: {
+    flex: 1,
+    marginTop: 60,
+  },
+  fullTextContainer: {
+    padding: 24,
+  },
+  fullTextTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  fullTextContent: {
+    fontSize: 18,
+    color: '#fff',
+    lineHeight: 28,
   },
 
   // Artwork Actions
