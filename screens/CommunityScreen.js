@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
 import { persistImageUri } from '../utils/imageUtils';
+import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
@@ -433,6 +434,7 @@ export default function CommunityScreen({ navigation, route }) {
         const updatedCurated = curatedArtworks.filter(a => a.id !== artwork.id);
         setCuratedArtworks(updatedCurated);
         await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
+        trackAction('artwork_uncurated');
         // Remove from Firestore curated
         if (user) {
           removeCuratedWork(user.uid, String(artwork.id)).catch(err =>
@@ -470,6 +472,7 @@ export default function CommunityScreen({ navigation, route }) {
         const updatedCurated = [...curatedArtworks, curatedArt];
         setCuratedArtworks(updatedCurated);
         await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
+        trackAction('artwork_curated');
         // Sync to Firestore curated
         if (user) {
           saveCuratedWork(user.uid, curatedArt).catch(err =>

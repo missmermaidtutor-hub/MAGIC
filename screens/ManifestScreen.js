@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { saveManifest } from '../services/firestoreService';
 import quotesData from '../quotes.json';
 import { getTodayQuote } from '../utils/quoteUtils';
+import { trackAction } from '../services/analyticsService';
 
 export default function ManifestScreen() {
   const { user } = useAuth();
@@ -357,6 +358,7 @@ export default function ManifestScreen() {
         );
       }
 
+      trackAction('manifest_saved');
       setSaveNotification(true);
       setTimeout(() => setSaveNotification(false), 3000);
       loadPastEntries(); // Refresh past entries

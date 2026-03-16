@@ -32,6 +32,7 @@ import { getESTDate } from '../utils/dateUtils';
 import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
 import { persistImageUri } from '../utils/imageUtils';
 import { captureError } from '../config/sentry';
+import { trackAction } from '../services/analyticsService';
 import DrawingStudio from '../components/drawing/DrawingStudio';
 
 const MIN_TIMER_MINUTES = 1;
@@ -327,9 +328,11 @@ export default function ArtScreen() {
       dailyEndTimeRef.current = null;
       const elapsed = (timerSetting * 60) - dailyTime;
       saveDailyArtTime(elapsed);
+      trackAction('art_timer_stopped');
     } else {
       dailyEndTimeRef.current = Date.now() + dailyTime * 1000;
       setIsDailyRunning(true);
+      trackAction('art_timer_started');
       dailyIntervalRef.current = setInterval(() => {
         const remaining = Math.max(0, Math.round((dailyEndTimeRef.current - Date.now()) / 1000));
         if (remaining <= 0) {
@@ -558,6 +561,7 @@ export default function ArtScreen() {
       // Mark as uploaded immediately so button disables + star detects it
       setCourageUploadedToday(true);
       await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
+      trackAction('courage_uploaded_write');
       setWriteModalVisible(false);
       setWriteTitle('');
 
@@ -623,6 +627,7 @@ export default function ArtScreen() {
           console.log('Firestore sketch sync error:', err)
         );
       }
+      trackAction('sketch_saved');
       showAlert('Saved!', 'Your sketch has been saved to your private gallery.');
     } catch (e) {
       console.log('Sketch save error:', e);
@@ -672,6 +677,7 @@ export default function ArtScreen() {
 
       setCourageUploadedToday(true);
       await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
+      trackAction('courage_uploaded_sketch');
 
       // Upload image to Firebase Storage, then create courage entry
       try {
@@ -704,7 +710,10 @@ export default function ArtScreen() {
     );
   };
 
-  const handleSketch = () => setSketchModalVisible(true);
+  const handleSketch = () => {
+    trackAction('sketch_started');
+    setSketchModalVisible(true);
+  };
 
   // --- Capture flow ---
 
@@ -835,6 +844,7 @@ export default function ArtScreen() {
 
       setCourageUploadedToday(true);
       await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
+      trackAction('courage_uploaded_capture');
       setCaptureModalVisible(false);
 
       try {

@@ -10,6 +10,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { showAlert } from '../utils/alertUtils';
+import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
@@ -117,6 +118,7 @@ export default function GoalScreen({ navigation }) {
 
       setTodayGoal(goalData);
       await loadGoals();
+      trackAction('goal_set');
       showAlert('Saved', 'Goal saved!');
     } catch (error) {
       showAlert('Error', 'Could not save goal.');
@@ -142,6 +144,7 @@ export default function GoalScreen({ navigation }) {
 
       setTodayGoal(goalData);
       await loadGoals();
+      trackAction(newCompleted ? 'goal_completed' : 'goal_uncompleted');
     } catch (error) {
       showAlert('Error', 'Could not update goal.');
     }
@@ -172,6 +175,7 @@ export default function GoalScreen({ navigation }) {
       setGoalText(yesterdayGoal.goal);
       setTodayGoal(goalData);
       await loadGoals();
+      trackAction('goal_carried_forward');
       showAlert('Carried Forward', 'Yesterday\'s goal has been set as today\'s goal.');
     } catch (error) {
       showAlert('Error', 'Could not carry forward goal.');

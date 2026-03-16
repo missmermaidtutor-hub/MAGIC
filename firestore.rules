@@ -207,6 +207,23 @@ service cloud.firestore {
       }
     }
 
+    // ===== ANALYTICS COLLECTION =====
+    match /analytics/{dateId} {
+      allow read, write: if false;
+
+      match /users/{userId} {
+        // Users can write their own analytics
+        allow create, update: if request.auth != null
+                              && request.auth.uid == userId;
+
+        // All authenticated users can read (admin check is client-side)
+        allow read: if request.auth != null;
+
+        // No deletes
+        allow delete: if false;
+      }
+    }
+
     // Deny everything else by default
     match /{document=**} {
       allow read, write: if false;

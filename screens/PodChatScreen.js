@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { subscribeToPodMessages, sendPodMessage } from '../services/firestoreService';
+import { trackAction } from '../services/analyticsService';
 
 export default function PodChatScreen({ route, navigation }) {
   const { podId, podName, members, memberUsernames } = route.params;
@@ -39,6 +40,7 @@ export default function PodChatScreen({ route, navigation }) {
     try {
       const username = userProfile?.username || user.email || 'Unknown';
       await sendPodMessage(podId, user.uid, username, trimmed);
+      trackAction('pod_message_sent');
       setText('');
     } catch (error) {
       console.log('Error sending message:', error);

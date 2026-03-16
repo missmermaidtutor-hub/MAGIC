@@ -13,6 +13,7 @@ import {
   Linking,
   Platform,
 } from 'react-native';
+import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { Audio } from 'expo-av';
@@ -391,6 +392,7 @@ export default function InspireScreen({ navigation }) {
       setRankings({});
 
       // Show thank you popup
+      trackAction('vote_submitted');
       showAlert('Thank You for Voting!', 'Your votes have been submitted.');
 
       // Load next set — check stock images available

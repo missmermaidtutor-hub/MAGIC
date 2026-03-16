@@ -1,10 +1,11 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { isAdmin } from '../config/admin';
 import { showDestructiveConfirm } from '../utils/alertUtils';
 
 export default function MenuScreen({ navigation }) {
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const menuItems = [
     { name: 'Home Page', screen: 'Home' },
     { name: 'Quick Launch Info', screen: 'QuickLaunch' },
@@ -14,6 +15,7 @@ export default function MenuScreen({ navigation }) {
     { name: 'Quotes', screen: 'Quotes' },
     { name: 'Legal Policies', screen: 'Legal' },
     { name: 'Contact Us', screen: 'Contact' },
+    ...(user && isAdmin(user.uid) ? [{ name: 'Analytics Dashboard', screen: 'Analytics' }] : []),
     { name: 'Log Out', screen: null }
   ];
 

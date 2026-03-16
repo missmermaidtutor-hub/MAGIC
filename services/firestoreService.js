@@ -779,3 +779,14 @@ export const getAllPods = async () => {
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
+
+// ============================================================
+// ANALYTICS
+// ============================================================
+
+// Get all user analytics for a specific date (admin dashboard)
+export const getAnalyticsForDate = async (dateStr) => {
+  const q = query(collection(db, 'analytics', dateStr, 'users'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+};

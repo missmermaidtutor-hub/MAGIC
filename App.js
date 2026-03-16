@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
@@ -29,6 +29,8 @@ import StreakScreen from './screens/StreakScreen';
 import DiscussionPodsScreen from './screens/DiscussionPodsScreen';
 import PodChatScreen from './screens/PodChatScreen';
 import ManagePodsScreen from './screens/ManagePodsScreen';
+import AnalyticsScreen from './screens/AnalyticsScreen';
+import { initAnalytics, stopAnalytics, onScreenChange } from './services/analyticsService';
 
 // Import menu pages
 import AboutUsScreen from './screens/menu-pages/AboutUsScreen';
@@ -237,6 +239,13 @@ function MainTabs({ initialRoute = 'Home' }) {
           tabBarButton: () => null,
         }}
       />
+      <Tab.Screen
+        name="Analytics"
+        component={AnalyticsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -245,6 +254,7 @@ function AppContent() {
   const { user, userProfile, loading } = useAuth();
   const [initialRoute, setInitialRoute] = useState(null);
   const [checkingLaunch, setCheckingLaunch] = useState(true);
+  const navigationRef = useNavigationContainerRef();
 
   useEffect(() => {
     const checkQuickLaunch = async () => {
@@ -259,6 +269,23 @@ function AppContent() {
     checkQuickLaunch();
   }, []);
 
+  // Initialize/teardown analytics when user changes
+  useEffect(() => {
+    if (user && user.uid !== 'local') {
+      initAnalytics(user.uid);
+    } else {
+      stopAnalytics();
+    }
+    return () => stopAnalytics();
+  }, [user]);
+
+  const handleNavigationStateChange = () => {
+    const currentRoute = navigationRef.getCurrentRoute();
+    if (currentRoute?.name) {
+      onScreenChange(currentRoute.name);
+    }
+  };
+
   if (loading || checkingLaunch) {
     return (
       <View style={styles.loadingContainer}>
@@ -269,7 +296,14 @@ function AppContent() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={() => {
+        const route = navigationRef.getCurrentRoute();
+        if (route?.name) onScreenChange(route.name);
+      }}
+      onStateChange={handleNavigationStateChange}
+    >
       {user ? <MainTabs initialRoute={initialRoute} /> : <AuthNavigator />}
     </NavigationContainer>
   );

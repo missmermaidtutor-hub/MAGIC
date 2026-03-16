@@ -11,6 +11,7 @@ import { calculateAndSetWinner, getRecentWinners, saveProgress } from '../servic
 import { getESTDate, getESTYesterday, getESTDayBeforeYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
 import { getTodayQuote } from '../utils/quoteUtils';
+import { trackAction } from '../services/analyticsService';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 
@@ -737,8 +738,10 @@ export default function HomeScreen({ navigation }) {
 
       if (exists) {
         saved = saved.filter(q => q.quote !== todayQuote.quote);
+        trackAction('quote_unhearted');
       } else {
         saved.push({ ...todayQuote, heartedAt: new Date().toISOString() });
+        trackAction('quote_hearted');
       }
 
       await AsyncStorage.setItem('hearted_quotes', JSON.stringify(saved));

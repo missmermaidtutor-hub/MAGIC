@@ -10,6 +10,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { showAlert, showDestructiveConfirm } from '../../utils/alertUtils';
+import { trackAction } from '../../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../config/firebase';
@@ -225,6 +226,7 @@ export default function AboutYouScreen({ navigation }) {
       setOriginalUsername(newName);
       setPseudonymAvailable(null);
       await refreshProfile();
+      trackAction('pseudonym_changed');
       showAlert('Saved', 'Pseudonym updated successfully.');
     } catch (error) {
       showAlert('Error', error.message || 'Could not update pseudonym.');
@@ -232,6 +234,7 @@ export default function AboutYouScreen({ navigation }) {
   };
 
   const handleSaveBio = () => {
+    trackAction('profile_updated');
     saveSettings('bio', bio);
     // Also save to user_profile in AsyncStorage
     AsyncStorage.getItem('user_profile').then(raw => {
