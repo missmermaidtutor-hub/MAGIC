@@ -30,6 +30,7 @@ import {
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
+import { persistImageUri } from '../utils/imageUtils';
 import DrawingStudio from '../components/drawing/DrawingStudio';
 
 const MIN_TIMER_MINUTES = 1;
@@ -587,10 +588,11 @@ export default function ArtScreen() {
   const saveSketchToPersonal = async (imageUri, sketchTitle) => {
     try {
       const today = getESTDate();
+      const persistedUri = await persistImageUri(imageUri);
       const artwork = {
         id: Date.now(),
         type: 'sketch',
-        imageUrl: imageUri,
+        imageUrl: persistedUri,
         artist: 'You',
         title: sketchTitle || `Sketch from ${today}`,
         prompt: todaysChallenge,
@@ -630,6 +632,7 @@ export default function ArtScreen() {
     const doUpload = async () => {
       const today = getESTDate();
       const title = sketchTitle || `Sketch from ${today}`;
+      const persistedUri = await persistImageUri(imageUri);
 
       // Save locally first
       try {
@@ -638,7 +641,7 @@ export default function ArtScreen() {
         personal.push({
           id: Date.now(),
           type: 'sketch',
-          imageUrl: imageUri,
+          imageUrl: persistedUri,
           artist: 'You',
           title,
           prompt: todaysChallenge,
@@ -744,10 +747,11 @@ export default function ArtScreen() {
     if (!capturedImageUri) return;
     try {
       const today = getESTDate();
+      const persistedUri = await persistImageUri(capturedImageUri);
       const artwork = {
         id: Date.now(),
         type: 'capture',
-        imageUrl: capturedImageUri,
+        imageUrl: persistedUri,
         artist: 'You',
         title: captureTitle.trim() || `Capture from ${today}`,
         prompt: todaysChallenge,
@@ -787,6 +791,7 @@ export default function ArtScreen() {
     const doUpload = async () => {
       const today = getESTDate();
       const title = captureTitle.trim() || `Capture from ${today}`;
+      const persistedUri = await persistImageUri(capturedImageUri);
 
       try {
         const personalRaw = await AsyncStorage.getItem('personal_artworks');
@@ -794,7 +799,7 @@ export default function ArtScreen() {
         personal.push({
           id: Date.now(),
           type: 'capture',
-          imageUrl: capturedImageUri,
+          imageUrl: persistedUri,
           artist: 'You',
           title,
           date: today,

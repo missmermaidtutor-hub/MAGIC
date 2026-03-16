@@ -12,6 +12,7 @@ import {
   ImageBackground
 } from 'react-native';
 import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
+import { persistImageUri } from '../utils/imageUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
@@ -401,7 +402,7 @@ export default function CommunityScreen({ route }) {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const uri = result.assets[0].uri;
+        const uri = await persistImageUri(result.assets[0].uri);
         const newArtwork = {
           id: `personal_${Date.now()}`,
           imageUrl: uri,
