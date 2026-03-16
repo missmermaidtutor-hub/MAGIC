@@ -26,6 +26,9 @@ import InspireScreen from './screens/InspireScreen';
 import CommunityScreen from './screens/CommunityScreen';
 import MenuScreen from './screens/MenuScreen';
 import StreakScreen from './screens/StreakScreen';
+import DiscussionPodsScreen from './screens/DiscussionPodsScreen';
+import PodChatScreen from './screens/PodChatScreen';
+import ManagePodsScreen from './screens/ManagePodsScreen';
 
 // Import menu pages
 import AboutUsScreen from './screens/menu-pages/AboutUsScreen';
@@ -209,6 +212,27 @@ function MainTabs({ initialRoute = 'Home' }) {
       <Tab.Screen
         name="QuickLaunch"
         component={QuickLaunchScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="DiscussionPods"
+        component={DiscussionPodsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="PodChat"
+        component={PodChatScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="ManagePods"
+        component={ManagePodsScreen}
         options={{
           tabBarButton: () => null,
         }}

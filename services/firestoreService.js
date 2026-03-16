@@ -15,6 +15,7 @@ import {
   writeBatch,
   runTransaction,
   serverTimestamp,
+  onSnapshot,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../config/firebase';
@@ -681,4 +682,100 @@ export const getWeeklyArtTime = async (uid, weekStart) => {
     total += d.data().seconds || 0;
   });
   return total;
+};
+
+// ============================================================
+// DISCUSSION PODS
+// ============================================================
+
+// Create a new discussion pod
+export const createPod = async (name, memberUids, memberUsernameMap, adminUid) => {
+  const docRef = await addDoc(collection(db, 'discussionPods'), {
+    name,
+    members: memberUids,
+    memberUsernames: memberUsernameMap,
+    createdBy: adminUid,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+};
+
+// Update pod members
+export const updatePodMembers = async (podId, memberUids, memberUsernameMap) => {
+  const podRef = doc(db, 'discussionPods', podId);
+  await updateDoc(podRef, {
+    members: memberUids,
+    memberUsernames: memberUsernameMap,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Update pod name
+export const updatePodName = async (podId, name) => {
+  const podRef = doc(db, 'discussionPods', podId);
+  await updateDoc(podRef, {
+    name,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Delete a pod
+export const deletePod = async (podId) => {
+  const podRef = doc(db, 'discussionPods', podId);
+  await deleteDoc(podRef);
+};
+
+// Subscribe to pods the user belongs to (real-time)
+export const subscribeToUserPods = (uid, callback, onError) => {
+  const q = query(
+    collection(db, 'discussionPods'),
+    where('members', 'array-contains', uid),
+  );
+  return onSnapshot(q, (snap) => {
+    const pods = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(pods);
+  }, (error) => {
+    console.log('subscribeToUserPods error:', error);
+    if (onError) onError(error);
+  });
+};
+
+// Subscribe to messages in a pod (real-time)
+export const subscribeToPodMessages = (podId, callback, onError) => {
+  const q = query(
+    collection(db, 'discussionPods', podId, 'messages'),
+    orderBy('createdAt', 'asc'),
+  );
+  return onSnapshot(q, (snap) => {
+    const messages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(messages);
+  }, (error) => {
+    console.log('subscribeToPodMessages error:', error);
+    if (onError) onError(error);
+  });
+};
+
+// Send a message to a pod
+export const sendPodMessage = async (podId, uid, username, text) => {
+  await addDoc(collection(db, 'discussionPods', podId, 'messages'), {
+    text,
+    uid,
+    username,
+    createdAt: serverTimestamp(),
+  });
+};
+
+// Get all users (admin needs this to assign members)
+export const getAllUsers = async () => {
+  const q = query(collection(db, 'users'), firestoreLimit(200));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+};
+
+// Get all pods (admin)
+export const getAllPods = async () => {
+  const q = query(collection(db, 'discussionPods'), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };

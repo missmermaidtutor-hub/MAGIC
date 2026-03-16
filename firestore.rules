@@ -178,6 +178,35 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ===== DISCUSSION PODS =====
+    match /discussionPods/{podId} {
+      // Members can read their pod
+      allow read: if request.auth != null
+                  && request.auth.uid in resource.data.members;
+
+      // Authenticated users can create pods (admin enforced client-side)
+      allow create: if request.auth != null;
+
+      // Authenticated users can update pods (admin enforced client-side)
+      allow update: if request.auth != null;
+
+      // Authenticated users can delete pods (admin enforced client-side)
+      allow delete: if request.auth != null;
+
+      // Messages subcollection
+      match /messages/{messageId} {
+        // Pod members can read messages
+        allow read: if request.auth != null;
+
+        // Pod members can create messages (must be their own UID)
+        allow create: if request.auth != null
+                      && request.resource.data.uid == request.auth.uid;
+
+        // No edits or deletes
+        allow update, delete: if false;
+      }
+    }
+
     // Deny everything else by default
     match /{document=**} {
       allow read, write: if false;

@@ -163,7 +163,7 @@ const Candle = ({ lit = false, onPress, size = 40 }) => (
   </TouchableOpacity>
 );
 
-export default function CommunityScreen({ route }) {
+export default function CommunityScreen({ navigation, route }) {
   const { user, userProfile } = useAuth();
   const [curatedArtworks, setCuratedArtworks] = useState([]);
   const [personalArtworks, setPersonalArtworks] = useState([]);
@@ -985,6 +985,19 @@ export default function CommunityScreen({ route }) {
           </TouchableOpacity>
         </View>
 
+        {/* Discussion Pods */}
+        <TouchableOpacity
+          style={styles.podsCard}
+          onPress={() => navigation.navigate('DiscussionPods')}
+        >
+          <Text style={styles.podsCardEmoji}>💬</Text>
+          <View style={styles.podsCardText}>
+            <Text style={styles.podsCardTitle}>Discussion Pods</Text>
+            <Text style={styles.podsCardSubtitle}>Join the conversation</Text>
+          </View>
+          <Text style={styles.podsCardArrow}>›</Text>
+        </TouchableOpacity>
+
         {/* Gallery Description */}
         <Text style={styles.galleryDescription}>
           {activeGallery === 'newsfeed' && 'Browse curated galleries from the community'}
@@ -1390,6 +1403,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
     lineHeight: 22,
+  },
+
+  // Discussion Pods card
+  podsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(184, 200, 232, 0.6)',
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+  },
+  podsCardEmoji: {
+    fontSize: 32,
+    marginRight: 14,
+  },
+  podsCardText: {
+    flex: 1,
+  },
+  podsCardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#050d61',
+  },
+  podsCardSubtitle: {
+    fontSize: 13,
+    color: '#050d61',
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
+  podsCardArrow: {
+    fontSize: 28,
+    color: '#050d61',
+    fontWeight: 'bold',
   },
 
   // Section Cards

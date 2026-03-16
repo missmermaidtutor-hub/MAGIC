@@ -673,20 +673,24 @@ export default function HomeScreen({ navigation }) {
     }
   }, [userProfile]);
 
-  // First-time login prompt — nudge new users to complete their profile settings
+  // First-time login prompt — nudge new users to complete their profile settings (once only)
   const profilePromptShown = useRef(false);
   useEffect(() => {
     if (profilePromptShown.current || !userProfile) return;
     const isIncomplete = !userProfile.pseudonym || !userProfile.birthdate || !userProfile.timezone;
-    if (isIncomplete) {
+    if (!isIncomplete) return;
+    // Only show once — check AsyncStorage
+    AsyncStorage.getItem('profile_prompt_dismissed').then(dismissed => {
+      if (dismissed === 'true' || profilePromptShown.current) return;
       profilePromptShown.current = true;
+      AsyncStorage.setItem('profile_prompt_dismissed', 'true');
       showConfirm(
         'Complete Your Profile',
         'Welcome to MAGIC! Set up your pseudonym, birthdate, and preferences to get the most out of your creative journey.',
         () => navigation.navigate('AboutYou'),
         'Go to Settings'
       );
-    }
+    });
   }, [userProfile]);
 
   // Reload quote, hearted state, star data, pseudonym, and winners every time this screen gets focus
