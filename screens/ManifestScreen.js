@@ -15,6 +15,7 @@ import { getESTDate, msUntilESTMidnight } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { saveManifest } from '../services/firestoreService';
 import quotesData from '../quotes.json';
+import { getTodayQuote } from '../utils/quoteUtils';
 
 export default function ManifestScreen() {
   const { user } = useAuth();
@@ -214,10 +215,8 @@ export default function ManifestScreen() {
 
   // Get quote of the day (same quote for the whole day)
   useEffect(() => {
-    // Use date as seed for consistent daily quote
-    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-    const quoteIndex = dayOfYear % quotesData.length;
-    setTodayQuote(quotesData[quoteIndex]);
+    // Load today's quote (shared with HomeScreen via AsyncStorage cache)
+    getTodayQuote(quotesData).then(setTodayQuote);
 
     entryDateRef.current = getTodayDate();
     // Load today's text entry (muse, dump, vision)
@@ -298,7 +297,8 @@ export default function ManifestScreen() {
         const parsed = JSON.parse(raw);
         setHeartedQuotes(parsed);
         // Check if today's quote is already hearted
-        const isHearted = parsed.some(q => q.quote === quotesData[Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24) % quotesData.length]?.quote);
+        const todayQ = await getTodayQuote(quotesData);
+        const isHearted = parsed.some(q => q.quote === todayQ?.quote);
         setTodayQuoteHearted(isHearted);
       }
     } catch (error) {

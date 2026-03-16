@@ -5,7 +5,6 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +12,7 @@ import {
   Switch,
   ImageBackground,
 } from 'react-native';
+import { showAlert } from '../../utils/alertUtils';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable } from '../../services/firestoreService';
@@ -124,15 +124,15 @@ export default function SignUpScreen({ navigation, route }) {
 
   const handleStep1 = async () => {
     if (!email.trim()) {
-      Alert.alert('Missing Email', 'Please enter your email address.');
+      showAlert('Missing Email', 'Please enter your email address.');
       return;
     }
     if (password.length < 6) {
-      Alert.alert('Weak Password', 'Password must be at least 6 characters.');
+      showAlert('Weak Password', 'Password must be at least 6 characters.');
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Password Mismatch', 'Passwords do not match.');
+      showAlert('Password Mismatch', 'Passwords do not match.');
       return;
     }
     setStep(2);
@@ -140,27 +140,27 @@ export default function SignUpScreen({ navigation, route }) {
 
   const handleStep2 = () => {
     if (!username.trim()) {
-      Alert.alert('Missing Username', 'Please choose a username.');
+      showAlert('Missing Username', 'Please choose a username.');
       return;
     }
     if (!checkingUsername && usernameAvailable === false) {
-      Alert.alert('Username Taken', 'Please choose a different username.');
+      showAlert('Username Taken', 'Please choose a different username.');
       return;
     }
     if (!pseudonym.trim()) {
-      Alert.alert('Missing Pseudonym', 'Please choose a pseudonym.');
+      showAlert('Missing Pseudonym', 'Please choose a pseudonym.');
       return;
     }
     if (!checkingPseudonym && pseudonymAvailable === false) {
-      Alert.alert('Pseudonym Taken', 'Please choose a different pseudonym.');
+      showAlert('Pseudonym Taken', 'Please choose a different pseudonym.');
       return;
     }
     if (!birthdate.trim()) {
-      Alert.alert('Missing Birthdate', 'Please enter your birthdate.');
+      showAlert('Missing Birthdate', 'Please enter your birthdate.');
       return;
     }
     if (!validateBirthdate(birthdate)) {
-      Alert.alert('Invalid Date', 'Please enter birthdate as mm/dd/yyyy (with leading zeros, e.g. 03/05/1990).');
+      showAlert('Invalid Date', 'Please enter birthdate as mm/dd/yyyy (with leading zeros, e.g. 03/05/1990).');
       return;
     }
     setStep(3);
@@ -229,7 +229,7 @@ export default function SignUpScreen({ navigation, route }) {
       if (error.code === 'auth/email-already-in-use') message = 'An account with this email already exists.';
       else if (error.code === 'auth/invalid-email') message = 'Invalid email address.';
       else if (error.message?.includes('username') || error.message?.includes('pseudonym')) message = error.message;
-      Alert.alert('Sign Up Failed', message);
+      showAlert('Sign Up Failed', message);
     }
     setLoading(false);
   };

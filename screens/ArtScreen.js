@@ -29,31 +29,11 @@ import {
   saveArtwork,
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
+import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
 import DrawingStudio from '../components/drawing/DrawingStudio';
 
 const MIN_TIMER_MINUTES = 1;
 const MAX_TIMER_MINUTES = 180;
-
-// Platform-aware alert helpers (react-native-web Alert.alert is a no-op)
-const showAlert = (title, message) => {
-  if (Platform.OS === 'web') {
-    window.alert(message ? `${title}\n\n${message}` : title);
-  } else {
-    Alert.alert(title, message);
-  }
-};
-const showConfirm = (title, message, onConfirm) => {
-  if (Platform.OS === 'web') {
-    if (window.confirm(message ? `${title}\n\n${message}` : title)) {
-      onConfirm();
-    }
-  } else {
-    Alert.alert(title, message, [
-      { text: 'Not Yet', style: 'cancel' },
-      { text: 'Share!', onPress: onConfirm },
-    ]);
-  }
-};
 
 export default function ArtScreen() {
   const { user, userProfile } = useAuth();
@@ -138,7 +118,7 @@ export default function ArtScreen() {
         dailyEndTimeRef.current = null;
         saveDailyArtTime(timerSetting * 60);
         startRepeatingAlarm();
-        Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!\n\nBowl will chime every 5 minutes until stopped.`);
+        showAlert('Time\'s Up!', `${timerSetting} minutes of art time complete!\n\nBowl will chime every 5 minutes until stopped.`);
       } else {
         setDailyTime(remaining);
       }
@@ -357,7 +337,7 @@ export default function ArtScreen() {
           dailyEndTimeRef.current = null;
           saveDailyArtTime(timerSetting * 60);
           startRepeatingAlarm();
-          Alert.alert('Time\'s Up!', `${timerSetting} minutes of art time complete!\n\nBowl will chime every 5 minutes until stopped.`);
+          showAlert('Time\'s Up!', `${timerSetting} minutes of art time complete!\n\nBowl will chime every 5 minutes until stopped.`);
         } else {
           setDailyTime(remaining);
         }
@@ -386,7 +366,7 @@ export default function ArtScreen() {
           await AsyncStorage.setItem(`art_time_${dateStr}`, '7200');
         }
       }
-      Alert.alert('120 Minutes!', 'Art point filled for today and the past 7 days!');
+      showAlert('120 Minutes!', 'Art point filled for today and the past 7 days!');
     } catch (e) {}
   };
 
@@ -423,24 +403,18 @@ export default function ArtScreen() {
   };
 
   const resetWeeklyStopwatch = () => {
-    Alert.alert(
+    showDestructiveConfirm(
       'Reset Weekly Time?',
       'This will reset your weekly art tracking to 00:00:00',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => {
-            clearInterval(weeklyIntervalRef.current);
-            setIsWeeklyRunning(false);
-            weeklyStartTimeRef.current = null;
-            weeklyBaseRef.current = 0;
-            setWeeklyTime(0);
-            saveWeeklyTime(0);
-          }
-        }
-      ]
+      () => {
+        clearInterval(weeklyIntervalRef.current);
+        setIsWeeklyRunning(false);
+        weeklyStartTimeRef.current = null;
+        weeklyBaseRef.current = 0;
+        setWeeklyTime(0);
+        saveWeeklyTime(0);
+      },
+      'Reset'
     );
   };
 
@@ -495,7 +469,7 @@ export default function ArtScreen() {
 
   const saveWriteToPersonal = async () => {
     if (!writeText.trim()) {
-      Alert.alert('Empty', 'Add something first!');
+      showAlert('Empty', 'Add something first!');
       return;
     }
     try {
@@ -529,9 +503,9 @@ export default function ArtScreen() {
       }
       setWriteModalVisible(false);
       setWriteTitle('');
-      Alert.alert('Saved!', `Your ${modeLabels[writeMode].toLowerCase()} has been saved to your private gallery.`);
+      showAlert('Saved!', `Your ${modeLabels[writeMode].toLowerCase()} has been saved to your private gallery.`);
     } catch (e) {
-      Alert.alert('Error', 'Could not save.');
+      showAlert('Error', 'Could not save.');
     }
   };
 
@@ -641,10 +615,10 @@ export default function ArtScreen() {
           console.log('Firestore sketch sync error:', err)
         );
       }
-      Alert.alert('Saved!', 'Your sketch has been saved to your private gallery.');
+      showAlert('Saved!', 'Your sketch has been saved to your private gallery.');
     } catch (e) {
       console.log('Sketch save error:', e);
-      Alert.alert('Error', 'Could not save sketch.');
+      showAlert('Error', 'Could not save sketch.');
     }
   };
 
@@ -723,7 +697,7 @@ export default function ArtScreen() {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Needed', 'Camera access is required to take a photo.');
+        showAlert('Permission Needed', 'Camera access is required to take a photo.');
         return;
       }
       const result = await ImagePicker.launchCameraAsync({ quality: 0.8 });
@@ -733,7 +707,7 @@ export default function ArtScreen() {
       setCaptureModalVisible(true);
     } catch (err) {
       console.log('Camera error:', err);
-      Alert.alert('Error', 'Could not open camera.');
+      showAlert('Error', 'Could not open camera.');
     }
   };
 
@@ -749,7 +723,7 @@ export default function ArtScreen() {
       setCaptureModalVisible(true);
     } catch (err) {
       console.log('Image picker error:', err);
-      Alert.alert('Error', 'Could not open image picker.');
+      showAlert('Error', 'Could not open image picker.');
     }
   };
 
@@ -797,10 +771,10 @@ export default function ArtScreen() {
         );
       }
       setCaptureModalVisible(false);
-      Alert.alert('Saved!', 'Your capture has been saved to your private gallery.');
+      showAlert('Saved!', 'Your capture has been saved to your private gallery.');
     } catch (e) {
       console.log('Capture save error:', e);
-      Alert.alert('Error', 'Could not save capture.');
+      showAlert('Error', 'Could not save capture.');
     }
   };
 
@@ -877,7 +851,7 @@ export default function ArtScreen() {
 
   const handleCourageUpload = async () => {
     if (courageUploadedToday) {
-      Alert.alert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
+      showAlert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
       return;
     }
     // Opens capture modal — user can title + save from there

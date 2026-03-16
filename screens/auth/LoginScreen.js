@@ -5,14 +5,14 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   ImageBackground,
 } from 'react-native';
-import { signInWithEmailAndPassword, signInWithCredential, OAuthProvider, GoogleAuthProvider } from 'firebase/auth';
+import { showAlert } from '../../utils/alertUtils';
+import { signInWithEmailAndPassword, signInWithCredential, OAuthProvider } from 'firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
@@ -27,7 +27,7 @@ export default function LoginScreen({ navigation }) {
 
   const handleEmailLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Missing Fields', 'Please enter your email and password.');
+      showAlert('Missing Fields', 'Please enter your email and password.');
       return;
     }
     setLoading(true);
@@ -39,7 +39,7 @@ export default function LoginScreen({ navigation }) {
       else if (error.code === 'auth/wrong-password') message = 'Incorrect password.';
       else if (error.code === 'auth/invalid-email') message = 'Invalid email address.';
       else if (error.code === 'auth/too-many-requests') message = 'Too many attempts. Please try again later.';
-      Alert.alert('Sign In Failed', message);
+      showAlert('Sign In Failed', message);
     }
     setLoading(false);
   };
@@ -80,18 +80,12 @@ export default function LoginScreen({ navigation }) {
       }
     } catch (error) {
       if (error.code !== 'ERR_CANCELED') {
-        Alert.alert('Apple Sign In Failed', 'Could not sign in with Apple.');
+        showAlert('Apple Sign In Failed', 'Could not sign in with Apple.');
       }
     }
     setLoading(false);
   };
 
-  const handleGoogleLogin = async () => {
-    Alert.alert(
-      'Google Sign-In',
-      'Google Sign-In requires an EAS development build with proper Google Cloud Console configuration. This feature will be available in the production build.'
-    );
-  };
 
   return (
     <ImageBackground
@@ -170,13 +164,6 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.appleButtonText}> Sign in with Apple</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.googleButton}
-              onPress={handleGoogleLogin}
-              disabled={loading}
-            >
-              <Text style={styles.googleButtonText}>Sign in with Google</Text>
-            </TouchableOpacity>
 
             <View style={styles.signUpRow}>
               <Text style={styles.signUpText}>Don't have an account? </Text>
@@ -297,18 +284,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  googleButton: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 14,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  googleButtonText: {
-    color: '#333',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  // Google Sign-In styles removed — not available without EAS build
   signUpRow: {
     flexDirection: 'row',
     justifyContent: 'center',

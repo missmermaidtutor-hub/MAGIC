@@ -6,12 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
   Linking,
   Modal,
   Dimensions,
   ImageBackground
 } from 'react-native';
+import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
@@ -390,7 +390,7 @@ export default function CommunityScreen({ route }) {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Please allow access to your photo library to upload images.');
+        showAlert('Permission needed', 'Please allow access to your photo library to upload images.');
         return;
       }
 
@@ -414,11 +414,11 @@ export default function CommunityScreen({ route }) {
         const updated = [...personalArtworks, newArtwork];
         setPersonalArtworks(updated);
         await AsyncStorage.setItem('personal_artworks', JSON.stringify(updated));
-        Alert.alert('Uploaded!', 'Your artwork has been added to your Private Gallery.');
+        showAlert('Uploaded!', 'Your artwork has been added to your Private Gallery.');
       }
     } catch (error) {
       console.log('Error uploading image:', error);
-      Alert.alert('Error', 'Could not upload image. Please try again.');
+      showAlert('Error', 'Could not upload image. Please try again.');
     }
   };
 
@@ -456,7 +456,7 @@ export default function CommunityScreen({ route }) {
       } else {
         // Check curated limit (max 25)
         if (curatedArtworks.length >= 25) {
-          Alert.alert('Curated Limit', 'You can only have 25 works in your curated gallery. Remove one first.');
+          showAlert('Curated Limit', 'You can only have 25 works in your curated gallery. Remove one first.');
           return;
         }
         // Add to curated
@@ -497,84 +497,76 @@ export default function CommunityScreen({ route }) {
   };
 
   const handleDeleteArtwork = (artwork, fromGallery) => {
-    Alert.alert(
+    showDestructiveConfirm(
       'Remove Artwork',
       'Are you sure you want to remove this from your gallery?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              if (fromGallery === 'personal') {
-                const updated = personalArtworks.filter(a => a.id !== artwork.id);
-                setPersonalArtworks(updated);
-                await AsyncStorage.setItem('personal_artworks', JSON.stringify(updated));
-                if (user) {
-                  deleteArtwork(user.uid, String(artwork.id)).catch(err =>
-                    console.log('Firestore delete artwork error:', err)
-                  );
-                }
-              } else if (fromGallery === 'inspiration') {
-                const updated = inspirationArtworks.filter(a => a.id !== artwork.id);
-                setInspirationArtworks(updated);
-                await AsyncStorage.setItem('favorite_artworks', JSON.stringify(updated));
-                setSavedNewsfeedArt(prev => {
-                  const next = new Set(prev);
-                  next.delete(artwork.id);
-                  return next;
-                });
-                if (user) {
-                  deleteInspiration(user.uid, String(artwork.id)).catch(err =>
-                    console.log('Firestore delete inspiration error:', err)
-                  );
-                }
-              } else if (fromGallery === 'curated') {
-                const updated = curatedArtworks.filter(a => a.id !== artwork.id);
-                setCuratedArtworks(updated);
-                await AsyncStorage.setItem('public_artworks', JSON.stringify(updated));
-                if (user) {
-                  removeCuratedWork(user.uid, String(artwork.id)).catch(err =>
-                    console.log('Firestore delete curated error:', err)
-                  );
-                }
-              }
-              // Also remove from curated if it was there
-              if (fromGallery !== 'curated') {
-                const updatedCurated = curatedArtworks.filter(a => a.id !== artwork.id);
-                if (updatedCurated.length !== curatedArtworks.length) {
-                  setCuratedArtworks(updatedCurated);
-                  await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
-                  if (user) {
-                    removeCuratedWork(user.uid, String(artwork.id)).catch(err =>
-                      console.log('Firestore remove curated error:', err)
-                    );
-                  }
-                }
-              }
-            } catch (error) {
-              console.log('Error deleting artwork:', error);
+      async () => {
+        try {
+          if (fromGallery === 'personal') {
+            const updated = personalArtworks.filter(a => a.id !== artwork.id);
+            setPersonalArtworks(updated);
+            await AsyncStorage.setItem('personal_artworks', JSON.stringify(updated));
+            if (user) {
+              deleteArtwork(user.uid, String(artwork.id)).catch(err =>
+                console.log('Firestore delete artwork error:', err)
+              );
+            }
+          } else if (fromGallery === 'inspiration') {
+            const updated = inspirationArtworks.filter(a => a.id !== artwork.id);
+            setInspirationArtworks(updated);
+            await AsyncStorage.setItem('favorite_artworks', JSON.stringify(updated));
+            setSavedNewsfeedArt(prev => {
+              const next = new Set(prev);
+              next.delete(artwork.id);
+              return next;
+            });
+            if (user) {
+              deleteInspiration(user.uid, String(artwork.id)).catch(err =>
+                console.log('Firestore delete inspiration error:', err)
+              );
+            }
+          } else if (fromGallery === 'curated') {
+            const updated = curatedArtworks.filter(a => a.id !== artwork.id);
+            setCuratedArtworks(updated);
+            await AsyncStorage.setItem('public_artworks', JSON.stringify(updated));
+            if (user) {
+              removeCuratedWork(user.uid, String(artwork.id)).catch(err =>
+                console.log('Firestore delete curated error:', err)
+              );
             }
           }
+          // Also remove from curated if it was there
+          if (fromGallery !== 'curated') {
+            const updatedCurated = curatedArtworks.filter(a => a.id !== artwork.id);
+            if (updatedCurated.length !== curatedArtworks.length) {
+              setCuratedArtworks(updatedCurated);
+              await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
+              if (user) {
+                removeCuratedWork(user.uid, String(artwork.id)).catch(err =>
+                  console.log('Firestore remove curated error:', err)
+                );
+              }
+            }
+          }
+        } catch (error) {
+          console.log('Error deleting artwork:', error);
         }
-      ]
+      },
+      'Remove'
     );
   };
 
   const handleResearchArticle = (url, title) => {
-    Alert.alert(
+    showConfirm(
       title,
       'Open this article in your browser?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Open', onPress: () => Linking.openURL(url) }
-      ]
+      () => Linking.openURL(url),
+      'Open'
     );
   };
 
   const handleBoutique = () => {
-    Alert.alert(
+    showAlert(
       'Boutique Coming Soon!',
       'Turn your favorite artworks into:\n• Prints\n• Mugs\n• T-shirts\n• Phone cases\n• And more!\n\nThis feature is in development.'
     );

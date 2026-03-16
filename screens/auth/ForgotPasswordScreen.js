@@ -5,12 +5,12 @@ import {
   View,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ImageBackground,
 } from 'react-native';
+import { showAlert } from '../../utils/alertUtils';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 
@@ -21,7 +21,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
   const handleReset = async () => {
     if (!email.trim()) {
-      Alert.alert('Missing Email', 'Please enter your email address.');
+      showAlert('Missing Email', 'Please enter your email address.');
       return;
     }
     setLoading(true);
@@ -32,7 +32,7 @@ export default function ForgotPasswordScreen({ navigation }) {
       let message = 'Could not send reset email. Please try again.';
       if (error.code === 'auth/user-not-found') message = 'No account found with this email.';
       else if (error.code === 'auth/invalid-email') message = 'Invalid email address.';
-      Alert.alert('Error', message);
+      showAlert('Error', message);
     }
     setLoading(false);
   };

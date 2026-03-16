@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
-  Alert,
   TextInput,
   ImageBackground,
 } from 'react-native';
+import { showAlert, showDestructiveConfirm } from '../../utils/alertUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../config/firebase';
@@ -200,7 +200,7 @@ export default function AboutYouScreen({ navigation }) {
     if (!newName) return;
     if (newName === originalUsername) return;
     if (pseudonymAvailable === false) {
-      Alert.alert('Unavailable', 'This pseudonym is already taken.');
+      showAlert('Unavailable', 'This pseudonym is already taken.');
       return;
     }
 
@@ -225,9 +225,9 @@ export default function AboutYouScreen({ navigation }) {
       setOriginalUsername(newName);
       setPseudonymAvailable(null);
       await refreshProfile();
-      Alert.alert('Saved', 'Pseudonym updated successfully.');
+      showAlert('Saved', 'Pseudonym updated successfully.');
     } catch (error) {
-      Alert.alert('Error', error.message || 'Could not update pseudonym.');
+      showAlert('Error', error.message || 'Could not update pseudonym.');
     }
   };
 
@@ -252,14 +252,14 @@ export default function AboutYouScreen({ navigation }) {
 
   const handlePasswordReset = async () => {
     if (!email) {
-      Alert.alert('No Email', 'No email address associated with this account.');
+      showAlert('No Email', 'No email address associated with this account.');
       return;
     }
     try {
       await sendPasswordResetEmail(auth, email);
-      Alert.alert('Email Sent', `A password reset link has been sent to ${email}.`);
+      showAlert('Email Sent', `A password reset link has been sent to ${email}.`);
     } catch (error) {
-      Alert.alert('Error', 'Could not send password reset email.');
+      showAlert('Error', 'Could not send password reset email.');
     }
   };
 
@@ -278,38 +278,26 @@ export default function AboutYouScreen({ navigation }) {
   };
 
   const handleClearData = () => {
-    Alert.alert(
+    showDestructiveConfirm(
       'Clear All Data?',
       'This will delete all your entries, artworks, and rankings. This action cannot be undone.',
-      [
-        { text: 'No', style: 'cancel' },
-        {
-          text: 'Yes',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Are you sure?',
-              'All of your data will be permanently erased. This cannot be undone.',
-              [
-                { text: 'No', style: 'cancel' },
-                {
-                  text: 'Yes, Clear Everything',
-                  style: 'destructive',
-                  onPress: async () => {
-                    try {
-                      await AsyncStorage.clear();
-                      Alert.alert('Success', 'All data has been cleared.');
-                      loadSettings();
-                    } catch (error) {
-                      Alert.alert('Error', 'Could not clear data.');
-                    }
-                  }
-                }
-              ]
-            );
-          }
-        }
-      ]
+      () => {
+        showDestructiveConfirm(
+          'Are you sure?',
+          'All of your data will be permanently erased. This cannot be undone.',
+          async () => {
+            try {
+              await AsyncStorage.clear();
+              showAlert('Success', 'All data has been cleared.');
+              loadSettings();
+            } catch (error) {
+              showAlert('Error', 'Could not clear data.');
+            }
+          },
+          'Yes, Clear Everything'
+        );
+      },
+      'Yes'
     );
   };
 

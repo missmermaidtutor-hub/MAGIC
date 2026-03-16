@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
   Modal,
   Dimensions,
   ImageBackground,
@@ -27,17 +26,9 @@ import {
   deleteInspiration,
 } from '../services/firestoreService';
 import { getESTDate, getESTYesterday } from '../utils/dateUtils';
+import { showAlert } from '../utils/alertUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-
-// Platform-aware alert (react-native-web Alert.alert is a no-op)
-const showAlert = (title, message) => {
-  if (Platform.OS === 'web') {
-    window.alert(message ? `${title}\n\n${message}` : title);
-  } else {
-    Alert.alert(title, message);
-  }
-};
 
 // Stock artwork images from ARTOWORKS folder for voting
 const ARTOWORKS_IMAGES = [

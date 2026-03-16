@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Platform, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { showDestructiveConfirm } from '../utils/alertUtils';
 
 export default function MenuScreen({ navigation }) {
   const { signOut } = useAuth();
@@ -18,26 +19,14 @@ export default function MenuScreen({ navigation }) {
 
   const handleItemPress = async (item) => {
     if (item.name === 'Log Out') {
-      if (Platform.OS === 'web') {
-        if (window.confirm('Are you sure you want to log out?')) {
+      showDestructiveConfirm(
+        'Log Out',
+        'Are you sure you want to log out?',
+        async () => {
           await signOut();
-        }
-      } else {
-        Alert.alert(
-          'Log Out',
-          'Are you sure you want to log out?',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            {
-              text: 'Log Out',
-              style: 'destructive',
-              onPress: async () => {
-                await signOut();
-              },
-            },
-          ]
-        );
-      }
+        },
+        'Log Out'
+      );
     } else if (item.screen) {
       navigation.navigate(item.screen);
     }

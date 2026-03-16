@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Linking, ImageBackground, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Linking, ImageBackground } from 'react-native';
+import { showConfirm } from '../utils/alertUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { useFocusEffect } from '@react-navigation/native';
@@ -9,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { calculateAndSetWinner, getRecentWinners, saveProgress } from '../services/firestoreService';
 import { getESTDate, getESTYesterday, getESTDayBeforeYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
+import { getTodayQuote } from '../utils/quoteUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 
@@ -646,10 +648,9 @@ export default function HomeScreen({ navigation }) {
   const [todayTasks, setTodayTasks] = useState({ manifest: false, art: false, goal: false, inspire: false, courage: false });
   const [previewIndex, setPreviewIndex] = useState(-1); // -1 = real data
 
-  const refreshQuote = useCallback(() => {
-    const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-    const quoteIndex = dayOfYear % quotesData.length;
-    setTodayQuote(quotesData[quoteIndex]);
+  const refreshQuote = useCallback(async () => {
+    const quote = await getTodayQuote(quotesData);
+    setTodayQuote(quote);
   }, []);
 
   useEffect(() => {
@@ -678,13 +679,11 @@ export default function HomeScreen({ navigation }) {
     const isIncomplete = !userProfile.pseudonym || !userProfile.birthdate || !userProfile.timezone;
     if (isIncomplete) {
       profilePromptShown.current = true;
-      Alert.alert(
+      showConfirm(
         'Complete Your Profile',
         'Welcome to MAGIC! Set up your pseudonym, birthdate, and preferences to get the most out of your creative journey.',
-        [
-          { text: 'Later', style: 'cancel' },
-          { text: 'Go to Settings', onPress: () => navigation.navigate('AboutYou') },
-        ]
+        () => navigation.navigate('AboutYou'),
+        'Go to Settings'
       );
     }
   }, [userProfile]);

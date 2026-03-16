@@ -6,10 +6,10 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
   ActivityIndicator,
   ImageBackground,
 } from 'react-native';
+import { showAlert } from '../utils/alertUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
@@ -93,7 +93,7 @@ export default function GoalScreen({ navigation }) {
   const handleSaveGoal = async () => {
     const text = goalText.trim();
     if (!text) {
-      Alert.alert('Empty Goal', 'Please enter a goal.');
+      showAlert('Empty Goal', 'Please enter a goal.');
       return;
     }
     setSaving(true);
@@ -117,9 +117,9 @@ export default function GoalScreen({ navigation }) {
 
       setTodayGoal(goalData);
       await loadGoals();
-      Alert.alert('Saved', 'Goal saved!');
+      showAlert('Saved', 'Goal saved!');
     } catch (error) {
-      Alert.alert('Error', 'Could not save goal.');
+      showAlert('Error', 'Could not save goal.');
       console.log('Save goal error:', error);
     }
     setSaving(false);
@@ -143,7 +143,7 @@ export default function GoalScreen({ navigation }) {
       setTodayGoal(goalData);
       await loadGoals();
     } catch (error) {
-      Alert.alert('Error', 'Could not update goal.');
+      showAlert('Error', 'Could not update goal.');
     }
     setSaving(false);
   };
@@ -172,9 +172,9 @@ export default function GoalScreen({ navigation }) {
       setGoalText(yesterdayGoal.goal);
       setTodayGoal(goalData);
       await loadGoals();
-      Alert.alert('Carried Forward', 'Yesterday\'s goal has been set as today\'s goal.');
+      showAlert('Carried Forward', 'Yesterday\'s goal has been set as today\'s goal.');
     } catch (error) {
-      Alert.alert('Error', 'Could not carry forward goal.');
+      showAlert('Error', 'Could not carry forward goal.');
     }
     setSaving(false);
   };
