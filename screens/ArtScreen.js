@@ -31,6 +31,7 @@ import {
 import { getESTDate } from '../utils/dateUtils';
 import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
 import { persistImageUri } from '../utils/imageUtils';
+import { captureError } from '../config/sentry';
 import DrawingStudio from '../components/drawing/DrawingStudio';
 
 const MIN_TIMER_MINUTES = 1;
@@ -515,6 +516,10 @@ export default function ArtScreen() {
       showAlert('Empty', 'Add something first!');
       return;
     }
+    if (user && !user.emailVerified) {
+      showAlert('Verify Email', 'Please verify your email before sharing with the community. Check your inbox for a verification link.');
+      return;
+    }
     if (courageUploadedToday) {
       showAlert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
       return;
@@ -570,6 +575,7 @@ export default function ArtScreen() {
         showAlert('Congratulations on your COURAGE!', 'Upload is ready for tomorrow\'s vote.');
       } catch (e) {
         console.log('Courage text upload error:', e);
+        captureError(e, { context: 'courageTextUpload' });
         showAlert(
           'Saved Locally',
           'Your work was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
@@ -588,7 +594,7 @@ export default function ArtScreen() {
   const saveSketchToPersonal = async (imageUri, sketchTitle) => {
     try {
       const today = getESTDate();
-      const persistedUri = await persistImageUri(imageUri);
+      const persistedUri = await persistImageUri(imageUri, user?.uid);
       const artwork = {
         id: Date.now(),
         type: 'sketch',
@@ -620,11 +626,16 @@ export default function ArtScreen() {
       showAlert('Saved!', 'Your sketch has been saved to your private gallery.');
     } catch (e) {
       console.log('Sketch save error:', e);
+      captureError(e, { context: 'saveSketchToPersonal' });
       showAlert('Error', 'Could not save sketch.');
     }
   };
 
   const saveSketchToCourage = async (imageUri, sketchTitle) => {
+    if (user && !user.emailVerified) {
+      showAlert('Verify Email', 'Please verify your email before sharing with the community. Check your inbox for a verification link.');
+      return;
+    }
     if (courageUploadedToday) {
       showAlert('Already Submitted', 'You can only upload one Courage per day.');
       return;
@@ -632,7 +643,7 @@ export default function ArtScreen() {
     const doUpload = async () => {
       const today = getESTDate();
       const title = sketchTitle || `Sketch from ${today}`;
-      const persistedUri = await persistImageUri(imageUri);
+      const persistedUri = await persistImageUri(imageUri, user?.uid);
 
       // Save locally first
       try {
@@ -679,6 +690,7 @@ export default function ArtScreen() {
         showAlert('Congratulations on your COURAGE!', 'Your sketch is ready for tomorrow\'s vote.');
       } catch (e) {
         console.log('Courage sketch upload error:', e);
+        captureError(e, { context: 'courageSketchUpload' });
         showAlert(
           'Saved Locally',
           'Your sketch was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
@@ -747,7 +759,7 @@ export default function ArtScreen() {
     if (!capturedImageUri) return;
     try {
       const today = getESTDate();
-      const persistedUri = await persistImageUri(capturedImageUri);
+      const persistedUri = await persistImageUri(capturedImageUri, user?.uid);
       const artwork = {
         id: Date.now(),
         type: 'capture',
@@ -778,12 +790,17 @@ export default function ArtScreen() {
       showAlert('Saved!', 'Your capture has been saved to your private gallery.');
     } catch (e) {
       console.log('Capture save error:', e);
+      captureError(e, { context: 'saveCaptureToPersonal' });
       showAlert('Error', 'Could not save capture.');
     }
   };
 
   const saveCaptureToCourage = async () => {
     if (!capturedImageUri) return;
+    if (user && !user.emailVerified) {
+      showAlert('Verify Email', 'Please verify your email before sharing with the community. Check your inbox for a verification link.');
+      return;
+    }
     if (courageUploadedToday) {
       showAlert('Already Submitted', 'You can only upload one Courage per day.');
       return;
@@ -791,7 +808,7 @@ export default function ArtScreen() {
     const doUpload = async () => {
       const today = getESTDate();
       const title = captureTitle.trim() || `Capture from ${today}`;
-      const persistedUri = await persistImageUri(capturedImageUri);
+      const persistedUri = await persistImageUri(capturedImageUri, user?.uid);
 
       try {
         const personalRaw = await AsyncStorage.getItem('personal_artworks');
@@ -836,6 +853,7 @@ export default function ArtScreen() {
         showAlert('Congratulations on your COURAGE!', 'Your capture is ready for tomorrow\'s vote.');
       } catch (e) {
         console.log('Courage capture upload error:', e);
+        captureError(e, { context: 'courageCaptureUpload' });
         showAlert(
           'Saved Locally',
           'Your capture was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'

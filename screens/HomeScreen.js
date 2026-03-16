@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Linking, ImageBackground } from 'react-native';
-import { showConfirm } from '../utils/alertUtils';
+import { showAlert, showConfirm } from '../utils/alertUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { useFocusEffect } from '@react-navigation/native';
@@ -623,7 +623,8 @@ const getTodaysTasks = async () => {
 // ============================================================
 
 export default function HomeScreen({ navigation }) {
-  const { user, userProfile, refreshProfile } = useAuth();
+  const { user, userProfile, refreshProfile, resendVerification } = useAuth();
+  const [verifyBannerDismissed, setVerifyBannerDismissed] = useState(false);
   const [goalAcknowledged, setGoalAcknowledged] = useState(false);
   const [goalMetYes, setGoalMetYes] = useState(false); // true = yes, false = no/not yet
   const [goalLocked, setGoalLocked] = useState(false);
@@ -1131,6 +1132,19 @@ export default function HomeScreen({ navigation }) {
   return (
     <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+
+        {/* Email verification banner */}
+        {user && !user.emailVerified && !verifyBannerDismissed && (
+          <View style={{ backgroundColor: 'rgba(255, 215, 0, 0.15)', borderWidth: 1, borderColor: '#FFD700', borderRadius: 10, padding: 12, marginHorizontal: 10, marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ color: '#FFD700', fontSize: 13, flex: 1 }}>Verify your email to unlock all features</Text>
+            <TouchableOpacity onPress={async () => { const ok = await resendVerification(); showAlert(ok ? 'Email Sent' : 'Error', ok ? 'Check your inbox for a verification link.' : 'Could not send verification email. Try again later.'); }} style={{ marginLeft: 8, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'rgba(255, 215, 0, 0.2)', borderRadius: 6 }}>
+              <Text style={{ color: '#FFD700', fontSize: 12, fontWeight: '600' }}>Resend</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setVerifyBannerDismissed(true)} style={{ marginLeft: 6, paddingHorizontal: 8, paddingVertical: 5 }}>
+              <Text style={{ color: '#999', fontSize: 14 }}>X</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Header spacer */}
         <View style={styles.headerContainer} />

@@ -5,6 +5,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { initSentry, Sentry } from './config/sentry';
+
+initSentry();
 
 // Auth
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -248,7 +251,7 @@ function AppContent() {
   );
 }
 
-export default function App() {
+function App() {
   return (
     <>
       <StatusBar style="light" />
@@ -258,6 +261,8 @@ export default function App() {
     </>
   );
 }
+
+export default Sentry.wrap(App);
 
 const styles = StyleSheet.create({
   loadingContainer: {

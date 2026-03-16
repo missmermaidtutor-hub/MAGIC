@@ -25,6 +25,9 @@
     "web": {
       "bundler": "metro"
     },
+    "plugins": [
+      "@sentry/react-native/expo"
+    ],
     "extra": {
       "eas": {
         "projectId": "f94ef889-8205-4dac-acaf-c517dc131240"

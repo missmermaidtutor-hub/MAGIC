@@ -13,7 +13,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable } from '../../services/firestoreService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -222,6 +222,15 @@ export default function SignUpScreen({ navigation, route }) {
         bio: bio || profile.bio || '',
       };
       await AsyncStorage.setItem('user_profile', JSON.stringify(updatedProfile));
+
+      // Send email verification (skip for Apple/Google sign-in — already verified)
+      if (!skipCredentials) {
+        try {
+          await sendEmailVerification(auth.currentUser);
+        } catch (verifyErr) {
+          console.log('Email verification send error:', verifyErr);
+        }
+      }
 
       // Auth listener in AuthContext will automatically redirect to main app
     } catch (error) {

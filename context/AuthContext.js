@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut as firebaseSignOut, sendEmailVerification } from 'firebase/auth';
 import { auth, isFirebaseConfigured } from '../config/firebase';
+import { setSentryUser, clearSentryUser, captureError } from '../config/sentry';
 import {
   getUserProfile,
   createUserProfile,
@@ -34,6 +35,7 @@ export function AuthProvider({ children }) {
       setUser(firebaseUser);
 
       if (firebaseUser) {
+        setSentryUser(firebaseUser.uid, firebaseUser.email);
         try {
           // Try Firestore first
           const profile = await getUserProfile(firebaseUser.uid);
@@ -60,6 +62,7 @@ export function AuthProvider({ children }) {
               }
             } catch (createError) {
               console.log('Error creating profile:', createError);
+              captureError(createError, { context: 'createProfile' });
               // Fallback to cached profile
               const cached = await AsyncStorage.getItem('cached_user_profile');
               if (cached) setUserProfile(JSON.parse(cached));
@@ -67,12 +70,14 @@ export function AuthProvider({ children }) {
           }
         } catch (error) {
           console.log('Error loading profile, using cache:', error);
+          captureError(error, { context: 'loadProfile' });
           // Offline fallback
           const cached = await AsyncStorage.getItem('cached_user_profile');
           if (cached) setUserProfile(JSON.parse(cached));
         }
       } else {
         setUserProfile(null);
+        clearSentryUser();
       }
 
       setLoading(false);
@@ -160,6 +165,17 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const resendVerification = async () => {
+    if (!auth.currentUser) return;
+    try {
+      await sendEmailVerification(auth.currentUser);
+      return true;
+    } catch (error) {
+      console.log('Resend verification error:', error);
+      return false;
+    }
+  };
+
   const refreshProfile = async () => {
     if (!isFirebaseConfigured || !user) return;
     try {
@@ -174,7 +190,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, signOut, refreshProfile, isFirebaseConfigured }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, signOut, refreshProfile, resendVerification, isFirebaseConfigured }}>
       {children}
     </AuthContext.Provider>
   );

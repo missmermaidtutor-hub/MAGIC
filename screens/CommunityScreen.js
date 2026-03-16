@@ -402,7 +402,7 @@ export default function CommunityScreen({ route }) {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const uri = await persistImageUri(result.assets[0].uri);
+        const uri = await persistImageUri(result.assets[0].uri, user?.uid);
         const newArtwork = {
           id: `personal_${Date.now()}`,
           imageUrl: uri,

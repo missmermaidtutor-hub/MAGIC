@@ -1,15 +1,37 @@
 import { Platform } from 'react-native';
+import { uploadMediaToStorage } from '../services/firestoreService';
 
 /**
- * On web, ImagePicker returns blob: URLs that expire on page reload.
- * Convert to base64 data: URLs for persistence in AsyncStorage.
- * On native, file:// URIs persist — return as-is.
+ * Persist an image URI for storage in AsyncStorage.
+ *
+ * Web: ImagePicker returns blob: URLs that expire on page reload.
+ * If uid is provided, uploads to Firebase Storage and returns the
+ * download URL (small string, no localStorage bloat).
+ * Falls back to base64 data URL if upload fails.
+ *
+ * Native: file:// URIs persist — returned as-is.
  */
-export const persistImageUri = async (uri) => {
-  if (Platform.OS !== 'web' || !uri || !uri.startsWith('blob:')) {
-    return uri;
+export const persistImageUri = async (uri, uid) => {
+  if (Platform.OS !== 'web' || !uri) return uri;
+
+  // Already persistent (data URL or Firebase download URL)
+  if (uri.startsWith('data:') || uri.startsWith('https://')) return uri;
+
+  // Not a blob — nothing to convert
+  if (!uri.startsWith('blob:')) return uri;
+
+  // Try Firebase Storage upload first (returns a short URL, saves localStorage space)
+  if (uid) {
+    try {
+      const path = `artworks/${uid}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
+      const downloadUrl = await uploadMediaToStorage(uri, path);
+      return downloadUrl;
+    } catch (e) {
+      console.log('Firebase Storage upload failed, falling back to base64:', e);
+    }
   }
 
+  // Fallback: convert blob to base64 data URL
   try {
     const response = await fetch(uri);
     const blob = await response.blob();
