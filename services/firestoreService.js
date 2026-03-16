@@ -555,9 +555,74 @@ export const getAllCuratedGalleries = async () => {
     const data = d.data();
     // Extract uid from the document path: users/{uid}/curated/{id}
     const pathParts = d.ref.path.split('/');
-    return { id: d.id, uid: pathParts[1], ...data };
+    return { ...data, docId: d.id, curatorUid: pathParts[1] };
   });
   return works;
+};
+
+// Get all curated galleries grouped by curator, excluding own art
+export const getAllCuratedGalleriesGrouped = async (excludeUid) => {
+  const works = await getAllCuratedGalleries();
+  const grouped = {};
+  for (const work of works) {
+    if (work.curatorUid === excludeUid) continue;
+    if (!grouped[work.curatorUid]) {
+      grouped[work.curatorUid] = {
+        uid: work.curatorUid,
+        pseudonym: work.pseudonym || 'Anonymous',
+        artworks: [],
+      };
+    }
+    grouped[work.curatorUid].artworks.push(work);
+  }
+  return Object.values(grouped);
+};
+
+// ============================================================
+// ART SAVES (tracking who saved whose art)
+// ============================================================
+
+// Record an art save (with duplicate check, skips self-saves)
+export const recordArtSave = async (ownerUid, artworkId, saverUid, saverPseudonym) => {
+  if (ownerUid === saverUid) return; // skip self-saves
+  // Duplicate check
+  const q = query(
+    collection(db, 'artSaves'),
+    where('artworkId', '==', artworkId),
+    where('saverUid', '==', saverUid),
+  );
+  const snap = await getDocs(q);
+  if (!snap.empty) return; // already saved
+  await addDoc(collection(db, 'artSaves'), {
+    artworkId,
+    ownerUid,
+    saverUid,
+    saverPseudonym: saverPseudonym || 'Anonymous',
+    savedAt: serverTimestamp(),
+  });
+};
+
+// Remove an art save when un-candled
+export const removeArtSave = async (artworkId, saverUid) => {
+  const q = query(
+    collection(db, 'artSaves'),
+    where('artworkId', '==', artworkId),
+    where('saverUid', '==', saverUid),
+  );
+  const snap = await getDocs(q);
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+  if (!snap.empty) await batch.commit();
+};
+
+// Get all saves of my art (for "My Inspiring Works" tab)
+export const getMyArtSaves = async (ownerUid) => {
+  const q = query(
+    collection(db, 'artSaves'),
+    where('ownerUid', '==', ownerUid),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
 // ============================================================

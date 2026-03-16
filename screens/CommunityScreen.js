@@ -9,7 +9,8 @@ import {
   Linking,
   Modal,
   Dimensions,
-  ImageBackground
+  ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
 import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
 import { persistImageUri } from '../utils/imageUtils';
@@ -24,63 +25,15 @@ import {
   removeCuratedWork,
   deleteArtwork,
   deleteInspiration,
+  recordArtSave,
+  removeArtSave,
+  getMyArtSaves,
+  getAllCuratedGalleriesGrouped,
+  getUserCurated,
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-
-// Sample demo users for the newsfeed (until real users exist)
-const DEMO_USERS = [
-  {
-    id: 'demo_luna',
-    name: 'Luna Starweaver',
-    avatar: '🌙',
-    artworks: [
-      { id: 'luna_1', imageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=400&fit=crop', title: 'Cosmic Dreams', date: '2026-02-18' },
-      { id: 'luna_2', imageUrl: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=400&fit=crop', title: 'Abstract Flow', date: '2026-02-15' },
-      { id: 'luna_3', imageUrl: 'https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=400&h=400&fit=crop', title: 'Color Burst', date: '2026-02-10' },
-    ],
-  },
-  {
-    id: 'demo_oak',
-    name: 'Oak Thornberry',
-    avatar: '🌿',
-    artworks: [
-      { id: 'oak_1', imageUrl: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=400&fit=crop', title: 'Morning Light', date: '2026-02-17' },
-      { id: 'oak_2', imageUrl: 'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=400&h=400&fit=crop', title: 'Still Life', date: '2026-02-12' },
-    ],
-  },
-  {
-    id: 'demo_coral',
-    name: 'Coral Reef',
-    avatar: '🐚',
-    artworks: [
-      { id: 'coral_1', imageUrl: 'https://images.unsplash.com/photo-1549887534-1541e9326642?w=400&h=400&fit=crop', title: 'Ocean Waves', date: '2026-02-16' },
-      { id: 'coral_2', imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop', title: 'Seascape', date: '2026-02-08' },
-      { id: 'coral_3', imageUrl: 'https://images.unsplash.com/photo-1545551816-c691d80f8e31?w=400&h=400&fit=crop', title: 'Blue Horizon', date: '2026-02-03' },
-      { id: 'coral_4', imageUrl: 'https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=400&h=400&fit=crop', title: 'Coral Garden', date: '2026-01-28' },
-    ],
-  },
-  {
-    id: 'demo_blaze',
-    name: 'Blaze Phoenix',
-    avatar: '🔥',
-    artworks: [
-      { id: 'blaze_1', imageUrl: 'https://images.unsplash.com/photo-1573521193826-58c7dc2e13e3?w=400&h=400&fit=crop', title: 'Ember Glow', date: '2026-02-14' },
-      { id: 'blaze_2', imageUrl: 'https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=400&h=400&fit=crop', title: 'Neon Dreams', date: '2026-02-06' },
-    ],
-  },
-  {
-    id: 'demo_sage',
-    name: 'Sage Moonwhisper',
-    avatar: '🦋',
-    artworks: [
-      { id: 'sage_1', imageUrl: 'https://images.unsplash.com/photo-1544967082-d9d25d867d66?w=400&h=400&fit=crop', title: 'Butterfly Effect', date: '2026-02-13' },
-      { id: 'sage_2', imageUrl: 'https://images.unsplash.com/photo-1502472584811-0a2f2feb8968?w=400&h=400&fit=crop', title: 'Zen Garden', date: '2026-02-01' },
-      { id: 'sage_3', imageUrl: 'https://images.unsplash.com/photo-1518012312832-96DF0a18690f?w=400&h=400&fit=crop', title: 'Watercolor Sky', date: '2026-01-25' },
-    ],
-  },
-];
 
 // Gold Frame component (matches HomeScreen)
 const GoldFrame = ({ children, style, containerStyle, onPress, thickness = 4 }) => {
@@ -178,6 +131,29 @@ export default function CommunityScreen({ navigation, route }) {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [userPseudonym, setUserPseudonym] = useState('');
 
+  // Real newsfeed state
+  const [newsfeedUsers, setNewsfeedUsers] = useState([]);
+  const [newsfeedLoading, setNewsfeedLoading] = useState(false);
+
+  // My Inspiring Works state
+  const [myInspiringWorks, setMyInspiringWorks] = useState([]);
+  const [inspiringWorksLoading, setInspiringWorksLoading] = useState(false);
+  const [expandedSaveCounts, setExpandedSaveCounts] = useState({});
+
+  // Day 13 popup
+  const [showDay13Popup, setShowDay13Popup] = useState(false);
+
+  // 13-day membership check
+  const getMemberDayCount = () => {
+    if (!userProfile?.createdAt) return 0;
+    const createdDate = userProfile.createdAt?.toDate?.()
+      ?? (userProfile.createdAt?.seconds
+        ? new Date(userProfile.createdAt.seconds * 1000)
+        : new Date(userProfile.createdAt));
+    return Math.floor((Date.now() - createdDate.getTime()) / 86400000) + 1;
+  };
+  const canCurate = getMemberDayCount() >= 13;
+
   // Sync from auth context
   useEffect(() => {
     if (userProfile) {
@@ -192,7 +168,21 @@ export default function CommunityScreen({ navigation, route }) {
     loadSavedArt();
     promotePendingVotingArtworks();
     loadUserIdentity();
+    loadNewsfeed();
   }, []);
+
+  // Day 13 popup (one-time)
+  useEffect(() => {
+    if (canCurate) {
+      AsyncStorage.getItem('day13_popup_shown').then(shown => {
+        if (!shown) {
+          setShowDay13Popup(true);
+          AsyncStorage.setItem('day13_popup_shown', 'true');
+          trackAction('day_13_popup_shown');
+        }
+      });
+    }
+  }, [canCurate]);
 
   // Reload galleries when screen comes into focus & mark as browsed for Connect star
   useFocusEffect(
@@ -200,6 +190,7 @@ export default function CommunityScreen({ navigation, route }) {
       loadAllGalleries();
       loadSavedArt();
       promotePendingVotingArtworks();
+      loadNewsfeed();
       // Mark browsed for today's Connect (C) star point
       const today = getESTDate();
       AsyncStorage.setItem(`browsed_${today}`, 'true');
@@ -253,6 +244,57 @@ export default function CommunityScreen({ navigation, route }) {
     }
   };
 
+  // Load real community newsfeed from Firestore
+  const loadNewsfeed = async () => {
+    if (!user) return;
+    setNewsfeedLoading(true);
+    try {
+      const grouped = await getAllCuratedGalleriesGrouped(user.uid);
+      setNewsfeedUsers(grouped);
+      trackAction('newsfeed_loaded');
+    } catch (error) {
+      console.log('Error loading newsfeed:', error);
+    } finally {
+      setNewsfeedLoading(false);
+    }
+  };
+
+  // Load artworks of mine that others have saved
+  const loadMyInspiringWorks = async () => {
+    if (!user) return;
+    setInspiringWorksLoading(true);
+    try {
+      const saves = await getMyArtSaves(user.uid);
+      const myCurated = await getUserCurated(user.uid);
+
+      // Group saves by artworkId
+      const grouped = {};
+      for (const save of saves) {
+        if (!grouped[save.artworkId]) {
+          grouped[save.artworkId] = { artworkId: save.artworkId, savers: [] };
+        }
+        grouped[save.artworkId].savers.push(save.saverPseudonym || 'Anonymous');
+      }
+
+      // Match with curated artworks
+      const works = Object.values(grouped).map(g => {
+        const artwork = myCurated.find(a => a.id === g.artworkId);
+        return {
+          ...g,
+          artwork: artwork || null,
+          saveCount: g.savers.length,
+        };
+      }).filter(w => w.artwork); // only show works that still exist
+
+      setMyInspiringWorks(works);
+      trackAction('inspiring_works_loaded');
+    } catch (error) {
+      console.log('Error loading inspiring works:', error);
+    } finally {
+      setInspiringWorksLoading(false);
+    }
+  };
+
   // Move pending voting artworks to curated gallery after voting day passes
   const promotePendingVotingArtworks = async () => {
     try {
@@ -297,31 +339,46 @@ export default function CommunityScreen({ navigation, route }) {
     }
   };
 
-  const handleCandleSave = async (artwork) => {
+  const handleCandleSave = async (artwork, curatorUid) => {
     try {
       const existing = await AsyncStorage.getItem('favorite_artworks');
       let favorites = existing ? JSON.parse(existing) : [];
-      const alreadySaved = favorites.some(a => a.id === artwork.id);
+      const artId = artwork.docId || artwork.id;
+      const alreadySaved = favorites.some(a => a.id === artId);
 
       if (alreadySaved) {
-        favorites = favorites.filter(a => a.id !== artwork.id);
+        favorites = favorites.filter(a => a.id !== artId);
         setSavedNewsfeedArt(prev => {
           const next = new Set(prev);
-          next.delete(artwork.id);
+          next.delete(artId);
           return next;
         });
+        // Remove Firestore art save record
+        if (user && curatorUid) {
+          removeArtSave(artId, user.uid).catch(err =>
+            console.log('removeArtSave error:', err)
+          );
+          trackAction('art_save_removed');
+        }
       } else {
         favorites.push({
-          id: artwork.id,
+          id: artId,
           imageUrl: artwork.imageUrl,
           title: artwork.title || 'Untitled',
           source: 'candle_save',
           date: artwork.date,
           savedAt: new Date().toISOString(),
         });
-        setSavedNewsfeedArt(prev => new Set(prev).add(artwork.id));
+        setSavedNewsfeedArt(prev => new Set(prev).add(artId));
         const today = getESTDate();
         await AsyncStorage.setItem(`inspiration_saved_${today}`, 'true');
+        // Record Firestore art save
+        if (user && curatorUid) {
+          recordArtSave(curatorUid, artId, user.uid, userPseudonym || 'Anonymous').catch(err =>
+            console.log('recordArtSave error:', err)
+          );
+          trackAction('art_save_recorded');
+        }
       }
       await AsyncStorage.setItem('favorite_artworks', JSON.stringify(favorites));
       setInspirationArtworks(favorites);
@@ -356,18 +413,14 @@ export default function CommunityScreen({ navigation, route }) {
     AsyncStorage.setItem(`connected_${today}`, 'true');
     setNewsfeedImageIndex(prev => {
       const currentIndex = prev[userId] || 0;
-      const user = getNewsfeedUsers().find(u => u.id === userId);
-      if (!user) return prev;
-      const maxIndex = user.artworks.length - 1;
+      const feedUser = newsfeedUsers.find(u => u.uid === userId);
+      if (!feedUser) return prev;
+      const maxIndex = feedUser.artworks.length - 1;
       let newIndex = currentIndex + direction;
       if (newIndex < 0) newIndex = 0;
       if (newIndex > maxIndex) newIndex = maxIndex;
       return { ...prev, [userId]: newIndex };
     });
-  };
-
-  const getNewsfeedUsers = () => {
-    return [...DEMO_USERS];
   };
 
   const loadAllGalleries = async () => {
@@ -576,27 +629,8 @@ export default function CommunityScreen({ navigation, route }) {
     );
   };
 
-  const getSampleImageUrl = (index) => {
-    const sampleImages = [
-      'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1549887534-1541e9326642?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1545551816-c691d80f8e31?w=400&h=400&fit=crop',
-    ];
-    if (index >= 0 && index < sampleImages.length) return sampleImages[index];
-    return null;
-  };
-
   const getArtworkImageSource = (artwork) => {
     if (artwork.imageUrl) return { uri: artwork.imageUrl };
-    if (artwork.index !== undefined) {
-      const url = getSampleImageUrl(artwork.index);
-      if (url) return { uri: url };
-    }
     return null;
   };
 
@@ -670,11 +704,18 @@ export default function CommunityScreen({ navigation, route }) {
 
           {isPrivateGallery && (
             <TouchableOpacity
-              style={[styles.curateBtn, isCurated && styles.curateBtnActive]}
-              onPress={() => handleToggleCurate(artwork, fromGallery)}
+              style={[styles.curateBtn, isCurated && styles.curateBtnActive, !canCurate && styles.curateBtnDisabled]}
+              onPress={() => {
+                if (!canCurate) {
+                  showAlert('Gallery Locked', `Curating unlocks on Day 13. You are on Day ${getMemberDayCount()}.`);
+                  trackAction('curate_blocked_day_gate');
+                  return;
+                }
+                handleToggleCurate(artwork, fromGallery);
+              }}
             >
               <Text style={styles.curateBtnText}>
-                {isCurated ? '🖼️ Public' : '🖼️ Private'}
+                {!canCurate ? '🔒 Day 13' : (isCurated ? '🖼️ Public' : '🖼️ Private')}
               </Text>
             </TouchableOpacity>
           )}
@@ -762,54 +803,62 @@ export default function CommunityScreen({ navigation, route }) {
 
   // ─── Newsfeed (Visit Curations) ───
   const renderNewsfeed = () => {
-    const users = getNewsfeedUsers();
-    if (users.length === 0) {
+    if (newsfeedLoading) {
+      return (
+        <View style={styles.emptyState}>
+          <ActivityIndicator size="large" color="#FFD700" />
+          <Text style={[styles.emptyText, { marginTop: 12 }]}>Loading community curations...</Text>
+        </View>
+      );
+    }
+
+    if (newsfeedUsers.length === 0) {
       return (
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🖼️</Text>
           <Text style={styles.emptyText}>
-            No curations to visit yet.{'\n'}Add artworks to your curated gallery to appear here!
+            No curations to visit yet.{'\n'}Community members' curated galleries will appear here!
           </Text>
         </View>
       );
     }
 
-    return users.map((user) => {
-      const currentIndex = newsfeedImageIndex[user.id] || 0;
-      const artwork = user.artworks[currentIndex];
+    return newsfeedUsers.map((feedUser) => {
+      const currentIndex = newsfeedImageIndex[feedUser.uid] || 0;
+      const artwork = feedUser.artworks[currentIndex];
       if (!artwork) return null;
-      const imageSource = artwork.imageUrl ? { uri: artwork.imageUrl } : getArtworkImageSource(artwork);
-      const isFollowed = followedUsers.includes(user.id);
-      const isCurrentUser = user.id === 'current_user';
+      const imageSource = getArtworkImageSource(artwork);
+      const isFollowed = followedUsers.includes(feedUser.uid);
+      const firstLetter = (feedUser.pseudonym || 'A').charAt(0).toUpperCase();
 
       return (
-        <View key={user.id} style={styles.newsfeedCard}>
+        <View key={feedUser.uid} style={styles.newsfeedCard}>
           <View style={styles.newsfeedHeader}>
             <View style={styles.newsfeedUserInfo}>
-              <Text style={styles.newsfeedAvatar}>{user.avatar}</Text>
+              <View style={styles.newsfeedAvatarCircle}>
+                <Text style={styles.newsfeedAvatarLetter}>{firstLetter}</Text>
+              </View>
               <View>
-                <Text style={styles.newsfeedUsername}>{user.name}</Text>
+                <Text style={styles.newsfeedUsername}>{feedUser.pseudonym}</Text>
                 <Text style={styles.newsfeedArtCount}>
-                  {user.artworks.length} artwork{user.artworks.length !== 1 ? 's' : ''}
+                  {feedUser.artworks.length} artwork{feedUser.artworks.length !== 1 ? 's' : ''}
                 </Text>
               </View>
             </View>
-            {!isCurrentUser && (
-              <TouchableOpacity
-                style={[styles.followBtn, isFollowed && styles.followBtnActive]}
-                onPress={() => toggleFollow(user.id)}
-              >
-                <Text style={[styles.followBtnText, isFollowed && styles.followBtnTextActive]}>
-                  {isFollowed ? 'Following' : 'Follow'}
-                </Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.followBtn, isFollowed && styles.followBtnActive]}
+              onPress={() => toggleFollow(feedUser.uid)}
+            >
+              <Text style={[styles.followBtnText, isFollowed && styles.followBtnTextActive]}>
+                {isFollowed ? 'Following' : 'Follow'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.newsfeedArtContainer}>
             <TouchableOpacity
               style={[styles.navArrow, currentIndex === 0 && styles.navArrowDisabled]}
-              onPress={() => navigateNewsfeed(user.id, -1)}
+              onPress={() => navigateNewsfeed(feedUser.uid, -1)}
               disabled={currentIndex === 0}
             >
               <Text style={[styles.navArrowText, currentIndex === 0 && styles.navArrowTextDisabled]}>‹</Text>
@@ -841,11 +890,11 @@ export default function CommunityScreen({ navigation, route }) {
             </View>
 
             <TouchableOpacity
-              style={[styles.navArrow, currentIndex >= user.artworks.length - 1 && styles.navArrowDisabled]}
-              onPress={() => navigateNewsfeed(user.id, 1)}
-              disabled={currentIndex >= user.artworks.length - 1}
+              style={[styles.navArrow, currentIndex >= feedUser.artworks.length - 1 && styles.navArrowDisabled]}
+              onPress={() => navigateNewsfeed(feedUser.uid, 1)}
+              disabled={currentIndex >= feedUser.artworks.length - 1}
             >
-              <Text style={[styles.navArrowText, currentIndex >= user.artworks.length - 1 && styles.navArrowTextDisabled]}>›</Text>
+              <Text style={[styles.navArrowText, currentIndex >= feedUser.artworks.length - 1 && styles.navArrowTextDisabled]}>›</Text>
             </TouchableOpacity>
           </View>
 
@@ -856,18 +905,17 @@ export default function CommunityScreen({ navigation, route }) {
             </TouchableOpacity>
             <View style={styles.newsfeedArtInfoCenter}>
               <Text style={styles.newsfeedArtTitle}>{artwork.title || 'Untitled'}</Text>
-              <Text style={styles.newsfeedArtDate}>{artwork.date}</Text>
             </View>
             <Candle
-              lit={savedNewsfeedArt.has(artwork.id)}
-              onPress={() => handleCandleSave(artwork)}
+              lit={savedNewsfeedArt.has(artwork.docId || artwork.id)}
+              onPress={() => handleCandleSave(artwork, feedUser.uid)}
               size={36}
             />
           </View>
 
-          {user.artworks.length > 1 && (
+          {feedUser.artworks.length > 1 && (
             <View style={styles.dotRow}>
-              {user.artworks.map((_, i) => (
+              {feedUser.artworks.map((_, i) => (
                 <View key={i} style={[styles.dot, i === currentIndex && styles.dotActive]} />
               ))}
             </View>
@@ -877,6 +925,78 @@ export default function CommunityScreen({ navigation, route }) {
     });
   };
 
+  // ─── Render "My Inspiring Works" tab ───
+  const renderInspiringWorks = () => {
+    if (inspiringWorksLoading) {
+      return (
+        <View style={styles.emptyState}>
+          <ActivityIndicator size="large" color="#FFD700" />
+          <Text style={[styles.emptyText, { marginTop: 12 }]}>Loading...</Text>
+        </View>
+      );
+    }
+
+    if (myInspiringWorks.length === 0) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyEmoji}>💫</Text>
+          <Text style={styles.emptyText}>
+            None of your curated works have been saved yet.{'\n'}Keep creating and sharing!
+          </Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.galleryGrid}>
+        {myInspiringWorks.map(item => {
+          const imageSource = getArtworkImageSource(item.artwork);
+          const isExpanded = expandedSaveCounts[item.artworkId];
+          return (
+            <View key={item.artworkId} style={styles.galleryItemContainer}>
+              <GoldFrame
+                onPress={() => imageSource && setFullViewImage(imageSource)}
+                thickness={3}
+              >
+                {imageSource ? (
+                  <View style={styles.galleryImageBg}>
+                    <Image source={imageSource} style={styles.galleryImage} resizeMode="contain" />
+                  </View>
+                ) : (
+                  <View style={[styles.galleryImageBg, styles.placeholderArt]}>
+                    <Text style={styles.placeholderEmoji}>🎨</Text>
+                  </View>
+                )}
+              </GoldFrame>
+              <Text style={styles.curatedTitle}>{item.artwork.title || 'Untitled'}</Text>
+              <TouchableOpacity
+                style={styles.saveCountBadge}
+                onPress={() => {
+                  setExpandedSaveCounts(prev => ({
+                    ...prev,
+                    [item.artworkId]: !prev[item.artworkId],
+                  }));
+                  trackAction('save_count_tapped');
+                }}
+              >
+                <Text style={styles.saveCountText}>
+                  {item.saveCount} save{item.saveCount !== 1 ? 's' : ''}
+                </Text>
+              </TouchableOpacity>
+              {isExpanded && (
+                <View style={styles.saversList}>
+                  {item.savers.map((name, i) => (
+                    <Text key={i} style={styles.saverName}>{name}</Text>
+                  ))}
+                </View>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
   // ─── Gallery content switcher ───
   const renderGalleryContent = () => {
     switch (activeGallery) {
@@ -884,6 +1004,17 @@ export default function CommunityScreen({ navigation, route }) {
         return renderNewsfeed();
 
       case 'curated':
+        if (!canCurate) {
+          const dayCount = getMemberDayCount();
+          return (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>🔒</Text>
+              <Text style={styles.emptyText}>
+                Your curated gallery unlocks on Day 13.{'\n'}You are on Day {dayCount} — keep going!
+              </Text>
+            </View>
+          );
+        }
         return curatedArtworks.length > 0 ? (
           <View style={styles.galleryGrid}>
             {curatedArtworks.map(artwork => renderCuratedItem(artwork))}
@@ -896,6 +1027,9 @@ export default function CommunityScreen({ navigation, route }) {
             </Text>
           </View>
         );
+
+      case 'inspiring':
+        return renderInspiringWorks();
 
       case 'private':
         return (
@@ -949,7 +1083,7 @@ export default function CommunityScreen({ navigation, route }) {
         <Text style={styles.header}>Connect</Text>
         <Text style={styles.subtitle}>Galleries & Community</Text>
 
-        {/* 3-Tab Selector */}
+        {/* 4-Tab Selector */}
         <View style={styles.tabRow}>
           <TouchableOpacity
             style={[styles.tab, activeGallery === 'newsfeed' && styles.tabActive]}
@@ -957,21 +1091,41 @@ export default function CommunityScreen({ navigation, route }) {
           >
             <Text style={styles.tabIcon}>🖼️</Text>
             <Text style={[styles.tabLabel, activeGallery === 'newsfeed' && styles.tabLabelActive]}>
-              Visit Community{'\n'}Curations
+              Community
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.tab, activeGallery === 'curated' && styles.tabActive]}
-            onPress={() => setActiveGallery('curated')}
+            onPress={() => {
+              if (!canCurate) {
+                showAlert('Gallery Locked', `Your curated gallery unlocks on Day 13. You are on Day ${getMemberDayCount()}.`);
+                trackAction('curate_blocked_day_gate');
+                return;
+              }
+              setActiveGallery('curated');
+            }}
           >
-            <Text style={styles.tabIcon}>⭐</Text>
+            <Text style={styles.tabIcon}>{canCurate ? '⭐' : '🔒'}</Text>
             <Text style={[styles.tabLabel, activeGallery === 'curated' && styles.tabLabelActive]}>
-              My Curated{'\n'}Gallery
+              Curated
             </Text>
-            {curatedArtworks.length > 0 && (
+            {canCurate && curatedArtworks.length > 0 && (
               <Text style={styles.tabCount}>{curatedArtworks.length}</Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tab, activeGallery === 'inspiring' && styles.tabActive]}
+            onPress={() => {
+              setActiveGallery('inspiring');
+              loadMyInspiringWorks();
+            }}
+          >
+            <Text style={styles.tabIcon}>💫</Text>
+            <Text style={[styles.tabLabel, activeGallery === 'inspiring' && styles.tabLabelActive]}>
+              Inspiring
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -980,7 +1134,7 @@ export default function CommunityScreen({ navigation, route }) {
           >
             <Text style={styles.tabIcon}>🔒</Text>
             <Text style={[styles.tabLabel, activeGallery === 'private' && styles.tabLabelActive]}>
-              My Private{'\n'}Galleries
+              Private
             </Text>
             {(personalArtworks.length + inspirationArtworks.length) > 0 && (
               <Text style={styles.tabCount}>{personalArtworks.length + inspirationArtworks.length}</Text>
@@ -1005,6 +1159,7 @@ export default function CommunityScreen({ navigation, route }) {
         <Text style={styles.galleryDescription}>
           {activeGallery === 'newsfeed' && 'Browse curated galleries from the community'}
           {activeGallery === 'curated' && 'Artworks you chose to share publicly'}
+          {activeGallery === 'inspiring' && 'Your art that others have saved'}
           {activeGallery === 'private' && 'Your uploads and inspirations — only you can see these'}
         </Text>
 
@@ -1118,6 +1273,40 @@ export default function CommunityScreen({ navigation, route }) {
             ) : null}
             <Text style={styles.fullTextContent}>{fullViewText?.text}</Text>
           </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Day 13 Congratulations Popup */}
+      <Modal
+        visible={showDay13Popup}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDay13Popup(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.day13Popup}>
+            <Text style={styles.day13Emoji}>🎉</Text>
+            <Text style={styles.day13Title}>Congratulations!</Text>
+            <Text style={styles.day13Text}>
+              You've reached Day 13!{'\n'}Your curated gallery is now unlocked.{'\n'}Share your best work with the community!
+            </Text>
+            <TouchableOpacity
+              style={styles.day13Button}
+              onPress={() => {
+                setShowDay13Popup(false);
+                setActiveGallery('curated');
+                trackAction('day_13_open_gallery');
+              }}
+            >
+              <Text style={styles.day13ButtonText}>Open My Gallery</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.day13DismissBtn}
+              onPress={() => setShowDay13Popup(false)}
+            >
+              <Text style={styles.day13DismissText}>Maybe Later</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </ImageBackground>
@@ -1612,9 +1801,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  newsfeedAvatar: {
-    fontSize: 32,
+  newsfeedAvatarCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 10,
+  },
+  newsfeedAvatarLetter: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0a0e27',
   },
   newsfeedUsername: {
     fontSize: 16,
@@ -1726,5 +1925,84 @@ const styles = StyleSheet.create({
   },
   dotActive: {
     backgroundColor: '#FFD700',
+  },
+
+  // Curate button disabled
+  curateBtnDisabled: {
+    opacity: 0.5,
+    borderColor: '#444',
+  },
+
+  // Save count badge (Inspiring Works tab)
+  saveCountBadge: {
+    backgroundColor: '#FFD700',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    alignSelf: 'center',
+    marginTop: 6,
+  },
+  saveCountText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#0a0e27',
+  },
+  saversList: {
+    backgroundColor: 'rgba(184, 200, 232, 0.6)',
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 4,
+  },
+  saverName: {
+    fontSize: 12,
+    color: '#050d61',
+    paddingVertical: 2,
+  },
+
+  // Day 13 popup
+  day13Popup: {
+    backgroundColor: '#1a1e47',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    padding: 30,
+    marginHorizontal: 30,
+    alignItems: 'center',
+  },
+  day13Emoji: {
+    fontSize: 60,
+    marginBottom: 12,
+  },
+  day13Title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 12,
+  },
+  day13Text: {
+    fontSize: 16,
+    color: '#fff',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 20,
+  },
+  day13Button: {
+    backgroundColor: '#FFD700',
+    borderRadius: 10,
+    paddingHorizontal: 30,
+    paddingVertical: 14,
+    marginBottom: 12,
+  },
+  day13ButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0a0e27',
+  },
+  day13DismissBtn: {
+    padding: 8,
+  },
+  day13DismissText: {
+    fontSize: 14,
+    color: '#999',
   },
 });
