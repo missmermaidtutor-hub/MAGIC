@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Linking, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Linking, ImageBackground, Modal } from 'react-native';
 import { showAlert, showConfirm } from '../utils/alertUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
@@ -14,6 +14,18 @@ import { getTodayQuote } from '../utils/quoteUtils';
 import { trackAction } from '../services/analyticsService';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
+
+// MAGIC task constants (shared with insight modal)
+const MAGIC_KEYS = ['manifest', 'art', 'goal', 'inspire', 'courage'];
+const MAGIC_COLOR_ARRAY = ['#DC143C', '#FF7F00', '#FFD700', '#22C55E', '#6366F1'];
+const MAGIC_LABELS = ['Manifest', 'Art', 'Grow', 'Inspire', 'Connect'];
+const MAGIC_GUIDANCE = [
+  'Write in your Muse, Dump, or Vision journal',
+  'Use the art timer, create, or upload artwork',
+  'Set a growth goal in your Manifest',
+  "Vote on today's artwork rankings",
+  'Browse curations, send inspiration, or save art',
+];
 
 // ============================================================
 // STAR COMPONENTS
@@ -552,18 +564,16 @@ const getStreakStars = (streak) => {
   return { yearDots, monthStars, weekStars, dayStars, total: streak };
 };
 
-// Get today's MAGIC task completion
+// Get MAGIC task completion for a given date
 // M = Manifest: wrote in muse, dump, or vision
 // A = Art: used timer/stopwatch, or wrote/sketched/captured, or uploaded (courage or private)
 // G = Grow: set a growth goal
 // I = Inspire: voted/ranked one set of artwork
 // C = Connect: browsed artwork after voting, sent email, or saved an inspiration
-const getTodaysTasks = async () => {
-  const today = getESTDate();
-
+const getTasksForDate = async (dateStr) => {
   // --- M: Manifest (wrote in muse, dump, or vision) ---
   let hasManifest = false;
-  const manifestRaw = await AsyncStorage.getItem(`manifest_${today}`);
+  const manifestRaw = await AsyncStorage.getItem(`manifest_${dateStr}`);
   if (manifestRaw) {
     try {
       const entry = JSON.parse(manifestRaw);
@@ -576,7 +586,7 @@ const getTodaysTasks = async () => {
   }
 
   // --- A: Art (used timer/stopwatch, created, or uploaded) ---
-  const dailyArtTime = await AsyncStorage.getItem(`art_time_${today}`);
+  const dailyArtTime = await AsyncStorage.getItem(`art_time_${dateStr}`);
   const dailyTimerUsed = !!(dailyArtTime && parseInt(dailyArtTime) > 0);
   const weeklyArtTime = await AsyncStorage.getItem('weekly_art_time');
   const weeklyTimerUsed = !!(weeklyArtTime && parseInt(weeklyArtTime) > 0);
@@ -584,9 +594,9 @@ const getTodaysTasks = async () => {
   const personalArtworks = personalArtworksRaw ? JSON.parse(personalArtworksRaw) : [];
   const publicArtworksRaw = await AsyncStorage.getItem('public_artworks');
   const publicArtworks = publicArtworksRaw ? JSON.parse(publicArtworksRaw) : [];
-  const uploadedToday = personalArtworks.some(a => a.date === today) || publicArtworks.some(a => a.date === today);
-  const artCreated = (await AsyncStorage.getItem(`art_created_${today}`)) === 'true';
-  const hasArt = dailyTimerUsed || weeklyTimerUsed || uploadedToday || artCreated;
+  const uploadedOnDate = personalArtworks.some(a => a.date === dateStr) || publicArtworks.some(a => a.date === dateStr);
+  const artCreated = (await AsyncStorage.getItem(`art_created_${dateStr}`)) === 'true';
+  const hasArt = dailyTimerUsed || weeklyTimerUsed || uploadedOnDate || artCreated;
 
   // --- G: Grow (set a growth goal) ---
   let hasGoal = false;
@@ -598,17 +608,17 @@ const getTodaysTasks = async () => {
   }
 
   // --- I: Inspire (voted on one set) ---
-  const hasInspire = (await AsyncStorage.getItem(`ranked_${today}`)) === 'true';
+  const hasInspire = (await AsyncStorage.getItem(`ranked_${dateStr}`)) === 'true';
 
   // --- C: Connect (visited Connect tab, clicked arrows, sent email, saved inspiration, or courage upload) ---
-  const browsedConnect = (await AsyncStorage.getItem(`browsed_${today}`)) === 'true';
-  const interactedConnect = (await AsyncStorage.getItem(`connected_${today}`)) === 'true';
-  const sentEmail = (await AsyncStorage.getItem(`email_sent_${today}`)) === 'true';
-  const courageUploaded = (await AsyncStorage.getItem(`courage_uploaded_${today}`)) === 'true';
+  const browsedConnect = (await AsyncStorage.getItem(`browsed_${dateStr}`)) === 'true';
+  const interactedConnect = (await AsyncStorage.getItem(`connected_${dateStr}`)) === 'true';
+  const sentEmail = (await AsyncStorage.getItem(`email_sent_${dateStr}`)) === 'true';
+  const courageUploaded = (await AsyncStorage.getItem(`courage_uploaded_${dateStr}`)) === 'true';
   const favoriteArtworksRaw = await AsyncStorage.getItem('favorite_artworks');
   const favoriteArtworks = favoriteArtworksRaw ? JSON.parse(favoriteArtworksRaw) : [];
-  const savedInspirationToday = favoriteArtworks.some(a => a.date === today);
-  const hasConnect = browsedConnect || interactedConnect || sentEmail || savedInspirationToday || courageUploaded;
+  const savedInspirationOnDate = favoriteArtworks.some(a => a.date === dateStr);
+  const hasConnect = browsedConnect || interactedConnect || sentEmail || savedInspirationOnDate || courageUploaded;
 
   return {
     manifest: hasManifest,
@@ -649,6 +659,8 @@ export default function HomeScreen({ navigation }) {
   const [realStreakData, setRealStreakData] = useState(null);
   const [todayTasks, setTodayTasks] = useState({ manifest: false, art: false, goal: false, inspire: false, courage: false });
   const [previewIndex, setPreviewIndex] = useState(-1); // -1 = real data
+  const [showInsightModal, setShowInsightModal] = useState(false);
+  const [isShowingYesterday, setIsShowingYesterday] = useState(false);
 
   const refreshQuote = useCallback(async () => {
     const quote = await getTodayQuote(quotesData);
@@ -1064,13 +1076,30 @@ export default function HomeScreen({ navigation }) {
       const data = getStreakStars(streak);
       setStreakData(data);
       setRealStreakData(data);
-      const tasks = await getTodaysTasks();
-      setTodayTasks(tasks);
+      const todayStr = getESTDate();
+      const tasks = await getTasksForDate(todayStr);
+      const anyDoneToday = tasks.manifest || tasks.art || tasks.goal || tasks.inspire || tasks.courage;
 
-      // Sync progress to Firestore
+      if (anyDoneToday) {
+        setTodayTasks(tasks);
+        setIsShowingYesterday(false);
+      } else {
+        // No tasks done today — show yesterday's star so it stays gold
+        const yesterdayStr = getESTYesterday();
+        const yesterdayTasks = await getTasksForDate(yesterdayStr);
+        const anyDoneYesterday = yesterdayTasks.manifest || yesterdayTasks.art || yesterdayTasks.goal || yesterdayTasks.inspire || yesterdayTasks.courage;
+        if (anyDoneYesterday) {
+          setTodayTasks(yesterdayTasks);
+          setIsShowingYesterday(true);
+        } else {
+          setTodayTasks(tasks); // both empty, show today's (empty)
+          setIsShowingYesterday(false);
+        }
+      }
+
+      // Sync progress to Firestore (always use today's actual tasks)
       if (user) {
-        const today = getESTDate();
-        saveProgress(user.uid, today, tasks).catch(err =>
+        saveProgress(user.uid, todayStr, tasks).catch(err =>
           console.log('Firestore progress sync error:', err)
         );
       }
@@ -1171,7 +1200,11 @@ export default function HomeScreen({ navigation }) {
                 {item.type === 'month' && <MonthStar size={20} />}
                 {item.type === 'week' && <WeekStar size={28} />}
                 {item.type === 'day' && <DayStar size={32} />}
-                {item.type === 'magic' && <MagicStar tasks={todayTasks} size={52} />}
+                {item.type === 'magic' && (
+                  <TouchableOpacity onPress={() => setShowInsightModal(true)} activeOpacity={0.7}>
+                    <MagicStar tasks={todayTasks} size={52} />
+                  </TouchableOpacity>
+                )}
               </View>
             ))}
           </View>
@@ -1460,6 +1493,146 @@ export default function HomeScreen({ navigation }) {
 
         <View style={{ height: 20 }} />
       </ScrollView>
+
+      {/* ===== DAILY INSIGHT MODAL ===== */}
+      <Modal
+        visible={showInsightModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowInsightModal(false)}
+      >
+        <View style={styles.insightOverlay}>
+          <View style={styles.insightCard}>
+            {(() => {
+              const tasks = todayTasks;
+              const allComplete = tasks.manifest && tasks.art && tasks.goal && tasks.inspire && tasks.courage;
+              const completedCount = MAGIC_KEYS.filter(k => tasks[k]).length;
+              const starSize = 90;
+              const pointAngles = [
+                { key: 'manifest', angle: -90 },
+                { key: 'art',      angle: -90 + 72 },
+                { key: 'goal',     angle: -90 + 144 },
+                { key: 'inspire',  angle: -90 + 216 },
+                { key: 'courage',  angle: -90 + 288 },
+              ];
+              const pointColors = {
+                manifest: tasks.manifest ? '#DC143C' : '#1a2a4a',
+                art:      tasks.art      ? '#FF7F00' : '#1a2a4a',
+                goal:     tasks.goal     ? '#FFD700' : '#1a2a4a',
+                inspire:  tasks.inspire  ? '#22C55E' : '#1a2a4a',
+                courage:  tasks.courage  ? '#6366F1' : '#1a2a4a',
+              };
+
+              return (
+                <>
+                  {/* Header */}
+                  <Text style={styles.insightDate}>
+                    {isShowingYesterday ? "Yesterday's Star" : "Today's Star"}
+                  </Text>
+
+                  {/* Large star */}
+                  <View style={{ alignItems: 'center', marginVertical: 16 }}>
+                    <View style={{ width: starSize, height: starSize, justifyContent: 'center', alignItems: 'center' }}>
+                      {allComplete && (
+                        <>
+                          <View style={{
+                            position: 'absolute',
+                            width: starSize + 30, height: starSize + 30,
+                            borderRadius: (starSize + 30) / 2,
+                            backgroundColor: 'rgba(255, 215, 0, 0.15)',
+                          }} />
+                          <View style={{
+                            position: 'absolute',
+                            width: starSize + 18, height: starSize + 18,
+                            borderRadius: (starSize + 18) / 2,
+                            backgroundColor: 'rgba(255, 215, 0, 0.3)',
+                          }} />
+                        </>
+                      )}
+                      {pointAngles.map(({ key, angle }) => (
+                        <View key={`o-${key}`} style={{
+                          position: 'absolute',
+                          width: 0, height: 0,
+                          borderLeftWidth: starSize * 0.15,
+                          borderRightWidth: starSize * 0.15,
+                          borderBottomWidth: starSize * 0.48,
+                          borderLeftColor: 'transparent',
+                          borderRightColor: 'transparent',
+                          borderBottomColor: '#B8860B',
+                          transform: [{ rotate: `${angle + 90}deg` }, { translateY: -starSize * 0.155 }],
+                        }} />
+                      ))}
+                      <StarCenter
+                        size={starSize * 0.32}
+                        wedgeColors={allComplete
+                          ? ['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']
+                          : [pointColors.manifest, pointColors.art, pointColors.goal, pointColors.inspire, pointColors.courage]
+                        }
+                      />
+                      {pointAngles.map(({ key, angle }) => (
+                        <View key={key} style={{
+                          position: 'absolute',
+                          width: 0, height: 0,
+                          borderLeftWidth: starSize * 0.12,
+                          borderRightWidth: starSize * 0.12,
+                          borderBottomWidth: starSize * 0.42,
+                          borderLeftColor: 'transparent',
+                          borderRightColor: 'transparent',
+                          borderBottomColor: allComplete ? '#FFD700' : pointColors[key],
+                          transform: [{ rotate: `${angle + 90}deg` }, { translateY: -starSize * 0.14 }],
+                        }} />
+                      ))}
+                    </View>
+
+                    {/* MAGIC letters */}
+                    <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                      {['M', 'A', 'G', 'I', 'C'].map((letter, i) => (
+                        <Text key={letter} style={{
+                          fontSize: 16, fontWeight: 'bold',
+                          color: tasks[MAGIC_KEYS[i]] ? MAGIC_COLOR_ARRAY[i] : '#888',
+                          marginHorizontal: 3,
+                        }}>{letter}</Text>
+                      ))}
+                    </View>
+
+                    <Text style={styles.insightProgress}>
+                      {completedCount}/5 completed
+                    </Text>
+                  </View>
+
+                  {/* Guidance list */}
+                  <View style={styles.insightGuidance}>
+                    {MAGIC_KEYS.map((key, i) => {
+                      const done = !!tasks[key];
+                      return (
+                        <View key={key} style={styles.insightGuidanceRow}>
+                          <View style={[styles.insightGuidanceDot, {
+                            backgroundColor: done ? MAGIC_COLOR_ARRAY[i] : '#888',
+                          }]} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.insightGuidanceLabel, {
+                              color: done ? MAGIC_COLOR_ARRAY[i] : '#ffffff',
+                            }]}>
+                              {done ? '\u2713 ' : ''}{MAGIC_LABELS[i]}
+                            </Text>
+                            {!done && (
+                              <Text style={styles.insightGuidanceHint}>{MAGIC_GUIDANCE[i]}</Text>
+                            )}
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </View>
+
+                  <TouchableOpacity onPress={() => setShowInsightModal(false)} style={styles.insightClose}>
+                    <Text style={styles.insightCloseText}>Close</Text>
+                  </TouchableOpacity>
+                </>
+              );
+            })()}
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -1913,5 +2086,80 @@ const styles = StyleSheet.create({
     color: '#061679',
     textAlign: 'center',
     paddingHorizontal: 20,
+  },
+
+  // Daily Insight Modal
+  insightOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+  },
+  insightCard: {
+    backgroundColor: 'rgba(255, 254, 190, 0.25)',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#b18630',
+    padding: 20,
+    width: '100%',
+    maxWidth: 340,
+  },
+  insightDate: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#b18630',
+    textAlign: 'center',
+  },
+  insightProgress: {
+    fontSize: 14,
+    color: '#888',
+    marginTop: 8,
+  },
+  insightGuidance: {
+    marginTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#b18630',
+    paddingTop: 12,
+  },
+  insightGuidanceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    gap: 10,
+  },
+  insightGuidanceDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginTop: 4,
+  },
+  insightGuidanceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  insightGuidanceHint: {
+    fontSize: 12,
+    color: '#ffffff',
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  insightClose: {
+    marginTop: 16,
+    alignSelf: 'center',
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#b18630',
+    backgroundColor: 'rgba(255, 254, 190, 0.25)',
+  },
+  insightCloseText: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
 });
