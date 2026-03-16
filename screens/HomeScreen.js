@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
 import { calculateAndSetWinner, getRecentWinners, saveProgress } from '../services/firestoreService';
-import { getESTDate, getESTYesterday, formatDisplayDate } from '../utils/dateUtils';
+import { getESTDate, getESTYesterday, getESTDayBeforeYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
@@ -648,13 +648,7 @@ export default function HomeScreen({ navigation }) {
 
   const refreshQuote = useCallback(() => {
     const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-    let quoteIndex = dayOfYear % quotesData.length;
-    // Avoid same author on consecutive days
-    const yesterdayIndex = (dayOfYear - 1 + quotesData.length) % quotesData.length;
-    const yesterdayAuthor = quotesData[yesterdayIndex]?.author;
-    while (quotesData[quoteIndex]?.author === yesterdayAuthor && quotesData.length > 1) {
-      quoteIndex = (quoteIndex + 1) % quotesData.length;
-    }
+    const quoteIndex = dayOfYear % quotesData.length;
     setTodayQuote(quotesData[quoteIndex]);
   }, []);
 
@@ -1007,9 +1001,9 @@ export default function HomeScreen({ navigation }) {
   // Load winners from Firestore
   const loadWinners = async () => {
     try {
-      // Calculate yesterday's winner if not already done
-      const yesterday = getESTYesterday();
-      await calculateAndSetWinner(yesterday);
+      // Calculate winner from 2 days ago (Day N courages voted on Day N+1, winner shown Day N+2)
+      const twoDaysAgo = getESTDayBeforeYesterday();
+      await calculateAndSetWinner(twoDaysAgo);
 
       // Fetch recent winners for browsing
       const recent = await getRecentWinners(25);

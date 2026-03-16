@@ -216,13 +216,7 @@ export default function ManifestScreen() {
   useEffect(() => {
     // Use date as seed for consistent daily quote
     const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-    let quoteIndex = dayOfYear % quotesData.length;
-    // Avoid same author on consecutive days
-    const yesterdayIndex = (dayOfYear - 1 + quotesData.length) % quotesData.length;
-    const yesterdayAuthor = quotesData[yesterdayIndex]?.author;
-    while (quotesData[quoteIndex]?.author === yesterdayAuthor && quotesData.length > 1) {
-      quoteIndex = (quoteIndex + 1) % quotesData.length;
-    }
+    const quoteIndex = dayOfYear % quotesData.length;
     setTodayQuote(quotesData[quoteIndex]);
 
     entryDateRef.current = getTodayDate();
