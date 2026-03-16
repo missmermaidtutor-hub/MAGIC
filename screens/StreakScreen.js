@@ -10,6 +10,8 @@ import {
   ImageBackground
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Svg, { Path } from 'react-native-svg';
+import { getESTDate } from '../utils/dateUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DAY_ABBR = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -32,6 +34,31 @@ const MAGIC_GUIDANCE = [
   'Vote on today\'s artwork rankings',
   'Browse curations, send inspiration, or save art',
 ];
+
+// SVG pie-wedge center circle for MAGIC stars
+const StarCenter = ({ size, wedgeColors }) => {
+  const r = size / 2;
+  const wedgeAngles = [-90, -18, 54, 126, 198];
+  return (
+    <Svg width={size} height={size} style={{ position: 'absolute', zIndex: 10 }}>
+      {wedgeAngles.map((angle, i) => {
+        const startRad = (angle - 36) * Math.PI / 180;
+        const endRad = (angle + 36) * Math.PI / 180;
+        const x1 = r + r * Math.cos(startRad);
+        const y1 = r + r * Math.sin(startRad);
+        const x2 = r + r * Math.cos(endRad);
+        const y2 = r + r * Math.sin(endRad);
+        return (
+          <Path
+            key={i}
+            d={`M ${r} ${r} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`}
+            fill={wedgeColors[i]}
+          />
+        );
+      })}
+    </Svg>
+  );
+};
 
 // ─── Mini 5-point MAGIC star for calendar cells ───────────────────
 const CalendarStar = ({ tasks = {}, size = 14 }) => {
@@ -81,14 +108,15 @@ const CalendarStar = ({ tasks = {}, size = 14 }) => {
           ],
         }} />
       ))}
-      <View style={{
-        width: size * 0.28,
-        height: size * 0.28,
-        borderRadius: size * 0.14,
-        backgroundColor: allComplete ? '#FFD700' : '#0d1530',
-        position: 'absolute',
-        zIndex: 10,
-      }} />
+      {/* Center circle with pie wedges */}
+      <StarCenter
+        size={size * 0.28}
+        wedgeColors={allComplete
+          ? ['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']
+          : [pointColors.manifest, pointColors.art, pointColors.goal, pointColors.inspire, pointColors.courage]
+        }
+
+      />
       {pointAngles.map(({ key, angle }) => (
         <View key={key} style={{
           position: 'absolute',
@@ -111,7 +139,7 @@ const CalendarStar = ({ tasks = {}, size = 14 }) => {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────
-const getDateString = (date) => date.toISOString().split('T')[0];
+const getDateString = (date) => getESTDate(date);
 
 const getMonthNameShort = (month) => [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -175,7 +203,8 @@ const loadMonthData = async (year, month) => {
       const hasCourageUpload = publicArtworks.some(a => a.date === dateStr);
       const inspirationSaved = await AsyncStorage.getItem(`inspiration_saved_${dateStr}`);
       const emailSent = await AsyncStorage.getItem(`email_sent_${dateStr}`);
-      const hasCourage = hasCourageUpload || inspirationSaved === 'true' || emailSent === 'true';
+      const courageUploaded = await AsyncStorage.getItem(`courage_uploaded_${dateStr}`);
+      const hasCourage = hasCourageUpload || inspirationSaved === 'true' || emailSent === 'true' || courageUploaded === 'true';
       const hasAny = !!(hasManifest && manifestRaw) || hasArt || hasGoal || hasInspire || hasCourage;
 
       if (hasAny) {
@@ -656,12 +685,14 @@ export default function StreakScreen() {
                           transform: [{ rotate: `${angle + 90}deg` }, { translateY: -starSize * 0.155 }],
                         }} />
                       ))}
-                      <View style={{
-                        width: starSize * 0.3, height: starSize * 0.3,
-                        borderRadius: starSize * 0.15,
-                        backgroundColor: allComplete ? '#FFD700' : '#0d1530',
-                        position: 'absolute', zIndex: 10,
-                      }} />
+                      <StarCenter
+                        size={starSize * 0.32}
+                        wedgeColors={allComplete
+                          ? ['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']
+                          : [pointColors.manifest, pointColors.art, pointColors.goal, pointColors.inspire, pointColors.courage]
+                        }
+                
+                      />
                       {pointAngles.map(({ key, angle }) => (
                         <View key={key} style={{
                           position: 'absolute',

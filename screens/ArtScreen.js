@@ -34,6 +34,27 @@ import DrawingStudio from '../components/drawing/DrawingStudio';
 const MIN_TIMER_MINUTES = 1;
 const MAX_TIMER_MINUTES = 180;
 
+// Platform-aware alert helpers (react-native-web Alert.alert is a no-op)
+const showAlert = (title, message) => {
+  if (Platform.OS === 'web') {
+    window.alert(message ? `${title}\n\n${message}` : title);
+  } else {
+    Alert.alert(title, message);
+  }
+};
+const showConfirm = (title, message, onConfirm) => {
+  if (Platform.OS === 'web') {
+    if (window.confirm(message ? `${title}\n\n${message}` : title)) {
+      onConfirm();
+    }
+  } else {
+    Alert.alert(title, message, [
+      { text: 'Not Yet', style: 'cancel' },
+      { text: 'Share!', onPress: onConfirm },
+    ]);
+  }
+};
+
 export default function ArtScreen() {
   const { user, userProfile } = useAuth();
   const [courageUploadedToday, setCourageUploadedToday] = useState(false);
@@ -232,7 +253,7 @@ export default function ArtScreen() {
       await AsyncStorage.setItem('weekly_art_time', time.toString());
       // Sync weekly stopwatch time to Firestore
       if (user) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getESTDate();
         const weekStart = getWeekStart(new Date());
         saveArtTime(user.uid, today, time, weekStart).catch(err =>
           console.log('Firestore weekly time sync error:', err)
@@ -301,7 +322,7 @@ export default function ArtScreen() {
   const saveDailyArtTime = async (elapsedSeconds) => {
     if (elapsedSeconds > 0) {
       try {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getESTDate();
         const existing = await AsyncStorage.getItem(`art_time_${today}`);
         const total = (existing ? parseInt(existing) : 0) + elapsedSeconds;
         await AsyncStorage.setItem(`art_time_${today}`, total.toString());
@@ -359,7 +380,7 @@ export default function ArtScreen() {
       for (let i = 0; i < 8; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
+        const dateStr = getESTDate(d);
         const existing = await AsyncStorage.getItem(`art_time_${dateStr}`);
         if (!existing || parseInt(existing) === 0) {
           await AsyncStorage.setItem(`art_time_${dateStr}`, '7200');
@@ -478,7 +499,7 @@ export default function ArtScreen() {
       return;
     }
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getESTDate();
       const label = modeLabels[writeMode] || 'Art';
       const artwork = {
         id: Date.now(),
@@ -516,78 +537,74 @@ export default function ArtScreen() {
 
   const saveWriteToCourage = async () => {
     if (!writeText.trim()) {
-      Alert.alert('Empty', 'Add something first!');
+      showAlert('Empty', 'Add something first!');
       return;
     }
     if (courageUploadedToday) {
-      Alert.alert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
+      showAlert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
       return;
     }
-    Alert.alert(
+    const doUpload = async () => {
+      const today = getESTDate();
+      const label = modeLabels[writeMode] || 'Art';
+      const title = writeTitle.trim() || todaysChallenge || `${label} from ${today}`;
+
+      // Save to personal gallery locally first
+      try {
+        const personalRaw = await AsyncStorage.getItem('personal_artworks');
+        const personal = personalRaw ? JSON.parse(personalRaw) : [];
+        personal.push({
+          id: Date.now(),
+          type: writeMode,
+          text: writeText.trim(),
+          artist: 'You',
+          title,
+          date: today,
+          isPublic: false,
+          pendingVoting: true,
+        });
+        await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
+
+        // Mark art done for today
+        await AsyncStorage.setItem(`art_created_${today}`, 'true');
+        const existing = await AsyncStorage.getItem(`art_time_${today}`);
+        if (!existing || parseInt(existing) === 0) {
+          await AsyncStorage.setItem(`art_time_${today}`, '1');
+        }
+      } catch (localError) {
+        console.log('Local save error:', localError);
+      }
+
+      // Mark as uploaded immediately so button disables + star detects it
+      setCourageUploadedToday(true);
+      await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
+      setWriteModalVisible(false);
+      setWriteTitle('');
+
+      // Now attempt Firestore upload
+      try {
+        await uploadCourage(user.uid, {
+          pseudonym: userProfile?.pseudonym || '',
+          title: `${title}: ${writeText.trim().substring(0, 200)}`,
+          mediaType: 'image',
+          mediaUrl: '',
+          date: today,
+          anonymous: userProfile?.anonymous ?? false,
+        });
+
+        showAlert('Congratulations on your COURAGE!', 'Upload is ready for tomorrow\'s vote.');
+      } catch (e) {
+        console.log('Courage text upload error:', e);
+        showAlert(
+          'Saved Locally',
+          'Your work was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
+        );
+      }
+    };
+    showConfirm(
       'Upload with COURAGE',
       `Your ${modeLabels[writeMode].toLowerCase()} will be submitted for anonymous voting. Ready to share?`,
-      [
-        { text: 'Not Yet', style: 'cancel' },
-        {
-          text: 'Share!',
-          onPress: async () => {
-            const today = getESTDate();
-            const label = modeLabels[writeMode] || 'Art';
-            const title = writeTitle.trim() || todaysChallenge || `${label} from ${today}`;
-
-            // Save to personal gallery locally first
-            try {
-              const personalRaw = await AsyncStorage.getItem('personal_artworks');
-              const personal = personalRaw ? JSON.parse(personalRaw) : [];
-              personal.push({
-                id: Date.now(),
-                type: writeMode,
-                text: writeText.trim(),
-                artist: 'You',
-                title,
-                date: today,
-                isPublic: false,
-                pendingVoting: true,
-              });
-              await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
-
-              // Mark art done for today
-              await AsyncStorage.setItem(`art_created_${today}`, 'true');
-              const existing = await AsyncStorage.getItem(`art_time_${today}`);
-              if (!existing || parseInt(existing) === 0) {
-                await AsyncStorage.setItem(`art_time_${today}`, '1');
-              }
-            } catch (localError) {
-              console.log('Local save error:', localError);
-            }
-
-            // Mark as uploaded immediately so button disables
-            setCourageUploadedToday(true);
-            setWriteModalVisible(false);
-            setWriteTitle('');
-
-            // Now attempt Firestore upload
-            try {
-              await uploadCourage(user.uid, {
-                pseudonym: userProfile?.pseudonym || '',
-                title: `${title}: ${writeText.trim().substring(0, 200)}`,
-                mediaType: 'image',
-                mediaUrl: '',
-                date: today,
-                anonymous: userProfile?.anonymous ?? false,
-              });
-
-              Alert.alert('Congratulations on your COURAGE!', 'Upload is ready for tomorrow\'s vote.');
-            } catch (e) {
-              console.log('Courage text upload error:', e);
-              Alert.alert(
-                'Saved Locally',
-                'Your work was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
-              );
-            }
-          }
-        }
-      ]
+      doUpload
     );
   };
 
@@ -633,72 +650,68 @@ export default function ArtScreen() {
 
   const saveSketchToCourage = async (imageUri, sketchTitle) => {
     if (courageUploadedToday) {
-      Alert.alert('Already Submitted', 'You can only upload one Courage per day.');
+      showAlert('Already Submitted', 'You can only upload one Courage per day.');
       return;
     }
-    Alert.alert(
+    const doUpload = async () => {
+      const today = getESTDate();
+      const title = sketchTitle || `Sketch from ${today}`;
+
+      // Save locally first
+      try {
+        const personalRaw = await AsyncStorage.getItem('personal_artworks');
+        const personal = personalRaw ? JSON.parse(personalRaw) : [];
+        personal.push({
+          id: Date.now(),
+          type: 'sketch',
+          imageUrl: imageUri,
+          artist: 'You',
+          title,
+          prompt: todaysChallenge,
+          date: today,
+          isPublic: false,
+          pendingVoting: true,
+        });
+        await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
+        await AsyncStorage.setItem(`art_created_${today}`, 'true');
+        const existing = await AsyncStorage.getItem(`art_time_${today}`);
+        if (!existing || parseInt(existing) === 0) {
+          await AsyncStorage.setItem(`art_time_${today}`, '1');
+        }
+      } catch (localError) {
+        console.log('Local sketch save error:', localError);
+      }
+
+      setCourageUploadedToday(true);
+      await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
+
+      // Upload image to Firebase Storage, then create courage entry
+      try {
+        const storagePath = `courages/${user.uid}/${today}_sketch_${Date.now()}.png`;
+        const downloadUrl = await uploadMediaToStorage(imageUri, storagePath);
+
+        await uploadCourage(user.uid, {
+          pseudonym: userProfile?.pseudonym || '',
+          title: title,
+          mediaType: 'image',
+          mediaUrl: downloadUrl,
+          date: today,
+          anonymous: userProfile?.anonymous ?? false,
+        });
+
+        showAlert('Congratulations on your COURAGE!', 'Your sketch is ready for tomorrow\'s vote.');
+      } catch (e) {
+        console.log('Courage sketch upload error:', e);
+        showAlert(
+          'Saved Locally',
+          'Your sketch was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
+        );
+      }
+    };
+    showConfirm(
       'Upload with COURAGE',
       'Your sketch will be submitted for anonymous voting. Ready to share?',
-      [
-        { text: 'Not Yet', style: 'cancel' },
-        {
-          text: 'Share!',
-          onPress: async () => {
-            const today = getESTDate();
-            const title = sketchTitle || `Sketch from ${today}`;
-
-            // Save locally first
-            try {
-              const personalRaw = await AsyncStorage.getItem('personal_artworks');
-              const personal = personalRaw ? JSON.parse(personalRaw) : [];
-              personal.push({
-                id: Date.now(),
-                type: 'sketch',
-                imageUrl: imageUri,
-                artist: 'You',
-                title,
-                prompt: todaysChallenge,
-                date: today,
-                isPublic: false,
-                pendingVoting: true,
-              });
-              await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
-              await AsyncStorage.setItem(`art_created_${today}`, 'true');
-              const existing = await AsyncStorage.getItem(`art_time_${today}`);
-              if (!existing || parseInt(existing) === 0) {
-                await AsyncStorage.setItem(`art_time_${today}`, '1');
-              }
-            } catch (localError) {
-              console.log('Local sketch save error:', localError);
-            }
-
-            setCourageUploadedToday(true);
-
-            // Upload image to Firebase Storage, then create courage entry
-            try {
-              const storagePath = `courages/${user.uid}/${today}_sketch_${Date.now()}.png`;
-              const downloadUrl = await uploadMediaToStorage(imageUri, storagePath);
-
-              await uploadCourage(user.uid, {
-                pseudonym: userProfile?.pseudonym || '',
-                title: title,
-                mediaType: 'image',
-                mediaUrl: downloadUrl,
-                date: today,
-                anonymous: userProfile?.anonymous ?? false,
-              });
-
-              Alert.alert('Congratulations on your COURAGE!', 'Your sketch is ready for tomorrow\'s vote.');
-            } catch (e) {
-              console.log('Courage sketch upload error:', e);
-              Alert.alert(
-                'Saved Locally',
-                'Your sketch was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
-              );
-            }
-          }
-        }
-      ]
+      doUpload
     );
   };
 
@@ -794,70 +807,66 @@ export default function ArtScreen() {
   const saveCaptureToCourage = async () => {
     if (!capturedImageUri) return;
     if (courageUploadedToday) {
-      Alert.alert('Already Submitted', 'You can only upload one Courage per day.');
+      showAlert('Already Submitted', 'You can only upload one Courage per day.');
       return;
     }
-    Alert.alert(
+    const doUpload = async () => {
+      const today = getESTDate();
+      const title = captureTitle.trim() || `Capture from ${today}`;
+
+      try {
+        const personalRaw = await AsyncStorage.getItem('personal_artworks');
+        const personal = personalRaw ? JSON.parse(personalRaw) : [];
+        personal.push({
+          id: Date.now(),
+          type: 'capture',
+          imageUrl: capturedImageUri,
+          artist: 'You',
+          title,
+          date: today,
+          isPublic: false,
+          pendingVoting: true,
+        });
+        await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
+        await AsyncStorage.setItem(`art_created_${today}`, 'true');
+        const existing = await AsyncStorage.getItem(`art_time_${today}`);
+        if (!existing || parseInt(existing) === 0) {
+          await AsyncStorage.setItem(`art_time_${today}`, '1');
+        }
+      } catch (localError) {
+        console.log('Local capture save error:', localError);
+      }
+
+      setCourageUploadedToday(true);
+      await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
+      setCaptureModalVisible(false);
+
+      try {
+        const storagePath = `courages/${user.uid}/${today}_capture_${Date.now()}.png`;
+        const downloadUrl = await uploadMediaToStorage(capturedImageUri, storagePath);
+
+        await uploadCourage(user.uid, {
+          pseudonym: userProfile?.pseudonym || '',
+          title,
+          mediaType: 'image',
+          mediaUrl: downloadUrl,
+          date: today,
+          anonymous: userProfile?.anonymous ?? false,
+        });
+
+        showAlert('Congratulations on your COURAGE!', 'Your capture is ready for tomorrow\'s vote.');
+      } catch (e) {
+        console.log('Courage capture upload error:', e);
+        showAlert(
+          'Saved Locally',
+          'Your capture was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
+        );
+      }
+    };
+    showConfirm(
       'Upload with COURAGE',
       'Your capture will be submitted for anonymous voting. Ready to share?',
-      [
-        { text: 'Not Yet', style: 'cancel' },
-        {
-          text: 'Share!',
-          onPress: async () => {
-            const today = getESTDate();
-            const title = captureTitle.trim() || `Capture from ${today}`;
-
-            try {
-              const personalRaw = await AsyncStorage.getItem('personal_artworks');
-              const personal = personalRaw ? JSON.parse(personalRaw) : [];
-              personal.push({
-                id: Date.now(),
-                type: 'capture',
-                imageUrl: capturedImageUri,
-                artist: 'You',
-                title,
-                date: today,
-                isPublic: false,
-                pendingVoting: true,
-              });
-              await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
-              await AsyncStorage.setItem(`art_created_${today}`, 'true');
-              const existing = await AsyncStorage.getItem(`art_time_${today}`);
-              if (!existing || parseInt(existing) === 0) {
-                await AsyncStorage.setItem(`art_time_${today}`, '1');
-              }
-            } catch (localError) {
-              console.log('Local capture save error:', localError);
-            }
-
-            setCourageUploadedToday(true);
-            setCaptureModalVisible(false);
-
-            try {
-              const storagePath = `courages/${user.uid}/${today}_capture_${Date.now()}.png`;
-              const downloadUrl = await uploadMediaToStorage(capturedImageUri, storagePath);
-
-              await uploadCourage(user.uid, {
-                pseudonym: userProfile?.pseudonym || '',
-                title,
-                mediaType: 'image',
-                mediaUrl: downloadUrl,
-                date: today,
-                anonymous: userProfile?.anonymous ?? false,
-              });
-
-              Alert.alert('Congratulations on your COURAGE!', 'Your capture is ready for tomorrow\'s vote.');
-            } catch (e) {
-              console.log('Courage capture upload error:', e);
-              Alert.alert(
-                'Saved Locally',
-                'Your capture was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
-              );
-            }
-          }
-        }
-      ]
+      doUpload
     );
   };
 

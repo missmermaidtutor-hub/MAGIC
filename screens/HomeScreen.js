@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Linking, ImageBackground, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
 import { calculateAndSetWinner, getRecentWinners, saveProgress } from '../services/firestoreService';
-import { getESTYesterday, formatDisplayDate } from '../utils/dateUtils';
+import { getESTDate, getESTYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
@@ -14,6 +15,32 @@ const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 // ============================================================
 // STAR COMPONENTS
 // ============================================================
+
+// SVG pie-wedge center circle for MAGIC stars
+// Draws a circle divided into 5 colored wedges, each aligned with its star point
+const StarCenter = ({ size, wedgeColors }) => {
+  const r = size / 2;
+  const wedgeAngles = [-90, -18, 54, 126, 198]; // MAGIC point angles
+  return (
+    <Svg width={size} height={size} style={{ position: 'absolute', zIndex: 10 }}>
+      {wedgeAngles.map((angle, i) => {
+        const startRad = (angle - 36) * Math.PI / 180;
+        const endRad = (angle + 36) * Math.PI / 180;
+        const x1 = r + r * Math.cos(startRad);
+        const y1 = r + r * Math.sin(startRad);
+        const x2 = r + r * Math.cos(endRad);
+        const y2 = r + r * Math.sin(endRad);
+        return (
+          <Path
+            key={i}
+            d={`M ${r} ${r} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`}
+            fill={wedgeColors[i]}
+          />
+        );
+      })}
+    </Svg>
+  );
+};
 
 // Year Dot — smallest, earned every 365 days of streak
 const YearDot = ({ size = 10 }) => (
@@ -170,21 +197,15 @@ const MagicStar = ({ tasks = {}, size = 52 }) => {
             ],
           }} />
         ))}
-        {/* Center */}
-        <View style={{
-          width: size * 0.3,
-          height: size * 0.3,
-          borderRadius: size * 0.15,
-          backgroundColor: allComplete ? '#FFD700' : '#0d1530',
-          position: 'absolute',
-          zIndex: 10,
-          ...(allComplete ? {
-            shadowColor: '#FFD700',
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 1,
-            shadowRadius: 8,
-          } : {}),
-        }} />
+        {/* Center circle with pie wedges */}
+        <StarCenter
+          size={size * 0.32}
+          wedgeColors={allComplete
+            ? ['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']
+            : [pointColors.manifest, pointColors.art, pointColors.goal, pointColors.inspire, pointColors.courage]
+          }
+
+        />
         {/* 5 colored points (on top of gold outline) — all gold when complete */}
         {pointAngles.map(({ key, angle }) => (
           <View key={key} style={{
@@ -309,15 +330,11 @@ const DayStar = ({ size = 30 }) => {
           }} />
         );
       })}
-      {/* Center */}
-      <View style={{
-        width: size * 0.28,
-        height: size * 0.28,
-        borderRadius: size * 0.14,
-        backgroundColor: '#4FC3F7',
-        position: 'absolute',
-        zIndex: 10,
-      }} />
+      {/* Center circle with pie wedges */}
+      <StarCenter
+        size={size * 0.28}
+        wedgeColors={['#DC143C', '#FF7F00', '#FFD700', '#22C55E', '#6366F1']}
+      />
       {/* Filled points */}
       {[...Array(points)].map((_, i) => {
         const angle = (i * 72) - 90;
@@ -450,28 +467,51 @@ const Candle = ({ lit = false, onPress, size = 40 }) => (
 
 const getDateString = (date) => date.toISOString().split('T')[0];
 
-// Check if a specific date had ANY activity
-const checkDayActivity = async (dateStr, publicArtworks) => {
+// Check if a specific date had ANY MAGIC activity (matches Grow calendar criteria)
+const checkDayActivity = async (dateStr, publicArtworks, personalArtworks) => {
+  // M: Manifest
   const manifestRaw = await AsyncStorage.getItem(`manifest_${dateStr}`);
+  // A: Art
+  const artTime = await AsyncStorage.getItem(`art_time_${dateStr}`);
+  const artCreated = await AsyncStorage.getItem(`art_created_${dateStr}`);
+  const hasArt = !!(artTime && parseInt(artTime) > 0) || artCreated === 'true'
+    || personalArtworks.some(a => a.date === dateStr);
+  // G: Goal (growthGoal inside manifest)
+  let hasGoal = false;
+  if (manifestRaw) {
+    try { hasGoal = !!(JSON.parse(manifestRaw).growthGoal?.trim()); } catch (e) {}
+  }
+  // I: Inspire
   const ranked = await AsyncStorage.getItem(`ranked_${dateStr}`);
+  // C: Connect / Courage
+  const browsed = await AsyncStorage.getItem(`browsed_${dateStr}`);
+  const connected = await AsyncStorage.getItem(`connected_${dateStr}`);
+  const emailSent = await AsyncStorage.getItem(`email_sent_${dateStr}`);
+  const inspirationSaved = await AsyncStorage.getItem(`inspiration_saved_${dateStr}`);
+  const courageUploaded = await AsyncStorage.getItem(`courage_uploaded_${dateStr}`);
   const hasCourage = publicArtworks.some(a => a.date === dateStr);
-  return !!(manifestRaw || ranked === 'true' || hasCourage);
+  const hasConnect = browsed === 'true' || connected === 'true' || emailSent === 'true'
+    || inspirationSaved === 'true' || courageUploaded === 'true' || hasCourage;
+
+  return !!(manifestRaw || hasArt || hasGoal || ranked === 'true' || hasConnect);
 };
 
 // Calculate streak: consecutive days of activity ending today (or yesterday if today not started)
 const calculateStreak = async () => {
   const publicArtworksRaw = await AsyncStorage.getItem('public_artworks');
   const publicArtworks = publicArtworksRaw ? JSON.parse(publicArtworksRaw) : [];
+  const personalArtworksRaw = await AsyncStorage.getItem('personal_artworks');
+  const personalArtworks = personalArtworksRaw ? JSON.parse(personalArtworksRaw) : [];
 
   let streak = 0;
-  const today = new Date();
+  const now = new Date();
 
-  // Check going backwards from today
+  // Check going backwards from today using Eastern Time dates
   for (let i = 0; i < 3650; i++) { // max ~10 years
-    const checkDate = new Date(today);
-    checkDate.setDate(today.getDate() - i);
-    const dateStr = getDateString(checkDate);
-    const hadActivity = await checkDayActivity(dateStr, publicArtworks);
+    const checkDate = new Date(now);
+    checkDate.setDate(now.getDate() - i);
+    const dateStr = getESTDate(checkDate);
+    const hadActivity = await checkDayActivity(dateStr, publicArtworks, personalArtworks);
 
     if (hadActivity) {
       streak++;
@@ -516,7 +556,7 @@ const getStreakStars = (streak) => {
 // I = Inspire: voted/ranked one set of artwork
 // C = Connect: browsed artwork after voting, sent email, or saved an inspiration
 const getTodaysTasks = async () => {
-  const today = getDateString(new Date());
+  const today = getESTDate();
 
   // --- M: Manifest (wrote in muse, dump, or vision) ---
   let hasManifest = false;
@@ -557,14 +597,15 @@ const getTodaysTasks = async () => {
   // --- I: Inspire (voted on one set) ---
   const hasInspire = (await AsyncStorage.getItem(`ranked_${today}`)) === 'true';
 
-  // --- C: Connect (visited Connect tab, clicked arrows, sent email, or saved inspiration) ---
+  // --- C: Connect (visited Connect tab, clicked arrows, sent email, saved inspiration, or courage upload) ---
   const browsedConnect = (await AsyncStorage.getItem(`browsed_${today}`)) === 'true';
   const interactedConnect = (await AsyncStorage.getItem(`connected_${today}`)) === 'true';
   const sentEmail = (await AsyncStorage.getItem(`email_sent_${today}`)) === 'true';
+  const courageUploaded = (await AsyncStorage.getItem(`courage_uploaded_${today}`)) === 'true';
   const favoriteArtworksRaw = await AsyncStorage.getItem('favorite_artworks');
   const favoriteArtworks = favoriteArtworksRaw ? JSON.parse(favoriteArtworksRaw) : [];
   const savedInspirationToday = favoriteArtworks.some(a => a.date === today);
-  const hasConnect = browsedConnect || interactedConnect || sentEmail || savedInspirationToday;
+  const hasConnect = browsedConnect || interactedConnect || sentEmail || savedInspirationToday || courageUploaded;
 
   return {
     manifest: hasManifest,
@@ -580,7 +621,7 @@ const getTodaysTasks = async () => {
 // ============================================================
 
 export default function HomeScreen({ navigation }) {
-  const { userProfile, refreshProfile } = useAuth();
+  const { user, userProfile, refreshProfile } = useAuth();
   const [goalAcknowledged, setGoalAcknowledged] = useState(false);
   const [goalMetYes, setGoalMetYes] = useState(false); // true = yes, false = no/not yet
   const [goalLocked, setGoalLocked] = useState(false);
@@ -769,11 +810,10 @@ export default function HomeScreen({ navigation }) {
 
   const loadGoals = async () => {
     try {
-      const today = new Date();
-      const todayStr = getDateString(today);
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      const yesterdayStr = getDateString(yesterday);
+      const todayStr = getESTDate();
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = getESTDate(yesterday);
 
       // Check if already acknowledged today
       const ack = await AsyncStorage.getItem(`goal_acknowledged_${todayStr}`);
@@ -821,11 +861,11 @@ export default function HomeScreen({ navigation }) {
   };
 
   // Track which date the goal state was loaded for
-  const goalDateRef = useRef(getDateString(new Date()));
+  const goalDateRef = useRef(getESTDate());
 
   // Reset goal state if the date has changed (handles midnight + app reopen)
   const checkGoalDateReset = () => {
-    const currentDate = getDateString(new Date());
+    const currentDate = getESTDate();
     if (goalDateRef.current !== currentDate) {
       goalDateRef.current = currentDate;
       setGoalAcknowledged(false);
@@ -870,7 +910,7 @@ export default function HomeScreen({ navigation }) {
   const handleGoalHeart = async () => {
     if (goalLocked) return; // heart is locked
 
-    const todayStr = getDateString(new Date());
+    const todayStr = getESTDate();
     if (!goalAcknowledged) {
       // First click = yes, met the goal
       setGoalAcknowledged(true);
@@ -893,7 +933,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   const handleKeepGoal = async (keepIt) => {
-    const todayStr = getDateString(new Date());
+    const todayStr = getESTDate();
     await AsyncStorage.setItem(`goal_kept_${todayStr}`, keepIt ? 'yes' : 'no');
     setShowKeepGoalPrompt(false);
 
@@ -952,7 +992,7 @@ export default function HomeScreen({ navigation }) {
           mediaUrl: currentWinner.mediaUrl,
           winnerDate: currentWinner.date,
           source: 'home',
-          date: getDateString(new Date()),
+          date: getESTDate(),
           savedAt: new Date().toISOString(),
         };
         existing.push(artwork);
@@ -1028,7 +1068,7 @@ export default function HomeScreen({ navigation }) {
 
       // Sync progress to Firestore
       if (user) {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getESTDate();
         saveProgress(user.uid, today, tasks).catch(err =>
           console.log('Firestore progress sync error:', err)
         );
@@ -1386,7 +1426,7 @@ export default function HomeScreen({ navigation }) {
             const body = encodeURIComponent('This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
             Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
             // Mark email sent for Connect star
-            await AsyncStorage.setItem(`email_sent_${getDateString(new Date())}`, 'true');
+            await AsyncStorage.setItem(`email_sent_${getESTDate()}`, 'true');
           }}>
             <Text style={styles.iconEmoji}>✉️</Text>
           </TouchableOpacity>

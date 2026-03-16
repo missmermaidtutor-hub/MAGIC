@@ -14,18 +14,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { saveGoal, getGoal, getGoalHistory, getGoalStats } from '../services/firestoreService';
+import { getESTDate } from '../utils/dateUtils';
 
-const getDateString = (date) => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
+const getDateString = (date) => getESTDate(date);
 
 const getYesterdayString = () => {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return getDateString(d);
+  return getESTDate(d);
 };
 
 const formatDateLabel = (dateStr) => {

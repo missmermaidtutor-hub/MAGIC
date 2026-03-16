@@ -12,6 +12,7 @@ import {
   ImageBackground,
   ActivityIndicator,
   Linking,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -28,6 +29,15 @@ import {
 import { getESTDate, getESTYesterday } from '../utils/dateUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+
+// Platform-aware alert (react-native-web Alert.alert is a no-op)
+const showAlert = (title, message) => {
+  if (Platform.OS === 'web') {
+    window.alert(message ? `${title}\n\n${message}` : title);
+  } else {
+    Alert.alert(title, message);
+  }
+};
 
 // Stock artwork images from ARTOWORKS folder for voting
 const ARTOWORKS_IMAGES = [
@@ -327,14 +337,14 @@ export default function InspireScreen({ navigation }) {
     });
 
     if (Object.keys(batchRankings).length < 4) {
-      Alert.alert('Incomplete', 'Please rank all artworks before submitting.');
+      showAlert('Incomplete', 'Please rank all artworks before submitting.');
       return;
     }
 
     // Check for duplicate ranks
     const usedRanks = Object.values(batchRankings);
     if (new Set(usedRanks).size !== usedRanks.length) {
-      Alert.alert('Duplicate Ranks', 'Each artwork must have a unique rank. Please adjust before submitting.');
+      showAlert('Duplicate Ranks', 'Rank these images from 1, most aligned to the criteria, to 4, least aligned. Use each number (1,2,3,4) only once. Please review your rankings and resubmit.');
       return;
     }
 
@@ -390,7 +400,7 @@ export default function InspireScreen({ navigation }) {
       setRankings({});
 
       // Show thank you popup
-      Alert.alert('Thank You for Voting!', 'Your votes have been submitted.');
+      showAlert('Thank You for Voting!', 'Your votes have been submitted.');
 
       // Load next set — check stock images available
       const nextStock = pickStockSet(newVotedIds);
@@ -408,7 +418,7 @@ export default function InspireScreen({ navigation }) {
       }
     } catch (error) {
       console.log('Error submitting votes:', error);
-      Alert.alert('Error', 'Could not submit votes. Please try again.');
+      showAlert('Error', 'Could not submit votes. Please try again.');
     }
     setSubmitting(false);
   };
@@ -448,7 +458,7 @@ export default function InspireScreen({ navigation }) {
       });
     } catch (error) {
       console.log('Error playing audio:', error);
-      Alert.alert('Error', 'Could not play audio.');
+      showAlert('Error', 'Could not play audio.');
     }
   };
 

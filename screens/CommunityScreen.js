@@ -23,6 +23,7 @@ import {
   deleteArtwork,
   deleteInspiration,
 } from '../services/firestoreService';
+import { getESTDate } from '../utils/dateUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -198,7 +199,7 @@ export default function CommunityScreen({ route }) {
       loadSavedArt();
       promotePendingVotingArtworks();
       // Mark browsed for today's Connect (C) star point
-      const today = new Date().toISOString().split('T')[0];
+      const today = getESTDate();
       AsyncStorage.setItem(`browsed_${today}`, 'true');
       // Switch to gallery tab if navigated with param
       if (route?.params?.gallery) {
@@ -258,7 +259,7 @@ export default function CommunityScreen({ route }) {
       const pending = JSON.parse(pendingData);
       if (pending.length === 0) return;
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = getESTDate();
       const ready = pending.filter(a => a.votingSubmitDate < today);
       const stillPending = pending.filter(a => a.votingSubmitDate >= today);
 
@@ -317,7 +318,7 @@ export default function CommunityScreen({ route }) {
           savedAt: new Date().toISOString(),
         });
         setSavedNewsfeedArt(prev => new Set(prev).add(artwork.id));
-        const today = new Date().toISOString().split('T')[0];
+        const today = getESTDate();
         await AsyncStorage.setItem(`inspiration_saved_${today}`, 'true');
       }
       await AsyncStorage.setItem('favorite_artworks', JSON.stringify(favorites));
@@ -335,7 +336,7 @@ export default function CommunityScreen({ route }) {
       '[Add your message here]\n\n— Sent from MAGIC Tracker'
     );
     Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
-    const today = new Date().toISOString().split('T')[0];
+    const today = getESTDate();
     await AsyncStorage.setItem(`email_sent_${today}`, 'true');
   };
 
@@ -349,7 +350,7 @@ export default function CommunityScreen({ route }) {
 
   const navigateNewsfeed = (userId, direction) => {
     // Mark as connected for today's Connect (C) star point
-    const today = new Date().toISOString().split('T')[0];
+    const today = getESTDate();
     AsyncStorage.setItem(`connected_${today}`, 'true');
     setNewsfeedImageIndex(prev => {
       const currentIndex = prev[userId] || 0;
@@ -405,7 +406,7 @@ export default function CommunityScreen({ route }) {
           id: `personal_${Date.now()}`,
           imageUrl: uri,
           title: `My Art ${personalArtworks.length + 1}`,
-          date: new Date().toISOString().split('T')[0],
+          date: getESTDate(),
           savedAt: new Date().toISOString(),
           source: 'upload',
         };

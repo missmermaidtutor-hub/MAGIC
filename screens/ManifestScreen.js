@@ -6,7 +6,6 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
   AppState,
   ImageBackground
 } from 'react-native';
@@ -31,6 +30,7 @@ export default function ManifestScreen() {
   const [heartedQuotes, setHeartedQuotes] = useState([]);
   const [todayQuoteHearted, setTodayQuoteHearted] = useState(false);
   const [midnightWarning, setMidnightWarning] = useState(false);
+  const [saveNotification, setSaveNotification] = useState(false);
 
   // Track which text boxes are focused (user is active)
   const [activeFields, setActiveFields] = useState(new Set());
@@ -363,10 +363,11 @@ export default function ManifestScreen() {
         );
       }
 
-      Alert.alert('Saved!', 'Your manifest entry has been saved.');
+      setSaveNotification(true);
+      setTimeout(() => setSaveNotification(false), 3000);
       loadPastEntries(); // Refresh past entries
     } catch (error) {
-      Alert.alert('Error', 'Could not save entry. Please try again.');
+      setSaveNotification(false);
     }
   };
 
@@ -629,6 +630,13 @@ export default function ManifestScreen() {
           <TouchableOpacity style={styles.saveButton} onPress={saveEntry}>
             <Text style={styles.saveButtonText}>Save Entry</Text>
           </TouchableOpacity>
+
+          {/* Save confirmation toast */}
+          {saveNotification && (
+            <View style={styles.saveToast}>
+              <Text style={styles.saveToastText}>Entry saved!</Text>
+            </View>
+          )}
         </View>
 
         {/* View Past Entries Button */}
@@ -887,5 +895,19 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  saveToast: {
+    backgroundColor: '#4A148C',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  saveToastText: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
