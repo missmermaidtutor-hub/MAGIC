@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -21,6 +21,25 @@ import {
   deletePod,
 } from '../services/firestoreService';
 
+const TIMEZONE_SHORT = {
+  'America/New_York': 'EST',
+  'America/Chicago': 'CST',
+  'America/Denver': 'MST',
+  'America/Los_Angeles': 'PST',
+  'America/Anchorage': 'AKST',
+  'Pacific/Honolulu': 'HST',
+  'America/Phoenix': 'AZ',
+  'America/Toronto': 'EST',
+  'America/Vancouver': 'PST',
+  'Europe/London': 'GMT',
+  'Europe/Paris': 'CET',
+  'Europe/Berlin': 'CET',
+  'Asia/Tokyo': 'JST',
+  'Asia/Shanghai': 'CST-CN',
+  'Asia/Kolkata': 'IST',
+  'Australia/Sydney': 'AEST',
+};
+
 export default function ManagePodsScreen({ navigation }) {
   const { user } = useAuth();
   const [pods, setPods] = useState([]);
@@ -36,6 +55,14 @@ export default function ManagePodsScreen({ navigation }) {
   const [editingPod, setEditingPod] = useState(null);
   const [editName, setEditName] = useState('');
   const [editSelectedUids, setEditSelectedUids] = useState(new Set());
+
+  // Search & filters
+  const [searchText, setSearchText] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterTimezone, setFilterTimezone] = useState('');
+  const [filterCountry, setFilterCountry] = useState('');
+  const [filterState, setFilterState] = useState('');
+  const [openDropdown, setOpenDropdown] = useState(null); // 'timezone' | 'country' | 'state' | null
 
   useEffect(() => {
     if (!user || !isAdmin(user.uid)) {
@@ -59,6 +86,70 @@ export default function ManagePodsScreen({ navigation }) {
       showAlert('Error', 'Could not load data. Please try again.');
     }
     setLoading(false);
+  };
+
+  // Map each user UID → list of pods they belong to
+  const userPodMap = useMemo(() => {
+    const map = {};
+    pods.forEach(pod => {
+      (pod.members || []).forEach(uid => {
+        if (!map[uid]) map[uid] = [];
+        map[uid].push({ id: pod.id, name: pod.name });
+      });
+    });
+    return map;
+  }, [pods]);
+
+  // Extract unique filter options from user data
+  const filterOptions = useMemo(() => {
+    const timezones = new Set();
+    const countries = new Set();
+    const states = new Set();
+    allUsers.forEach(u => {
+      if (u.timezone) timezones.add(u.timezone);
+      const loc = u.currentLocation;
+      if (loc?.country) countries.add(loc.country);
+      if (loc?.state) states.add(loc.state);
+    });
+    return {
+      timezones: [...timezones].sort(),
+      countries: [...countries].sort(),
+      states: [...states].sort(),
+    };
+  }, [allUsers]);
+
+  // Filter users by search text + dropdown filters
+  const filteredUsers = useMemo(() => {
+    const query = searchText.toLowerCase().trim();
+    return allUsers.filter(u => {
+      // Text search
+      if (query) {
+        const username = (u.username || '').toLowerCase();
+        const pseudonym = (u.pseudonym || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const bio = (u.bio || '').toLowerCase();
+        if (!username.includes(query) && !pseudonym.includes(query) &&
+            !email.includes(query) && !bio.includes(query)) {
+          return false;
+        }
+      }
+      // Timezone filter
+      if (filterTimezone && u.timezone !== filterTimezone) return false;
+      // Country filter
+      if (filterCountry && u.currentLocation?.country !== filterCountry) return false;
+      // State filter
+      if (filterState && u.currentLocation?.state !== filterState) return false;
+      return true;
+    });
+  }, [allUsers, searchText, filterTimezone, filterCountry, filterState]);
+
+  const hasActiveFilters = filterTimezone || filterCountry || filterState;
+
+  const clearFilters = () => {
+    setFilterTimezone('');
+    setFilterCountry('');
+    setFilterState('');
+    setOpenDropdown(null);
   };
 
   const handleCreatePod = async () => {
@@ -159,38 +250,186 @@ export default function ManagePodsScreen({ navigation }) {
     });
   };
 
-  const renderUserPicker = (selected, setFn) => (
-    <View style={styles.userPicker}>
-      <Text style={styles.pickerLabel}>Select Members:</Text>
-      <ScrollView style={styles.userList} nestedScrollEnabled>
-        {allUsers.map((u) => {
-          const isSelected = selected.has(u.uid);
-          const displayName = u.username || u.email || u.uid.slice(0, 8);
-          const pseudonym = u.pseudonym || '';
-          return (
-            <TouchableOpacity
-              key={u.uid}
-              style={[styles.userRow, isSelected && styles.userRowSelected]}
-              onPress={() => toggleUid(u.uid, setFn)}
-            >
-              <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
-                {isSelected && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>{displayName}</Text>
-                {pseudonym ? (
-                  <Text style={styles.userPseudonym}>{pseudonym}</Text>
-                ) : null}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-      <Text style={styles.selectedCount}>
-        {selected.size} selected
-      </Text>
-    </View>
-  );
+  const renderDropdown = (label, value, options, filterKey) => {
+    const isOpen = openDropdown === filterKey;
+    const displayValue = filterKey === 'timezone' && value
+      ? (TIMEZONE_SHORT[value] || value)
+      : (value || label);
+
+    return (
+      <View style={styles.filterDropdownContainer}>
+        <TouchableOpacity
+          style={[styles.filterDropdown, value ? styles.filterDropdownActive : null]}
+          onPress={() => setOpenDropdown(isOpen ? null : filterKey)}
+        >
+          <Text
+            style={[styles.filterDropdownText, value ? styles.filterDropdownTextActive : null]}
+            numberOfLines={1}
+          >
+            {displayValue}
+          </Text>
+          <Text style={styles.filterDropdownArrow}>{isOpen ? '▲' : '▼'}</Text>
+        </TouchableOpacity>
+        {isOpen && (
+          <ScrollView style={styles.filterDropdownList} nestedScrollEnabled>
+            {value ? (
+              <TouchableOpacity
+                style={styles.filterDropdownItem}
+                onPress={() => {
+                  if (filterKey === 'timezone') setFilterTimezone('');
+                  else if (filterKey === 'country') setFilterCountry('');
+                  else if (filterKey === 'state') setFilterState('');
+                  setOpenDropdown(null);
+                }}
+              >
+                <Text style={[styles.filterDropdownItemText, { fontStyle: 'italic' }]}>Clear</Text>
+              </TouchableOpacity>
+            ) : null}
+            {options.map(opt => {
+              const isSelected = opt === value;
+              const displayOpt = filterKey === 'timezone'
+                ? (TIMEZONE_SHORT[opt] || opt)
+                : opt;
+              return (
+                <TouchableOpacity
+                  key={opt}
+                  style={[styles.filterDropdownItem, isSelected && styles.filterDropdownItemActive]}
+                  onPress={() => {
+                    if (filterKey === 'timezone') setFilterTimezone(opt);
+                    else if (filterKey === 'country') setFilterCountry(opt);
+                    else if (filterKey === 'state') setFilterState(opt);
+                    setOpenDropdown(null);
+                  }}
+                >
+                  <Text style={[
+                    styles.filterDropdownItemText,
+                    isSelected && styles.filterDropdownItemTextActive,
+                  ]}>
+                    {displayOpt}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
+      </View>
+    );
+  };
+
+  const renderUserPicker = (selected, setFn) => {
+    const userLocationStr = (u) => {
+      const parts = [];
+      if (u.timezone) parts.push(TIMEZONE_SHORT[u.timezone] || u.timezone);
+      const loc = u.currentLocation;
+      if (loc?.city) parts.push(loc.city);
+      if (loc?.state) parts.push(loc.state);
+      if (loc?.country) parts.push(loc.country);
+      return parts.join(' · ');
+    };
+
+    return (
+      <View style={styles.userPicker}>
+        <Text style={styles.pickerLabel}>Select Members:</Text>
+
+        {/* Search bar */}
+        <TextInput
+          style={styles.searchInput}
+          value={searchText}
+          onChangeText={setSearchText}
+          placeholder="Search users..."
+          placeholderTextColor="#999"
+        />
+
+        {/* Filter toggle */}
+        <TouchableOpacity
+          style={styles.filterToggle}
+          onPress={() => { setShowFilters(f => !f); setOpenDropdown(null); }}
+        >
+          <Text style={styles.filterToggleText}>
+            {showFilters ? '▲ Hide Filters' : '▼ Filters'}
+            {hasActiveFilters ? ' (active)' : ''}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Filter row */}
+        {showFilters && (
+          <View style={styles.filterRow}>
+            {filterOptions.timezones.length > 0 &&
+              renderDropdown('Timezone', filterTimezone, filterOptions.timezones, 'timezone')}
+            {filterOptions.countries.length > 0 &&
+              renderDropdown('Country', filterCountry, filterOptions.countries, 'country')}
+            {filterOptions.states.length > 0 &&
+              renderDropdown('State', filterState, filterOptions.states, 'state')}
+            {hasActiveFilters && (
+              <TouchableOpacity style={styles.clearFiltersBtn} onPress={clearFilters}>
+                <Text style={styles.clearFiltersBtnText}>Clear</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Results count */}
+        <Text style={styles.resultsCount}>
+          Showing {filteredUsers.length} of {allUsers.length} users · {selected.size} selected
+        </Text>
+
+        {/* User list */}
+        <ScrollView style={styles.userList} nestedScrollEnabled>
+          {filteredUsers.map((u) => {
+            const isSelected = selected.has(u.uid);
+            const displayName = u.username || u.email || u.uid.slice(0, 8);
+            const pseudonym = u.pseudonym || '';
+            const userPods = userPodMap[u.uid] || [];
+            const locationStr = userLocationStr(u);
+
+            return (
+              <TouchableOpacity
+                key={u.uid}
+                style={[styles.userRow, isSelected && styles.userRowSelected]}
+                onPress={() => toggleUid(u.uid, setFn)}
+              >
+                <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
+                  {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <View style={styles.userInfo}>
+                  <View style={styles.userTopRow}>
+                    <Text style={styles.userName}>{displayName}</Text>
+                    {userPods.length > 0 && (
+                      <View style={styles.podBadge}>
+                        <Text style={styles.podBadgeText}>
+                          In {userPods.length} pod{userPods.length !== 1 ? 's' : ''}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  {(pseudonym || locationStr) ? (
+                    <Text style={styles.userMeta} numberOfLines={1}>
+                      {pseudonym ? `★ ${pseudonym}` : ''}
+                      {pseudonym && locationStr ? ' · ' : ''}
+                      {locationStr}
+                    </Text>
+                  ) : null}
+                  {userPods.length > 0 && (
+                    <Text style={styles.userPodNames} numberOfLines={1}>
+                      → {userPods.map(p => p.name).join(', ')}
+                    </Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+          {filteredUsers.length === 0 && (
+            <View style={styles.noResults}>
+              <Text style={styles.noResultsText}>No users match your filters</Text>
+            </View>
+          )}
+        </ScrollView>
+        <Text style={styles.selectedCount}>
+          {selected.size} selected
+        </Text>
+      </View>
+    );
+  };
 
   if (loading) {
     return (
@@ -233,7 +472,7 @@ export default function ManagePodsScreen({ navigation }) {
             <View style={styles.formButtons}>
               <TouchableOpacity
                 style={styles.cancelBtn}
-                onPress={() => { setShowCreate(false); setSelectedUids(new Set()); setNewPodName(''); }}
+                onPress={() => { setShowCreate(false); setSelectedUids(new Set()); setNewPodName(''); setSearchText(''); setShowFilters(false); clearFilters(); }}
               >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
@@ -260,7 +499,7 @@ export default function ManagePodsScreen({ navigation }) {
             <View style={styles.formButtons}>
               <TouchableOpacity
                 style={styles.cancelBtn}
-                onPress={() => setEditingPod(null)}
+                onPress={() => { setEditingPod(null); setSearchText(''); setShowFilters(false); clearFilters(); }}
               >
                 <Text style={styles.cancelBtnText}>Cancel</Text>
               </TouchableOpacity>
@@ -406,8 +645,113 @@ const styles = StyleSheet.create({
     color: '#050d61',
     marginBottom: 8,
   },
+  searchInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#1a1a1a',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  filterToggle: {
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+  },
+  filterToggleText: {
+    fontSize: 13,
+    color: '#050d61',
+    fontWeight: '600',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+    alignItems: 'flex-start',
+  },
+  filterDropdownContainer: {
+    position: 'relative',
+    minWidth: 90,
+    zIndex: 10,
+  },
+  filterDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  filterDropdownActive: {
+    borderColor: '#FFD700',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+  },
+  filterDropdownText: {
+    fontSize: 12,
+    color: '#666',
+    marginRight: 4,
+    maxWidth: 80,
+  },
+  filterDropdownTextActive: {
+    color: '#050d61',
+    fontWeight: '600',
+  },
+  filterDropdownArrow: {
+    fontSize: 10,
+    color: '#999',
+  },
+  filterDropdownList: {
+    maxHeight: 140,
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    marginTop: 2,
+  },
+  filterDropdownItem: {
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  filterDropdownItemActive: {
+    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  filterDropdownItemText: {
+    fontSize: 12,
+    color: '#333',
+  },
+  filterDropdownItemTextActive: {
+    color: '#050d61',
+    fontWeight: '600',
+  },
+  clearFiltersBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: 'rgba(139, 0, 0, 0.1)',
+    borderWidth: 1,
+    borderColor: '#8B0000',
+    alignSelf: 'center',
+  },
+  clearFiltersBtnText: {
+    fontSize: 12,
+    color: '#8B0000',
+    fontWeight: '600',
+  },
+  resultsCount: {
+    fontSize: 11,
+    color: '#050d61',
+    marginBottom: 6,
+    fontStyle: 'italic',
+  },
   userList: {
-    maxHeight: 200,
+    maxHeight: 280,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: 8,
     borderWidth: 1,
@@ -415,7 +759,7 @@ const styles = StyleSheet.create({
   },
   userRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
@@ -433,6 +777,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
+    marginTop: 2,
   },
   checkboxChecked: {
     backgroundColor: '#FFD700',
@@ -446,14 +791,47 @@ const styles = StyleSheet.create({
   userInfo: {
     flex: 1,
   },
+  userTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   userName: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1a1a1a',
+    flexShrink: 1,
   },
-  userPseudonym: {
-    fontSize: 12,
+  podBadge: {
+    backgroundColor: 'rgba(255, 215, 0, 0.3)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+  podBadgeText: {
+    fontSize: 10,
+    color: '#6B5900',
+    fontWeight: '600',
+  },
+  userMeta: {
+    fontSize: 11,
     color: '#666',
+    marginTop: 2,
+  },
+  userPodNames: {
+    fontSize: 11,
+    color: '#888',
+    fontStyle: 'italic',
+    marginTop: 1,
+  },
+  noResults: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  noResultsText: {
+    fontSize: 13,
+    color: '#999',
     fontStyle: 'italic',
   },
   selectedCount: {
