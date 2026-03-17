@@ -6,8 +6,15 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } fr
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initSentry, Sentry } from './config/sentry';
+import {
+  configureNotificationHandler,
+  requestNotificationPermissions,
+  setupNotificationChannel,
+  scheduleStreakReminder,
+} from './utils/notificationUtils';
 
 initSentry();
+configureNotificationHandler();
 
 // Auth
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -279,10 +286,30 @@ function AppContent() {
     return () => stopAnalytics();
   }, [user]);
 
+  // Set up streak reminder notifications when user profile is available
+  useEffect(() => {
+    if (userProfile) {
+      const setupNotifications = async () => {
+        await setupNotificationChannel();
+        await requestNotificationPermissions();
+        const tz = userProfile.timezone || 'America/New_York';
+        const pref = userProfile.notificationPreference || 'daily';
+        await scheduleStreakReminder(tz, pref);
+      };
+      setupNotifications();
+    }
+  }, [userProfile]);
+
   const handleNavigationStateChange = () => {
     const currentRoute = navigationRef.getCurrentRoute();
     if (currentRoute?.name) {
       onScreenChange(currentRoute.name);
+    }
+    // User is interacting — cancel today's reminder, schedule for tomorrow
+    if (userProfile) {
+      const tz = userProfile.timezone || 'America/New_York';
+      const pref = userProfile.notificationPreference || 'daily';
+      scheduleStreakReminder(tz, pref, true); // forTomorrow = true
     }
   };
 

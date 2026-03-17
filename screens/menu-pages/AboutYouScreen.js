@@ -22,6 +22,7 @@ import {
   releasePseudonym,
 } from '../../services/firestoreService';
 import mediumsData from '../../mediums.json';
+import { scheduleStreakReminder } from '../../utils/notificationUtils';
 
 const TIMEZONES = [
   'America/New_York',
@@ -627,6 +628,7 @@ export default function AboutYouScreen({ navigation }) {
                     setNotificationPreference(opt.key);
                     saveSettings('notificationPreference', opt.key);
                     setShowNotificationList(false);
+                    scheduleStreakReminder(timezone, opt.key);
                   }}
                 >
                   <Text style={[
@@ -637,6 +639,9 @@ export default function AboutYouScreen({ navigation }) {
               ))}
             </View>
           )}
+          <Text style={styles.settingDescription}>
+            Tip: Choose "Daily Reminder" until you build a consistent habit — you can always switch to weekly later!
+          </Text>
 
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>

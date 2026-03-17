@@ -1045,13 +1045,19 @@ export default function CommunityScreen({ navigation, route }) {
       case 'private':
         return (
           <>
-            {/* Upload button */}
-            <TouchableOpacity style={styles.uploadButton} onPress={handleUploadImage}>
-              <Text style={styles.uploadButtonText}>+ Upload Image</Text>
-            </TouchableOpacity>
+            {/* Link to Art Studio */}
+            <Text style={styles.studioHint}>
+              To add to this album, do so in the{' '}
+              <Text
+                style={styles.studioLink}
+                onPress={() => navigation.navigate('Art')}
+              >
+                Art Studio
+              </Text>
+            </Text>
 
             {/* My Uploads section */}
-            <Text style={styles.privateSubheader}>My Uploads</Text>
+            <Text style={styles.privateSubheader}>My Gallery</Text>
             {personalArtworks.length > 0 ? (
               <View style={styles.galleryGrid}>
                 {personalArtworks.map(artwork => renderGalleryItem(artwork, 'personal'))}
@@ -1059,7 +1065,7 @@ export default function CommunityScreen({ navigation, route }) {
             ) : (
               <View style={styles.emptyStateSmall}>
                 <Text style={styles.emptyText}>
-                  No uploads yet. Tap + Upload Image above!
+                  No art yet. Create something in the Art Studio!
                 </Text>
               </View>
             )}
@@ -1574,21 +1580,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // Upload
-  uploadButton: {
-    backgroundColor: 'rgba(184, 200, 232, 0.5)',
-    borderWidth: 2,
-    borderColor: '#050d61',
-    borderStyle: 'dashed',
-    borderRadius: 10,
-    padding: 18,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  uploadButtonText: {
+  // Art Studio link hint
+  studioHint: {
+    fontSize: 14,
     color: '#050d61',
-    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 15,
+    fontStyle: 'italic',
+  },
+  studioLink: {
+    color: '#B8860B',
     fontWeight: 'bold',
+    textDecorationLine: 'underline',
+    fontStyle: 'normal',
   },
 
   // Empty State

@@ -12,6 +12,7 @@ import { getESTDate, getESTYesterday, getESTDayBeforeYesterday, formatDisplayDat
 import quotesData from '../quotes.json';
 import { getTodayQuote } from '../utils/quoteUtils';
 import { trackAction } from '../services/analyticsService';
+import { scheduleStreakReminder } from '../utils/notificationUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 
@@ -1086,6 +1087,12 @@ export default function HomeScreen({ navigation }) {
       if (anyDoneToday) {
         setTodayTasks(tasks);
         setIsShowingYesterday(false);
+        // User has done tasks today — cancel today's reminder, schedule for tomorrow
+        if (userProfile) {
+          const tz = userProfile.timezone || 'America/New_York';
+          const pref = userProfile.notificationPreference || 'daily';
+          scheduleStreakReminder(tz, pref, true);
+        }
       } else {
         // No tasks done today — show yesterday's star so it stays gold
         const yesterdayStr = getESTYesterday();

@@ -26,7 +26,13 @@
       "bundler": "metro"
     },
     "plugins": [
-      "@sentry/react-native/expo"
+      "@sentry/react-native/expo",
+      [
+        "expo-notifications",
+        {
+          "sounds": []
+        }
+      ]
     ],
     "extra": {
       "eas": {
