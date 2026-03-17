@@ -23,6 +23,7 @@ import {
   getCouragesForDate,
   getUserVotesForDate,
   submitVoteBatch,
+  getAllVotesForDate,
   saveInspiration,
   deleteInspiration,
   recordArtSave,
@@ -110,6 +111,7 @@ export default function InspireScreen({ navigation }) {
   const [fullViewArtwork, setFullViewArtwork] = useState(null);
   const [playingAudioId, setPlayingAudioId] = useState(null);
   const [savedInspirations, setSavedInspirations] = useState(new Set());
+  const [voteCountMap, setVoteCountMap] = useState({}); // courageId → number of votes received
   const soundRef = useRef(null);
 
   // Load criterion + saved inspirations
@@ -275,6 +277,18 @@ export default function InspireScreen({ navigation }) {
         console.log('Could not fetch votes:', e);
       }
 
+      // Fetch ALL votes for this date to build vote count map (for fair exposure)
+      let countMap = {};
+      try {
+        const allVotes = await getAllVotesForDate(votingDate);
+        allVotes.forEach(v => {
+          countMap[v.courageId] = (countMap[v.courageId] || 0) + 1;
+        });
+      } catch (e) {
+        console.log('Could not fetch vote counts:', e);
+      }
+      setVoteCountMap(countMap);
+
       // Also check locally-voted stock image IDs for today
       const today = getESTDate();
       try {
@@ -294,8 +308,11 @@ export default function InspireScreen({ navigation }) {
           setAllDone(true);
           setCurrentSet([]);
         } else if (unvoted.length >= 4) {
-          const shuffled = [...unvoted].sort(() => Math.random() - 0.5);
-          setCurrentSet(shuffled.slice(0, 4));
+          // Sort by vote count ascending — least-voted courages shown first for equal exposure
+          const sorted = [...unvoted].sort((a, b) =>
+            (countMap[a.id] || 0) - (countMap[b.id] || 0)
+          );
+          setCurrentSet(sorted.slice(0, 4));
           setAllDone(false);
         } else {
           // Mix real courages + stock to reach 4
@@ -412,13 +429,22 @@ export default function InspireScreen({ navigation }) {
       trackAction('vote_submitted');
       showAlert('Thank You for Voting!', 'Your votes have been submitted.');
 
-      // Load next set — check stock images available
+      // Update vote counts for just-voted courages
+      const updatedCounts = { ...voteCountMap };
+      realVotes.forEach(v => {
+        updatedCounts[v.courageId] = (updatedCounts[v.courageId] || 0) + 1;
+      });
+      setVoteCountMap(updatedCounts);
+
+      // Load next set — sort by least-voted for equal exposure
       const nextStock = pickStockSet(newVotedIds);
       const unvotedReal = availableCourages.filter(c => !newVotedIds.has(c.id));
 
       if (unvotedReal.length >= 4) {
-        const shuffled = [...unvotedReal].sort(() => Math.random() - 0.5);
-        setCurrentSet(shuffled.slice(0, 4));
+        const sorted = [...unvotedReal].sort((a, b) =>
+          (updatedCounts[a.id] || 0) - (updatedCounts[b.id] || 0)
+        );
+        setCurrentSet(sorted.slice(0, 4));
       } else if (nextStock.length >= 4) {
         // More stock images to vote on
         setCurrentSet(nextStock);

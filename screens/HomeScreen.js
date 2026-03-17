@@ -345,15 +345,14 @@ const DayStar = ({ size = 30 }) => {
           }} />
         );
       })}
-      {/* Center circle with pie wedges */}
+      {/* Center circle — all gold for completed days */}
       <StarCenter
         size={size * 0.28}
-        wedgeColors={['#DC143C', '#FF7F00', '#FFD700', '#22C55E', '#6366F1']}
+        wedgeColors={['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']}
       />
-      {/* Filled points */}
+      {/* Filled points — all gold for completed days */}
       {[...Array(points)].map((_, i) => {
         const angle = (i * 72) - 90;
-        const colors = ['#DC143C', '#FF7F00', '#FFD700', '#22C55E', '#6366F1'];
         return (
           <View key={i} style={{
             position: 'absolute',
@@ -364,11 +363,15 @@ const DayStar = ({ size = 30 }) => {
             borderBottomWidth: size * 0.38,
             borderLeftColor: 'transparent',
             borderRightColor: 'transparent',
-            borderBottomColor: colors[i],
+            borderBottomColor: '#FFD700',
             transform: [
               { rotate: `${angle + 90}deg` },
               { translateY: -size * 0.13 },
             ],
+            shadowColor: '#FFD700',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: 0.6,
+            shadowRadius: 3,
           }} />
         );
       })}

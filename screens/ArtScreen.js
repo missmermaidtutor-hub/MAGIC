@@ -598,6 +598,14 @@ export default function ArtScreen() {
   const saveSketchToPersonal = async (imageUri, sketchTitle) => {
     try {
       const today = getESTDate();
+
+      // Mark art done for today FIRST so star always credits
+      await AsyncStorage.setItem(`art_created_${today}`, 'true');
+      const existingTime = await AsyncStorage.getItem(`art_time_${today}`);
+      if (!existingTime || parseInt(existingTime) === 0) {
+        await AsyncStorage.setItem(`art_time_${today}`, '1');
+      }
+
       const persistedUri = await persistImageUri(imageUri, user?.uid);
       const artwork = {
         id: Date.now(),
@@ -613,13 +621,6 @@ export default function ArtScreen() {
       const artworks = existingRaw ? JSON.parse(existingRaw) : [];
       artworks.push(artwork);
       await AsyncStorage.setItem('personal_artworks', JSON.stringify(artworks));
-
-      // Mark art done for today
-      const existing = await AsyncStorage.getItem(`art_time_${today}`);
-      if (!existing || parseInt(existing) === 0) {
-        await AsyncStorage.setItem(`art_time_${today}`, '1');
-      }
-      await AsyncStorage.setItem(`art_created_${today}`, 'true');
 
       // Sync to Firestore
       if (user) {
@@ -648,9 +649,17 @@ export default function ArtScreen() {
     const doUpload = async () => {
       const today = getESTDate();
       const title = sketchTitle || `Sketch from ${today}`;
+
+      // Mark art done for today FIRST so star always credits
+      await AsyncStorage.setItem(`art_created_${today}`, 'true');
+      const existingTime = await AsyncStorage.getItem(`art_time_${today}`);
+      if (!existingTime || parseInt(existingTime) === 0) {
+        await AsyncStorage.setItem(`art_time_${today}`, '1');
+      }
+
       const persistedUri = await persistImageUri(imageUri, user?.uid);
 
-      // Save locally first
+      // Save locally
       try {
         const personalRaw = await AsyncStorage.getItem('personal_artworks');
         const personal = personalRaw ? JSON.parse(personalRaw) : [];
@@ -666,11 +675,6 @@ export default function ArtScreen() {
           pendingVoting: true,
         });
         await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
-        await AsyncStorage.setItem(`art_created_${today}`, 'true');
-        const existing = await AsyncStorage.getItem(`art_time_${today}`);
-        if (!existing || parseInt(existing) === 0) {
-          await AsyncStorage.setItem(`art_time_${today}`, '1');
-        }
       } catch (localError) {
         console.log('Local sketch save error:', localError);
       }
@@ -768,6 +772,14 @@ export default function ArtScreen() {
     if (!capturedImageUri) return;
     try {
       const today = getESTDate();
+
+      // Mark art done for today FIRST so star always credits
+      await AsyncStorage.setItem(`art_created_${today}`, 'true');
+      const existingTime = await AsyncStorage.getItem(`art_time_${today}`);
+      if (!existingTime || parseInt(existingTime) === 0) {
+        await AsyncStorage.setItem(`art_time_${today}`, '1');
+      }
+
       const persistedUri = await persistImageUri(capturedImageUri, user?.uid);
       const artwork = {
         id: Date.now(),
@@ -783,12 +795,6 @@ export default function ArtScreen() {
       const artworks = existingRaw ? JSON.parse(existingRaw) : [];
       artworks.push(artwork);
       await AsyncStorage.setItem('personal_artworks', JSON.stringify(artworks));
-
-      await AsyncStorage.setItem(`art_created_${today}`, 'true');
-      const existing = await AsyncStorage.getItem(`art_time_${today}`);
-      if (!existing || parseInt(existing) === 0) {
-        await AsyncStorage.setItem(`art_time_${today}`, '1');
-      }
 
       if (user) {
         saveArtwork(user.uid, artwork).catch(err =>
@@ -817,6 +823,14 @@ export default function ArtScreen() {
     const doUpload = async () => {
       const today = getESTDate();
       const title = captureTitle.trim() || `Capture from ${today}`;
+
+      // Mark art done for today FIRST so star always credits
+      await AsyncStorage.setItem(`art_created_${today}`, 'true');
+      const existingTime = await AsyncStorage.getItem(`art_time_${today}`);
+      if (!existingTime || parseInt(existingTime) === 0) {
+        await AsyncStorage.setItem(`art_time_${today}`, '1');
+      }
+
       const persistedUri = await persistImageUri(capturedImageUri, user?.uid);
 
       try {
@@ -833,11 +847,6 @@ export default function ArtScreen() {
           pendingVoting: true,
         });
         await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
-        await AsyncStorage.setItem(`art_created_${today}`, 'true');
-        const existing = await AsyncStorage.getItem(`art_time_${today}`);
-        if (!existing || parseInt(existing) === 0) {
-          await AsyncStorage.setItem(`art_time_${today}`, '1');
-        }
       } catch (localError) {
         console.log('Local capture save error:', localError);
       }
