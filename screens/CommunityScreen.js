@@ -30,6 +30,7 @@ import {
   getMyArtSaves,
   getAllCuratedGalleriesGrouped,
   getUserCurated,
+  getUserCourages,
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 
@@ -259,13 +260,16 @@ export default function CommunityScreen({ navigation, route }) {
     }
   };
 
-  // Load artworks of mine that others have saved
+  // Load artworks of mine that others have saved (curated + courages)
   const loadMyInspiringWorks = async () => {
     if (!user) return;
     setInspiringWorksLoading(true);
     try {
-      const saves = await getMyArtSaves(user.uid);
-      const myCurated = await getUserCurated(user.uid);
+      const [saves, myCurated, myCourages] = await Promise.all([
+        getMyArtSaves(user.uid),
+        getUserCurated(user.uid),
+        getUserCourages(user.uid),
+      ]);
 
       // Group saves by artworkId
       const grouped = {};
@@ -276,12 +280,19 @@ export default function CommunityScreen({ navigation, route }) {
         grouped[save.artworkId].savers.push(save.saverPseudonym || 'Anonymous');
       }
 
-      // Match with curated artworks
+      // Match with curated artworks OR courages
       const works = Object.values(grouped).map(g => {
-        const artwork = myCurated.find(a => a.id === g.artworkId);
+        const curated = myCurated.find(a => a.id === g.artworkId);
+        const courage = myCourages.find(a => a.id === g.artworkId);
+        const source = curated || courage;
         return {
           ...g,
-          artwork: artwork || null,
+          artwork: source ? {
+            id: source.id,
+            title: source.title || 'Untitled',
+            imageUrl: source.imageUrl || source.mediaUrl || null,
+          } : null,
+          sourceType: curated ? 'curated' : 'courage',
           saveCount: g.savers.length,
         };
       }).filter(w => w.artwork); // only show works that still exist

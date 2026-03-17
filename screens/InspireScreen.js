@@ -25,6 +25,8 @@ import {
   submitVoteBatch,
   saveInspiration,
   deleteInspiration,
+  recordArtSave,
+  removeArtSave,
 } from '../services/firestoreService';
 import { getESTDate, getESTYesterday } from '../utils/dateUtils';
 import { showAlert } from '../utils/alertUtils';
@@ -96,7 +98,7 @@ const Candle = ({ lit = false, onPress, size = 36 }) => (
 );
 
 export default function InspireScreen({ navigation }) {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [todaysCriterion, setTodaysCriterion] = useState('');
   const [rankings, setRankings] = useState({}); // { courageId: score }
   const [loading, setLoading] = useState(true);
@@ -165,7 +167,7 @@ export default function InspireScreen({ navigation }) {
     }
   };
 
-  // Candle save — adds/removes from inspiration gallery + fills Connect star
+  // Candle save — adds/removes from inspiration gallery + fills Connect star + tracks artSave
   const handleCandleSave = async (courage) => {
     try {
       const existing = await AsyncStorage.getItem('favorite_artworks');
@@ -184,6 +186,13 @@ export default function InspireScreen({ navigation }) {
           deleteInspiration(user.uid, courage.id).catch(err =>
             console.log('Firestore delete inspiration error:', err)
           );
+          // Remove art save record (courage owner tracking)
+          if (courage.uid && courage.uid !== user.uid) {
+            removeArtSave(courage.id, user.uid).catch(err =>
+              console.log('removeArtSave error:', err)
+            );
+            trackAction('art_save_removed');
+          }
         }
       } else {
         const inspiration = {
@@ -204,6 +213,14 @@ export default function InspireScreen({ navigation }) {
           saveInspiration(user.uid, inspiration).catch(err =>
             console.log('Firestore save inspiration error:', err)
           );
+          // Record art save (courage owner tracking)
+          if (courage.uid && courage.uid !== user.uid) {
+            const pseudonym = userProfile?.pseudonym || 'Anonymous';
+            recordArtSave(courage.uid, courage.id, user.uid, pseudonym).catch(err =>
+              console.log('recordArtSave error:', err)
+            );
+            trackAction('art_save_recorded');
+          }
         }
       }
       await AsyncStorage.setItem('favorite_artworks', JSON.stringify(favorites));

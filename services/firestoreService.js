@@ -153,6 +153,16 @@ export const uploadCourage = async (uid, data) => {
   return docRef.id;
 };
 
+// Get all courages by a specific user (for "My Inspiring Works")
+export const getUserCourages = async (uid) => {
+  const q = query(
+    collection(db, 'dailyCourages'),
+    where('uid', '==', uid),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
 // Get all courages for a specific date (for voting)
 export const getCouragesForDate = async (dateStr) => {
   const q = query(
