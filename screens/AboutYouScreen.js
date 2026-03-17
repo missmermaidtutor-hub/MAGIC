@@ -6,8 +6,8 @@ import {
   ScrollView, 
   TouchableOpacity,
   TextInput,
-  Alert
 } from 'react-native';
+import { showAlert } from '../utils/alertUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AboutYouScreen({ navigation }) {
@@ -44,9 +44,9 @@ export default function AboutYouScreen({ navigation }) {
       };
       await AsyncStorage.setItem('user_profile', JSON.stringify(profile));
       setIsEditing(false);
-      Alert.alert('Saved!', 'Your profile has been updated.');
+      showAlert('Saved!', 'Your profile has been updated.');
     } catch (error) {
-      Alert.alert('Error', 'Could not save profile.');
+      showAlert('Error', 'Could not save profile.');
     }
   };
 

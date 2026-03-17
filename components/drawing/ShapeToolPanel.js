@@ -9,10 +9,25 @@ const SHAPE_OPTIONS = [
   { key: TOOLS.TRIANGLE, label: 'Triangle', icon: '△' },
 ];
 
-export default function ShapeToolPanel({ activeTool, onSelectTool }) {
+export default function ShapeToolPanel({ activeTool, onSelectTool, shapeFill, onToggleFill, fillColor }) {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Shape Tools</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.label}>Shape Tools</Text>
+        <TouchableOpacity
+          style={[styles.fillBtn, shapeFill && styles.fillBtnActive]}
+          onPress={onToggleFill}
+        >
+          <View style={[
+            styles.fillSwatch,
+            { backgroundColor: shapeFill ? fillColor : 'transparent' },
+            !shapeFill && styles.fillSwatchEmpty,
+          ]} />
+          <Text style={[styles.fillLabel, shapeFill && styles.fillLabelActive]}>
+            {shapeFill ? 'Fill On' : 'Fill Off'}
+          </Text>
+        </TouchableOpacity>
+      </View>
       <View style={styles.row}>
         {SHAPE_OPTIONS.map((shape) => (
           <TouchableOpacity
@@ -43,10 +58,48 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#333',
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   label: {
     color: '#999',
     fontSize: 12,
-    marginBottom: 6,
+  },
+  fillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#444',
+    gap: 6,
+  },
+  fillBtnActive: {
+    borderColor: '#FFD700',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+  },
+  fillSwatch: {
+    width: 16,
+    height: 16,
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  fillSwatchEmpty: {
+    borderStyle: 'dashed',
+    borderColor: '#888',
+  },
+  fillLabel: {
+    fontSize: 11,
+    color: '#999',
+    fontWeight: '600',
+  },
+  fillLabelActive: {
+    color: '#FFD700',
   },
   row: {
     flexDirection: 'row',

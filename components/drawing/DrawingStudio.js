@@ -7,7 +7,6 @@ import {
   TextInput,
   StyleSheet,
   SafeAreaView,
-  Alert,
   Platform,
   ScrollView,
 } from 'react-native';
@@ -20,6 +19,7 @@ import ShapeToolPanel from './ShapeToolPanel';
 import TextOverlay from './TextOverlay';
 import { TOOLS, FREEHAND_TOOLS, SHAPE_TOOLS, BRUSH_PRESETS } from './drawingConstants';
 import { pointsToSvgPath, simplifyPoints } from './drawingUtils';
+import { showAlert } from '../../utils/alertUtils';
 
 export default function DrawingStudio({
   visible,
@@ -44,6 +44,7 @@ export default function DrawingStudio({
   const [brushSize, setBrushSize] = useState(5);
   const [brushOpacity, setBrushOpacity] = useState(1.0);
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
+  const [shapeFill, setShapeFill] = useState(false);
 
   // Panel visibility
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -65,6 +66,7 @@ export default function DrawingStudio({
   const brushSizeRef = useRef(brushSize);
   const brushOpacityRef = useRef(brushOpacity);
   const backgroundColorRef = useRef(backgroundColor);
+  const shapeFillRef = useRef(shapeFill);
   const textPlacementModeRef = useRef(textPlacementMode);
   const pendingTextRef = useRef(pendingText);
 
@@ -74,6 +76,7 @@ export default function DrawingStudio({
   brushSizeRef.current = brushSize;
   brushOpacityRef.current = brushOpacity;
   backgroundColorRef.current = backgroundColor;
+  shapeFillRef.current = shapeFill;
   textPlacementModeRef.current = textPlacementMode;
   pendingTextRef.current = pendingText;
 
@@ -146,6 +149,7 @@ export default function DrawingStudio({
         opacity: getStrokeOpacity(),
         lineCap: 'round',
         lineJoin: 'round',
+        fillColor: (shapeFillRef.current && tool !== 'line') ? brushColorRef.current : null,
       };
       currentStrokeRef.current = stroke;
       setCurrentStroke(stroke);
@@ -246,7 +250,7 @@ export default function DrawingStudio({
   const exportCanvas = async () => {
     try {
       if (!canvasRef.current) {
-        Alert.alert('Error', 'Canvas not ready. Try again.');
+        showAlert('Error', 'Canvas not ready. Try again.');
         return null;
       }
       const uri = await captureRef(canvasRef, {
@@ -257,14 +261,14 @@ export default function DrawingStudio({
       return uri;
     } catch (error) {
       console.log('Export error:', error);
-      Alert.alert('Export Error', 'Could not export drawing.');
+      showAlert('Export Error', 'Could not export drawing.');
       return null;
     }
   };
 
   const handleSavePersonal = async () => {
     if (strokes.length === 0 && textOverlays.length === 0) {
-      Alert.alert('Empty Canvas', 'Draw something first!');
+      showAlert('Empty Canvas', 'Draw something first!');
       return;
     }
     const uri = await exportCanvas();
@@ -276,11 +280,11 @@ export default function DrawingStudio({
 
   const handleSaveCourage = async () => {
     if (courageUploadedToday) {
-      Alert.alert('Already Submitted', 'You can only upload one Courage per day.');
+      showAlert('Already Submitted', 'You can only upload one Courage per day.');
       return;
     }
     if (strokes.length === 0 && textOverlays.length === 0) {
-      Alert.alert('Empty Canvas', 'Draw something first!');
+      showAlert('Empty Canvas', 'Draw something first!');
       return;
     }
     const uri = await exportCanvas();
@@ -301,6 +305,7 @@ export default function DrawingStudio({
     setBrushSize(5);
     setBrushOpacity(1.0);
     setBackgroundColor('#FFFFFF');
+    setShapeFill(false);
     setShowColorPicker(false);
     setShowBrushSettings(false);
     setShowShapes(false);
@@ -349,7 +354,13 @@ export default function DrawingStudio({
 
         {/* Shape panel */}
         {showShapes && (
-          <ShapeToolPanel activeTool={activeTool} onSelectTool={handleSelectTool} />
+          <ShapeToolPanel
+            activeTool={activeTool}
+            onSelectTool={handleSelectTool}
+            shapeFill={shapeFill}
+            onToggleFill={() => setShapeFill(!shapeFill)}
+            fillColor={brushColor}
+          />
         )}
 
         {/* Brush size panel */}

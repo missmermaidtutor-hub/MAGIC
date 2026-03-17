@@ -6,8 +6,8 @@ import {
   ScrollView, 
   TouchableOpacity,
   Switch,
-  Alert
 } from 'react-native';
+import { showAlert, showDestructiveConfirm } from '../utils/alertUtils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SettingsScreen({ navigation }) {
@@ -45,25 +45,19 @@ export default function SettingsScreen({ navigation }) {
   };
 
   const handleClearData = () => {
-    Alert.alert(
+    showDestructiveConfirm(
       'Clear All Data?',
       'This will delete all your entries, artworks, and rankings. This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await AsyncStorage.clear();
-              Alert.alert('Success', 'All data has been cleared.');
-              loadSettings();
-            } catch (error) {
-              Alert.alert('Error', 'Could not clear data.');
-            }
-          }
+      async () => {
+        try {
+          await AsyncStorage.clear();
+          showAlert('Success', 'All data has been cleared.');
+          loadSettings();
+        } catch (error) {
+          showAlert('Error', 'Could not clear data.');
         }
-      ]
+      },
+      'Clear'
     );
   };
 

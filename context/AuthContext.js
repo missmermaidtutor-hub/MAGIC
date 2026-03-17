@@ -166,12 +166,18 @@ export function AuthProvider({ children }) {
   };
 
   const resendVerification = async () => {
-    if (!auth.currentUser) return;
+    if (!auth.currentUser) {
+      console.log('Resend verification: no current user');
+      return false;
+    }
     try {
-      await sendEmailVerification(auth.currentUser);
+      await sendEmailVerification(auth.currentUser, {
+        url: 'https://13magicalnights.com',
+        handleCodeInApp: false,
+      });
       return true;
     } catch (error) {
-      console.log('Resend verification error:', error);
+      console.log('Resend verification error:', error.code, error.message);
       return false;
     }
   };

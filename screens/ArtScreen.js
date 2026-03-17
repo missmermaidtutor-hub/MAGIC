@@ -1056,7 +1056,7 @@ export default function ArtScreen() {
 
           <TouchableOpacity
             style={styles.privateUploadButton}
-            onPress={handlePrivateUpload}
+            onPress={handleCourageUpload}
           >
             <Text style={styles.uploadButtonText}>SHARE WITH</Text>
             <Text style={styles.uploadButtonText}>COURAGE</Text>

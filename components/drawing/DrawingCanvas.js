@@ -63,7 +63,8 @@ export default function DrawingCanvas({
       stroke: stroke.color,
       strokeWidth: stroke.size,
       strokeOpacity: stroke.opacity,
-      fill: 'none',
+      fill: stroke.fillColor || 'none',
+      fillOpacity: stroke.fillColor ? stroke.opacity : 0,
       strokeLinecap: stroke.lineCap || 'round',
       strokeLinejoin: stroke.lineJoin || 'round',
     };

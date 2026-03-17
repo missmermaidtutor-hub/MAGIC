@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { showDestructiveConfirm } from '../../utils/alertUtils';
 import { TOOLS } from './drawingConstants';
 
 const TOOL_ITEMS = [
@@ -43,10 +44,7 @@ export default function DrawingToolbar({
         onRedo();
         break;
       case 'clear':
-        Alert.alert('Clear Canvas', 'Erase everything?', [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Clear', style: 'destructive', onPress: onClear },
-        ]);
+        showDestructiveConfirm('Clear Canvas', 'Erase everything?', onClear, 'Clear');
         break;
       case 'shapes':
         onToggleShapes();
