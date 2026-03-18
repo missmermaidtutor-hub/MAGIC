@@ -12,6 +12,10 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
 import { getESTDate } from '../utils/dateUtils';
+import { getTasksForDate } from '../utils/taskUtils';
+import { useAuth } from '../context/AuthContext';
+import { getMyArtSaves } from '../services/firestoreService';
+import { showAlert, showDestructiveConfirm } from '../utils/alertUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DAY_ABBR = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -160,61 +164,19 @@ const getNextMonth = (year, month) => {
 };
 
 // ─── Load MAGIC tasks for every day in a given month ─────────────
+// Uses the shared getTasksForDate so stars match the HomeScreen exactly
 const loadMonthData = async (year, month) => {
   const daysInMonth = getDaysInMonth(year, month);
   const dayData = {};
 
   try {
-    const publicRaw = await AsyncStorage.getItem('public_artworks');
-    const publicArtworks = publicRaw ? JSON.parse(publicRaw) : [];
-    const allKeys = await AsyncStorage.getAllKeys();
-
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = getDateString(new Date(year, month, day));
-
-      const manifestKey = `manifest_${dateStr}`;
-      const hasManifest = allKeys.includes(manifestKey);
-      let manifestRaw = null;
-      let hasGoal = false;
-      if (hasManifest) {
-        manifestRaw = await AsyncStorage.getItem(manifestKey);
-        if (manifestRaw) {
-          try {
-            const entry = JSON.parse(manifestRaw);
-            hasGoal = !!(entry.growthGoal && entry.growthGoal.trim());
-          } catch (e) {}
-        }
-      }
-
-      const artTimeRaw = await AsyncStorage.getItem(`art_time_${dateStr}`);
-      let hasArt = !!(artTimeRaw && parseInt(artTimeRaw) > 0);
-      if (!hasArt) {
-        const now = new Date();
-        const checkDate = new Date(year, month, day);
-        const diffDays = Math.floor((now - checkDate) / (1000 * 60 * 60 * 24));
-        if (diffDays >= 0 && diffDays < 7) {
-          const weeklyTime = await AsyncStorage.getItem('weekly_art_time');
-          hasArt = !!(weeklyTime && parseInt(weeklyTime) > 0);
-        }
-      }
-
-      const ranked = await AsyncStorage.getItem(`ranked_${dateStr}`);
-      const hasInspire = ranked === 'true';
-      const hasCourageUpload = publicArtworks.some(a => a.date === dateStr);
-      const inspirationSaved = await AsyncStorage.getItem(`inspiration_saved_${dateStr}`);
-      const emailSent = await AsyncStorage.getItem(`email_sent_${dateStr}`);
-      const courageUploaded = await AsyncStorage.getItem(`courage_uploaded_${dateStr}`);
-      const hasCourage = hasCourageUpload || inspirationSaved === 'true' || emailSent === 'true' || courageUploaded === 'true';
-      const hasAny = !!(hasManifest && manifestRaw) || hasArt || hasGoal || hasInspire || hasCourage;
+      const tasks = await getTasksForDate(dateStr);
+      const hasAny = tasks.manifest || tasks.art || tasks.goal || tasks.inspire || tasks.courage;
 
       if (hasAny) {
-        dayData[day] = {
-          manifest: !!(hasManifest && manifestRaw),
-          art: hasArt,
-          goal: hasGoal,
-          inspire: hasInspire,
-          courage: hasCourage,
-        };
+        dayData[day] = tasks;
       }
     }
   } catch (error) {
@@ -297,6 +259,7 @@ const MiniMonth = ({ year, month, data, cellSize, todayInfo, onDayPress }) => {
 
 // ═══════════════════════════════════════════════════════════════════
 export default function StreakScreen() {
+  const { user } = useAuth();
   const today = new Date();
 
   const [viewMonth, setViewMonth] = useState(
@@ -309,6 +272,7 @@ export default function StreakScreen() {
   const [month1Data, setMonth1Data] = useState({});
   const [month2Data, setMonth2Data] = useState({});
   const [selectedDay, setSelectedDay] = useState(null); // { day, month, year, tasks }
+  const [inspiringSaveCount, setInspiringSaveCount] = useState(0);
 
   const [streakData, setStreakData] = useState({
     currentStreak: 0,
@@ -334,7 +298,43 @@ export default function StreakScreen() {
 
   useEffect(() => {
     loadStreakStats();
+    loadInspiringCount();
   }, []);
+
+  const loadInspiringCount = async () => {
+    if (!user || user.uid === 'local') return;
+    try {
+      const saves = await getMyArtSaves(user.uid);
+      setInspiringSaveCount(saves.length);
+    } catch (e) {
+      console.log('Error loading inspiring count:', e);
+    }
+  };
+
+  const handleClearData = () => {
+    showDestructiveConfirm(
+      'Clear All Data?',
+      'This will delete all your local entries, artworks, and rankings. This action cannot be undone.',
+      () => {
+        showDestructiveConfirm(
+          'Are you sure?',
+          'All of your local data will be permanently erased. This cannot be undone.',
+          async () => {
+            try {
+              await AsyncStorage.clear();
+              showAlert('Success', 'All local data has been cleared.');
+              loadStreakStats();
+              loadBothMonths();
+            } catch (error) {
+              showAlert('Error', 'Could not clear data.');
+            }
+          },
+          'Yes, Clear Everything'
+        );
+      },
+      'Yes'
+    );
+  };
 
   const loadBothMonths = async () => {
     const [d1, d2] = await Promise.all([
@@ -348,27 +348,53 @@ export default function StreakScreen() {
   const loadStreakStats = async () => {
     try {
       const allKeys = await AsyncStorage.getAllKeys();
-      const manifestKeys = allKeys.filter(k => k.startsWith('manifest_'));
-      const rankedKeys = allKeys.filter(k => k.startsWith('ranked_'));
-      const publicRaw = await AsyncStorage.getItem('public_artworks');
-      const publicArtworks = publicRaw ? JSON.parse(publicRaw) : [];
 
+      // Build set of all dates with any activity using the shared criteria
       const activeDates = new Set();
-      manifestKeys.forEach(k => activeDates.add(k.replace('manifest_', '')));
-      rankedKeys.forEach(k => activeDates.add(k.replace('ranked_', '')));
-      publicArtworks.forEach(a => { if (a.date) activeDates.add(a.date); });
+      const manifestKeys = allKeys.filter(k => k.startsWith('manifest_'));
+      const artKeys = allKeys.filter(k => k.startsWith('art_created_') || k.startsWith('art_time_'));
+      const rankedKeys = allKeys.filter(k => k.startsWith('ranked_'));
+      const connectKeys = allKeys.filter(k =>
+        k.startsWith('browsed_') || k.startsWith('connected_') ||
+        k.startsWith('email_sent_') || k.startsWith('courage_uploaded_') ||
+        k.startsWith('inspiration_saved_')
+      );
+      const goalAckKeys = allKeys.filter(k => k.startsWith('goal_acknowledged_'));
 
-      // Current streak
-      let current = 0;
-      let checkDate = new Date();
-      const todayStr = getDateString(new Date());
-      if (!activeDates.has(todayStr)) {
-        checkDate.setDate(checkDate.getDate() - 1);
+      // Collect all candidate date strings
+      const candidateDates = new Set();
+      manifestKeys.forEach(k => candidateDates.add(k.replace('manifest_', '')));
+      artKeys.forEach(k => {
+        const d = k.replace('art_created_', '').replace('art_time_', '');
+        if (d.match(/^\d{4}-\d{2}-\d{2}$/)) candidateDates.add(d);
+      });
+      rankedKeys.forEach(k => candidateDates.add(k.replace('ranked_', '')));
+      connectKeys.forEach(k => {
+        const d = k.replace('browsed_', '').replace('connected_', '')
+          .replace('email_sent_', '').replace('courage_uploaded_', '')
+          .replace('inspiration_saved_', '');
+        if (d.match(/^\d{4}-\d{2}-\d{2}$/)) candidateDates.add(d);
+      });
+      goalAckKeys.forEach(k => candidateDates.add(k.replace('goal_acknowledged_', '')));
+
+      // Check each candidate with shared criteria
+      for (const dateStr of candidateDates) {
+        const tasks = await getTasksForDate(dateStr);
+        if (tasks.manifest || tasks.art || tasks.goal || tasks.inspire || tasks.courage) {
+          activeDates.add(dateStr);
+        }
       }
-      for (let i = 0; i < 3650; i++) {
-        if (activeDates.has(getDateString(checkDate))) {
+
+      // Current streak (consecutive days ending today or yesterday)
+      let current = 0;
+      const now = new Date();
+      const todayStr = getDateString(now);
+      let startOffset = activeDates.has(todayStr) ? 0 : 1;
+      for (let i = startOffset; i < 3650; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        if (activeDates.has(getDateString(d))) {
           current++;
-          checkDate.setDate(checkDate.getDate() - 1);
         } else break;
       }
 
@@ -393,29 +419,35 @@ export default function StreakScreen() {
           const raw = await AsyncStorage.getItem(key);
           if (raw) {
             const entry = JSON.parse(raw);
-            if (entry.growthGoal && entry.growthGoal.trim()) {
-              goalsSet++;
-            }
+            if (entry.growthGoal && entry.growthGoal.trim()) goalsSet++;
           }
         } catch (e) {}
       }
-      // Count goal acknowledgements
-      const ackKeys = allKeys.filter(k => k.startsWith('goal_acknowledged_'));
-      for (const key of ackKeys) {
+      for (const key of goalAckKeys) {
         const val = await AsyncStorage.getItem(key);
         if (val === 'yes') goalsMet++;
+      }
+
+      // Count per-category days
+      let manifestDays = 0, artDays = 0, inspireDays = 0, couragePosts = 0;
+      for (const dateStr of activeDates) {
+        const tasks = await getTasksForDate(dateStr);
+        if (tasks.manifest) manifestDays++;
+        if (tasks.art) artDays++;
+        if (tasks.inspire) inspireDays++;
+        if (tasks.courage) couragePosts++;
       }
 
       setStreakData({
         currentStreak: current,
         longestStreak: longest,
         totalActiveDays: activeDates.size,
-        manifestDays: manifestKeys.length,
-        artDays: 0, // placeholder — tracked weekly not daily
+        manifestDays,
+        artDays,
         goalsSet,
         goalsMet,
-        inspireDays: rankedKeys.length,
-        couragePosts: publicArtworks.length,
+        inspireDays,
+        couragePosts,
       });
     } catch (error) {
       console.log('Error loading streak stats:', error);
@@ -579,12 +611,16 @@ export default function StreakScreen() {
             <Text style={styles.statLabel}>Manifest{'\n'}Days</Text>
           </View>
           <View style={styles.statBox}>
+            <Text style={[styles.statNumber, { color: MAGIC_COLORS.art }]}>{streakData.artDays}</Text>
+            <Text style={styles.statLabel}>Art{'\n'}Days</Text>
+          </View>
+          <View style={styles.statBox}>
             <Text style={[styles.statNumber, { color: MAGIC_COLORS.inspire }]}>{streakData.inspireDays}</Text>
             <Text style={styles.statLabel}>Inspire{'\n'}Days</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={[styles.statNumber, { color: MAGIC_COLORS.connect }]}>{streakData.couragePosts}</Text>
-            <Text style={styles.statLabel}>Connect{'\n'}Posts</Text>
+            <Text style={styles.statLabel}>Connect{'\n'}Days</Text>
           </View>
         </View>
 
@@ -603,6 +639,24 @@ export default function StreakScreen() {
             <Text style={styles.statLabel}>Goal Rate</Text>
           </View>
         </View>
+
+        {/* Row 4: Inspiring */}
+        {user && user.uid !== 'local' && (
+          <View style={styles.statsRow}>
+            <View style={[styles.statBox, { flex: 1 }]}>
+              <Text style={[styles.statNumber, { color: '#FF69B4' }]}>{inspiringSaveCount}</Text>
+              <Text style={styles.statLabel}>Times Your Courages{'\n'}Inspired Others</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Clear Data */}
+        <TouchableOpacity style={styles.dangerButton} onPress={handleClearData}>
+          <Text style={styles.dangerButtonText}>Clear All Local Data</Text>
+        </TouchableOpacity>
+        <Text style={styles.warningText}>
+          This will delete all your local entries, artworks, and rankings permanently.
+        </Text>
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -1032,5 +1086,26 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.7)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
+  },
+
+  // Clear Data
+  dangerButton: {
+    backgroundColor: '#D32F2F',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  dangerButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  warningText: {
+    fontSize: 12,
+    color: '#FF6B6B',
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

@@ -13,6 +13,7 @@ import quotesData from '../quotes.json';
 import { getTodayQuote } from '../utils/quoteUtils';
 import { trackAction } from '../services/analyticsService';
 import { scheduleStreakReminder } from '../utils/notificationUtils';
+import { getTasksForDate } from '../utils/taskUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 
@@ -321,61 +322,87 @@ const EmptyStar = ({ size = 52 }) => (
 );
 
 // Past day star — smaller 5-pointed, fully filled (completed day in streak)
-const DayStar = ({ size = 30 }) => {
-  const points = 5;
+// MAGIC colors for star points (same order as StreakScreen CalendarStar)
+const MAGIC_STAR_COLORS = {
+  manifest: '#DC143C',
+  art:      '#FF7F00',
+  grow:     '#FFD700',
+  inspire:  '#22C55E',
+  connect:  '#6366F1',
+};
+
+const DayStar = ({ size = 30, tasks = {} }) => {
+  const pointAngles = [
+    { key: 'manifest', angle: -90 },
+    { key: 'art',      angle: -90 + 72 },
+    { key: 'goal',     angle: -90 + 144 },
+    { key: 'inspire',  angle: -90 + 216 },
+    { key: 'courage',  angle: -90 + 288 },
+  ];
+  const pointColors = {
+    manifest: tasks.manifest ? MAGIC_STAR_COLORS.manifest : '#1a2a4a',
+    art:      tasks.art      ? MAGIC_STAR_COLORS.art      : '#1a2a4a',
+    goal:     tasks.goal     ? MAGIC_STAR_COLORS.grow      : '#1a2a4a',
+    inspire:  tasks.inspire  ? MAGIC_STAR_COLORS.inspire   : '#1a2a4a',
+    courage:  tasks.courage  ? MAGIC_STAR_COLORS.connect   : '#1a2a4a',
+  };
+  const allComplete = tasks.manifest && tasks.art && tasks.goal && tasks.inspire && tasks.courage;
+
   return (
     <View style={{ width: size + 4, height: size + 4, margin: 3, justifyContent: 'center', alignItems: 'center' }}>
+      {allComplete && (
+        <View style={{
+          position: 'absolute',
+          width: size + 6,
+          height: size + 6,
+          borderRadius: (size + 6) / 2,
+          backgroundColor: 'rgba(255, 215, 0, 0.35)',
+        }} />
+      )}
       {/* Gold outline */}
-      {[...Array(points)].map((_, i) => {
-        const angle = (i * 72) - 90;
-        return (
-          <View key={`o-${i}`} style={{
-            position: 'absolute',
-            width: 0,
-            height: 0,
-            borderLeftWidth: size * 0.13,
-            borderRightWidth: size * 0.13,
-            borderBottomWidth: size * 0.44,
-            borderLeftColor: 'transparent',
-            borderRightColor: 'transparent',
-            borderBottomColor: '#B8860B',
-            transform: [
-              { rotate: `${angle + 90}deg` },
-              { translateY: -size * 0.14 },
-            ],
-          }} />
-        );
-      })}
-      {/* Center circle — all gold for completed days */}
+      {pointAngles.map(({ key, angle }) => (
+        <View key={`o-${key}`} style={{
+          position: 'absolute',
+          width: 0,
+          height: 0,
+          borderLeftWidth: size * 0.13,
+          borderRightWidth: size * 0.13,
+          borderBottomWidth: size * 0.44,
+          borderLeftColor: 'transparent',
+          borderRightColor: 'transparent',
+          borderBottomColor: '#B8860B',
+          transform: [
+            { rotate: `${angle + 90}deg` },
+            { translateY: -size * 0.14 },
+          ],
+        }} />
+      ))}
+      {/* Center circle — per-task colors or all gold */}
       <StarCenter
         size={size * 0.28}
-        wedgeColors={['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']}
+        wedgeColors={allComplete
+          ? ['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']
+          : [pointColors.manifest, pointColors.art, pointColors.goal, pointColors.inspire, pointColors.courage]
+        }
       />
-      {/* Filled points — all gold for completed days */}
-      {[...Array(points)].map((_, i) => {
-        const angle = (i * 72) - 90;
-        return (
-          <View key={i} style={{
-            position: 'absolute',
-            width: 0,
-            height: 0,
-            borderLeftWidth: size * 0.1,
-            borderRightWidth: size * 0.1,
-            borderBottomWidth: size * 0.38,
-            borderLeftColor: 'transparent',
-            borderRightColor: 'transparent',
-            borderBottomColor: '#FFD700',
-            transform: [
-              { rotate: `${angle + 90}deg` },
-              { translateY: -size * 0.13 },
-            ],
-            shadowColor: '#FFD700',
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.6,
-            shadowRadius: 3,
-          }} />
-        );
-      })}
+      {/* Filled points — per-task colors or all gold */}
+      {pointAngles.map(({ key, angle }) => (
+        <View key={key} style={{
+          position: 'absolute',
+          width: 0,
+          height: 0,
+          borderLeftWidth: size * 0.1,
+          borderRightWidth: size * 0.1,
+          borderBottomWidth: size * 0.38,
+          borderLeftColor: 'transparent',
+          borderRightColor: 'transparent',
+          borderBottomColor: allComplete ? '#FFD700' : pointColors[key],
+          transform: [
+            { rotate: `${angle + 90}deg` },
+            { translateY: -size * 0.13 },
+          ],
+        }} />
+      ))}
     </View>
   );
 };
@@ -487,41 +514,15 @@ const Candle = ({ lit = false, onPress, size = 40 }) => (
 const getDateString = (date) => date.toISOString().split('T')[0];
 
 // Check if a specific date had ANY MAGIC activity (matches Grow calendar criteria)
-const checkDayActivity = async (dateStr, publicArtworks, personalArtworks) => {
-  // M: Manifest
-  const manifestRaw = await AsyncStorage.getItem(`manifest_${dateStr}`);
-  // A: Art
-  const artTime = await AsyncStorage.getItem(`art_time_${dateStr}`);
-  const artCreated = await AsyncStorage.getItem(`art_created_${dateStr}`);
-  const hasArt = !!(artTime && parseInt(artTime) > 0) || artCreated === 'true'
-    || personalArtworks.some(a => a.date === dateStr);
-  // G: Goal (growthGoal inside manifest)
-  let hasGoal = false;
-  if (manifestRaw) {
-    try { hasGoal = !!(JSON.parse(manifestRaw).growthGoal?.trim()); } catch (e) {}
-  }
-  // I: Inspire
-  const ranked = await AsyncStorage.getItem(`ranked_${dateStr}`);
-  // C: Connect / Courage
-  const browsed = await AsyncStorage.getItem(`browsed_${dateStr}`);
-  const connected = await AsyncStorage.getItem(`connected_${dateStr}`);
-  const emailSent = await AsyncStorage.getItem(`email_sent_${dateStr}`);
-  const inspirationSaved = await AsyncStorage.getItem(`inspiration_saved_${dateStr}`);
-  const courageUploaded = await AsyncStorage.getItem(`courage_uploaded_${dateStr}`);
-  const hasCourage = publicArtworks.some(a => a.date === dateStr);
-  const hasConnect = browsed === 'true' || connected === 'true' || emailSent === 'true'
-    || inspirationSaved === 'true' || courageUploaded === 'true' || hasCourage;
-
-  return !!(manifestRaw || hasArt || hasGoal || ranked === 'true' || hasConnect);
+// Check if there was ANY MAGIC activity on a given date (for streak calculation)
+// Uses the shared getTasksForDate so streak criteria matches star criteria exactly
+const checkDayActivity = async (dateStr) => {
+  const tasks = await getTasksForDate(dateStr);
+  return tasks.manifest || tasks.art || tasks.goal || tasks.inspire || tasks.courage;
 };
 
 // Calculate streak: consecutive days of activity ending today (or yesterday if today not started)
 const calculateStreak = async () => {
-  const publicArtworksRaw = await AsyncStorage.getItem('public_artworks');
-  const publicArtworks = publicArtworksRaw ? JSON.parse(publicArtworksRaw) : [];
-  const personalArtworksRaw = await AsyncStorage.getItem('personal_artworks');
-  const personalArtworks = personalArtworksRaw ? JSON.parse(personalArtworksRaw) : [];
-
   let streak = 0;
   const now = new Date();
 
@@ -530,7 +531,7 @@ const calculateStreak = async () => {
     const checkDate = new Date(now);
     checkDate.setDate(now.getDate() - i);
     const dateStr = getESTDate(checkDate);
-    const hadActivity = await checkDayActivity(dateStr, publicArtworks, personalArtworks);
+    const hadActivity = await checkDayActivity(dateStr);
 
     if (hadActivity) {
       streak++;
@@ -568,78 +569,16 @@ const getStreakStars = (streak) => {
   return { yearDots, monthStars, weekStars, dayStars, total: streak };
 };
 
-// Get MAGIC task completion for a given date
-// M = Manifest: wrote in muse, dump, or vision
-// A = Art: used timer/stopwatch, or wrote/sketched/captured, or uploaded (courage or private)
-// G = Grow: set a growth goal
-// I = Inspire: voted/ranked one set of artwork
-// C = Connect: browsed artwork after voting, sent email, or saved an inspiration
-const getTasksForDate = async (dateStr) => {
-  // --- M: Manifest (wrote in muse, dump, or vision) ---
-  let hasManifest = false;
-  const manifestRaw = await AsyncStorage.getItem(`manifest_${dateStr}`);
-  if (manifestRaw) {
-    try {
-      const entry = JSON.parse(manifestRaw);
-      hasManifest = !!(
-        (entry.callMuse && entry.callMuse.trim()) ||
-        (entry.dumpStalls && entry.dumpStalls.trim()) ||
-        (entry.manifestVision && entry.manifestVision.trim())
-      );
-    } catch (e) {}
-  }
-
-  // --- A: Art (used timer/stopwatch, created, or uploaded) ---
-  const dailyArtTime = await AsyncStorage.getItem(`art_time_${dateStr}`);
-  const dailyTimerUsed = !!(dailyArtTime && parseInt(dailyArtTime) > 0);
-  const weeklyArtTime = await AsyncStorage.getItem('weekly_art_time');
-  const weeklyTimerUsed = !!(weeklyArtTime && parseInt(weeklyArtTime) > 0);
-  const personalArtworksRaw = await AsyncStorage.getItem('personal_artworks');
-  const personalArtworks = personalArtworksRaw ? JSON.parse(personalArtworksRaw) : [];
-  const publicArtworksRaw = await AsyncStorage.getItem('public_artworks');
-  const publicArtworks = publicArtworksRaw ? JSON.parse(publicArtworksRaw) : [];
-  const uploadedOnDate = personalArtworks.some(a => a.date === dateStr) || publicArtworks.some(a => a.date === dateStr);
-  const artCreated = (await AsyncStorage.getItem(`art_created_${dateStr}`)) === 'true';
-  const hasArt = dailyTimerUsed || weeklyTimerUsed || uploadedOnDate || artCreated;
-
-  // --- G: Grow (set a growth goal) ---
-  let hasGoal = false;
-  if (manifestRaw) {
-    try {
-      const entry = JSON.parse(manifestRaw);
-      hasGoal = !!(entry.growthGoal && entry.growthGoal.trim());
-    } catch (e) {}
-  }
-
-  // --- I: Inspire (voted on one set) ---
-  const hasInspire = (await AsyncStorage.getItem(`ranked_${dateStr}`)) === 'true';
-
-  // --- C: Connect (visited Connect tab, clicked arrows, sent email, saved inspiration, or courage upload) ---
-  const browsedConnect = (await AsyncStorage.getItem(`browsed_${dateStr}`)) === 'true';
-  const interactedConnect = (await AsyncStorage.getItem(`connected_${dateStr}`)) === 'true';
-  const sentEmail = (await AsyncStorage.getItem(`email_sent_${dateStr}`)) === 'true';
-  const courageUploaded = (await AsyncStorage.getItem(`courage_uploaded_${dateStr}`)) === 'true';
-  const favoriteArtworksRaw = await AsyncStorage.getItem('favorite_artworks');
-  const favoriteArtworks = favoriteArtworksRaw ? JSON.parse(favoriteArtworksRaw) : [];
-  const savedInspirationOnDate = favoriteArtworks.some(a => a.date === dateStr);
-  const hasConnect = browsedConnect || interactedConnect || sentEmail || savedInspirationOnDate || courageUploaded;
-
-  return {
-    manifest: hasManifest,
-    art: hasArt,
-    goal: hasGoal,
-    inspire: hasInspire,
-    courage: hasConnect,
-  };
-};
+// getTasksForDate is now shared — imported from utils/taskUtils.js
 
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
 
 export default function HomeScreen({ navigation }) {
-  const { user, userProfile, refreshProfile, resendVerification } = useAuth();
+  const { user, userProfile, refreshProfile, resendVerification, checkEmailVerified } = useAuth();
   const [verifyBannerDismissed, setVerifyBannerDismissed] = useState(false);
+  const [sendingVerification, setSendingVerification] = useState(false);
   const [goalAcknowledged, setGoalAcknowledged] = useState(false);
   const [goalMetYes, setGoalMetYes] = useState(false); // true = yes, false = no/not yet
   const [goalLocked, setGoalLocked] = useState(false);
@@ -665,6 +604,7 @@ export default function HomeScreen({ navigation }) {
   const [previewIndex, setPreviewIndex] = useState(-1); // -1 = real data
   const [showInsightModal, setShowInsightModal] = useState(false);
   const [isShowingYesterday, setIsShowingYesterday] = useState(false);
+  const [pastDayTasks, setPastDayTasks] = useState([]); // task data for past streak days
 
   const refreshQuote = useCallback(async () => {
     const quote = await getTodayQuote(quotesData);
@@ -720,6 +660,8 @@ export default function HomeScreen({ navigation }) {
       refreshProfile();
       loadWinners();
       loadTodaysChallenge();
+      // Refresh email verification status so banner hides after user verifies
+      if (user && !user.emailVerified) checkEmailVerified();
     }, [todayQuote, userProfile])
   );
 
@@ -1004,7 +946,7 @@ export default function HomeScreen({ navigation }) {
           id: `fav_${Date.now()}`,
           courageId: currentWinner.courageId,
           title: currentWinner.title || 'Untitled',
-          pseudonym: currentWinner.pseudonym || 'Anonymous',
+          pseudonym: currentWinner.anonymous ? 'Anonymous' : (currentWinner.pseudonym || 'Anonymous'),
           mediaType: currentWinner.mediaType,
           mediaUrl: currentWinner.mediaUrl,
           winnerDate: currentWinner.date,
@@ -1081,6 +1023,25 @@ export default function HomeScreen({ navigation }) {
       setStreakData(data);
       setRealStreakData(data);
       const todayStr = getESTDate();
+
+      // Load task data for past streak days (for the day stars in the arrow)
+      // dayStars includes today, so past days = dayStars - 1
+      const pastDayCount = Math.max(0, (data.dayStars || 0) - 1);
+      if (pastDayCount > 0) {
+        const pastTasks = [];
+        const now = new Date();
+        for (let i = 1; i <= pastDayCount; i++) {
+          const d = new Date(now);
+          d.setDate(now.getDate() - i);
+          const dateStr = getESTDate(d);
+          const tasks = await getTasksForDate(dateStr);
+          pastTasks.push(tasks);
+        }
+        // Reverse so oldest is first (matches arrow order: oldest → newest)
+        setPastDayTasks(pastTasks.reverse());
+      } else {
+        setPastDayTasks([]);
+      }
       const tasks = await getTasksForDate(todayStr);
       const anyDoneToday = tasks.manifest || tasks.art || tasks.goal || tasks.inspire || tasks.courage;
 
@@ -1157,7 +1118,7 @@ export default function HomeScreen({ navigation }) {
     // dayStars count excludes today (today is the MAGIC star)
     const pastDays = Math.max(0, (streakData.dayStars || 0) - 1);
     for (let i = 0; i < pastDays; i++) {
-      items.push({ type: 'day', key: `day-${i}` });
+      items.push({ type: 'day', key: `day-${i}`, tasks: pastDayTasks[i] || {} });
     }
     // Today's big MAGIC star is always last (the arrow point)
     items.push({ type: 'magic', key: 'today' });
@@ -1179,21 +1140,34 @@ export default function HomeScreen({ navigation }) {
     <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
 
-        {/* Email verification banner */}
+        {/* Header spacer */}
+        <View style={styles.headerContainer} />
+
+        {/* Email verification banner — below header spacer so transparent header doesn't block touch */}
         {user && !user.emailVerified && !verifyBannerDismissed && (
-          <View style={{ backgroundColor: 'rgba(255, 215, 0, 0.15)', borderWidth: 1, borderColor: '#FFD700', borderRadius: 10, padding: 12, marginHorizontal: 10, marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ color: '#FFD700', fontSize: 13, flex: 1 }}>Verify your email to unlock all features</Text>
-            <TouchableOpacity onPress={async () => { const ok = await resendVerification(); showAlert(ok ? 'Email Sent' : 'Error', ok ? 'Check your inbox for a verification link.' : 'Could not send verification email. Try again later.'); }} style={{ marginLeft: 8, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: 'rgba(255, 215, 0, 0.2)', borderRadius: 6 }}>
-              <Text style={{ color: '#FFD700', fontSize: 12, fontWeight: '600' }}>Resend</Text>
+          <View style={{ backgroundColor: 'rgba(10, 14, 39, 0.9)', borderWidth: 2, borderColor: '#FFD700', borderRadius: 10, padding: 12, marginHorizontal: 10, marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ color: '#fff', fontSize: 13, flex: 1 }}>Verify your email to unlock all features</Text>
+            <TouchableOpacity
+              disabled={sendingVerification}
+              onPress={async () => {
+                setSendingVerification(true);
+                try {
+                  const ok = await resendVerification();
+                  showAlert(ok ? 'Email Sent' : 'Error', ok ? 'Check your inbox (and spam folder) for a verification link.' : 'Could not send verification email. Try again later.');
+                } catch (e) {
+                  showAlert('Error', 'Could not send verification email. Try again later.');
+                }
+                setSendingVerification(false);
+              }}
+              style={{ marginLeft: 8, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: '#B8860B', borderRadius: 6 }}
+            >
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{sendingVerification ? 'Sending...' : 'Resend'}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setVerifyBannerDismissed(true)} style={{ marginLeft: 6, paddingHorizontal: 8, paddingVertical: 5 }}>
-              <Text style={{ color: '#999', fontSize: 14 }}>X</Text>
+              <Text style={{ color: '#ccc', fontSize: 14, fontWeight: 'bold' }}>X</Text>
             </TouchableOpacity>
           </View>
         )}
-
-        {/* Header spacer */}
-        <View style={styles.headerContainer} />
 
         {/* ===== STREAK STAR ARROW ===== */}
         <View style={styles.starSection}>
@@ -1209,7 +1183,7 @@ export default function HomeScreen({ navigation }) {
                 {item.type === 'year' && <YearDot size={7} />}
                 {item.type === 'month' && <MonthStar size={20} />}
                 {item.type === 'week' && <WeekStar size={28} />}
-                {item.type === 'day' && <DayStar size={32} />}
+                {item.type === 'day' && <DayStar size={32} tasks={item.tasks} />}
                 {item.type === 'magic' && (
                   <TouchableOpacity onPress={() => setShowInsightModal(true)} activeOpacity={0.7}>
                     <MagicStar tasks={todayTasks} size={52} />
@@ -1469,7 +1443,7 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.winnerNameInner}>
               <Text style={styles.winnerNameText}>
                 {winners.length > 0
-                  ? (winners[currentWinnerIndex]?.pseudonym || 'Anonymous')
+                  ? (winners[currentWinnerIndex]?.anonymous ? 'Anonymous' : (winners[currentWinnerIndex]?.pseudonym || 'Anonymous'))
                   : '---'}
               </Text>
             </View>

@@ -171,14 +171,24 @@ export function AuthProvider({ children }) {
       return false;
     }
     try {
-      await sendEmailVerification(auth.currentUser, {
-        url: 'https://13magicalnights.com',
-        handleCodeInApp: false,
-      });
+      await sendEmailVerification(auth.currentUser);
       return true;
     } catch (error) {
       console.log('Resend verification error:', error.code, error.message);
       return false;
+    }
+  };
+
+  const checkEmailVerified = async () => {
+    if (!auth.currentUser || auth.currentUser.emailVerified) return;
+    try {
+      await auth.currentUser.reload();
+      if (auth.currentUser.emailVerified) {
+        // Update the user object in state so banner disappears
+        setUser({ ...auth.currentUser });
+      }
+    } catch (error) {
+      console.log('Email verification check error:', error);
     }
   };
 
@@ -196,7 +206,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, signOut, refreshProfile, resendVerification, isFirebaseConfigured }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, signOut, refreshProfile, resendVerification, checkEmailVerified, isFirebaseConfigured }}>
       {children}
     </AuthContext.Provider>
   );

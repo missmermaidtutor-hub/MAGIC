@@ -9,7 +9,7 @@ import {
   TextInput,
   ImageBackground,
 } from 'react-native';
-import { showAlert, showDestructiveConfirm } from '../../utils/alertUtils';
+import { showAlert } from '../../utils/alertUtils';
 import { trackAction } from '../../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendPasswordResetEmail } from 'firebase/auth';
@@ -279,30 +279,6 @@ export default function AboutYouScreen({ navigation }) {
 
   const toggleCategory = (cat) => {
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
-  };
-
-  const handleClearData = () => {
-    showDestructiveConfirm(
-      'Clear All Data?',
-      'This will delete all your entries, artworks, and rankings. This action cannot be undone.',
-      () => {
-        showDestructiveConfirm(
-          'Are you sure?',
-          'All of your data will be permanently erased. This cannot be undone.',
-          async () => {
-            try {
-              await AsyncStorage.clear();
-              showAlert('Success', 'All data has been cleared.');
-              loadSettings();
-            } catch (error) {
-              showAlert('Error', 'Could not clear data.');
-            }
-          },
-          'Yes, Clear Everything'
-        );
-      },
-      'Yes'
-    );
   };
 
   const getAccountMethodLabel = () => {
@@ -676,28 +652,6 @@ export default function AboutYouScreen({ navigation }) {
           </View>
         </View>
 
-        {/* ===== G. YOUR JOURNEY ===== */}
-        <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Your Journey</Text>
-          <Text style={styles.statsSubtext}>Stats coming soon!</Text>
-        </View>
-
-        {/* ===== H. DATA & INFO ===== */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Data & Info</Text>
-
-          <TouchableOpacity
-            style={styles.dangerButton}
-            onPress={handleClearData}
-          >
-            <Text style={styles.dangerButtonText}>Clear All Data</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.warningText}>
-            This will delete all your entries, artworks, and rankings permanently.
-          </Text>
-        </View>
-
         {/* App Info */}
         <View style={styles.infoCard}>
           <Text style={styles.infoText}>MAGIC Tracker v1.0.0</Text>
@@ -758,7 +712,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#061679',
+    color: '#FFD700',
     marginBottom: 15,
   },
 
@@ -772,12 +726,12 @@ const styles = StyleSheet.create({
     borderColor: '#333',
   },
   readOnlyText: {
-    color: '#999',
+    color: '#bbb',
     fontSize: 16,
   },
   inputLabel: {
     fontSize: 14,
-    color: '#061679',
+    color: '#E0E0E0',
     marginBottom: 6,
     marginTop: 12,
     fontWeight: '600',
@@ -809,7 +763,7 @@ const styles = StyleSheet.create({
     borderColor: '#FF6B6B',
   },
   checkingText: {
-    color: '#061679',
+    color: '#FFD700',
     fontSize: 12,
     marginTop: 4,
   },
@@ -845,10 +799,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 16,
     borderWidth: 1,
-    borderColor: '#061679',
+    borderColor: '#B8860B',
   },
   secondaryButtonText: {
-    color: '#061679',
+    color: '#FFD700',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -869,7 +823,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   dropdownArrow: {
-    color: '#1226A1',
+    color: '#FFD700',
     fontSize: 14,
   },
   dropdownList: {
@@ -893,14 +847,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   dropdownItemTextActive: {
-    color: '#1226A1',
+    color: '#FFD700',
     fontWeight: '600',
   },
 
   // Location
   locationSubtitle: {
     fontSize: 16,
-    color: '#061679',
+    color: '#E0E0E0',
     fontWeight: '600',
     marginBottom: 8,
     marginTop: 4,
@@ -915,7 +869,7 @@ const styles = StyleSheet.create({
   },
   inputLabelSmall: {
     fontSize: 12,
-    color: '#888',
+    color: '#bbb',
     marginBottom: 4,
   },
   textInputSmall: {
@@ -948,7 +902,7 @@ const styles = StyleSheet.create({
     borderColor: '#8E0DD3',
   },
   chipText: {
-    color: '#1226A1',
+    color: '#fff',
     fontSize: 13,
   },
   chipRemove: {
@@ -966,11 +920,11 @@ const styles = StyleSheet.create({
   },
   categoryTitle: {
     fontSize: 17,
-    color: '#061679',
+    color: '#FFD700',
     fontWeight: '600',
   },
   categoryArrow: {
-    color: '#1226A1',
+    color: '#FFD700',
     fontSize: 14,
   },
   mediumList: {
@@ -988,7 +942,7 @@ const styles = StyleSheet.create({
     borderColor: '#444',
   },
   mediumItemActive: {
-    borderColor: '#1226A1',
+    borderColor: '#FFD700',
     backgroundColor: 'rgba(24, 112, 162, 0.7)',
   },
   mediumText: {
@@ -996,7 +950,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   mediumTextActive: {
-    color: '#1226A1',
+    color: '#FFD700',
     fontWeight: '600',
   },
 
@@ -1015,56 +969,17 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 16,
-    color: '#061679',
+    color: '#E0E0E0',
     marginBottom: 4,
     fontWeight: '600',
   },
   settingDescription: {
     fontSize: 14,
-    color: '#666',
-  },
-
-  // Stats
-  statsCard: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
-    borderWidth: 3,
-    borderColor: '#4FC3F7',
-    borderRadius: 12,
-    padding: 30,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  statsTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#f2990a',
-    marginBottom: 10,
-  },
-  statsSubtext: {
-    fontSize: 16,
-    color: '#ffffff',
+    color: '#aaa',
     fontStyle: 'italic',
   },
 
-  // Data & Info
-  dangerButton: {
-    backgroundColor: '#D32F2F',
-    borderRadius: 8,
-    padding: 15,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  dangerButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  warningText: {
-    fontSize: 12,
-    color: '#FF6B6B',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
+  // App Info
   infoCard: {
     backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderWidth: 2,
@@ -1075,12 +990,12 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 14,
-    color: '#061679',
+    color: '#FFD700',
     marginBottom: 5,
   },
   infoSubtext: {
     fontSize: 12,
-    color: '#666',
+    color: '#aaa',
     fontStyle: 'italic',
   },
   hamburgerButton: {

@@ -226,10 +226,7 @@ export default function SignUpScreen({ navigation, route }) {
       // Send email verification (skip for Apple/Google sign-in — already verified)
       if (!skipCredentials) {
         try {
-          await sendEmailVerification(auth.currentUser, {
-            url: 'https://13magicalnights.com',
-            handleCodeInApp: false,
-          });
+          await sendEmailVerification(auth.currentUser);
         } catch (verifyErr) {
           console.log('Email verification send error:', verifyErr.code, verifyErr.message);
           // Don't block signup, but let user know
