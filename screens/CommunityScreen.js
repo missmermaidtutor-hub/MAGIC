@@ -1216,25 +1216,6 @@ export default function CommunityScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        {/* Community Stats */}
-        <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Community Stats</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{curatedArtworks.length}</Text>
-              <Text style={styles.statLabel}>Curated</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{personalArtworks.length}</Text>
-              <Text style={styles.statLabel}>Uploads</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{inspirationArtworks.length}</Text>
-              <Text style={styles.statLabel}>Saved</Text>
-            </View>
-          </View>
-        </View>
-
         <View style={{ height: 40 }} />
       </ScrollView>
 
@@ -1724,40 +1705,6 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-
-  // Stats
-  statsCard: {
-    backgroundColor: 'rgba(184, 200, 232, 0.5)',
-    borderWidth: 3,
-    borderColor: '#050d61',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-  },
-  statsTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#050d61',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#050d61',
-    marginBottom: 5,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#050d61',
   },
 
   // Full-screen modal

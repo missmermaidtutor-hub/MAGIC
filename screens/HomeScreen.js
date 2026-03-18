@@ -1744,7 +1744,8 @@ const styles = StyleSheet.create({
     minHeight: 140,
   },
   cardInnerArt: {
-    padding: 30,
+    padding: 16,
+    paddingVertical: 20,
   },
   quoteText: {
     fontSize: 16,
@@ -1876,14 +1877,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   artLabel: {
-    fontSize: 24,
+    fontSize: 20,
     color: '#061679',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
   },
   artChallenge: {
-    fontSize: 32,
+    fontSize: 26,
     color: '#061679',
     fontWeight: 'bold',
     textAlign: 'center',

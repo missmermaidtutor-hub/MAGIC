@@ -105,6 +105,8 @@ export default function InspireScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [allDone, setAllDone] = useState(false);
+  const [postVoteModalVisible, setPostVoteModalVisible] = useState(false);
+  const [browseMode, setBrowseMode] = useState(false);
   const [currentSet, setCurrentSet] = useState([]); // 4 courages to vote on
   const [votedCourageIds, setVotedCourageIds] = useState(new Set());
   const [availableCourages, setAvailableCourages] = useState([]); // all eligible, minus own
@@ -424,32 +426,34 @@ export default function InspireScreen({ navigation }) {
       // Reset rankings
       setRankings({});
 
-      // Show thank you popup
-      trackAction('vote_submitted');
-      showAlert('Thank You for Voting!', 'Your votes have been submitted.');
-
       // Update vote counts for just-voted courages
+      trackAction('vote_submitted');
       const updatedCounts = { ...voteCountMap };
       realVotes.forEach(v => {
         updatedCounts[v.courageId] = (updatedCounts[v.courageId] || 0) + 1;
       });
       setVoteCountMap(updatedCounts);
 
-      // Load next set — sort by least-voted for equal exposure
+      // Check if more courages are available
       const nextStock = pickStockSet(newVotedIds);
       const unvotedReal = availableCourages.filter(c => !newVotedIds.has(c.id));
+      const hasMore = unvotedReal.length >= 4 || nextStock.length >= 4;
 
-      if (unvotedReal.length >= 4) {
-        const sorted = [...unvotedReal].sort((a, b) =>
-          (updatedCounts[a.id] || 0) - (updatedCounts[b.id] || 0)
-        );
-        setCurrentSet(sorted.slice(0, 4));
-      } else if (nextStock.length >= 4) {
-        // More stock images to vote on
-        setCurrentSet(nextStock);
+      if (hasMore) {
+        // Prepare next set but show choice modal
+        if (unvotedReal.length >= 4) {
+          const sorted = [...unvotedReal].sort((a, b) =>
+            (updatedCounts[a.id] || 0) - (updatedCounts[b.id] || 0)
+          );
+          setCurrentSet(sorted.slice(0, 4));
+        } else {
+          setCurrentSet(nextStock);
+        }
+        setPostVoteModalVisible(true);
       } else {
         setAllDone(true);
         setCurrentSet([]);
+        showAlert('Thank You for Voting!', 'You have voted on all available courages!');
       }
     } catch (error) {
       console.log('Error submitting votes:', error);
@@ -629,7 +633,7 @@ export default function InspireScreen({ navigation }) {
 
   return (
     <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
-      {/* Full-page image viewer modal */}
+      {/* Full-page image viewer modal — swipeable through current set */}
       <Modal
         visible={fullViewArtwork !== null}
         transparent={true}
@@ -643,27 +647,97 @@ export default function InspireScreen({ navigation }) {
           >
             <Text style={styles.modalCloseText}>X</Text>
           </TouchableOpacity>
-          {fullViewArtwork && (
-            <View style={styles.modalContent}>
-              <ScrollView
-                maximumZoomScale={5}
-                minimumZoomScale={1}
-                bouncesZoom={true}
-                showsHorizontalScrollIndicator={false}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.zoomContainer}
-                style={styles.zoomScroll}
-              >
-                <Image
-                  source={fullViewArtwork.source || { uri: fullViewArtwork.mediaUrl }}
-                  style={styles.modalImage}
-                  resizeMode="contain"
-                />
-              </ScrollView>
-              <Text style={styles.modalTitle}>{fullViewArtwork.title}</Text>
-              <Text style={styles.modalHint}>Pinch to zoom, drag to pan</Text>
-            </View>
-          )}
+          {fullViewArtwork && (() => {
+            const viewableSet = browseMode ? availableCourages : currentSet;
+            const currentIndex = viewableSet.findIndex(c => c.id === fullViewArtwork.id);
+            const hasPrev = currentIndex > 0;
+            const hasNext = currentIndex < viewableSet.length - 1;
+            return (
+              <View style={styles.modalContent}>
+                <ScrollView
+                  maximumZoomScale={5}
+                  minimumZoomScale={1}
+                  bouncesZoom={true}
+                  showsHorizontalScrollIndicator={false}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.zoomContainer}
+                  style={styles.zoomScroll}
+                >
+                  <Image
+                    source={fullViewArtwork.source || { uri: fullViewArtwork.mediaUrl }}
+                    style={styles.modalImage}
+                    resizeMode="contain"
+                  />
+                </ScrollView>
+                <Text style={styles.modalTitle}>{fullViewArtwork.title}</Text>
+                {viewableSet.length > 1 && (
+                  <View style={styles.fullViewNav}>
+                    <TouchableOpacity
+                      style={[styles.fullViewNavBtn, !hasPrev && { opacity: 0.3 }]}
+                      onPress={() => hasPrev && setFullViewArtwork(viewableSet[currentIndex - 1])}
+                      disabled={!hasPrev}
+                    >
+                      <Text style={styles.fullViewNavText}>Prev</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.fullViewCounter}>{currentIndex + 1} / {viewableSet.length}</Text>
+                    <TouchableOpacity
+                      style={[styles.fullViewNavBtn, !hasNext && { opacity: 0.3 }]}
+                      onPress={() => hasNext && setFullViewArtwork(viewableSet[currentIndex + 1])}
+                      disabled={!hasNext}
+                    >
+                      <Text style={styles.fullViewNavText}>Next</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            );
+          })()}
+        </View>
+      </Modal>
+
+      {/* Post-vote choice modal */}
+      <Modal
+        visible={postVoteModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPostVoteModalVisible(false)}
+      >
+        <View style={styles.postVoteOverlay}>
+          <View style={styles.postVoteCard}>
+            <Text style={styles.postVoteTitle}>Thank You for Voting!</Text>
+            <Text style={styles.postVoteMessage}>
+              Would you like to keep voting to see more Courage from yesterday, or would you like to scroll through them without voting? Close this window if you are ready to move on.
+            </Text>
+            <TouchableOpacity
+              style={styles.postVoteBtn}
+              onPress={() => {
+                setPostVoteModalVisible(false);
+                setBrowseMode(false);
+              }}
+            >
+              <Text style={styles.postVoteBtnText}>Keep Voting</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.postVoteBtnSecondary}
+              onPress={() => {
+                setPostVoteModalVisible(false);
+                setBrowseMode(true);
+                setCurrentSet([]);
+              }}
+            >
+              <Text style={styles.postVoteBtnSecondaryText}>Browse Without Voting</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.postVoteCloseBtn}
+              onPress={() => {
+                setPostVoteModalVisible(false);
+                setAllDone(true);
+                setCurrentSet([]);
+              }}
+            >
+              <Text style={styles.postVoteCloseBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
 
@@ -701,8 +775,60 @@ export default function InspireScreen({ navigation }) {
           </>
         )}
 
+        {/* Browse Mode — scroll through all courages without voting */}
+        {browseMode && !allDone && (
+          <>
+            <View style={styles.completeCard}>
+              <Text style={styles.completeText}>Browse Yesterday's Courages</Text>
+              <Text style={styles.completeSubtext}>Tap any image to view full size</Text>
+            </View>
+            <View style={styles.artworksGrid}>
+              {availableCourages.map(courage => {
+                const isSaved = savedInspirations.has(courage.id);
+                return (
+                  <View key={courage.id} style={styles.artworkCard}>
+                    <View style={styles.imageActionRow}>
+                      <TouchableOpacity style={styles.sideAction} onPress={() => handleEmailShare(courage)}>
+                        <Text style={styles.envelopeIcon}>✉️</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.imageFrame}
+                        onPress={() => {
+                          if (courage.mediaUrl || courage.source) setFullViewArtwork(courage);
+                        }}
+                      >
+                        {courage.source ? (
+                          <Image source={courage.source} style={styles.artworkImage} resizeMode="cover" />
+                        ) : courage.mediaUrl ? (
+                          <Image source={{ uri: courage.mediaUrl }} style={styles.artworkImage} resizeMode="cover" />
+                        ) : (
+                          <View style={styles.textCourageFrame}>
+                            <Text style={styles.textCourageContent} numberOfLines={6}>{courage.title}</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                      <View style={styles.sideAction}>
+                        <Candle lit={isSaved} onPress={() => handleCandleSave(courage)} size={32} />
+                      </View>
+                    </View>
+                    <View style={styles.artistInfo}>
+                      <Text style={styles.artworkTitle} numberOfLines={2}>{courage.title || 'Untitled'}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+            <TouchableOpacity
+              style={styles.postVoteBtnSecondary}
+              onPress={() => { setBrowseMode(false); setAllDone(true); }}
+            >
+              <Text style={styles.postVoteBtnSecondaryText}>Done Browsing</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
         {/* Voting Mode */}
-        {!allDone && currentSet.length === 4 && (
+        {!allDone && !browseMode && currentSet.length === 4 && (
           <>
             {/* Progress */}
             <View style={styles.progressContainer}>
@@ -1066,5 +1192,93 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#555',
     marginTop: 10,
+  },
+  fullViewNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    gap: 20,
+  },
+  fullViewNavBtn: {
+    backgroundColor: 'rgba(207, 232, 199, 0.3)',
+    borderWidth: 1,
+    borderColor: '#004225',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+  },
+  fullViewNavText: {
+    color: '#cfe8c7',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  fullViewCounter: {
+    color: '#cfe8c7',
+    fontSize: 14,
+  },
+  postVoteOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  postVoteCard: {
+    backgroundColor: '#0a0e27',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    padding: 24,
+    width: '100%',
+    maxWidth: 380,
+    alignItems: 'center',
+  },
+  postVoteTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  postVoteMessage: {
+    fontSize: 15,
+    color: '#ccc',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  postVoteBtn: {
+    backgroundColor: '#FFD700',
+    borderRadius: 10,
+    padding: 14,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  postVoteBtnText: {
+    color: '#0a0e27',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  postVoteBtnSecondary: {
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    borderRadius: 10,
+    padding: 14,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  postVoteBtnSecondaryText: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  postVoteCloseBtn: {
+    padding: 10,
+  },
+  postVoteCloseBtnText: {
+    color: '#999',
+    fontSize: 14,
   },
 });
