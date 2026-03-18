@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground, Linking } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import { openMailto } from '../../utils/emailUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -128,9 +129,7 @@ export default function QuickLaunchScreen({ navigation }) {
             </Text>
             <View style={styles.inspireActions}>
               <TouchableOpacity onPress={() => {
-                const subject = encodeURIComponent('Something that inspired me');
-                const body = encodeURIComponent('This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
-                Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
+                openMailto('Something that inspired me', 'This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
               }}>
                 <Text style={styles.inspireActionText}>✉️ Send Inspiration</Text>
               </TouchableOpacity>

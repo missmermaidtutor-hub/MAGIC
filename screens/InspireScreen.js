@@ -10,9 +10,9 @@ import {
   Dimensions,
   ImageBackground,
   ActivityIndicator,
-  Linking,
   Platform,
 } from 'react-native';
+import { openMailto } from '../utils/emailUtils';
 import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -233,13 +233,12 @@ export default function InspireScreen({ navigation }) {
 
   // Email share — opens email compose + fills Connect star
   const handleEmailShare = async (courage) => {
-    const subject = encodeURIComponent('Something that inspired me');
-    const body = encodeURIComponent(
+    openMailto(
+      'Something that inspired me',
       'This inspired me to send to you!\n\n' +
       (courage.title ? `"${courage.title}"\n\n` : '') +
       '[Add your message here]\n\n— Sent from MAGIC Tracker'
     );
-    Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
     const today = getESTDate();
     await AsyncStorage.setItem(`email_sent_${today}`, 'true');
   };

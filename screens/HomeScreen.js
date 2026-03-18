@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, Linking, ImageBackground, Modal } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, ImageBackground, Modal } from 'react-native';
 import { showAlert, showConfirm } from '../utils/alertUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
@@ -14,6 +14,7 @@ import { getTodayQuote } from '../utils/quoteUtils';
 import { trackAction } from '../services/analyticsService';
 import { scheduleStreakReminder } from '../utils/notificationUtils';
 import { getTasksForDate } from '../utils/taskUtils';
+import { openMailto } from '../utils/emailUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 
@@ -1453,9 +1454,7 @@ export default function HomeScreen({ navigation }) {
         {/* Inspired Section */}
         <View style={styles.inspiredContainer}>
           <TouchableOpacity onPress={async () => {
-            const subject = encodeURIComponent('Something that inspired me');
-            const body = encodeURIComponent('This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
-            Linking.openURL(`mailto:?subject=${subject}&body=${body}`);
+            openMailto('Something that inspired me', 'This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
             // Mark email sent for Connect star
             await AsyncStorage.setItem(`email_sent_${getESTDate()}`, 'true');
           }}>
