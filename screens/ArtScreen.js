@@ -564,14 +564,11 @@ export default function ArtScreen() {
         console.log('Local save error:', localError);
       }
 
-      // Mark as uploaded immediately so button disables + star detects it
-      setCourageUploadedToday(true);
-      await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
       trackAction('courage_uploaded_write');
       setWriteModalVisible(false);
       setWriteTitle('');
 
-      // Now attempt Firestore upload
+      // Attempt Firestore upload
       try {
         await uploadCourage(user.uid, {
           pseudonym: userProfile?.pseudonym || '',
@@ -581,6 +578,9 @@ export default function ArtScreen() {
           date: today,
           anonymous: isAnonymous,
         });
+
+        setCourageUploadedToday(true);
+        await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
 
         const successMsg = isAnonymous
           ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
@@ -686,15 +686,19 @@ export default function ArtScreen() {
         console.log('Local sketch save error:', localError);
       }
 
-      setCourageUploadedToday(true);
-      await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
       trackAction('courage_uploaded_sketch');
 
-      // Upload image to Firebase Storage, then create courage entry
+      // Try uploading image to Firebase Storage
+      let downloadUrl = '';
       try {
         const storagePath = `courages/${user.uid}/${today}_sketch_${Date.now()}.png`;
-        const downloadUrl = await uploadMediaToStorage(imageUri, storagePath);
+        downloadUrl = await uploadMediaToStorage(imageUri, storagePath);
+      } catch (storageErr) {
+        console.log('Storage upload failed, submitting without image:', storageErr);
+      }
 
+      // Upload courage entry to Firestore (with or without image URL)
+      try {
         await uploadCourage(user.uid, {
           pseudonym: userProfile?.pseudonym || '',
           title: title,
@@ -703,6 +707,9 @@ export default function ArtScreen() {
           date: today,
           anonymous: isAnonymous,
         });
+
+        setCourageUploadedToday(true);
+        await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
 
         const successMsg = isAnonymous
           ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
@@ -859,15 +866,20 @@ export default function ArtScreen() {
         console.log('Local capture save error:', localError);
       }
 
-      setCourageUploadedToday(true);
-      await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
       trackAction('courage_uploaded_capture');
       setCaptureModalVisible(false);
 
+      // Try uploading image to Firebase Storage
+      let downloadUrl = '';
       try {
         const storagePath = `courages/${user.uid}/${today}_capture_${Date.now()}.png`;
-        const downloadUrl = await uploadMediaToStorage(capturedImageUri, storagePath);
+        downloadUrl = await uploadMediaToStorage(capturedImageUri, storagePath);
+      } catch (storageErr) {
+        console.log('Storage upload failed, submitting without image:', storageErr);
+      }
 
+      // Upload courage entry to Firestore (with or without image URL)
+      try {
         await uploadCourage(user.uid, {
           pseudonym: userProfile?.pseudonym || '',
           title,
@@ -876,6 +888,9 @@ export default function ArtScreen() {
           date: today,
           anonymous: isAnonymous,
         });
+
+        setCourageUploadedToday(true);
+        await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
 
         const successMsg = isAnonymous
           ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
