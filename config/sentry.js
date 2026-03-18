@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/react-native';
 
 // Replace with your actual Sentry DSN from https://sentry.io
-const SENTRY_DSN = 'YOUR_SENTRY_DSN_HERE';
+const SENTRY_DSN = 'https://276940f9d86aca4dc86ea52697215526@o4511067556216832.ingest.us.sentry.io/4511067563098112';
 
 const isConfigured = SENTRY_DSN !== 'YOUR_SENTRY_DSN_HERE';
 
