@@ -83,6 +83,97 @@ export function triangleFromPoints(start, end) {
 }
 
 /**
+ * Append new bezier segments to an existing SVG path string.
+ * Only generates the path for points from `fromIndex` onward,
+ * avoiding regeneration of the full path on every move.
+ */
+export function appendToSvgPath(existingPath, points, fromIndex) {
+  if (!points || points.length === 0) return existingPath || '';
+
+  // First point — start the path
+  if (points.length === 1) {
+    return `M ${points[0].x} ${points[0].y} L ${points[0].x + 0.5} ${points[0].y + 0.5}`;
+  }
+
+  // If fromIndex is 0 or 1, regenerate from scratch (short path)
+  if (fromIndex <= 1) {
+    return pointsToSvgPath(points);
+  }
+
+  // Strip trailing L segment from existing path (we'll re-append it)
+  let base = existingPath;
+  const lastLIndex = base.lastIndexOf(' L ');
+  if (lastLIndex !== -1) {
+    base = base.substring(0, lastLIndex);
+  }
+
+  // Append new Q segments from fromIndex-1 onward
+  let appended = '';
+  for (let i = Math.max(fromIndex - 1, 1); i < points.length - 1; i++) {
+    const midX = (points[i].x + points[i + 1].x) / 2;
+    const midY = (points[i].y + points[i + 1].y) / 2;
+    appended += ` Q ${points[i].x} ${points[i].y} ${midX} ${midY}`;
+  }
+
+  // Final point
+  const last = points[points.length - 1];
+  appended += ` L ${last.x} ${last.y}`;
+
+  return base + appended;
+}
+
+/**
+ * Convert HSV (h: 0-360, s: 0-1, v: 0-1) to hex color string.
+ */
+export function hsvToHex(h, s, v) {
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = v - c;
+  let r, g, b;
+
+  if (h < 60)      { r = c; g = x; b = 0; }
+  else if (h < 120) { r = x; g = c; b = 0; }
+  else if (h < 180) { r = 0; g = c; b = x; }
+  else if (h < 240) { r = 0; g = x; b = c; }
+  else if (h < 300) { r = x; g = 0; b = c; }
+  else              { r = c; g = 0; b = x; }
+
+  const toHex = (val) => {
+    const hex = Math.round((val + m) * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+
+  return '#' + toHex(r) + toHex(g) + toHex(b);
+}
+
+/**
+ * Convert hex color string to HSV {h: 0-360, s: 0-1, v: 0-1}.
+ */
+export function hexToHsv(hex) {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.substring(0, 2), 16) / 255;
+  const g = parseInt(clean.substring(2, 4), 16) / 255;
+  const b = parseInt(clean.substring(4, 6), 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+
+  let h = 0;
+  if (d !== 0) {
+    if (max === r)      h = 60 * (((g - b) / d) % 6);
+    else if (max === g) h = 60 * (((b - r) / d) + 2);
+    else                h = 60 * (((r - g) / d) + 4);
+  }
+  if (h < 0) h += 360;
+
+  const s = max === 0 ? 0 : d / max;
+  const v = max;
+
+  return { h, s, v };
+}
+
+/**
  * Simplify points array by removing points too close together.
  * Reduces SVG path complexity for better performance.
  */

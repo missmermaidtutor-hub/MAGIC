@@ -8,6 +8,7 @@ import {
   Alert,
   Platform,
   Modal,
+  Switch,
   TextInput,
   KeyboardAvoidingView,
   AppState,
@@ -73,6 +74,11 @@ export default function ArtScreen() {
   // Alarm repeating state
   const [alarmRinging, setAlarmRinging] = useState(false);
   const alarmRepeatRef = useRef(null);
+
+  // Courage confirmation modal
+  const [courageConfirmVisible, setCourageConfirmVisible] = useState(false);
+  const [courageOverrideAnonymous, setCourageOverrideAnonymous] = useState(true);
+  const pendingCourageUploadRef = useRef(null);
 
   // Refs for intervals
   const dailyIntervalRef = useRef(null);
@@ -527,7 +533,7 @@ export default function ArtScreen() {
       showAlert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
       return;
     }
-    const doUpload = async () => {
+    const doUpload = async (isAnonymous) => {
       const today = getESTDate();
       const label = modeLabels[writeMode] || 'Art';
       const title = writeTitle.trim() || todaysChallenge || `${label} from ${today}`;
@@ -573,10 +579,13 @@ export default function ArtScreen() {
           mediaType: 'image',
           mediaUrl: '',
           date: today,
-          anonymous: userProfile?.anonymous ?? false,
+          anonymous: isAnonymous,
         });
 
-        showAlert('Congratulations on your COURAGE!', 'Upload is ready for tomorrow\'s vote.');
+        const successMsg = isAnonymous
+          ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
+          : 'Your Courage has been registered for Voting tomorrow. When voting is over, your Courage will also show your pseudonym in Winner Circle, and galleries.';
+        showAlert('Congratulations on your COURAGE!', successMsg);
       } catch (e) {
         console.log('Courage text upload error:', e);
         captureError(e, { context: 'courageTextUpload' });
@@ -586,11 +595,9 @@ export default function ArtScreen() {
         );
       }
     };
-    showConfirm(
-      'Upload with COURAGE',
-      `Your ${modeLabels[writeMode].toLowerCase()} will be submitted for anonymous voting. Ready to share?`,
-      doUpload
-    );
+    setCourageOverrideAnonymous(userProfile?.anonymous ?? true);
+    pendingCourageUploadRef.current = doUpload;
+    setCourageConfirmVisible(true);
   };
 
   // --- Drawing Studio save handlers ---
@@ -646,7 +653,7 @@ export default function ArtScreen() {
       showAlert('Already Submitted', 'You can only upload one Courage per day.');
       return;
     }
-    const doUpload = async () => {
+    const doUpload = async (isAnonymous) => {
       const today = getESTDate();
       const title = sketchTitle || `Sketch from ${today}`;
 
@@ -694,10 +701,13 @@ export default function ArtScreen() {
           mediaType: 'image',
           mediaUrl: downloadUrl,
           date: today,
-          anonymous: userProfile?.anonymous ?? false,
+          anonymous: isAnonymous,
         });
 
-        showAlert('Congratulations on your COURAGE!', 'Your sketch is ready for tomorrow\'s vote.');
+        const successMsg = isAnonymous
+          ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
+          : 'Your Courage has been registered for Voting tomorrow. When voting is over, your Courage will also show your pseudonym in Winner Circle, and galleries.';
+        showAlert('Congratulations on your COURAGE!', successMsg);
       } catch (e) {
         console.log('Courage sketch upload error:', e);
         captureError(e, { context: 'courageSketchUpload' });
@@ -707,11 +717,9 @@ export default function ArtScreen() {
         );
       }
     };
-    showConfirm(
-      'Upload with COURAGE',
-      'Your sketch will be submitted for anonymous voting. Ready to share?',
-      doUpload
-    );
+    setCourageOverrideAnonymous(userProfile?.anonymous ?? true);
+    pendingCourageUploadRef.current = doUpload;
+    setCourageConfirmVisible(true);
   };
 
   const handleSketch = () => {
@@ -820,7 +828,7 @@ export default function ArtScreen() {
       showAlert('Already Submitted', 'You can only upload one Courage per day.');
       return;
     }
-    const doUpload = async () => {
+    const doUpload = async (isAnonymous) => {
       const today = getESTDate();
       const title = captureTitle.trim() || `Capture from ${today}`;
 
@@ -866,10 +874,13 @@ export default function ArtScreen() {
           mediaType: 'image',
           mediaUrl: downloadUrl,
           date: today,
-          anonymous: userProfile?.anonymous ?? false,
+          anonymous: isAnonymous,
         });
 
-        showAlert('Congratulations on your COURAGE!', 'Your capture is ready for tomorrow\'s vote.');
+        const successMsg = isAnonymous
+          ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
+          : 'Your Courage has been registered for Voting tomorrow. When voting is over, your Courage will also show your pseudonym in Winner Circle, and galleries.';
+        showAlert('Congratulations on your COURAGE!', successMsg);
       } catch (e) {
         console.log('Courage capture upload error:', e);
         captureError(e, { context: 'courageCaptureUpload' });
@@ -879,11 +890,9 @@ export default function ArtScreen() {
         );
       }
     };
-    showConfirm(
-      'Upload with COURAGE',
-      'Your capture will be submitted for anonymous voting. Ready to share?',
-      doUpload
-    );
+    setCourageOverrideAnonymous(userProfile?.anonymous ?? true);
+    pendingCourageUploadRef.current = doUpload;
+    setCourageConfirmVisible(true);
   };
 
   // Handle uploads (opens capture modal with image from library)
@@ -898,6 +907,20 @@ export default function ArtScreen() {
     }
     // Opens capture modal — user can title + save from there
     captureFromLibrary();
+  };
+
+  // Courage confirmation modal handlers
+  const handleCourageConfirm = () => {
+    setCourageConfirmVisible(false);
+    if (pendingCourageUploadRef.current) {
+      pendingCourageUploadRef.current(courageOverrideAnonymous);
+      pendingCourageUploadRef.current = null;
+    }
+  };
+
+  const handleCourageCancel = () => {
+    setCourageConfirmVisible(false);
+    pendingCourageUploadRef.current = null;
   };
 
   // Check if weekly goal met (120 minutes)
@@ -1180,6 +1203,40 @@ export default function ArtScreen() {
             <TouchableOpacity style={styles.writeCloseBtn} onPress={() => setCaptureModalVisible(false)}>
               <Text style={styles.writeCloseBtnText}>Cancel</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Courage Confirmation Modal */}
+      <Modal visible={courageConfirmVisible} transparent animationType="fade">
+        <View style={styles.courageConfirmOverlay}>
+          <View style={styles.courageConfirmCard}>
+            <Text style={styles.courageConfirmTitle}>Upload with COURAGE</Text>
+
+            <View style={styles.courageToggleRow}>
+              <Text style={styles.courageToggleLabel}>Stay Anonymous</Text>
+              <Switch
+                value={courageOverrideAnonymous}
+                onValueChange={setCourageOverrideAnonymous}
+                trackColor={{ false: '#555', true: '#FFD700' }}
+                thumbColor={courageOverrideAnonymous ? '#fff' : '#ccc'}
+              />
+            </View>
+
+            <Text style={styles.courageConfirmMessage}>
+              {courageOverrideAnonymous
+                ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
+                : 'Your Courage has been registered for Voting tomorrow. When voting is over, your Courage will also show your pseudonym in Winner Circle, and galleries.'}
+            </Text>
+
+            <View style={styles.courageConfirmButtons}>
+              <TouchableOpacity style={styles.courageCancelBtn} onPress={handleCourageCancel}>
+                <Text style={styles.courageCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.courageConfirmBtn} onPress={handleCourageConfirm}>
+                <Text style={styles.courageConfirmBtnText}>Confirm</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1627,5 +1684,78 @@ const styles = StyleSheet.create({
     color: '#332100',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  courageConfirmOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  courageConfirmCard: {
+    backgroundColor: '#0a0e27',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    padding: 24,
+    width: '100%',
+    maxWidth: 380,
+  },
+  courageConfirmTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  courageToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 16,
+  },
+  courageToggleLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  courageConfirmMessage: {
+    fontSize: 14,
+    color: '#ccc',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  courageConfirmButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  courageCancelBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#666',
+    borderRadius: 10,
+    padding: 14,
+    alignItems: 'center',
+  },
+  courageCancelBtnText: {
+    color: '#999',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  courageConfirmBtn: {
+    flex: 1,
+    backgroundColor: '#FFD700',
+    borderRadius: 10,
+    padding: 14,
+    alignItems: 'center',
+  },
+  courageConfirmBtnText: {
+    color: '#0a0e27',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

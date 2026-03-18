@@ -13,12 +13,12 @@ import {
 import { captureRef } from 'react-native-view-shot';
 import DrawingCanvas from './DrawingCanvas';
 import DrawingToolbar from './DrawingToolbar';
-import ColorPicker from './ColorPicker';
+import ColorPicker, { ColorSidebar } from './ColorPicker';
 import BrushSettings from './BrushSettings';
 import ShapeToolPanel from './ShapeToolPanel';
 import TextOverlay from './TextOverlay';
 import { TOOLS, FREEHAND_TOOLS, SHAPE_TOOLS, BRUSH_PRESETS } from './drawingConstants';
-import { pointsToSvgPath, simplifyPoints } from './drawingUtils';
+import { pointsToSvgPath, simplifyPoints, appendToSvgPath } from './drawingUtils';
 import { showAlert } from '../../utils/alertUtils';
 
 export default function DrawingStudio({
@@ -61,6 +61,9 @@ export default function DrawingStudio({
   const pointsRef = useRef([]);
   const shapeStartRef = useRef(null);
   const currentStrokeRef = useRef(null);
+  const rafRef = useRef(null);        // requestAnimationFrame handle
+  const pathRef = useRef('');          // incrementally built SVG path
+  const lastPathIndexRef = useRef(0);  // index of last point added to path
   const activeToolRef = useRef(activeTool);
   const brushColorRef = useRef(brushColor);
   const brushSizeRef = useRef(brushSize);
@@ -124,6 +127,8 @@ export default function DrawingStudio({
 
     if (FREEHAND_TOOLS.includes(tool)) {
       pointsRef.current = [pos];
+      pathRef.current = '';
+      lastPathIndexRef.current = 0;
       const stroke = {
         id: Date.now(),
         type: 'path',
@@ -161,13 +166,25 @@ export default function DrawingStudio({
 
     if (FREEHAND_TOOLS.includes(tool) && pointsRef.current.length > 0) {
       pointsRef.current.push(pos);
-      const updated = {
-        ...currentStrokeRef.current,
-        points: [...pointsRef.current],
-        pathData: pointsToSvgPath(pointsRef.current),
-      };
-      currentStrokeRef.current = updated;
-      setCurrentStroke(updated);
+
+      // Throttle state updates to one per animation frame
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = null;
+          const pts = pointsRef.current;
+          // Incremental path: only compute new segments
+          const newPath = appendToSvgPath(pathRef.current, pts, lastPathIndexRef.current);
+          pathRef.current = newPath;
+          lastPathIndexRef.current = Math.max(0, pts.length - 2);
+          const updated = {
+            ...currentStrokeRef.current,
+            points: pts,
+            pathData: newPath,
+          };
+          currentStrokeRef.current = updated;
+          setCurrentStroke(updated);
+        });
+      }
     } else if (SHAPE_TOOLS.includes(tool) && shapeStartRef.current) {
       const updated = { ...currentStrokeRef.current, endPoint: pos };
       currentStrokeRef.current = updated;
@@ -176,6 +193,12 @@ export default function DrawingStudio({
   }, []);
 
   const handleStrokeEnd = useCallback(() => {
+    // Cancel any pending RAF
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+
     const stroke = currentStrokeRef.current;
     if (stroke) {
       let finalStroke = { ...stroke };
@@ -192,6 +215,8 @@ export default function DrawingStudio({
       currentStrokeRef.current = null;
       pointsRef.current = [];
       shapeStartRef.current = null;
+      pathRef.current = '';
+      lastPathIndexRef.current = 0;
     }
   }, []);
 
@@ -387,21 +412,29 @@ export default function DrawingStudio({
           </View>
         )}
 
-        {/* Canvas */}
-        <DrawingCanvas
-          strokes={strokes}
-          currentStroke={currentStroke}
-          textOverlays={textOverlays}
-          backgroundColor={backgroundColor}
-          activeTool={activeTool}
-          brushColor={brushColor}
-          brushSize={brushSize}
-          brushOpacity={brushOpacity}
-          onStrokeStart={handleStrokeStart}
-          onStrokeMove={handleStrokeMove}
-          onStrokeEnd={handleStrokeEnd}
-          canvasRef={canvasRef}
-        />
+        {/* Canvas row (sidebar + canvas) */}
+        <View style={styles.canvasRow}>
+          {showColorPicker && (
+            <ColorSidebar
+              brushColor={brushColor}
+              onSelectColor={setBrushColor}
+            />
+          )}
+          <DrawingCanvas
+            strokes={strokes}
+            currentStroke={currentStroke}
+            textOverlays={textOverlays}
+            backgroundColor={backgroundColor}
+            activeTool={activeTool}
+            brushColor={brushColor}
+            brushSize={brushSize}
+            brushOpacity={brushOpacity}
+            onStrokeStart={handleStrokeStart}
+            onStrokeMove={handleStrokeMove}
+            onStrokeEnd={handleStrokeEnd}
+            canvasRef={canvasRef}
+          />
+        </View>
 
         {/* Title */}
         <View style={styles.titleRow}>
@@ -443,6 +476,11 @@ export default function DrawingStudio({
 }
 
 const styles = StyleSheet.create({
+  canvasRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
   container: {
     flex: 1,
     backgroundColor: '#E2A06E',
