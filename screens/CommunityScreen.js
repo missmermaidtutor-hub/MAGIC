@@ -375,6 +375,7 @@ export default function CommunityScreen({ navigation, route }) {
         favorites.push({
           id: artId,
           imageUrl: artwork.imageUrl,
+          text: artwork.text || '',
           title: artwork.title || 'Untitled',
           source: 'candle_save',
           date: artwork.date,

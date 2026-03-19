@@ -5,8 +5,8 @@ service cloud.firestore {
 
     // ===== USERS COLLECTION =====
     match /users/{userId} {
-      // Users can read their own profile
-      allow read: if request.auth != null && request.auth.uid == userId;
+      // Any authenticated user can read profiles (needed for community features, pod management)
+      allow read: if request.auth != null;
 
       // Users can create their own profile (on signup)
       allow create: if request.auth != null
@@ -191,9 +191,8 @@ service cloud.firestore {
 
     // ===== DISCUSSION PODS =====
     match /discussionPods/{podId} {
-      // Members can read their pod
-      allow read: if request.auth != null
-                  && request.auth.uid in resource.data.members;
+      // Any authenticated user can read pod metadata (admin needs full list)
+      allow read: if request.auth != null;
 
       // Authenticated users can create pods (admin enforced client-side)
       allow create: if request.auth != null;

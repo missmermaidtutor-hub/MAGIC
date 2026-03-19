@@ -62,7 +62,10 @@ export default function ManagePodsScreen({ navigation }) {
   const [filterTimezone, setFilterTimezone] = useState('');
   const [filterCountry, setFilterCountry] = useState('');
   const [filterState, setFilterState] = useState('');
-  const [openDropdown, setOpenDropdown] = useState(null); // 'timezone' | 'country' | 'state' | null
+  const [filterHeartCity, setFilterHeartCity] = useState('');
+  const [filterMedium, setFilterMedium] = useState('');
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [expandedUser, setExpandedUser] = useState(null);
 
   useEffect(() => {
     if (!user || !isAdmin(user.uid)) {
@@ -105,31 +108,35 @@ export default function ManagePodsScreen({ navigation }) {
     const timezones = new Set();
     const countries = new Set();
     const states = new Set();
+    const heartCities = new Set();
+    const mediums = new Set();
     allUsers.forEach(u => {
       if (u.timezone) timezones.add(u.timezone);
       const loc = u.currentLocation;
       if (loc?.country) countries.add(loc.country);
       if (loc?.state) states.add(loc.state);
+      const heart = u.heartLocation;
+      if (heart?.city) heartCities.add(heart.city);
+      (u.favoriteMediums || []).forEach(m => mediums.add(m));
     });
     return {
       timezones: [...timezones].sort(),
       countries: [...countries].sort(),
       states: [...states].sort(),
+      heartCities: [...heartCities].sort(),
+      mediums: [...mediums].sort(),
     };
   }, [allUsers]);
 
   // Filter users by search text + dropdown filters
   const filteredUsers = useMemo(() => {
-    const query = searchText.toLowerCase().trim();
+    const q = searchText.toLowerCase().trim();
     return allUsers.filter(u => {
-      // Text search
-      if (query) {
+      // Text search (username + pseudonym)
+      if (q) {
         const username = (u.username || '').toLowerCase();
         const pseudonym = (u.pseudonym || '').toLowerCase();
-        const email = (u.email || '').toLowerCase();
-        const bio = (u.bio || '').toLowerCase();
-        if (!username.includes(query) && !pseudonym.includes(query) &&
-            !email.includes(query) && !bio.includes(query)) {
+        if (!username.includes(q) && !pseudonym.includes(q)) {
           return false;
         }
       }
@@ -139,16 +146,22 @@ export default function ManagePodsScreen({ navigation }) {
       if (filterCountry && u.currentLocation?.country !== filterCountry) return false;
       // State filter
       if (filterState && u.currentLocation?.state !== filterState) return false;
+      // Heart city filter
+      if (filterHeartCity && u.heartLocation?.city !== filterHeartCity) return false;
+      // Medium filter
+      if (filterMedium && !(u.favoriteMediums || []).includes(filterMedium)) return false;
       return true;
     });
-  }, [allUsers, searchText, filterTimezone, filterCountry, filterState]);
+  }, [allUsers, searchText, filterTimezone, filterCountry, filterState, filterHeartCity, filterMedium]);
 
-  const hasActiveFilters = filterTimezone || filterCountry || filterState;
+  const hasActiveFilters = filterTimezone || filterCountry || filterState || filterHeartCity || filterMedium;
 
   const clearFilters = () => {
     setFilterTimezone('');
     setFilterCountry('');
     setFilterState('');
+    setFilterHeartCity('');
+    setFilterMedium('');
     setOpenDropdown(null);
   };
 
@@ -279,6 +292,8 @@ export default function ManagePodsScreen({ navigation }) {
                   if (filterKey === 'timezone') setFilterTimezone('');
                   else if (filterKey === 'country') setFilterCountry('');
                   else if (filterKey === 'state') setFilterState('');
+                  else if (filterKey === 'heartCity') setFilterHeartCity('');
+                  else if (filterKey === 'medium') setFilterMedium('');
                   setOpenDropdown(null);
                 }}
               >
@@ -298,6 +313,8 @@ export default function ManagePodsScreen({ navigation }) {
                     if (filterKey === 'timezone') setFilterTimezone(opt);
                     else if (filterKey === 'country') setFilterCountry(opt);
                     else if (filterKey === 'state') setFilterState(opt);
+                    else if (filterKey === 'heartCity') setFilterHeartCity(opt);
+                    else if (filterKey === 'medium') setFilterMedium(opt);
                     setOpenDropdown(null);
                   }}
                 >
@@ -327,6 +344,16 @@ export default function ManagePodsScreen({ navigation }) {
       return parts.join(' · ');
     };
 
+    const heartLocationStr = (u) => {
+      const heart = u.heartLocation;
+      if (!heart) return '';
+      const parts = [];
+      if (heart.city) parts.push(heart.city);
+      if (heart.state) parts.push(heart.state);
+      if (heart.country) parts.push(heart.country);
+      return parts.join(', ');
+    };
+
     return (
       <View style={styles.userPicker}>
         <Text style={styles.pickerLabel}>Select Members:</Text>
@@ -336,7 +363,7 @@ export default function ManagePodsScreen({ navigation }) {
           style={styles.searchInput}
           value={searchText}
           onChangeText={setSearchText}
-          placeholder="Search users..."
+          placeholder="Search by username or pseudonym..."
           placeholderTextColor="#999"
         />
 
@@ -360,6 +387,10 @@ export default function ManagePodsScreen({ navigation }) {
               renderDropdown('Country', filterCountry, filterOptions.countries, 'country')}
             {filterOptions.states.length > 0 &&
               renderDropdown('State', filterState, filterOptions.states, 'state')}
+            {filterOptions.heartCities.length > 0 &&
+              renderDropdown('Heart City', filterHeartCity, filterOptions.heartCities, 'heartCity')}
+            {filterOptions.mediums.length > 0 &&
+              renderDropdown('Medium', filterMedium, filterOptions.mediums, 'medium')}
             {hasActiveFilters && (
               <TouchableOpacity style={styles.clearFiltersBtn} onPress={clearFilters}>
                 <Text style={styles.clearFiltersBtnText}>Clear</Text>
@@ -381,41 +412,61 @@ export default function ManagePodsScreen({ navigation }) {
             const pseudonym = u.pseudonym || '';
             const userPods = userPodMap[u.uid] || [];
             const locationStr = userLocationStr(u);
+            const heartStr = heartLocationStr(u);
+            const mediums = u.favoriteMediums || [];
+            const isExpanded = expandedUser === u.uid;
 
             return (
-              <TouchableOpacity
-                key={u.uid}
-                style={[styles.userRow, isSelected && styles.userRowSelected]}
-                onPress={() => toggleUid(u.uid, setFn)}
-              >
-                <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
-                  {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                </View>
-                <View style={styles.userInfo}>
-                  <View style={styles.userTopRow}>
-                    <Text style={styles.userName}>{displayName}</Text>
+              <View key={u.uid}>
+                <TouchableOpacity
+                  style={[styles.userRow, isSelected && styles.userRowSelected]}
+                  onPress={() => toggleUid(u.uid, setFn)}
+                >
+                  <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
+                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <View style={styles.userInfo}>
+                    <View style={styles.userTopRow}>
+                      <Text style={styles.userName}>{displayName}</Text>
+                      {userPods.length > 0 && (
+                        <View style={styles.podBadge}>
+                          <Text style={styles.podBadgeText}>
+                            In {userPods.length} pod{userPods.length !== 1 ? 's' : ''}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    {pseudonym ? (
+                      <Text style={styles.userMeta} numberOfLines={1}>★ {pseudonym}</Text>
+                    ) : null}
+                    {locationStr ? (
+                      <Text style={styles.userMeta} numberOfLines={1}>{locationStr}</Text>
+                    ) : null}
+                  </View>
+                  <TouchableOpacity
+                    style={styles.expandBtn}
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      setExpandedUser(isExpanded ? null : u.uid);
+                    }}
+                  >
+                    <Text style={styles.expandBtnText}>{isExpanded ? '▲' : '▼'}</Text>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+                {isExpanded && (
+                  <View style={styles.userDetails}>
+                    {u.bio ? <Text style={styles.detailText}>Bio: {u.bio}</Text> : null}
+                    {heartStr ? <Text style={styles.detailText}>Heart City: {heartStr}</Text> : null}
+                    {mediums.length > 0 ? (
+                      <Text style={styles.detailText}>Mediums: {mediums.join(', ')}</Text>
+                    ) : null}
+                    {u.email ? <Text style={styles.detailText}>Email: {u.email}</Text> : null}
                     {userPods.length > 0 && (
-                      <View style={styles.podBadge}>
-                        <Text style={styles.podBadgeText}>
-                          In {userPods.length} pod{userPods.length !== 1 ? 's' : ''}
-                        </Text>
-                      </View>
+                      <Text style={styles.detailText}>Pods: {userPods.map(p => p.name).join(', ')}</Text>
                     )}
                   </View>
-                  {(pseudonym || locationStr) ? (
-                    <Text style={styles.userMeta} numberOfLines={1}>
-                      {pseudonym ? `★ ${pseudonym}` : ''}
-                      {pseudonym && locationStr ? ' · ' : ''}
-                      {locationStr}
-                    </Text>
-                  ) : null}
-                  {userPods.length > 0 && (
-                    <Text style={styles.userPodNames} numberOfLines={1}>
-                      → {userPods.map(p => p.name).join(', ')}
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
+                )}
+              </View>
             );
           })}
           {filteredUsers.length === 0 && (
@@ -824,6 +875,30 @@ const styles = StyleSheet.create({
     color: '#888',
     fontStyle: 'italic',
     marginTop: 1,
+  },
+  expandBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 6,
+    marginTop: 2,
+  },
+  expandBtnText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  userDetails: {
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    marginLeft: 32,
+  },
+  detailText: {
+    fontSize: 12,
+    color: '#333',
+    marginBottom: 3,
+    lineHeight: 17,
   },
   noResults: {
     padding: 20,
