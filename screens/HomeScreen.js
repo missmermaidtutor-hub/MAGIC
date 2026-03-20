@@ -20,7 +20,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 
 // MAGIC task constants (shared with insight modal)
 const MAGIC_KEYS = ['manifest', 'art', 'goal', 'inspire', 'courage'];
-const MAGIC_COLOR_ARRAY = ['#DC143C', '#FF7F00', '#FFD700', '#22C55E', '#6366F1'];
+const MAGIC_COLOR_ARRAY = ['#78000E', '#9E4502', '#c1a900', '#3c9820', '#5008a7'];
 const MAGIC_LABELS = ['Manifest', 'Art', 'Grow', 'Inspire', 'Connect'];
 const MAGIC_GUIDANCE = [
   'Write in your Muse, Dump, or Vision journal',
@@ -152,11 +152,11 @@ const WeekStar = ({ size = 24 }) => {
 // Each point fills independently: M=Manifest, A=Art, G=Goal, I=Inspire, C=Courage
 const MagicStar = ({ tasks = {}, size = 52 }) => {
   const pointColors = {
-    manifest: tasks.manifest ? '#DC143C' : '#1a2a4a',
-    art:      tasks.art      ? '#FF7F00' : '#1a2a4a',
-    goal:     tasks.goal     ? '#FFD700' : '#1a2a4a',
-    inspire:  tasks.inspire  ? '#22C55E' : '#1a2a4a',
-    courage:  tasks.courage  ? '#6366F1' : '#1a2a4a',
+    manifest: tasks.manifest ? '#78000E' : '#1a2a4a',
+    art:      tasks.art      ? '#9E4502' : '#1a2a4a',
+    goal:     tasks.goal     ? '#c1a900' : '#1a2a4a',
+    inspire:  tasks.inspire  ? '#3c9820' : '#1a2a4a',
+    courage:  tasks.courage  ? '#5008a7' : '#1a2a4a',
   };
 
   const pointAngles = [
@@ -219,7 +219,7 @@ const MagicStar = ({ tasks = {}, size = 52 }) => {
         <StarCenter
           size={size * 0.32}
           wedgeColors={allComplete
-            ? ['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']
+            ? ['#c1a900','#c1a900','#c1a900','#c1a900','#c1a900']
             : [pointColors.manifest, pointColors.art, pointColors.goal, pointColors.inspire, pointColors.courage]
           }
 
@@ -235,7 +235,7 @@ const MagicStar = ({ tasks = {}, size = 52 }) => {
             borderBottomWidth: size * 0.42,
             borderLeftColor: 'transparent',
             borderRightColor: 'transparent',
-            borderBottomColor: allComplete ? '#FFD700' : pointColors[key],
+            borderBottomColor: allComplete ? '#c1a900' : pointColors[key],
             transform: [
               { rotate: `${angle + 90}deg` },
               { translateY: -size * 0.14 },
@@ -253,7 +253,7 @@ const MagicStar = ({ tasks = {}, size = 52 }) => {
       <View style={{ flexDirection: 'row', marginTop: 4 }}>
         {['M', 'A', 'G', 'I', 'C'].map((letter, i) => {
           const keys = ['manifest', 'art', 'goal', 'inspire', 'courage'];
-          const colors = ['#DC143C', '#FF7F00', '#FFD700', '#22C55E', '#6366F1'];
+          const colors = ['#78000E', '#9E4502', '#c1a900', '#3c9820', '#5008a7'];
           return (
             <Text key={letter} style={{
               fontSize: 9,
@@ -325,11 +325,11 @@ const EmptyStar = ({ size = 52 }) => (
 // Past day star — smaller 5-pointed, fully filled (completed day in streak)
 // MAGIC colors for star points (same order as StreakScreen CalendarStar)
 const MAGIC_STAR_COLORS = {
-  manifest: '#DC143C',
-  art:      '#FF7F00',
-  grow:     '#FFD700',
-  inspire:  '#22C55E',
-  connect:  '#6366F1',
+  manifest: '#78000E',
+  art:      '#9E4502',
+  grow:     '#c1a900',
+  inspire:  '#3c9820',
+  connect:  '#5008a7',
 };
 
 const DayStar = ({ size = 30, tasks = {} }) => {
@@ -382,7 +382,7 @@ const DayStar = ({ size = 30, tasks = {} }) => {
       <StarCenter
         size={size * 0.28}
         wedgeColors={allComplete
-          ? ['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']
+          ? ['#c1a900','#c1a900','#c1a900','#c1a900','#c1a900']
           : [pointColors.manifest, pointColors.art, pointColors.goal, pointColors.inspire, pointColors.courage]
         }
       />
@@ -397,7 +397,7 @@ const DayStar = ({ size = 30, tasks = {} }) => {
           borderBottomWidth: size * 0.38,
           borderLeftColor: 'transparent',
           borderRightColor: 'transparent',
-          borderBottomColor: allComplete ? '#FFD700' : pointColors[key],
+          borderBottomColor: allComplete ? '#c1a900' : pointColors[key],
           transform: [
             { rotate: `${angle + 90}deg` },
             { translateY: -size * 0.13 },
@@ -1499,11 +1499,11 @@ export default function HomeScreen({ navigation }) {
                 { key: 'courage',  angle: -90 + 288 },
               ];
               const pointColors = {
-                manifest: tasks.manifest ? '#DC143C' : '#1a2a4a',
-                art:      tasks.art      ? '#FF7F00' : '#1a2a4a',
-                goal:     tasks.goal     ? '#FFD700' : '#1a2a4a',
-                inspire:  tasks.inspire  ? '#22C55E' : '#1a2a4a',
-                courage:  tasks.courage  ? '#6366F1' : '#1a2a4a',
+                manifest: tasks.manifest ? '#78000E' : '#1a2a4a',
+                art:      tasks.art      ? '#9E4502' : '#1a2a4a',
+                goal:     tasks.goal     ? '#c1a900' : '#1a2a4a',
+                inspire:  tasks.inspire  ? '#3c9820' : '#1a2a4a',
+                courage:  tasks.courage  ? '#5008a7' : '#1a2a4a',
               };
 
               return (
@@ -1548,7 +1548,7 @@ export default function HomeScreen({ navigation }) {
                       <StarCenter
                         size={starSize * 0.32}
                         wedgeColors={allComplete
-                          ? ['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']
+                          ? ['#c1a900','#c1a900','#c1a900','#c1a900','#c1a900']
                           : [pointColors.manifest, pointColors.art, pointColors.goal, pointColors.inspire, pointColors.courage]
                         }
                       />
@@ -1561,7 +1561,7 @@ export default function HomeScreen({ navigation }) {
                           borderBottomWidth: starSize * 0.42,
                           borderLeftColor: 'transparent',
                           borderRightColor: 'transparent',
-                          borderBottomColor: allComplete ? '#FFD700' : pointColors[key],
+                          borderBottomColor: allComplete ? '#c1a900' : pointColors[key],
                           transform: [{ rotate: `${angle + 90}deg` }, { translateY: -starSize * 0.14 }],
                         }} />
                       ))}
@@ -1754,13 +1754,13 @@ const styles = StyleSheet.create({
   },
   quoteTextSmall: {
     fontSize: 15,
-    color: '#660008',
+    color: '#78000E',
     marginBottom: 6,
     lineHeight: 20,
   },
   authorText: {
     fontSize: 13,
-    color: '#660008',
+    color: '#78000E',
     fontStyle: 'italic',
     marginBottom: 15,
   },
@@ -1771,11 +1771,11 @@ const styles = StyleSheet.create({
   },
   manifestTextSmall: {
     fontSize: 14,
-    color: '#660008',
+    color: '#78000E',
     fontWeight: '600',
   },
   manifestHighlight: {
-    color: '#660008',
+    color: '#78000E',
   },
   heartRight: {
     position: 'absolute',
@@ -1795,7 +1795,7 @@ const styles = StyleSheet.create({
   },
   goalTitleSmall: {
     fontSize: 16,
-    color: '#b4924a',
+    color: '#c1a900',
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -1806,7 +1806,7 @@ const styles = StyleSheet.create({
   },
   goalSubtextSmall: {
     fontSize: 13,
-    color: '#b4924a',
+    color: '#c1a900',
     marginBottom: 4,
   },
   goalDisplay: {
@@ -1819,7 +1819,7 @@ const styles = StyleSheet.create({
   },
   goalDisplaySmall: {
     fontSize: 14,
-    color: '#b4924a',
+    color: '#c1a900',
     fontWeight: '500',
     marginTop: 6,
     marginRight: 30,
@@ -1827,13 +1827,13 @@ const styles = StyleSheet.create({
   },
   goalAckText: {
     fontSize: 16,
-    color: '#b4924a',
+    color: '#c1a900',
     fontWeight: '600',
     marginTop: 8,
   },
   goalLabel: {
     fontSize: 14,
-    color: '#b4924a',
+    color: '#c1a900',
     marginTop: 8,
     fontWeight: '600',
   },
@@ -1878,20 +1878,20 @@ const styles = StyleSheet.create({
   },
   artLabel: {
     fontSize: 20,
-    color: '#061679',
+    color: '#9E4502',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
   },
   artChallenge: {
     fontSize: 26,
-    color: '#061679',
+    color: '#9E4502',
     fontWeight: 'bold',
     textAlign: 'center',
   },
   artStudioLink: {
     fontSize: 14,
-    color: '#061679',
+    color: '#9E4502',
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 10,
@@ -1910,7 +1910,7 @@ const styles = StyleSheet.create({
   },
   rankTitle: {
     fontSize: 22,
-    color: '#004225',
+    color: '#3c9820',
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 5,
@@ -2029,12 +2029,12 @@ const styles = StyleSheet.create({
   },
   inspiredText: {
     fontSize: 20,
-    color: '#061679',
+    color: '#5008a7',
     fontWeight: 'bold',
   },
   inspiredSubtext: {
     fontSize: 12,
-    color: '#061679',
+    color: '#5008a7',
     marginTop: 2,
   },
   noWinnerPlaceholder: {

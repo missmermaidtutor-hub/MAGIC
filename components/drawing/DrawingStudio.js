@@ -49,6 +49,7 @@ export default function DrawingStudio({
   // Panel visibility
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showBrushSettings, setShowBrushSettings] = useState(false);
+  const [colorBgMode, setColorBgMode] = useState(false);
   const [showShapes, setShowShapes] = useState(false);
   const [showTextOverlay, setShowTextOverlay] = useState(false);
   const [textPlacementMode, setTextPlacementMode] = useState(false);
@@ -334,6 +335,7 @@ export default function DrawingStudio({
     setShowColorPicker(false);
     setShowBrushSettings(false);
     setShowShapes(false);
+    setColorBgMode(false);
     setTextPlacementMode(false);
     setPendingText(null);
     onClose();
@@ -375,6 +377,13 @@ export default function DrawingStudio({
             setShowShapes(false);
           }}
           brushColor={brushColor}
+          backgroundColor={backgroundColor}
+          onToggleBgColor={() => {
+            setColorBgMode(true);
+            setShowColorPicker(true);
+            setShowBrushSettings(false);
+            setShowShapes(false);
+          }}
         />
 
         {/* Shape panel */}
@@ -402,6 +411,8 @@ export default function DrawingStudio({
             onChangeOpacity={setBrushOpacity}
             backgroundColor={backgroundColor}
             onChangeBackground={setBackgroundColor}
+            bgMode={colorBgMode}
+            onBgModeChange={setColorBgMode}
           />
         )}
 

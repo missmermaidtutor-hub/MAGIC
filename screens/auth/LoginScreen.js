@@ -99,11 +99,11 @@ export default function LoginScreen({ navigation }) {
       >
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.appTitle}>
-            <Text style={{ color: '#DC143C' }}>M</Text>
-            <Text style={{ color: '#FF7F00' }}>A</Text>
-            <Text style={{ color: '#FFD700' }}>G</Text>
-            <Text style={{ color: '#22C55E' }}>I</Text>
-            <Text style={{ color: '#6366F1' }}>C</Text>
+            <Text style={{ color: '#78000E' }}>M</Text>
+            <Text style={{ color: '#9E4502' }}>A</Text>
+            <Text style={{ color: '#c1a900' }}>G</Text>
+            <Text style={{ color: '#3c9820' }}>I</Text>
+            <Text style={{ color: '#5008a7' }}>C</Text>
           </Text>
           <Text style={styles.appSubtitle}>Daily Creative Practice</Text>
 

@@ -22,11 +22,11 @@ const DAY_ABBR = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 // MAGIC color constants
 const MAGIC_COLORS = {
-  manifest: '#DC143C',  // Maroon/Red
-  art:      '#FF7F00',  // Orange
-  grow:     '#FFD700',  // Yellow/Gold
-  inspire:  '#22C55E',  // Green
-  connect:  '#6366F1',  // Indigo
+  manifest: '#78000E',  // Dark Red
+  art:      '#9E4502',  // Dark Orange
+  grow:     '#c1a900',  // Dark Gold
+  inspire:  '#3c9820',  // Dark Green
+  connect:  '#5008a7',  // Dark Indigo
 };
 const MAGIC_KEYS = ['manifest', 'art', 'goal', 'inspire', 'courage'];
 const MAGIC_COLOR_ARRAY = [MAGIC_COLORS.manifest, MAGIC_COLORS.art, MAGIC_COLORS.grow, MAGIC_COLORS.inspire, MAGIC_COLORS.connect];
@@ -116,7 +116,7 @@ const CalendarStar = ({ tasks = {}, size = 14 }) => {
       <StarCenter
         size={size * 0.28}
         wedgeColors={allComplete
-          ? ['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']
+          ? ['#c1a900','#c1a900','#c1a900','#c1a900','#c1a900']
           : [pointColors.manifest, pointColors.art, pointColors.goal, pointColors.inspire, pointColors.courage]
         }
 
@@ -131,7 +131,7 @@ const CalendarStar = ({ tasks = {}, size = 14 }) => {
           borderBottomWidth: size * 0.38,
           borderLeftColor: 'transparent',
           borderRightColor: 'transparent',
-          borderBottomColor: allComplete ? '#FFD700' : pointColors[key],
+          borderBottomColor: allComplete ? '#c1a900' : pointColors[key],
           transform: [
             { rotate: `${angle + 90}deg` },
             { translateY: -size * 0.13 },
@@ -742,10 +742,10 @@ export default function StreakScreen() {
                       <StarCenter
                         size={starSize * 0.32}
                         wedgeColors={allComplete
-                          ? ['#FFD700','#FFD700','#FFD700','#FFD700','#FFD700']
+                          ? ['#c1a900','#c1a900','#c1a900','#c1a900','#c1a900']
                           : [pointColors.manifest, pointColors.art, pointColors.goal, pointColors.inspire, pointColors.courage]
                         }
-                
+
                       />
                       {pointAngles.map(({ key, angle }) => (
                         <View key={key} style={{
@@ -756,7 +756,7 @@ export default function StreakScreen() {
                           borderBottomWidth: starSize * 0.42,
                           borderLeftColor: 'transparent',
                           borderRightColor: 'transparent',
-                          borderBottomColor: allComplete ? '#FFD700' : pointColors[key],
+                          borderBottomColor: allComplete ? '#c1a900' : pointColors[key],
                           transform: [{ rotate: `${angle + 90}deg` }, { translateY: -starSize * 0.14 }],
                         }} />
                       ))}
@@ -828,7 +828,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#662C1A',
+    color: '#c1a900',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 10,

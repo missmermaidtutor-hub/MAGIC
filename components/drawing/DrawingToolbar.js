@@ -34,6 +34,8 @@ export default function DrawingToolbar({
   showColorPicker,
   onToggleColorPicker,
   brushColor,
+  backgroundColor,
+  onToggleBgColor,
 }) {
   const handleAction = (key) => {
     switch (key) {
@@ -75,6 +77,17 @@ export default function DrawingToolbar({
           <View style={[styles.colorPreview, { backgroundColor: brushColor }]} />
           <Text style={[styles.toolLabel, showColorPicker && styles.toolLabelActive]}>Color</Text>
         </TouchableOpacity>
+
+        {/* BG color button */}
+        {onToggleBgColor && (
+          <TouchableOpacity
+            style={styles.toolBtn}
+            onPress={onToggleBgColor}
+          >
+            <View style={[styles.bgColorPreview, { backgroundColor: backgroundColor || '#FFFFFF' }]} />
+            <Text style={styles.toolLabel}>BG</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.divider} />
 
@@ -190,6 +203,13 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+  },
+  bgColorPreview: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
     borderWidth: 2,
     borderColor: '#FFD700',
   },

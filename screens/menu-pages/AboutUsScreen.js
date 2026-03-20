@@ -196,23 +196,23 @@ const styles = StyleSheet.create({
   },
   boldM: {
     fontWeight: 'bold',
-    color: '#DC143C',
+    color: '#78000E',
   },
   boldA: {
     fontWeight: 'bold',
-    color: '#FF7F00',
+    color: '#9E4502',
   },
   boldG: {
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#c1a900',
   },
   boldI: {
     fontWeight: 'bold',
-    color: '#22C55E',
+    color: '#3c9820',
   },
   boldC: {
     fontWeight: 'bold',
-    color: '#6366F1',
+    color: '#5008a7',
   },
   hamburgerButton: {
     width: 44,

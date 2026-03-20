@@ -191,17 +191,22 @@ service cloud.firestore {
 
     // ===== DISCUSSION PODS =====
     match /discussionPods/{podId} {
-      // Any authenticated user can read pod metadata (admin needs full list)
-      allow read: if request.auth != null;
+      // Admin can read all pods; members can read their own pod
+      allow read: if request.auth != null
+                   && (request.auth.uid == 'VYnCl7waz4VyxRhryIAOTA9NBMg2'
+                       || request.auth.uid in resource.data.members);
 
-      // Authenticated users can create pods (admin enforced client-side)
-      allow create: if request.auth != null;
+      // Only admin can create pods
+      allow create: if request.auth != null
+                    && request.auth.uid == 'VYnCl7waz4VyxRhryIAOTA9NBMg2';
 
-      // Authenticated users can update pods (admin enforced client-side)
-      allow update: if request.auth != null;
+      // Only admin can update pods
+      allow update: if request.auth != null
+                    && request.auth.uid == 'VYnCl7waz4VyxRhryIAOTA9NBMg2';
 
-      // Authenticated users can delete pods (admin enforced client-side)
-      allow delete: if request.auth != null;
+      // Only admin can delete pods
+      allow delete: if request.auth != null
+                    && request.auth.uid == 'VYnCl7waz4VyxRhryIAOTA9NBMg2';
 
       // Messages subcollection
       match /messages/{messageId} {

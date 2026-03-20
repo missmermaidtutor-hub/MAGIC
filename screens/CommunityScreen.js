@@ -35,6 +35,7 @@ import {
 import { getESTDate } from '../utils/dateUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 // Gold Frame component (matches HomeScreen)
 const GoldFrame = ({ children, style, containerStyle, onPress, thickness = 4 }) => {
@@ -380,6 +381,7 @@ export default function CommunityScreen({ navigation, route }) {
           source: 'candle_save',
           date: artwork.date,
           savedAt: new Date().toISOString(),
+          ...(artwork.textStyle && { textStyle: artwork.textStyle }),
         });
         setSavedNewsfeedArt(prev => new Set(prev).add(artId));
         const today = getESTDate();
@@ -672,9 +674,9 @@ export default function CommunityScreen({ navigation, route }) {
 
     const handleFramePress = () => {
       if (imageSource) {
-        setFullViewImage(imageSource);
+        setFullViewImage({ source: imageSource, artwork });
       } else if (hasText) {
-        setFullViewText({ text: artwork.text, title: artwork.title });
+        setFullViewText({ text: artwork.text, title: artwork.title, textStyle: artwork.textStyle });
       }
     };
 
@@ -691,7 +693,17 @@ export default function CommunityScreen({ navigation, route }) {
           ) : hasText ? (
             <View style={[styles.galleryImageBg, styles.textArtBg]}>
               <ScrollView contentContainerStyle={styles.textArtScroll} showsVerticalScrollIndicator={false}>
-                <Text style={styles.textArtContent} numberOfLines={12}>{artwork.text}</Text>
+                <Text style={[
+                  styles.textArtContent,
+                  artwork.textStyle && {
+                    fontFamily: artwork.textStyle.fontFamily,
+                    fontWeight: artwork.textStyle.fontWeight,
+                    fontStyle: artwork.textStyle.fontStyle,
+                    textDecorationLine: artwork.textStyle.textDecorationLine,
+                    textAlign: artwork.textStyle.textAlign,
+                    color: artwork.textStyle.color,
+                  },
+                ]} numberOfLines={12}>{artwork.text}</Text>
               </ScrollView>
               {artwork.title ? (
                 <Text style={styles.textArtTitle}>{artwork.title}</Text>
@@ -761,9 +773,9 @@ export default function CommunityScreen({ navigation, route }) {
 
     const handleFramePress = () => {
       if (imageSource) {
-        setFullViewImage(imageSource);
+        setFullViewImage({ source: imageSource, artwork });
       } else if (hasText) {
-        setFullViewText({ text: artwork.text, title: artwork.title });
+        setFullViewText({ text: artwork.text, title: artwork.title, textStyle: artwork.textStyle });
       }
     };
 
@@ -879,8 +891,8 @@ export default function CommunityScreen({ navigation, route }) {
               <GoldFrame
                 style={styles.newsfeedFrameInner}
                 onPress={() => {
-                  if (imageSource) setFullViewImage(imageSource);
-                  else if (artwork.text) setFullViewText({ text: artwork.text, title: artwork.title });
+                  if (imageSource) setFullViewImage({ source: imageSource, artwork, curatorUid: feedUser.uid });
+                  else if (artwork.text) setFullViewText({ text: artwork.text, title: artwork.title, textStyle: artwork.textStyle });
                 }}
                 thickness={6}
               >
@@ -890,7 +902,17 @@ export default function CommunityScreen({ navigation, route }) {
                   </View>
                 ) : artwork.text ? (
                   <View style={[styles.newsfeedImageBg, styles.textArtBg]}>
-                    <Text style={styles.textArtContent} numberOfLines={8}>{artwork.text}</Text>
+                    <Text style={[
+                      styles.textArtContent,
+                      artwork.textStyle && {
+                        fontFamily: artwork.textStyle.fontFamily,
+                        fontWeight: artwork.textStyle.fontWeight,
+                        fontStyle: artwork.textStyle.fontStyle,
+                        textDecorationLine: artwork.textStyle.textDecorationLine,
+                        textAlign: artwork.textStyle.textAlign,
+                        color: artwork.textStyle.color,
+                      },
+                    ]} numberOfLines={8}>{artwork.text}</Text>
                   </View>
                 ) : (
                   <View style={[styles.newsfeedImageBg, styles.placeholderArt]}>
@@ -966,7 +988,7 @@ export default function CommunityScreen({ navigation, route }) {
           return (
             <View key={item.artworkId} style={styles.galleryItemContainer}>
               <GoldFrame
-                onPress={() => imageSource && setFullViewImage(imageSource)}
+                onPress={() => imageSource && setFullViewImage({ source: imageSource, artwork: item.artwork })}
                 thickness={3}
               >
                 {imageSource ? (
@@ -1242,12 +1264,21 @@ export default function CommunityScreen({ navigation, route }) {
           >
             {fullViewImage && (
               <Image
-                source={fullViewImage}
+                source={fullViewImage.source}
                 style={styles.modalImage}
                 resizeMode="contain"
               />
             )}
           </ScrollView>
+          {fullViewImage?.curatorUid && (
+            <View style={styles.fullViewCandleRow}>
+              <Candle
+                lit={savedNewsfeedArt.has(fullViewImage.artwork?.docId || fullViewImage.artwork?.id)}
+                onPress={() => handleCandleSave(fullViewImage.artwork, fullViewImage.curatorUid)}
+                size={44}
+              />
+            </View>
+          )}
         </View>
       </Modal>
 
@@ -1269,7 +1300,18 @@ export default function CommunityScreen({ navigation, route }) {
             {fullViewText?.title ? (
               <Text style={styles.fullTextTitle}>{fullViewText.title}</Text>
             ) : null}
-            <Text style={styles.fullTextContent}>{fullViewText?.text}</Text>
+            <Text style={[
+              styles.fullTextContent,
+              fullViewText?.textStyle && {
+                fontFamily: fullViewText.textStyle.fontFamily,
+                fontSize: fullViewText.textStyle.fontSize,
+                color: fullViewText.textStyle.color,
+                fontWeight: fullViewText.textStyle.fontWeight,
+                fontStyle: fullViewText.textStyle.fontStyle,
+                textDecorationLine: fullViewText.textStyle.textDecorationLine,
+                textAlign: fullViewText.textStyle.textAlign,
+              },
+            ]}>{fullViewText?.text}</Text>
           </ScrollView>
         </View>
       </Modal>
@@ -1322,14 +1364,14 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#5008a7',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 18,
-    color: '#050d61',
+    color: '#5008a7',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
@@ -1359,7 +1401,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 10,
-    color: '#050d61',
+    color: '#5008a7',
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -1649,7 +1691,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#5008a7',
   },
   sectionDescription: {
     fontSize: 14,
@@ -1739,7 +1781,12 @@ const styles = StyleSheet.create({
   },
   modalImage: {
     width: SCREEN_WIDTH,
-    height: SCREEN_WIDTH,
+    height: Math.min(SCREEN_WIDTH, SCREEN_HEIGHT - 180),
+  },
+  fullViewCandleRow: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
   },
 
   // Newsfeed Styles

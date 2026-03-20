@@ -39,6 +39,25 @@ import DrawingStudio from '../components/drawing/DrawingStudio';
 const MIN_TIMER_MINUTES = 1;
 const MAX_TIMER_MINUTES = 180;
 
+const FONT_FAMILIES = [
+  { label: 'Default', value: undefined },
+  { label: 'Serif', value: 'serif' },
+  { label: 'Sans', value: 'sans-serif' },
+  { label: 'Mono', value: 'monospace' },
+  { label: 'Cursive', value: Platform.OS === 'web' ? 'cursive' : 'serif' },
+  { label: 'Georgia', value: Platform.OS === 'web' ? 'Georgia, serif' : 'Georgia' },
+];
+const FONT_SIZES = [
+  { label: 'S', value: 13 },
+  { label: 'M', value: 16 },
+  { label: 'L', value: 20 },
+  { label: 'XL', value: 26 },
+];
+const TEXT_COLORS = [
+  '#332100', '#000000', '#FFFFFF', '#DC143C', '#FF7F00',
+  '#FFD700', '#22C55E', '#3B82F6', '#8B5CF6', '#EC4899',
+];
+
 export default function ArtScreen() {
   const { user, userProfile } = useAuth();
   const [courageUploadedToday, setCourageUploadedToday] = useState(false);
@@ -62,6 +81,15 @@ export default function ArtScreen() {
   const [writeText, setWriteText] = useState('');
   const [writeTitle, setWriteTitle] = useState('');
   const [writeMode, setWriteMode] = useState('write');
+  const [textStyle, setTextStyle] = useState({
+    fontFamily: undefined,
+    fontSize: 16,
+    color: '#332100',
+    fontWeight: 'normal',
+    fontStyle: 'normal',
+    textDecorationLine: 'none',
+    textAlign: 'left',
+  });
 
   // Drawing studio modal
   const [sketchModalVisible, setSketchModalVisible] = useState(false);
@@ -466,6 +494,11 @@ export default function ArtScreen() {
   const openArtModal = (mode) => {
     setWriteMode(mode);
     setWriteText('');
+    setTextStyle({
+      fontFamily: undefined, fontSize: 16, color: '#332100',
+      fontWeight: 'normal', fontStyle: 'normal',
+      textDecorationLine: 'none', textAlign: 'left',
+    });
     setWriteModalVisible(true);
   };
 
@@ -494,7 +527,8 @@ export default function ArtScreen() {
         title: writeTitle.trim() || `${label} from ${today}`,
         prompt: todaysChallenge,
         date: today,
-        isPublic: false
+        isPublic: false,
+        textStyle,
       };
       const existingRaw = await AsyncStorage.getItem('personal_artworks');
       const artworks = existingRaw ? JSON.parse(existingRaw) : [];
@@ -551,6 +585,7 @@ export default function ArtScreen() {
           date: today,
           isPublic: false,
           pendingVoting: true,
+          textStyle,
         });
         await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
 
@@ -1135,8 +1170,113 @@ export default function ArtScreen() {
               onChangeText={setWriteTitle}
               maxLength={100}
             />
+
+            {/* Formatting toolbar */}
+            <View style={styles.formatToolbar}>
+              {/* Font family row */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.formatScrollRow}>
+                {FONT_FAMILIES.map((f) => (
+                  <TouchableOpacity
+                    key={f.label}
+                    style={[styles.formatBtn, textStyle.fontFamily === f.value && styles.formatBtnActive]}
+                    onPress={() => setTextStyle(s => ({ ...s, fontFamily: f.value }))}
+                  >
+                    <Text style={[
+                      styles.formatBtnText,
+                      textStyle.fontFamily === f.value && styles.formatBtnTextActive,
+                      f.value && { fontFamily: f.value },
+                    ]}>{f.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Size + style toggles + alignment */}
+              <View style={styles.formatRowWrap}>
+                {FONT_SIZES.map((s) => (
+                  <TouchableOpacity
+                    key={s.label}
+                    style={[styles.formatBtn, textStyle.fontSize === s.value && styles.formatBtnActive]}
+                    onPress={() => setTextStyle(st => ({ ...st, fontSize: s.value }))}
+                  >
+                    <Text style={[styles.formatBtnText, textStyle.fontSize === s.value && styles.formatBtnTextActive]}>{s.label}</Text>
+                  </TouchableOpacity>
+                ))}
+
+                <View style={styles.formatDivider} />
+
+                <TouchableOpacity
+                  style={[styles.formatBtn, textStyle.fontWeight === 'bold' && styles.formatBtnActive]}
+                  onPress={() => setTextStyle(s => ({ ...s, fontWeight: s.fontWeight === 'bold' ? 'normal' : 'bold' }))}
+                >
+                  <Text style={[styles.formatBtnText, { fontWeight: 'bold' }, textStyle.fontWeight === 'bold' && styles.formatBtnTextActive]}>B</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.formatBtn, textStyle.fontStyle === 'italic' && styles.formatBtnActive]}
+                  onPress={() => setTextStyle(s => ({ ...s, fontStyle: s.fontStyle === 'italic' ? 'normal' : 'italic' }))}
+                >
+                  <Text style={[styles.formatBtnText, { fontStyle: 'italic' }, textStyle.fontStyle === 'italic' && styles.formatBtnTextActive]}>I</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.formatBtn, textStyle.textDecorationLine === 'underline' && styles.formatBtnActive]}
+                  onPress={() => setTextStyle(s => ({ ...s, textDecorationLine: s.textDecorationLine === 'underline' ? 'none' : 'underline' }))}
+                >
+                  <Text style={[styles.formatBtnText, { textDecorationLine: 'underline' }, textStyle.textDecorationLine === 'underline' && styles.formatBtnTextActive]}>U</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.formatBtn, textStyle.textDecorationLine === 'line-through' && styles.formatBtnActive]}
+                  onPress={() => setTextStyle(s => ({ ...s, textDecorationLine: s.textDecorationLine === 'line-through' ? 'none' : 'line-through' }))}
+                >
+                  <Text style={[styles.formatBtnText, { textDecorationLine: 'line-through' }, textStyle.textDecorationLine === 'line-through' && styles.formatBtnTextActive]}>S</Text>
+                </TouchableOpacity>
+
+                <View style={styles.formatDivider} />
+
+                {['left', 'center', 'right'].map((align) => (
+                  <TouchableOpacity
+                    key={align}
+                    style={[styles.formatBtn, textStyle.textAlign === align && styles.formatBtnActive]}
+                    onPress={() => setTextStyle(s => ({ ...s, textAlign: align }))}
+                  >
+                    <Text style={[styles.formatBtnText, textStyle.textAlign === align && styles.formatBtnTextActive]}>
+                      {align === 'left' ? '⫷' : align === 'center' ? '⫿' : '⫸'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Color row */}
+              <View style={styles.formatColorRow}>
+                {TEXT_COLORS.map((c) => (
+                  <TouchableOpacity
+                    key={c}
+                    style={[
+                      styles.formatColorSwatch,
+                      { backgroundColor: c },
+                      textStyle.color === c && styles.formatColorActive,
+                      c === '#FFFFFF' && { borderColor: '#999', borderWidth: 1 },
+                    ]}
+                    onPress={() => setTextStyle(s => ({ ...s, color: c }))}
+                  />
+                ))}
+              </View>
+            </View>
+
             <TextInput
-              style={styles.writeTextInput}
+              style={[
+                styles.writeTextInput,
+                {
+                  fontFamily: textStyle.fontFamily,
+                  fontSize: textStyle.fontSize,
+                  color: textStyle.color,
+                  fontWeight: textStyle.fontWeight,
+                  fontStyle: textStyle.fontStyle,
+                  textDecorationLine: textStyle.textDecorationLine,
+                  textAlign: textStyle.textAlign,
+                },
+              ]}
               multiline
               placeholder={modePlaceholders[writeMode] || 'Start writing...'}
               placeholderTextColor="#666"
@@ -1280,7 +1420,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#F3CB82',
+    color: '#9E4502',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 20,
@@ -1296,13 +1436,13 @@ const styles = StyleSheet.create({
   },
   challengeLabel: {
     fontSize: 20,
-    color: '#332100',
+    color: '#9E4502',
     fontWeight: 'bold',
     marginBottom: 10,
   },
   challengeText: {
     fontSize: 32,
-    color: '#332100',
+    color: '#9E4502',
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -1772,5 +1912,63 @@ const styles = StyleSheet.create({
     color: '#0a0e27',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  formatToolbar: {
+    marginBottom: 8,
+    gap: 6,
+  },
+  formatScrollRow: {
+    flexGrow: 0,
+    marginBottom: 2,
+  },
+  formatRowWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 4,
+  },
+  formatBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#c8875a',
+    backgroundColor: 'rgba(243, 203, 130, 0.3)',
+    marginRight: 4,
+  },
+  formatBtnActive: {
+    borderColor: '#f2990a',
+    backgroundColor: 'rgba(242, 153, 10, 0.35)',
+  },
+  formatBtnText: {
+    fontSize: 13,
+    color: '#5a3800',
+  },
+  formatBtnTextActive: {
+    color: '#332100',
+    fontWeight: '700',
+  },
+  formatDivider: {
+    width: 1,
+    height: 22,
+    backgroundColor: '#c8875a',
+    marginHorizontal: 4,
+  },
+  formatColorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 2,
+  },
+  formatColorSwatch: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  formatColorActive: {
+    borderColor: '#f2990a',
+    borderWidth: 2.5,
   },
 });

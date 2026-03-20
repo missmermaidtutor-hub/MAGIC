@@ -226,8 +226,12 @@ export default function ColorPicker({
   onChangeOpacity,
   backgroundColor,
   onChangeBackground,
+  bgMode: bgModeProp,
+  onBgModeChange,
 }) {
-  const [bgMode, setBgMode] = useState(false);
+  const [bgModeLocal, setBgModeLocal] = useState(false);
+  const bgMode = bgModeProp !== undefined ? bgModeProp : bgModeLocal;
+  const setBgMode = onBgModeChange || setBgModeLocal;
   const [customHex, setCustomHex] = useState('');
   const [showCustom, setShowCustom] = useState(false);
 

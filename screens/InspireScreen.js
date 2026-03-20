@@ -33,6 +33,7 @@ import { getESTDate, getESTYesterday } from '../utils/dateUtils';
 import { showAlert } from '../utils/alertUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 // Stock artwork images from ARTOWORKS folder for voting
 const ARTOWORKS_IMAGES = [
@@ -886,14 +887,14 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#004225',
+    color: '#3c9820',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 18,
-    color: '#004225',
+    color: '#3c9820',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
@@ -909,13 +910,13 @@ const styles = StyleSheet.create({
   },
   criterionLabel: {
     fontSize: 16,
-    color: '#004225',
+    color: '#3c9820',
     marginBottom: 10,
   },
   criterionText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#004225',
+    color: '#3c9820',
     textAlign: 'center',
   },
   progressContainer: {
@@ -1168,7 +1169,7 @@ const styles = StyleSheet.create({
   },
   zoomScroll: {
     width: SCREEN_WIDTH,
-    maxHeight: SCREEN_WIDTH,
+    maxHeight: Math.min(SCREEN_WIDTH, SCREEN_HEIGHT - 220),
     borderWidth: 3,
     borderColor: '#004225',
     borderRadius: 8,
@@ -1179,7 +1180,7 @@ const styles = StyleSheet.create({
   },
   modalImage: {
     width: SCREEN_WIDTH - 6,
-    height: SCREEN_WIDTH - 6,
+    height: Math.min(SCREEN_WIDTH - 6, SCREEN_HEIGHT - 226),
     borderRadius: 5,
   },
   modalTitle: {

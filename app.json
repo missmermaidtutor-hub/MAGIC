@@ -7,15 +7,23 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "splash": {
-      "backgroundColor": "#000000"
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0a0e27"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
+    "icon": "./assets/icon.png",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.cejafi.magictracker",
-      "usesAppleSignIn": true
+      "buildNumber": "1",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "MAGIC Tracker uses your camera to capture artwork for your gallery and daily courage posts.",
+        "NSPhotoLibraryUsageDescription": "MAGIC Tracker accesses your photo library to upload artwork to your gallery and community features."
+      }
     },
     "android": {
       "adaptiveIcon": {
