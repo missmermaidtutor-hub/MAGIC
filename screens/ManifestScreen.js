@@ -14,12 +14,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getESTDate, msUntilESTMidnight } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
 import { saveManifest } from '../services/firestoreService';
+import { canAccessFeature } from '../utils/premiumUtils';
+import { showAlert } from '../utils/alertUtils';
+import PremiumPaywall from '../components/premium/PremiumPaywall';
 import quotesData from '../quotes.json';
 import { getTodayQuote } from '../utils/quoteUtils';
 import { trackAction } from '../services/analyticsService';
 
 export default function ManifestScreen() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [todayQuote, setTodayQuote] = useState({ quote: '', author: '' });
   const [growthGoal, setGrowthGoal] = useState('');
   const [callMuse, setCallMuse] = useState('');
@@ -526,14 +529,18 @@ export default function ManifestScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity
-          style={styles.viewPastButton}
-          onPress={() => setShowFavoriteQuotes(true)}
-        >
-          <Text style={styles.viewPastButtonText}>
-            💜 Review favorite quotes ({heartedQuotes.length})
-          </Text>
-        </TouchableOpacity>
+        {canAccessFeature('favoriteQuotes', userProfile) ? (
+          <TouchableOpacity
+            style={styles.viewPastButton}
+            onPress={() => setShowFavoriteQuotes(true)}
+          >
+            <Text style={styles.viewPastButtonText}>
+              💜 Review favorite quotes ({heartedQuotes.length})
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <PremiumPaywall feature="favoriteQuotes" compact />
+        )}
 
         {/* Midnight warning banner */}
         {midnightWarning && (
@@ -635,15 +642,19 @@ export default function ManifestScreen() {
           )}
         </View>
 
-        {/* View Past Entries Button */}
-        <TouchableOpacity 
-          style={styles.viewEntriesButton}
-          onPress={() => setShowPastEntries(true)}
-        >
-          <Text style={styles.viewEntriesButtonText}>
-            View Past Entries ({pastEntries.length})
-          </Text>
-        </TouchableOpacity>
+        {/* View Past Entries Button (premium) */}
+        {canAccessFeature('pastDiaryEntries', userProfile) ? (
+          <TouchableOpacity
+            style={styles.viewEntriesButton}
+            onPress={() => setShowPastEntries(true)}
+          >
+            <Text style={styles.viewEntriesButtonText}>
+              View Past Entries ({pastEntries.length})
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <PremiumPaywall feature="pastDiaryEntries" compact />
+        )}
       </ScrollView>
     </ImageBackground>
   );

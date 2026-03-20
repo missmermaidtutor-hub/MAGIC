@@ -33,6 +33,7 @@ import {
   getUserCourages,
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
+import { getMemberDayCount as getMemberDayCountUtil, getCuratedLimit, canAccessFeature } from '../utils/premiumUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -145,16 +146,9 @@ export default function CommunityScreen({ navigation, route }) {
   // Day 13 popup
   const [showDay13Popup, setShowDay13Popup] = useState(false);
 
-  // 13-day membership check
-  const getMemberDayCount = () => {
-    if (!userProfile?.createdAt) return 0;
-    const createdDate = userProfile.createdAt?.toDate?.()
-      ?? (userProfile.createdAt?.seconds
-        ? new Date(userProfile.createdAt.seconds * 1000)
-        : new Date(userProfile.createdAt));
-    return Math.floor((Date.now() - createdDate.getTime()) / 86400000) + 1;
-  };
-  const canCurate = getMemberDayCount() >= 13;
+  // 13-day membership check (premium users get early access)
+  const memberDays = getMemberDayCountUtil(userProfile);
+  const canCurate = memberDays >= 13 || canAccessFeature('earlyCuratedAccess', userProfile);
 
   // Sync from auth context
   useEffect(() => {
@@ -523,9 +517,13 @@ export default function CommunityScreen({ navigation, route }) {
           await AsyncStorage.setItem('favorite_artworks', JSON.stringify(updated));
         }
       } else {
-        // Check curated limit (max 25)
-        if (curatedArtworks.length >= 25) {
-          showAlert('Curated Limit', 'You can only have 25 works in your curated gallery. Remove one first.');
+        // Check curated limit (10 free, 25 premium)
+        const curatedMax = getCuratedLimit(userProfile);
+        if (curatedArtworks.length >= curatedMax) {
+          const msg = curatedMax < 25
+            ? `Free accounts can curate up to ${curatedMax} works. Upgrade to premium for 25 slots!`
+            : 'You can only have 25 works in your curated gallery. Remove one first.';
+          showAlert('Curated Limit', msg);
           return;
         }
         // Add to curated
@@ -1062,6 +1060,19 @@ export default function CommunityScreen({ navigation, route }) {
         );
 
       case 'inspiring':
+        if (!canAccessFeature('inspiringOthers', userProfile)) {
+          return (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyEmoji}>&#x2B50;</Text>
+              <Text style={[styles.emptyText, { color: '#FFD700' }]}>
+                Premium Feature
+              </Text>
+              <Text style={styles.emptyText}>
+                See which of your artworks inspire others! Unlock with premium or earn a streak ending in 13.
+              </Text>
+            </View>
+          );
+        }
         return renderInspiringWorks();
 
       case 'private':

@@ -38,6 +38,9 @@ export const createUserProfile = async (uid, data) => {
     anonymous: data.anonymous ?? true,
     bio: data.bio || '',
     favoritePrompt: data.favoritePrompt || '',
+    isPremium: false,
+    premiumTrialExpiry: null,
+    premiumExpiry: null,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -853,6 +856,35 @@ export const getAllPods = async () => {
   const q = query(collection(db, 'discussionPods'), orderBy('createdAt', 'desc'));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+// ============================================================
+// PREMIUM
+// ============================================================
+
+// Grant premium trial (sets premiumTrialExpiry on user profile)
+export const grantPremiumTrial = async (uid, expiryDate) => {
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, {
+    premiumTrialExpiry: expiryDate,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Set paid premium status
+export const setPremium = async (uid, isPremium, expiryDate = null) => {
+  const userRef = doc(db, 'users', uid);
+  const updates = {
+    isPremium,
+    updatedAt: serverTimestamp(),
+  };
+  if (isPremium) {
+    updates.premiumStartDate = serverTimestamp();
+  }
+  if (expiryDate) {
+    updates.premiumExpiry = expiryDate;
+  }
+  await updateDoc(userRef, updates);
 };
 
 // ============================================================

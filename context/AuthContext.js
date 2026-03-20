@@ -5,6 +5,7 @@ import { setSentryUser, clearSentryUser, captureError } from '../config/sentry';
 import {
   getUserProfile,
   createUserProfile,
+  grantPremiumTrial,
   getGoalHistory,
   getUserArtworks,
   getUserInspirations,
@@ -13,6 +14,8 @@ import {
   getProgress,
   getArtTime,
 } from '../services/firestoreService';
+import { getPremiumStatus, checkStreakTrialEligibility } from '../utils/premiumUtils';
+import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext({});
@@ -154,6 +157,26 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Check if current streak qualifies for a premium trial grant
+  const checkStreakTrial = async (streak) => {
+    if (!user || user.uid === 'local' || !userProfile) return;
+    try {
+      const expiry = await checkStreakTrialEligibility(streak, userProfile);
+      if (expiry) {
+        await grantPremiumTrial(user.uid, expiry);
+        trackAction('premium_trial_granted');
+        // Update local profile so UI reflects immediately
+        const updatedProfile = { ...userProfile, premiumTrialExpiry: expiry };
+        setUserProfile(updatedProfile);
+        await AsyncStorage.setItem('cached_user_profile', JSON.stringify(updatedProfile));
+        return true; // trial was granted
+      }
+    } catch (error) {
+      console.log('Error checking streak trial:', error);
+    }
+    return false;
+  };
+
   const signOut = async () => {
     if (!isFirebaseConfigured) return;
     try {
@@ -206,7 +229,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, signOut, refreshProfile, resendVerification, checkEmailVerified, isFirebaseConfigured }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, signOut, refreshProfile, resendVerification, checkEmailVerified, checkStreakTrial, isFirebaseConfigured }}>
       {children}
     </AuthContext.Provider>
   );

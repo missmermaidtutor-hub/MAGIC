@@ -20,7 +20,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 
 // MAGIC task constants (shared with insight modal)
 const MAGIC_KEYS = ['manifest', 'art', 'goal', 'inspire', 'courage'];
-const MAGIC_COLOR_ARRAY = ['#78000E', '#9E4502', '#c1a900', '#3c9820', '#5008a7'];
+const MAGIC_COLOR_ARRAY = ['#FF2D55', '#FF8C00', '#FFD700', '#34D058', '#8B5CF6'];
 const MAGIC_LABELS = ['Manifest', 'Art', 'Grow', 'Inspire', 'Connect'];
 const MAGIC_GUIDANCE = [
   'Write in your Muse, Dump, or Vision journal',
@@ -152,11 +152,11 @@ const WeekStar = ({ size = 24 }) => {
 // Each point fills independently: M=Manifest, A=Art, G=Goal, I=Inspire, C=Courage
 const MagicStar = ({ tasks = {}, size = 52 }) => {
   const pointColors = {
-    manifest: tasks.manifest ? '#78000E' : '#1a2a4a',
-    art:      tasks.art      ? '#9E4502' : '#1a2a4a',
-    goal:     tasks.goal     ? '#c1a900' : '#1a2a4a',
-    inspire:  tasks.inspire  ? '#3c9820' : '#1a2a4a',
-    courage:  tasks.courage  ? '#5008a7' : '#1a2a4a',
+    manifest: tasks.manifest ? '#FF2D55' : '#1a2a4a',
+    art:      tasks.art      ? '#FF8C00' : '#1a2a4a',
+    goal:     tasks.goal     ? '#FFD700' : '#1a2a4a',
+    inspire:  tasks.inspire  ? '#34D058' : '#1a2a4a',
+    courage:  tasks.courage  ? '#8B5CF6' : '#1a2a4a',
   };
 
   const pointAngles = [
@@ -325,11 +325,11 @@ const EmptyStar = ({ size = 52 }) => (
 // Past day star — smaller 5-pointed, fully filled (completed day in streak)
 // MAGIC colors for star points (same order as StreakScreen CalendarStar)
 const MAGIC_STAR_COLORS = {
-  manifest: '#78000E',
-  art:      '#9E4502',
-  grow:     '#c1a900',
-  inspire:  '#3c9820',
-  connect:  '#5008a7',
+  manifest: '#FF2D55',
+  art:      '#FF8C00',
+  grow:     '#FFD700',
+  inspire:  '#34D058',
+  connect:  '#8B5CF6',
 };
 
 const DayStar = ({ size = 30, tasks = {} }) => {
@@ -410,16 +410,18 @@ const DayStar = ({ size = 30, tasks = {} }) => {
 
 // Gold Frame wrapper — uses actual gold frame image
 // Gold Frame — gradient metallic gold border with gleam
-const GoldFrame = ({ children, style, containerStyle, onPress, thickness = 4 }) => {
+const GoldFrame = ({ children, style, containerStyle, onPress, thickness = 4, borderColor: outerBorderColor }) => {
   const Wrapper = onPress ? TouchableOpacity : View;
   return (
     <Wrapper onPress={onPress} style={[{
-      borderRadius: 6,
+      borderRadius: outerBorderColor ? 11 : 6,
       shadowColor: '#FFD700',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.6,
       shadowRadius: 10,
       elevation: 8,
+      backgroundColor: 'transparent',
+      ...(outerBorderColor ? { borderWidth: 5, borderColor: outerBorderColor } : {}),
     }, containerStyle]}>
       {/* Outer gradient — diagonal metallic sweep */}
       <LinearGradient
@@ -427,15 +429,15 @@ const GoldFrame = ({ children, style, containerStyle, onPress, thickness = 4 }) 
         locations={[0, 0.12, 0.25, 0.4, 0.5, 0.6, 0.75, 0.88, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ borderRadius: 6, padding: thickness }}
+        style={{ borderRadius: outerBorderColor ? 6 : 6, padding: thickness }}
       >
-        {/* Inner thin bright line */}
+        {/* Inner gold border line */}
         <View style={{
           borderRadius: 3,
-          borderWidth: 0.5,
-          borderColor: 'rgba(255, 248, 220, 0.5)',
+          borderWidth: 1.5,
+          borderColor: '#DAA520',
         }}>
-          <View style={[{ borderRadius: 3, overflow: 'hidden' }, style]}>
+          <View style={[{ borderRadius: 2, overflow: 'hidden', backgroundColor: 'transparent' }, style]}>
             {children}
           </View>
         </View>
@@ -577,7 +579,7 @@ const getStreakStars = (streak) => {
 // ============================================================
 
 export default function HomeScreen({ navigation }) {
-  const { user, userProfile, refreshProfile, resendVerification, checkEmailVerified } = useAuth();
+  const { user, userProfile, refreshProfile, resendVerification, checkEmailVerified, checkStreakTrial } = useAuth();
   const [verifyBannerDismissed, setVerifyBannerDismissed] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
   const [goalAcknowledged, setGoalAcknowledged] = useState(false);
@@ -1023,6 +1025,15 @@ export default function HomeScreen({ navigation }) {
       const data = getStreakStars(streak);
       setStreakData(data);
       setRealStreakData(data);
+
+      // Check if streak qualifies for a premium trial (milestones ending in 13)
+      if (checkStreakTrial && streak > 0) {
+        const trialGranted = await checkStreakTrial(streak);
+        if (trialGranted) {
+          showAlert('Premium Trial Unlocked!', `Congratulations on your ${streak}-day streak! You've earned a free 13-day premium trial.`);
+        }
+      }
+
       const todayStr = getESTDate();
 
       // Load task data for past streak days (for the day stars in the arrow)
@@ -1184,7 +1195,7 @@ export default function HomeScreen({ navigation }) {
                 {item.type === 'year' && <YearDot size={7} />}
                 {item.type === 'month' && <MonthStar size={20} />}
                 {item.type === 'week' && <WeekStar size={28} />}
-                {item.type === 'day' && <DayStar size={32} tasks={item.tasks} />}
+                {item.type === 'day' && <DayStar size={44} tasks={item.tasks} />}
                 {item.type === 'magic' && (
                   <TouchableOpacity onPress={() => setShowInsightModal(true)} activeOpacity={0.7}>
                     <MagicStar tasks={todayTasks} size={52} />
@@ -1216,15 +1227,15 @@ export default function HomeScreen({ navigation }) {
 
         <View style={styles.divider} />
 
-        {/* Quote & Goal side by side */}
-        <View style={styles.cardRow}>
+        {/* Quote, Goal, Be Creative — stacked and centered */}
+        <View style={styles.stackedCards}>
           {/* Quote Box - Clickable to Manifest */}
-          <View style={[styles.cardHalf, styles.manifestBorder]}>
-          <GoldFrame
-            style={styles.purpleCard}
+          <TouchableOpacity
+            style={[styles.stackedCard, styles.openFrame, { borderColor: '#78000E' }]}
             onPress={() => navigation.navigate('Manifest')}
           >
-            <View style={styles.cardInnerCompact}>
+            <View style={styles.goldInnerBorder}>
+            <View style={styles.cardInner}>
               <Text style={styles.quoteTextSmall}>"{todayQuote.quote}"</Text>
               <Text style={styles.authorText}>~{todayQuote.author}</Text>
               <Text style={styles.manifestTextSmall}>
@@ -1238,15 +1249,27 @@ export default function HomeScreen({ navigation }) {
                 />
               </View>
             </View>
-          </GoldFrame>
-          </View>
+            </View>
+          </TouchableOpacity>
+
+          {/* Art Challenge Box */}
+          <TouchableOpacity
+            style={[styles.stackedCard, styles.openFrame, { borderColor: '#9E4502' }]}
+            onPress={() => navigation.navigate('Art')}
+          >
+            <View style={styles.goldInnerBorder}>
+            <View style={styles.cardInner}>
+              <Text style={styles.artLabel}>Be Creative:</Text>
+              <Text style={styles.artChallenge}>{todaysChallenge || 'Loading...'}</Text>
+              <Text style={styles.artStudioLink}>Straight to Art Studio</Text>
+            </View>
+            </View>
+          </TouchableOpacity>
 
           {/* Goal Box */}
-          <View style={[styles.cardHalf, styles.goalBorder]}>
-          <GoldFrame
-            style={styles.redCard}
-          >
-            <View style={styles.cardInnerCompact}>
+          <View style={[styles.stackedCard, styles.openFrame, { borderColor: '#c1a900' }]}>
+            <View style={styles.goldInnerBorder}>
+            <View style={styles.cardInner}>
               {!goalAcknowledged ? (
                 /* Phase 1: Show yesterday's goal, ask if met */
                 <View>
@@ -1328,43 +1351,26 @@ export default function HomeScreen({ navigation }) {
                 )}
               </View>
             </View>
-          </GoldFrame>
-          </View>
-        </View>
-
-        {/* Art Challenge Box - Center third, double frame */}
-        <View style={styles.artBoxRow}>
-          <View style={styles.artBorder}>
-          <GoldFrame
-            containerStyle={styles.artBoxOuter}
-            onPress={() => navigation.navigate('Art')}
-          >
-            <View style={styles.artFrameGap}>
-              <GoldFrame style={styles.artCard} thickness={3}>
-                <View style={styles.cardInnerArt}>
-                  <Text style={styles.artLabel}>Be Creative:</Text>
-                  <Text style={styles.artChallenge}>{todaysChallenge || 'Loading...'}</Text>
-                  <Text style={styles.artStudioLink}>Straight to Art Studio</Text>
-                </View>
-              </GoldFrame>
             </View>
-          </GoldFrame>
           </View>
         </View>
 
         <View style={styles.divider} />
 
         {/* Ranking Section - Clickable to Inspire */}
-        <View style={styles.rankBorder}>
-          <GoldFrame>
-            <TouchableOpacity style={styles.rankBox} onPress={() => navigation.navigate('Inspire')}>
+          <TouchableOpacity
+            style={[styles.stackedCard, styles.openFrame, { borderColor: '#3c9820', marginBottom: 15, alignSelf: 'center' }]}
+            onPress={() => navigation.navigate('Inspire')}
+          >
+            <View style={styles.goldInnerBorder}>
+            <View style={styles.rankBox}>
               <Text style={styles.rankTitle}>
-                See Today's Rank Criterion and{'\n'}
+                Be INSPIRED by COURAGE{'\n'}
                 <Text style={styles.underline}>Cast Your Vote Here</Text>
               </Text>
-            </TouchableOpacity>
-          </GoldFrame>
-        </View>
+            </View>
+            </View>
+          </TouchableOpacity>
 
         {/* Gallery buttons aligned to art box edges, above artwork */}
         <View style={styles.galleryButtonRow}>
@@ -1403,7 +1409,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => winners.length > 1 && switchWinner(Math.min(winners.length - 1, currentWinnerIndex + 1))}
             style={styles.arrowButton}
           >
-            <Image source={goldArrowImage} style={[styles.arrowImage, { transform: [{ scaleX: -1 }] }]} resizeMode="contain" />
+            <Text style={styles.arrowText}>‹</Text>
           </TouchableOpacity>
 
           <GoldFrame thickness={50}>
@@ -1434,7 +1440,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => winners.length > 1 && switchWinner(Math.max(0, currentWinnerIndex - 1))}
             style={styles.arrowButton}
           >
-            <Image source={goldArrowImage} style={styles.arrowImage} resizeMode="contain" />
+            <Text style={styles.arrowText}>›</Text>
           </TouchableOpacity>
         </View>
 
@@ -1499,11 +1505,11 @@ export default function HomeScreen({ navigation }) {
                 { key: 'courage',  angle: -90 + 288 },
               ];
               const pointColors = {
-                manifest: tasks.manifest ? '#78000E' : '#1a2a4a',
-                art:      tasks.art      ? '#9E4502' : '#1a2a4a',
-                goal:     tasks.goal     ? '#c1a900' : '#1a2a4a',
-                inspire:  tasks.inspire  ? '#3c9820' : '#1a2a4a',
-                courage:  tasks.courage  ? '#5008a7' : '#1a2a4a',
+                manifest: tasks.manifest ? '#FF2D55' : '#1a2a4a',
+                art:      tasks.art      ? '#FF8C00' : '#1a2a4a',
+                goal:     tasks.goal     ? '#FFD700' : '#1a2a4a',
+                inspire:  tasks.inspire  ? '#34D058' : '#1a2a4a',
+                courage:  tasks.courage  ? '#8B5CF6' : '#1a2a4a',
               };
 
               return (
@@ -1687,27 +1693,43 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   purpleCard: {
-    backgroundColor: '#ffe4ed',
+    backgroundColor: 'transparent',
+  },
+  openFrame: {
+    borderWidth: 5,
+    borderRadius: 11,
+    backgroundColor: 'transparent',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  goldInnerBorder: {
+    borderWidth: 2,
+    borderColor: '#DAA520',
+    borderRadius: 6,
+    margin: 3,
   },
   manifestBorder: {
     borderWidth: 5,
-    borderColor: '#ff7795',
+    borderColor: '#78000E',
     borderRadius: 11,
   },
   redCard: {
-    backgroundColor: '#faf5b5',
+    backgroundColor: 'transparent',
   },
   goalBorder: {
     borderWidth: 5,
-    borderColor: '#b4924a',
+    borderColor: '#c1a900',
     borderRadius: 11,
   },
   artCard: {
-    backgroundColor: '#ffecd3',
+    backgroundColor: 'transparent',
   },
   artBorder: {
     borderWidth: 5,
-    borderColor: '#f7bc6e',
+    borderColor: '#9E4502',
     borderRadius: 11,
     width: '60%',
   },
@@ -1720,7 +1742,7 @@ const styles = StyleSheet.create({
   },
   artFrameGap: {
     padding: 15,
-    backgroundColor: '#ffecd3',
+    backgroundColor: 'transparent',
   },
   frameSpacing: {
     marginBottom: 16,
@@ -1733,6 +1755,14 @@ const styles = StyleSheet.create({
   },
   cardHalf: {
     flex: 1,
+  },
+  stackedCards: {
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 16,
+  },
+  stackedCard: {
+    width: '75%',
   },
   cardInner: {
     padding: 20,
@@ -1899,12 +1929,12 @@ const styles = StyleSheet.create({
   },
   rankBorder: {
     borderWidth: 5,
-    borderColor: '#004225',
+    borderColor: '#3c9820',
     borderRadius: 11,
     marginBottom: 15,
   },
   rankBox: {
-    backgroundColor: 'rgba(207, 232, 199, 0.5)',
+    backgroundColor: 'transparent',
     padding: 15,
     alignItems: 'center',
   },
@@ -1933,7 +1963,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   galleryButtonInner: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
+    backgroundColor: 'transparent',
     paddingHorizontal: 15,
     paddingVertical: 8,
   },
@@ -1991,13 +2021,17 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   arrowButton: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  arrowImage: {
-    width: 50,
-    height: 30,
+  arrowText: {
+    fontSize: 60,
+    fontWeight: '900',
+    color: '#DAA520',
+    textShadowColor: '#B8860B',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   imageFrameInner: {
     width: 240,

@@ -16,17 +16,18 @@ import { getTasksForDate } from '../utils/taskUtils';
 import { useAuth } from '../context/AuthContext';
 import { getMyArtSaves } from '../services/firestoreService';
 import { showAlert, showDestructiveConfirm } from '../utils/alertUtils';
+import PremiumGate from '../components/premium/PremiumGate';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DAY_ABBR = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 // MAGIC color constants
 const MAGIC_COLORS = {
-  manifest: '#78000E',  // Dark Red
-  art:      '#9E4502',  // Dark Orange
-  grow:     '#c1a900',  // Dark Gold
-  inspire:  '#3c9820',  // Dark Green
-  connect:  '#5008a7',  // Dark Indigo
+  manifest: '#FF2D55',  // Bright Pink-Red
+  art:      '#FF8C00',  // Bright Orange
+  grow:     '#FFD700',  // Bright Gold
+  inspire:  '#34D058',  // Bright Green
+  connect:  '#8B5CF6',  // Bright Violet
 };
 const MAGIC_KEYS = ['manifest', 'art', 'goal', 'inspire', 'courage'];
 const MAGIC_COLOR_ARRAY = [MAGIC_COLORS.manifest, MAGIC_COLORS.art, MAGIC_COLORS.grow, MAGIC_COLORS.inspire, MAGIC_COLORS.connect];
@@ -604,50 +605,53 @@ export default function StreakScreen() {
           </View>
         </View>
 
-        {/* Row 2: MAGIC category counts */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: MAGIC_COLORS.manifest }]}>{streakData.manifestDays}</Text>
-            <Text style={styles.statLabel}>Manifest{'\n'}Days</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: MAGIC_COLORS.art }]}>{streakData.artDays}</Text>
-            <Text style={styles.statLabel}>Art{'\n'}Days</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: MAGIC_COLORS.inspire }]}>{streakData.inspireDays}</Text>
-            <Text style={styles.statLabel}>Inspire{'\n'}Days</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: MAGIC_COLORS.connect }]}>{streakData.couragePosts}</Text>
-            <Text style={styles.statLabel}>Connect{'\n'}Days</Text>
-          </View>
-        </View>
-
-        {/* Row 3: Goals */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsSet}</Text>
-            <Text style={styles.statLabel}>Goals Set</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsMet}</Text>
-            <Text style={styles.statLabel}>Goals Met</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{goalPct}%</Text>
-            <Text style={styles.statLabel}>Goal Rate</Text>
-          </View>
-        </View>
-
-        {/* Row 4: Inspiring */}
-        {user && user.uid !== 'local' && (
+        {/* Row 2–4: Premium stats (MAGIC categories, goals, inspiring) */}
+        <PremiumGate feature="advancedStats" compact>
           <View style={styles.statsRow}>
-            <View style={[styles.statBox, { flex: 1 }]}>
-              <Text style={[styles.statNumber, { color: '#FF69B4' }]}>{inspiringSaveCount}</Text>
-              <Text style={styles.statLabel}>Times Your Courages{'\n'}Inspired Others</Text>
+            <View style={styles.statBox}>
+              <Text style={[styles.statNumber, { color: MAGIC_COLORS.manifest }]}>{streakData.manifestDays}</Text>
+              <Text style={styles.statLabel}>Manifest{'\n'}Days</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={[styles.statNumber, { color: MAGIC_COLORS.art }]}>{streakData.artDays}</Text>
+              <Text style={styles.statLabel}>Art{'\n'}Days</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={[styles.statNumber, { color: MAGIC_COLORS.inspire }]}>{streakData.inspireDays}</Text>
+              <Text style={styles.statLabel}>Inspire{'\n'}Days</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={[styles.statNumber, { color: MAGIC_COLORS.connect }]}>{streakData.couragePosts}</Text>
+              <Text style={styles.statLabel}>Connect{'\n'}Days</Text>
             </View>
           </View>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statBox}>
+              <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsSet}</Text>
+              <Text style={styles.statLabel}>Goals Set</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsMet}</Text>
+              <Text style={styles.statLabel}>Goals Met</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{goalPct}%</Text>
+              <Text style={styles.statLabel}>Goal Rate</Text>
+            </View>
+          </View>
+        </PremiumGate>
+
+        {/* Inspiring others count — premium */}
+        {user && user.uid !== 'local' && (
+          <PremiumGate feature="inspiringOthers" compact>
+            <View style={styles.statsRow}>
+              <View style={[styles.statBox, { flex: 1 }]}>
+                <Text style={[styles.statNumber, { color: '#FF69B4' }]}>{inspiringSaveCount}</Text>
+                <Text style={styles.statLabel}>Times Your Courages{'\n'}Inspired Others</Text>
+              </View>
+            </View>
+          </PremiumGate>
         )}
 
         {/* Clear Data */}

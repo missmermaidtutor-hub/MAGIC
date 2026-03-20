@@ -63,19 +63,28 @@ const CompletedStrokes = memo(function CompletedStrokes({ strokes, textOverlays,
       </G>
 
       {/* Text overlays */}
-      {textOverlays.map((t, i) => (
-        <SvgText
-          key={`text-${i}`}
-          x={t.x}
-          y={t.y}
-          fill={t.color}
-          fontSize={t.fontSize}
-          fontWeight={t.bold ? 'bold' : 'normal'}
-          opacity={t.opacity || 1}
-        >
-          {t.text}
-        </SvgText>
-      ))}
+      {textOverlays.map((t, i) => {
+        const decoration = [
+          t.underline ? 'underline' : '',
+          t.strikethrough ? 'line-through' : '',
+        ].filter(Boolean).join(' ') || 'none';
+        return (
+          <SvgText
+            key={`text-${i}`}
+            x={t.x}
+            y={t.y}
+            fill={t.color}
+            fontSize={t.fontSize}
+            fontWeight={t.bold ? 'bold' : 'normal'}
+            fontStyle={t.italic ? 'italic' : 'normal'}
+            fontFamily={t.fontFamily || undefined}
+            textDecoration={decoration}
+            opacity={t.opacity || 1}
+          >
+            {t.text}
+          </SvgText>
+        );
+      })}
     </>
   );
 });

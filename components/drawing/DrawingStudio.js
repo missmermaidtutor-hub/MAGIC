@@ -20,6 +20,8 @@ import TextOverlay from './TextOverlay';
 import { TOOLS, FREEHAND_TOOLS, SHAPE_TOOLS, BRUSH_PRESETS } from './drawingConstants';
 import { pointsToSvgPath, simplifyPoints, appendToSvgPath } from './drawingUtils';
 import { showAlert } from '../../utils/alertUtils';
+import { useAuth } from '../../context/AuthContext';
+import { canAccessFeature } from '../../utils/premiumUtils';
 
 export default function DrawingStudio({
   visible,
@@ -29,6 +31,11 @@ export default function DrawingStudio({
   prompt,
   courageUploadedToday,
 }) {
+  // Premium check
+  const { userProfile } = useAuth();
+  const hasFullColors = canAccessFeature('studioFullColors', userProfile);
+  const hasAdvancedText = canAccessFeature('studioAdvancedText', userProfile);
+
   // Title
   const [artTitle, setArtTitle] = useState('');
 
@@ -413,6 +420,7 @@ export default function DrawingStudio({
             onChangeBackground={setBackgroundColor}
             bgMode={colorBgMode}
             onBgModeChange={setColorBgMode}
+            isPremium={hasFullColors}
           />
         )}
 
@@ -425,10 +433,11 @@ export default function DrawingStudio({
 
         {/* Canvas row (sidebar + canvas) */}
         <View style={styles.canvasRow}>
-          {showColorPicker && (
+          {showColorPicker && (!colorBgMode || hasFullColors) && (
             <ColorSidebar
-              brushColor={brushColor}
-              onSelectColor={setBrushColor}
+              brushColor={colorBgMode ? backgroundColor : brushColor}
+              onSelectColor={colorBgMode ? setBackgroundColor : setBrushColor}
+              isPremium={hasFullColors}
             />
           )}
           <DrawingCanvas
@@ -481,6 +490,7 @@ export default function DrawingStudio({
         visible={showTextOverlay}
         onClose={() => setShowTextOverlay(false)}
         onAddText={handleAddText}
+        isPremium={hasAdvancedText}
       />
     </Modal>
   );

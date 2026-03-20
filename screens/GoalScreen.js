@@ -15,6 +15,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 import { saveGoal, getGoal, getGoalHistory, getGoalStats } from '../services/firestoreService';
+import { canAccessFeature } from '../utils/premiumUtils';
+import PremiumGate from '../components/premium/PremiumGate';
 import { getESTDate } from '../utils/dateUtils';
 
 const getDateString = (date) => getESTDate(date);
@@ -32,7 +34,7 @@ const formatDateLabel = (dateStr) => {
 };
 
 export default function GoalScreen({ navigation }) {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [goalText, setGoalText] = useState('');
   const [todayGoal, setTodayGoal] = useState(null); // { goal, completed, carriedForward }
   const [yesterdayGoal, setYesterdayGoal] = useState(null);
@@ -269,65 +271,65 @@ export default function GoalScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Stats */}
-        {stats && (
-          <View style={styles.statsCard}>
-            <Text style={styles.statsTitle}>Goal Stats</Text>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{stats.totalGoals}</Text>
-                <Text style={styles.statLabel}>Goals Set</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{stats.completedGoals}</Text>
-                <Text style={styles.statLabel}>Completed</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>
-                  {stats.totalGoals > 0
-                    ? Math.round((stats.completedGoals / stats.totalGoals) * 100)
-                    : 0}%
-                </Text>
-                <Text style={styles.statLabel}>Rate</Text>
+        {/* Stats & History (premium) */}
+        <PremiumGate feature="goalHistory" compact>
+          {stats && (
+            <View style={styles.statsCard}>
+              <Text style={styles.statsTitle}>Goal Stats</Text>
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>{stats.totalGoals}</Text>
+                  <Text style={styles.statLabel}>Goals Set</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>{stats.completedGoals}</Text>
+                  <Text style={styles.statLabel}>Completed</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statNumber}>
+                    {stats.totalGoals > 0
+                      ? Math.round((stats.completedGoals / stats.totalGoals) * 100)
+                      : 0}%
+                  </Text>
+                  <Text style={styles.statLabel}>Rate</Text>
+                </View>
               </View>
             </View>
-          </View>
-        )}
+          )}
 
-        {/* History toggle */}
-        <TouchableOpacity
-          style={styles.historyToggle}
-          onPress={() => setShowHistory(!showHistory)}
-        >
-          <Text style={styles.historyToggleText}>
-            {showHistory ? 'Hide History' : 'View Goal History'}
-          </Text>
-          <Text style={styles.historyArrow}>{showHistory ? '▲' : '▼'}</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.historyToggle}
+            onPress={() => setShowHistory(!showHistory)}
+          >
+            <Text style={styles.historyToggleText}>
+              {showHistory ? 'Hide History' : 'View Goal History'}
+            </Text>
+            <Text style={styles.historyArrow}>{showHistory ? '▲' : '▼'}</Text>
+          </TouchableOpacity>
 
-        {/* History list */}
-        {showHistory && (
-          <View style={styles.historyCard}>
-            {history.length === 0 ? (
-              <Text style={styles.emptyText}>No goals yet. Set your first one above!</Text>
-            ) : (
-              history.map((item, index) => (
-                <View key={item.id || index} style={styles.historyItem}>
-                  <View style={styles.historyHeader}>
-                    <Text style={styles.historyDate}>{formatDateLabel(item.id)}</Text>
-                    <Text style={item.completed ? styles.historyComplete : styles.historyIncomplete}>
-                      {item.completed ? 'Completed' : 'Not completed'}
-                    </Text>
+          {showHistory && (
+            <View style={styles.historyCard}>
+              {history.length === 0 ? (
+                <Text style={styles.emptyText}>No goals yet. Set your first one above!</Text>
+              ) : (
+                history.map((item, index) => (
+                  <View key={item.id || index} style={styles.historyItem}>
+                    <View style={styles.historyHeader}>
+                      <Text style={styles.historyDate}>{formatDateLabel(item.id)}</Text>
+                      <Text style={item.completed ? styles.historyComplete : styles.historyIncomplete}>
+                        {item.completed ? 'Completed' : 'Not completed'}
+                      </Text>
+                    </View>
+                    <Text style={styles.historyGoalText}>{item.goal}</Text>
+                    {item.carriedForward && (
+                      <Text style={styles.historyCarried}>Carried forward</Text>
+                    )}
                   </View>
-                  <Text style={styles.historyGoalText}>{item.goal}</Text>
-                  {item.carriedForward && (
-                    <Text style={styles.historyCarried}>Carried forward</Text>
-                  )}
-                </View>
-              ))
-            )}
-          </View>
-        )}
+                ))
+              )}
+            </View>
+          )}
+        </PremiumGate>
 
         <View style={{ height: 40 }} />
       </ScrollView>
