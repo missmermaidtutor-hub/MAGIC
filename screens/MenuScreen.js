@@ -13,6 +13,7 @@ export default function MenuScreen({ navigation }) {
     { name: 'About You', screen: 'AboutYou' },
     { name: 'Streak', screen: 'Grow' },
     { name: 'Quotes', screen: 'Quotes' },
+    { name: 'Boutique', screen: 'ComingSoon', params: { feature: 'Boutique' } },
     { name: 'Legal Policies', screen: 'Legal' },
     { name: 'Contact Us', screen: 'Contact' },
     ...(user && isAdmin(user.uid) ? [{ name: 'Analytics Dashboard', screen: 'Analytics' }] : []),
@@ -30,7 +31,7 @@ export default function MenuScreen({ navigation }) {
         'Log Out'
       );
     } else if (item.screen) {
-      navigation.navigate(item.screen);
+      navigation.navigate(item.screen, item.params || {});
     }
   };
 

@@ -101,6 +101,7 @@ export default function ArtScreen() {
   
   // Alarm repeating state
   const [alarmRinging, setAlarmRinging] = useState(false);
+  const [timerDoneModalVisible, setTimerDoneModalVisible] = useState(false);
   const alarmRepeatRef = useRef(null);
 
   // Courage confirmation modal
@@ -155,7 +156,7 @@ export default function ArtScreen() {
         dailyEndTimeRef.current = null;
         saveDailyArtTime(timerSetting * 60);
         startRepeatingAlarm();
-        showAlert('Time\'s Up!', `${timerSetting} minutes of art time complete!\n\nBowl will chime every 5 minutes until stopped.`);
+        setTimerDoneModalVisible(true);
       } else {
         setDailyTime(remaining);
       }
@@ -196,7 +197,7 @@ export default function ArtScreen() {
         playThroughEarpieceAndroid: false,
       });
       const { sound } = await Audio.Sound.createAsync(
-        require('../assets/singing-bowl.wav'),
+        require('../assets/bird-alarm.mp3'),
         { shouldPlay: true, volume: 1.0 }
       );
       alarmSoundRef.current = sound;
@@ -233,6 +234,18 @@ export default function ArtScreen() {
       alarmSoundRef.current = null;
     }
     setAlarmRinging(false);
+    setTimerDoneModalVisible(false);
+  };
+
+  // Timer done: reset to current setting and restart
+  const handleTimerRestart = () => {
+    stopAlarm();
+    setDailyTime(timerSetting * 60);
+  };
+
+  // Timer done: close completely (stop alarm, leave timer at 0)
+  const handleTimerClose = () => {
+    stopAlarm();
   };
 
   // Load weekly time from storage
@@ -376,7 +389,7 @@ export default function ArtScreen() {
           dailyEndTimeRef.current = null;
           saveDailyArtTime(timerSetting * 60);
           startRepeatingAlarm();
-          showAlert('Time\'s Up!', `${timerSetting} minutes of art time complete!\n\nBowl will chime every 5 minutes until stopped.`);
+          setTimerDoneModalVisible(true);
         } else {
           setDailyTime(remaining);
         }
@@ -1396,6 +1409,32 @@ export default function ArtScreen() {
         </View>
       </Modal>
 
+      {/* Timer Done Modal (non-blocking so alarm can play) */}
+      <Modal visible={timerDoneModalVisible} transparent animationType="fade">
+        <View style={styles.timerDoneOverlay}>
+          <View style={styles.timerDoneCard}>
+            <Text style={styles.timerDoneTitle}>Time's Up!</Text>
+            <Text style={styles.timerDoneMessage}>
+              {timerSetting} minutes of art time complete!
+            </Text>
+            <View style={styles.timerDoneButtons}>
+              <TouchableOpacity
+                style={styles.timerDoneResetBtn}
+                onPress={handleTimerRestart}
+              >
+                <Text style={styles.timerDoneResetText}>Reset Timer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.timerDoneCloseBtn}
+                onPress={handleTimerClose}
+              >
+                <Text style={styles.timerDoneCloseText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Drawing Studio */}
       <DrawingStudio
         visible={sketchModalVisible}
@@ -1970,5 +2009,62 @@ const styles = StyleSheet.create({
   formatColorActive: {
     borderColor: '#f2990a',
     borderWidth: 2.5,
+  },
+  timerDoneOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  timerDoneCard: {
+    backgroundColor: 'rgba(243, 203, 130, 0.95)',
+    borderWidth: 3,
+    borderColor: '#FFD700',
+    borderRadius: 16,
+    padding: 28,
+    width: '100%',
+    maxWidth: 340,
+    alignItems: 'center',
+  },
+  timerDoneTitle: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#332100',
+    marginBottom: 8,
+  },
+  timerDoneMessage: {
+    fontSize: 16,
+    color: '#5a3800',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  timerDoneButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  timerDoneResetBtn: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  timerDoneResetText: {
+    color: '#332100',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  timerDoneCloseBtn: {
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#999',
+  },
+  timerDoneCloseText: {
+    color: '#332100',
+    fontWeight: '600',
+    fontSize: 15,
   },
 });

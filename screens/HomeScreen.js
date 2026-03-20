@@ -1235,7 +1235,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Manifest')}
           >
             <View style={styles.goldInnerBorder}>
-            <View style={styles.cardInner}>
+            <View style={[styles.cardInner, styles.cardInnerIndented]}>
               <Text style={styles.quoteTextSmall}>"{todayQuote.quote}"</Text>
               <Text style={styles.authorText}>~{todayQuote.author}</Text>
               <Text style={styles.manifestTextSmall}>
@@ -1269,7 +1269,7 @@ export default function HomeScreen({ navigation }) {
           {/* Goal Box */}
           <View style={[styles.stackedCard, styles.openFrame, { borderColor: '#c1a900' }]}>
             <View style={styles.goldInnerBorder}>
-            <View style={styles.cardInner}>
+            <View style={[styles.cardInner, styles.cardInnerIndented]}>
               {!goalAcknowledged ? (
                 /* Phase 1: Show yesterday's goal, ask if met */
                 <View>
@@ -1768,6 +1768,9 @@ const styles = StyleSheet.create({
     padding: 20,
     position: 'relative',
   },
+  cardInnerIndented: {
+    paddingLeft: '33%',
+  },
   cardInnerCompact: {
     padding: 12,
     position: 'relative',
@@ -1951,16 +1954,15 @@ const styles = StyleSheet.create({
   galleryButtonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    width: '75%',
+    alignSelf: 'center',
     marginBottom: 0,
-    paddingHorizontal: 0,
   },
   galleryButtonLeft: {
-    width: '20%',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
   },
   galleryButtonRight: {
-    width: '20%',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
   },
   galleryButtonInner: {
     backgroundColor: 'transparent',

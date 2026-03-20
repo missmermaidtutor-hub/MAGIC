@@ -94,77 +94,77 @@ export function ColorSidebar({ brushColor, onSelectColor, isPremium = true }) {
 
   return (
     <View style={sidebarStyles.container}>
-      {/* Vertical hue bar (premium only) */}
+      {/* Vertical hue bar (free for all) */}
+      <View
+        style={sidebarStyles.hueBar}
+        onLayout={(e) => { hueBarLayout.current = e.nativeEvent.layout; }}
+        onStartShouldSetResponder={() => true}
+        onMoveShouldSetResponder={() => true}
+        onResponderGrant={handleHueTouch}
+        onResponderMove={handleHueMove}
+      >
+        <Svg width={HUE_BAR_WIDTH} height="100%">
+          <Defs>
+            <LinearGradient id="hueGradV" x1="0" y1="0" x2="0" y2="1">
+              {HUE_STOPS.map((stop, i) => (
+                <Stop key={i} offset={stop.offset} stopColor={stop.color} />
+              ))}
+            </LinearGradient>
+          </Defs>
+          <Rect x="0" y="0" width={HUE_BAR_WIDTH} height="100%" rx="4" fill="url(#hueGradV)" />
+        </Svg>
+        {/* Hue indicator */}
+        <View
+          style={[
+            sidebarStyles.hueIndicator,
+            { top: `${(hue / 360) * 100}%` },
+          ]}
+          pointerEvents="none"
+        />
+      </View>
+
+      {/* Vertical SV panel (premium only) */}
       {isPremium ? (
         <View
-          style={sidebarStyles.hueBar}
-          onLayout={(e) => { hueBarLayout.current = e.nativeEvent.layout; }}
+          style={sidebarStyles.svPanel}
+          onLayout={(e) => { svPanelLayout.current = e.nativeEvent.layout; }}
           onStartShouldSetResponder={() => true}
           onMoveShouldSetResponder={() => true}
-          onResponderGrant={handleHueTouch}
-          onResponderMove={handleHueMove}
+          onResponderGrant={handleSVTouch}
+          onResponderMove={handleSVMove}
         >
-          <Svg width={HUE_BAR_WIDTH} height="100%">
+          <Svg width={SV_PANEL_WIDTH} height="100%">
             <Defs>
-              <LinearGradient id="hueGradV" x1="0" y1="0" x2="0" y2="1">
-                {HUE_STOPS.map((stop, i) => (
-                  <Stop key={i} offset={stop.offset} stopColor={stop.color} />
-                ))}
+              <LinearGradient id="satGradV" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0%" stopColor="#FFFFFF" />
+                <Stop offset="100%" stopColor={pureHueColor} />
+              </LinearGradient>
+              <LinearGradient id="valGradV" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0%" stopColor="transparent" />
+                <Stop offset="100%" stopColor="#000000" />
               </LinearGradient>
             </Defs>
-            <Rect x="0" y="0" width={HUE_BAR_WIDTH} height="100%" rx="4" fill="url(#hueGradV)" />
+            <Rect x="0" y="0" width={SV_PANEL_WIDTH} height="100%" rx="4" fill="url(#satGradV)" />
+            <Rect x="0" y="0" width={SV_PANEL_WIDTH} height="100%" rx="4" fill="url(#valGradV)" />
           </Svg>
-          {/* Hue indicator */}
+          {/* Crosshair indicator */}
           <View
             style={[
-              sidebarStyles.hueIndicator,
-              { top: `${(hue / 360) * 100}%` },
+              sidebarStyles.svIndicator,
+              {
+                left: `${sat * 100}%`,
+                top: `${(1 - val) * 100}%`,
+                borderColor: val > 0.5 ? '#000' : '#fff',
+              },
             ]}
             pointerEvents="none"
           />
         </View>
       ) : (
-        <View style={sidebarStyles.lockedHue}>
+        <View style={sidebarStyles.lockedSV}>
           <Text style={sidebarStyles.lockedText}>&#x2B50;</Text>
         </View>
       )}
-
-      {/* Vertical SV panel */}
-      <View
-        style={sidebarStyles.svPanel}
-        onLayout={(e) => { svPanelLayout.current = e.nativeEvent.layout; }}
-        onStartShouldSetResponder={() => true}
-        onMoveShouldSetResponder={() => true}
-        onResponderGrant={handleSVTouch}
-        onResponderMove={handleSVMove}
-      >
-        <Svg width={SV_PANEL_WIDTH} height="100%">
-          <Defs>
-            <LinearGradient id="satGradV" x1="0" y1="0" x2="1" y2="0">
-              <Stop offset="0%" stopColor="#FFFFFF" />
-              <Stop offset="100%" stopColor={pureHueColor} />
-            </LinearGradient>
-            <LinearGradient id="valGradV" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor="transparent" />
-              <Stop offset="100%" stopColor="#000000" />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width={SV_PANEL_WIDTH} height="100%" rx="4" fill="url(#satGradV)" />
-          <Rect x="0" y="0" width={SV_PANEL_WIDTH} height="100%" rx="4" fill="url(#valGradV)" />
-        </Svg>
-        {/* Crosshair indicator */}
-        <View
-          style={[
-            sidebarStyles.svIndicator,
-            {
-              left: `${sat * 100}%`,
-              top: `${(1 - val) * 100}%`,
-              borderColor: val > 0.5 ? '#000' : '#fff',
-            },
-          ]}
-          pointerEvents="none"
-        />
-      </View>
 
       {/* Preview dot at bottom */}
       <View style={[sidebarStyles.previewDot, { backgroundColor: brushColor }]} />
@@ -222,8 +222,8 @@ const sidebarStyles = StyleSheet.create({
     alignSelf: 'flex-end',
     marginLeft: 2,
   },
-  lockedHue: {
-    width: HUE_BAR_WIDTH,
+  lockedSV: {
+    width: SV_PANEL_WIDTH,
     borderRadius: 4,
     backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
@@ -369,7 +369,7 @@ export default function ColorPicker({
 
       {/* Premium upsell hint */}
       {!isPremium && (
-        <Text style={styles.premiumHint}>&#x2B50; Upgrade for hue control, opacity & custom hex</Text>
+        <Text style={styles.premiumHint}>&#x2B50; Upgrade for color mixing, opacity & custom hex</Text>
       )}
     </View>
   );

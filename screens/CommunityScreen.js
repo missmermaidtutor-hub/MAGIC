@@ -1080,7 +1080,7 @@ export default function CommunityScreen({ navigation, route }) {
           <>
             {/* Link to Art Studio */}
             <Text style={styles.studioHint}>
-              To add to this album, do so in the{' '}
+              To add more of your art to this album, do so in the{' '}
               <Text
                 style={styles.studioLink}
                 onPress={() => navigation.navigate('Art')}

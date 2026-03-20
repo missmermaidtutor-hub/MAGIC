@@ -48,6 +48,7 @@ const SettingsScreen = AboutYouScreen;
 import LegalScreen from './screens/menu-pages/LegalScreen';
 import ContactScreen from './screens/menu-pages/ContactScreen';
 import QuickLaunchScreen from './screens/menu-pages/QuickLaunchScreen';
+import ComingSoonScreen from './screens/menu-pages/ComingSoonScreen';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
@@ -249,6 +250,13 @@ function MainTabs({ initialRoute = 'Home' }) {
       <Tab.Screen
         name="Analytics"
         component={AnalyticsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="ComingSoon"
+        component={ComingSoonScreen}
         options={{
           tabBarButton: () => null,
         }}
