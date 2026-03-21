@@ -37,6 +37,7 @@ import DiscussionPodsScreen from './screens/DiscussionPodsScreen';
 import PodChatScreen from './screens/PodChatScreen';
 import ManagePodsScreen from './screens/ManagePodsScreen';
 import AnalyticsScreen from './screens/AnalyticsScreen';
+import DiagnosticsScreen from './screens/DiagnosticsScreen';
 import { initAnalytics, stopAnalytics, onScreenChange } from './services/analyticsService';
 
 // Import menu pages
@@ -49,6 +50,7 @@ import LegalScreen from './screens/menu-pages/LegalScreen';
 import ContactScreen from './screens/menu-pages/ContactScreen';
 import QuickLaunchScreen from './screens/menu-pages/QuickLaunchScreen';
 import ComingSoonScreen from './screens/menu-pages/ComingSoonScreen';
+import FeatureIdeasScreen from './screens/FeatureIdeasScreen';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
@@ -255,8 +257,22 @@ function MainTabs({ initialRoute = 'Home' }) {
         }}
       />
       <Tab.Screen
+        name="Diagnostics"
+        component={DiagnosticsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
         name="ComingSoon"
         component={ComingSoonScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="FeatureIdeas"
+        component={FeatureIdeasScreen}
         options={{
           tabBarButton: () => null,
         }}

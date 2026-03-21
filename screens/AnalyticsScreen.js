@@ -156,6 +156,9 @@ export default function AnalyticsScreen({ navigation }) {
 
   return (
     <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+      <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
+        <Text style={styles.closeBtnText}>✕</Text>
+      </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Analytics</Text>
 
@@ -498,5 +501,22 @@ const styles = StyleSheet.create({
     color: '#050d61',
     fontSize: 15,
     fontWeight: '600',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 44,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeBtnText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

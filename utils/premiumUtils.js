@@ -193,6 +193,19 @@ export const getPremiumLabel = (userProfile) => {
   }
 };
 
+/** Feature name → description of what the feature does. */
+export const FEATURE_DESCRIPTIONS = {
+  advancedStats: 'See your progress across all 5 MAGIC categories with per-day breakdowns and goal completion rates.',
+  inspiringOthers: 'Track how many times other artists have saved your curated artwork to their inspiration gallery.',
+  pastDiaryEntries: 'Browse and revisit your past journal entries, manifests, and reflections from any date.',
+  favoriteQuotes: 'Review your archive of hearted quotes and revisit the words that inspired you.',
+  unlimitedCurated: 'Expand your curated gallery from 10 to 25 works to showcase more of your best art.',
+  goalHistory: 'View your complete goal history with stats on completion rates and streaks of met goals.',
+  earlyCuratedAccess: 'Access the curated gallery before the standard 13-day membership waiting period.',
+  studioFullColors: 'Unlock the color mixing panel, opacity controls, and custom hex input in the Art Studio.',
+  studioAdvancedText: 'Add italic, underline, strikethrough formatting plus font families and all 12 colors to text overlays.',
+};
+
 /** Feature name → user-friendly label for paywalls. */
 export const FEATURE_LABELS = {
   advancedStats: 'Advanced Statistics',

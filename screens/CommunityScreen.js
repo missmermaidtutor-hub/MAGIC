@@ -633,13 +633,6 @@ export default function CommunityScreen({ navigation, route }) {
     );
   };
 
-  const handleBoutique = () => {
-    showAlert(
-      'Boutique Coming Soon!',
-      'Turn your favorite artworks into:\n• Prints\n• Mugs\n• T-shirts\n• Phone cases\n• And more!\n\nThis feature is in development.'
-    );
-  };
-
   const getArtworkImageSource = (artwork) => {
     if (artwork.imageUrl) return { uri: artwork.imageUrl };
     return null;
@@ -1068,7 +1061,7 @@ export default function CommunityScreen({ navigation, route }) {
                 Premium Feature
               </Text>
               <Text style={styles.emptyText}>
-                See which of your artworks inspire others! Unlock with premium or earn a streak ending in 13.
+                See which of your artworks inspire others! Unlock with premium or get a free trial after a 13-day streak.
               </Text>
             </View>
           );
@@ -1192,19 +1185,6 @@ export default function CommunityScreen({ navigation, route }) {
           </TouchableOpacity>
         </View>
 
-        {/* Discussion Pods */}
-        <TouchableOpacity
-          style={styles.podsCard}
-          onPress={() => navigation.navigate('DiscussionPods')}
-        >
-          <Text style={styles.podsCardEmoji}>💬</Text>
-          <View style={styles.podsCardText}>
-            <Text style={styles.podsCardTitle}>Discussion Pods</Text>
-            <Text style={styles.podsCardSubtitle}>Join the conversation</Text>
-          </View>
-          <Text style={styles.podsCardArrow}>›</Text>
-        </TouchableOpacity>
-
         {/* Gallery Description */}
         <Text style={styles.galleryDescription}>
           {activeGallery === 'newsfeed' && 'Browse curated galleries from the community'}
@@ -1216,38 +1196,6 @@ export default function CommunityScreen({ navigation, route }) {
         {/* Gallery Content */}
         <View style={styles.gallerySection}>
           {renderGalleryContent()}
-        </View>
-
-        {/* Boutique */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionIcon}>🛍️</Text>
-            <Text style={styles.sectionTitle}>Boutique</Text>
-          </View>
-          <Text style={styles.sectionDescription}>
-            Turn your art into physical products
-          </Text>
-          <View style={styles.boutiqueItems}>
-            <View style={styles.boutiqueItem}>
-              <Text style={styles.boutiqueEmoji}>🖼️</Text>
-              <Text style={styles.boutiqueLabel}>Prints</Text>
-            </View>
-            <View style={styles.boutiqueItem}>
-              <Text style={styles.boutiqueEmoji}>☕</Text>
-              <Text style={styles.boutiqueLabel}>Mugs</Text>
-            </View>
-            <View style={styles.boutiqueItem}>
-              <Text style={styles.boutiqueEmoji}>👕</Text>
-              <Text style={styles.boutiqueLabel}>Apparel</Text>
-            </View>
-            <View style={styles.boutiqueItem}>
-              <Text style={styles.boutiqueEmoji}>📱</Text>
-              <Text style={styles.boutiqueLabel}>Cases</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.boutiqueButton} onPress={handleBoutique}>
-            <Text style={styles.boutiqueButtonText}>Coming Soon</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={{ height: 40 }} />
@@ -1646,69 +1594,6 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  // Discussion Pods card
-  podsCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(184, 200, 232, 0.6)',
-    borderWidth: 2,
-    borderColor: '#FFD700',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-  },
-  podsCardEmoji: {
-    fontSize: 32,
-    marginRight: 14,
-  },
-  podsCardText: {
-    flex: 1,
-  },
-  podsCardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#050d61',
-  },
-  podsCardSubtitle: {
-    fontSize: 13,
-    color: '#050d61',
-    fontStyle: 'italic',
-    marginTop: 2,
-  },
-  podsCardArrow: {
-    fontSize: 28,
-    color: '#050d61',
-    fontWeight: 'bold',
-  },
-
-  // Section Cards
-  sectionCard: {
-    backgroundColor: 'rgba(184, 200, 232, 0.5)',
-    borderWidth: 3,
-    borderColor: '#DDA0DD',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  sectionIcon: {
-    fontSize: 32,
-    marginRight: 10,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#5008a7',
-  },
-  sectionDescription: {
-    fontSize: 14,
-    color: '#050d61',
-    marginBottom: 15,
-  },
   articleCard: {
     backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderRadius: 8,
@@ -1732,33 +1617,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#050d61',
     fontWeight: '600',
-  },
-  boutiqueItems: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 15,
-  },
-  boutiqueItem: {
-    alignItems: 'center',
-  },
-  boutiqueEmoji: {
-    fontSize: 40,
-    marginBottom: 5,
-  },
-  boutiqueLabel: {
-    fontSize: 12,
-    color: '#050d61',
-  },
-  boutiqueButton: {
-    backgroundColor: '#FFD700',
-    borderRadius: 8,
-    padding: 15,
-    alignItems: 'center',
-  },
-  boutiqueButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 
   // Full-screen modal

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FEATURE_LABELS, getPremiumLabel } from '../../utils/premiumUtils';
+import { FEATURE_LABELS, FEATURE_DESCRIPTIONS, getPremiumLabel } from '../../utils/premiumUtils';
 import { trackAction } from '../../services/analyticsService';
 
 /**
@@ -15,7 +15,10 @@ import { trackAction } from '../../services/analyticsService';
  */
 export default function PremiumPaywall({ feature, message, compact = false, onUpgrade }) {
   const label = FEATURE_LABELS[feature] || 'This Feature';
-  const defaultMessage = `${label} is a premium feature. Upgrade to unlock it, or keep your streak going — every streak milestone ending in 13 earns a free trial!`;
+  const description = FEATURE_DESCRIPTIONS[feature];
+  const defaultMessage = description
+    ? `${description}\n\nThis is a premium feature. Upgrade to unlock it, or keep your streak going — reach a 13-day streak to earn a free trial!`
+    : `${label} is a premium feature. Upgrade to unlock it, or keep your streak going — reach a 13-day streak to earn a free trial!`;
 
   React.useEffect(() => {
     trackAction('premium_paywall_shown');
@@ -25,7 +28,12 @@ export default function PremiumPaywall({ feature, message, compact = false, onUp
     return (
       <View style={styles.compactContainer}>
         <Text style={styles.compactLock}>&#x1F512;</Text>
-        <Text style={styles.compactText}>{message || `${label} — Premium Feature`}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.compactText}>{message || `${label} — Premium Feature`}</Text>
+          {!message && description && (
+            <Text style={styles.compactDescription}>{description}</Text>
+          )}
+        </View>
       </View>
     );
   }
@@ -33,7 +41,7 @@ export default function PremiumPaywall({ feature, message, compact = false, onUp
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a1a3e', '#0a0e27']}
+        colors={['#1a1040', '#0d0a25']}
         style={styles.card}
       >
         <Text style={styles.lockIcon}>&#x2B50;</Text>
@@ -42,7 +50,7 @@ export default function PremiumPaywall({ feature, message, compact = false, onUp
         <Text style={styles.message}>{message || defaultMessage}</Text>
         <View style={styles.divider} />
         <Text style={styles.hint}>
-          Streak milestones ending in 13 unlock a free 13-day trial!
+          Reach a 13-day streak to unlock a free trial!
         </Text>
         {onUpgrade && (
           <TouchableOpacity
@@ -70,8 +78,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderWidth: 2,
+    borderColor: '#FFD700',
     width: '100%',
   },
   lockIcon: {
@@ -80,34 +88,35 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFD700',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   featureName: {
-    color: '#FFF8DC',
-    fontSize: 15,
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
     marginBottom: 12,
   },
   message: {
-    color: '#ccc',
-    fontSize: 13,
+    color: '#ffffff',
+    fontSize: 14,
     textAlign: 'center',
-    lineHeight: 19,
+    lineHeight: 21,
     marginBottom: 12,
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(255, 215, 0, 0.3)',
     width: '80%',
     marginBottom: 12,
   },
   hint: {
-    color: '#999',
-    fontSize: 12,
+    color: '#FFD700',
+    fontSize: 13,
     textAlign: 'center',
     fontStyle: 'italic',
+    fontWeight: '600',
   },
   upgradeButton: {
     marginTop: 16,
@@ -125,12 +134,12 @@ const styles = StyleSheet.create({
   compactContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    backgroundColor: 'rgba(20, 15, 50, 0.9)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
+    borderColor: '#FFD700',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     marginVertical: 4,
   },
   compactLock: {
@@ -139,8 +148,13 @@ const styles = StyleSheet.create({
   },
   compactText: {
     color: '#FFD700',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  compactDescription: {
+    color: '#ffffff',
     fontSize: 12,
-    fontWeight: '600',
-    flex: 1,
+    marginTop: 3,
+    lineHeight: 17,
   },
 });

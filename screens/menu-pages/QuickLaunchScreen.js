@@ -311,115 +311,115 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  // Manifest (Pink)
+  // Manifest (M = #78000E)
   manifestBorder: {
     borderWidth: 5,
-    borderColor: '#ff7795',
+    borderColor: '#78000E',
     borderRadius: 11,
     marginBottom: 12,
   },
   manifestBox: {
-    backgroundColor: '#ffe4ed',
+    backgroundColor: 'transparent',
     padding: 16,
     borderRadius: 6,
   },
   manifestTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#660008',
+    color: '#78000E',
   },
   manifestNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#660008',
+    color: '#78000E',
   },
   manifestText: {
     fontSize: 15,
-    color: '#660008',
+    color: '#78000E',
     lineHeight: 21,
   },
 
-  // Art (Cream)
+  // Art (A = #9E4502)
   artBorder: {
     borderWidth: 5,
-    borderColor: '#f7bc6e',
+    borderColor: '#9E4502',
     borderRadius: 11,
     marginBottom: 12,
   },
   artBox: {
-    backgroundColor: '#ffecd3',
+    backgroundColor: 'transparent',
     padding: 16,
     borderRadius: 6,
   },
   artTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#061679',
+    color: '#9E4502',
   },
   artNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#061679',
+    color: '#9E4502',
   },
   artText: {
     fontSize: 15,
-    color: '#061679',
+    color: '#9E4502',
     lineHeight: 21,
   },
 
-  // Goals (Yellow)
+  // Goals (G = #c1a900)
   goalBorder: {
     borderWidth: 5,
-    borderColor: '#b4924a',
+    borderColor: '#c1a900',
     borderRadius: 11,
     marginBottom: 12,
   },
   goalBox: {
-    backgroundColor: '#faf5b5',
+    backgroundColor: 'transparent',
     padding: 16,
     borderRadius: 6,
   },
   goalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#b4924a',
+    color: '#c1a900',
   },
   goalNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#b4924a',
+    color: '#c1a900',
   },
   goalText: {
     fontSize: 15,
-    color: '#b4924a',
+    color: '#c1a900',
     lineHeight: 21,
   },
 
-  // Inspire (Green)
+  // Inspire (I = #3c9820)
   inspireBorder: {
     borderWidth: 5,
-    borderColor: '#004225',
+    borderColor: '#3c9820',
     borderRadius: 11,
     marginBottom: 16,
   },
   inspireBox: {
-    backgroundColor: 'rgba(207, 232, 199, 0.5)',
+    backgroundColor: 'transparent',
     padding: 16,
     borderRadius: 6,
   },
   inspireTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#004225',
+    color: '#3c9820',
   },
   inspireNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#004225',
+    color: '#3c9820',
   },
   inspireText: {
     fontSize: 15,
-    color: '#004225',
+    color: '#3c9820',
     lineHeight: 21,
   },
   inspireActions: {
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   },
   inspireActionText: {
     fontSize: 15,
-    color: '#004225',
+    color: '#3c9820',
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  // Courage (Gold shimmer)
+  // Courage (Gold shimmer — keeps filled background)
   courageContainer: {
     marginBottom: 12,
     borderRadius: 11,
@@ -516,44 +516,44 @@ const styles = StyleSheet.create({
   courageTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#5008a7',
   },
   courageNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#5008a7',
   },
   courageText: {
     fontSize: 15,
-    color: '#050d61',
+    color: '#5008a7',
     lineHeight: 21,
   },
 
-  // Connect (Blue)
+  // Connect (C = #5008a7)
   connectBorder: {
     borderWidth: 5,
-    borderColor: '#050d61',
+    borderColor: '#5008a7',
     borderRadius: 11,
     marginBottom: 24,
   },
   connectBox: {
-    backgroundColor: 'rgba(184, 200, 232, 0.5)',
+    backgroundColor: 'transparent',
     padding: 16,
     borderRadius: 6,
   },
   connectTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#5008a7',
   },
   connectNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#5008a7',
   },
   connectText: {
     fontSize: 15,
-    color: '#050d61',
+    color: '#5008a7',
     lineHeight: 21,
   },
 

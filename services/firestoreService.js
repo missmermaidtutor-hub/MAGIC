@@ -897,3 +897,95 @@ export const getAnalyticsForDate = async (dateStr) => {
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
 };
+
+// ============================================================
+// FEATURE VOTES & IDEAS
+// ============================================================
+
+// Vote for a coming-soon feature (one vote per user per feature)
+export const voteForFeature = async (feature, voterUid) => {
+  const q = query(
+    collection(db, 'featureVotes'),
+    where('feature', '==', feature),
+    where('voterUid', '==', voterUid)
+  );
+  const existing = await getDocs(q);
+  if (!existing.empty) return false; // already voted
+  await addDoc(collection(db, 'featureVotes'), {
+    feature,
+    voterUid,
+    createdAt: serverTimestamp(),
+  });
+  return true;
+};
+
+// Remove a vote for a coming-soon feature (un-vote)
+export const removeFeatureVote = async (feature, voterUid) => {
+  const q = query(
+    collection(db, 'featureVotes'),
+    where('feature', '==', feature),
+    where('voterUid', '==', voterUid)
+  );
+  const snap = await getDocs(q);
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+  if (!snap.empty) await batch.commit();
+};
+
+// Get vote counts for all features
+export const getFeatureVoteCounts = async () => {
+  const snap = await getDocs(collection(db, 'featureVotes'));
+  const counts = {};
+  snap.docs.forEach(d => {
+    const f = d.data().feature;
+    counts[f] = (counts[f] || 0) + 1;
+  });
+  return counts;
+};
+
+// Get the set of features a user has already voted for
+export const getUserFeatureVotes = async (uid) => {
+  const q = query(collection(db, 'featureVotes'), where('voterUid', '==', uid));
+  const snap = await getDocs(q);
+  return new Set(snap.docs.map(d => d.data().feature));
+};
+
+// Submit a feature idea
+export const submitFeatureIdea = async (text, submitterUid, submitterPseudonym) => {
+  await addDoc(collection(db, 'featureIdeas'), {
+    text,
+    submitterUid,
+    submitterPseudonym: submitterPseudonym || 'Anonymous',
+    createdAt: serverTimestamp(),
+  });
+};
+
+// ============================================================
+// DIAGNOSTICS (Admin)
+// ============================================================
+
+// Get all users ordered by createdAt desc
+export const getAllUsersOrdered = async () => {
+  const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+};
+
+// Get all pseudonym claims
+export const getAllPseudonymClaims = async () => {
+  const snap = await getDocs(collection(db, 'pseudonyms'));
+  return snap.docs.map(d => ({ key: d.id, ...d.data() }));
+};
+
+// Get all username claims
+export const getAllUsernameClaims = async () => {
+  const snap = await getDocs(collection(db, 'usernames'));
+  return snap.docs.map(d => ({ key: d.id, ...d.data() }));
+};
+
+// Get all feature ideas (admin use, newest first)
+export const getAllFeatureIdeas = async () => {
+  const q = query(collection(db, 'featureIdeas'), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};

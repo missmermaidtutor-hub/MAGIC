@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground, Linking, Alert } from 'react-native';
+import { openMailto } from '../../utils/emailUtils';
 
 export default function AboutUsScreen({ navigation }) {
   return (
@@ -106,6 +107,20 @@ export default function AboutUsScreen({ navigation }) {
             <Text style={styles.text}>
               We believe everyone is creative. MAGIC Tracker removes barriers to creative practice by providing structure, prompts, and community support. Whether you're an experienced artist or just beginning, our system adapts to your journey.
             </Text>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Contact Us</Text>
+            <Text style={styles.text}>
+              We'd love to hear from you! Have questions, suggestions, or need help? Send us an email and we'll get back to you as soon as possible.
+            </Text>
+            <TouchableOpacity
+              style={styles.contactButton}
+              onPress={() => openMailto('MAGIC Tracker Feedback', '')}
+            >
+              <Text style={styles.contactIcon}>📧</Text>
+              <Text style={styles.contactText}>missmermaidtutor@gmail.com</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -255,5 +270,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#061679',
     fontWeight: '600',
+  },
+  contactButton: {
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 12,
+    borderWidth: 2,
+    borderColor: '#8E0DD3',
+  },
+  contactIcon: {
+    fontSize: 28,
+    marginBottom: 6,
+  },
+  contactText: {
+    fontSize: 15,
+    color: '#061679',
+    fontWeight: 'bold',
   },
 });

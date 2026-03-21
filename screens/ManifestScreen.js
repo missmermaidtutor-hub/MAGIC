@@ -736,7 +736,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   journalCard: {
-    backgroundColor: 'rgba(255, 228, 237, 0.5)',
+    backgroundColor: 'transparent',
     borderRadius: 12,
     padding: 20,
     borderWidth: 3,
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   saveButton: {
-    backgroundColor: '#ff7795',
+    backgroundColor: '#78000E',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',

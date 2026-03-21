@@ -608,6 +608,7 @@ export default function HomeScreen({ navigation }) {
   const [showInsightModal, setShowInsightModal] = useState(false);
   const [isShowingYesterday, setIsShowingYesterday] = useState(false);
   const [pastDayTasks, setPastDayTasks] = useState([]); // task data for past streak days
+  const [starUnlockModal, setStarUnlockModal] = useState(null);
 
   const refreshQuote = useCallback(async () => {
     const quote = await getTodayQuote(quotesData);
@@ -1025,6 +1026,24 @@ export default function HomeScreen({ navigation }) {
       const data = getStreakStars(streak);
       setStreakData(data);
       setRealStreakData(data);
+
+      // Check for star unlock milestones (show popup once per star type)
+      const STAR_MILESTONES = [
+        { days: 7, name: 'Week Star', description: 'Stars that look like this are each worth 7 streak days.' },
+        { days: 30, name: 'Month Star', description: 'Stars that look like this are each worth 30 streak days.' },
+        { days: 365, name: 'Year Dot', description: 'Stars that look like this are each worth 365 streak days.' },
+      ];
+      for (const milestone of STAR_MILESTONES) {
+        if (streak >= milestone.days) {
+          const key = `star_unlock_shown_${milestone.days}`;
+          const shown = await AsyncStorage.getItem(key);
+          if (!shown) {
+            await AsyncStorage.setItem(key, 'true');
+            setStarUnlockModal(milestone);
+            break; // show one at a time
+          }
+        }
+      }
 
       // Check if streak qualifies for a premium trial (milestones ending in 13)
       if (checkStreakTrial && streak > 0) {
@@ -1619,6 +1638,36 @@ export default function HomeScreen({ navigation }) {
                 </>
               );
             })()}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Star Unlock Popup */}
+      <Modal
+        visible={starUnlockModal !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setStarUnlockModal(null)}
+      >
+        <View style={styles.insightOverlay}>
+          <View style={styles.insightCard}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 16 }}>
+              You've unlocked the {starUnlockModal?.name}!
+            </Text>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              {starUnlockModal?.days === 7 && <WeekStar size={64} />}
+              {starUnlockModal?.days === 30 && <MonthStar size={52} />}
+              {starUnlockModal?.days === 365 && <YearDot size={28} />}
+            </View>
+            <Text style={{ fontSize: 14, color: '#ccc', textAlign: 'center', lineHeight: 20, marginBottom: 16 }}>
+              {starUnlockModal?.description}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setStarUnlockModal(null)}
+              style={styles.insightClose}
+            >
+              <Text style={styles.insightCloseText}>Awesome!</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

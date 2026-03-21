@@ -1004,112 +1004,111 @@ export default function ArtScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Daily Timer (adjustable) */}
-        <View style={styles.timerCard}>
-          <View style={styles.timerIcon}>
-            <Text style={styles.timerEmoji}>⏱️</Text>
-          </View>
+        {/* Timer & Stopwatch Side by Side */}
+        <View style={styles.timerRow}>
+          {/* Daily Timer */}
+          <View style={styles.timerCardHalf}>
+            <Text style={styles.halfLabel}>Timer</Text>
 
-          {/* Editable HH:MM:SS input */}
-          {!isDailyRunning && !alarmRinging ? (
-            <View style={styles.timerInputRow}>
-              <TextInput
-                style={styles.timerInput}
-                keyboardType="number-pad"
-                value={editHrs}
-                onChangeText={setEditHrs}
-                onBlur={applyEditedTime}
-                maxLength={2}
-                selectTextOnFocus
-              />
-              <Text style={styles.timerColon}>:</Text>
-              <TextInput
-                style={styles.timerInput}
-                keyboardType="number-pad"
-                value={editMins}
-                onChangeText={setEditMins}
-                onBlur={applyEditedTime}
-                maxLength={2}
-                selectTextOnFocus
-              />
-              <Text style={styles.timerColon}>:</Text>
-              <TextInput
-                style={styles.timerInput}
-                keyboardType="number-pad"
-                value={editSecs}
-                onChangeText={setEditSecs}
-                onBlur={applyEditedTime}
-                maxLength={2}
-                selectTextOnFocus
-              />
-            </View>
-          ) : (
-            <Text style={styles.timerDisplay}>{formatTime(dailyTime)}</Text>
-          )}
-
-          <View style={styles.timerButtons}>
-            {!alarmRinging ? (
-              <>
-                <TouchableOpacity
-                  style={[styles.timerButton, isDailyRunning && styles.timerButtonStop]}
-                  onPress={toggleDailyTimer}
-                >
-                  <Text style={styles.timerButtonText}>
-                    {isDailyRunning ? 'Pause' : 'Start'}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.timerButtonSecondary}
-                  onPress={resetDailyTimer}
-                >
-                  <Text style={styles.timerButtonText}>Reset</Text>
-                </TouchableOpacity>
-              </>
+            {!isDailyRunning && !alarmRinging ? (
+              <View style={styles.halfInputRow}>
+                <TextInput
+                  style={styles.halfInput}
+                  keyboardType="number-pad"
+                  value={editHrs}
+                  onChangeText={setEditHrs}
+                  onBlur={applyEditedTime}
+                  maxLength={2}
+                  selectTextOnFocus
+                />
+                <Text style={styles.halfColon}>:</Text>
+                <TextInput
+                  style={styles.halfInput}
+                  keyboardType="number-pad"
+                  value={editMins}
+                  onChangeText={setEditMins}
+                  onBlur={applyEditedTime}
+                  maxLength={2}
+                  selectTextOnFocus
+                />
+                <Text style={styles.halfColon}>:</Text>
+                <TextInput
+                  style={styles.halfInput}
+                  keyboardType="number-pad"
+                  value={editSecs}
+                  onChangeText={setEditSecs}
+                  onBlur={applyEditedTime}
+                  maxLength={2}
+                  selectTextOnFocus
+                />
+              </View>
             ) : (
-              <TouchableOpacity
-                style={styles.timerButtonAlarmStop}
-                onPress={stopAlarm}
-              >
-                <Text style={styles.timerButtonText}>Stop Sound</Text>
-              </TouchableOpacity>
+              <Text style={styles.halfDisplay}>{formatTime(dailyTime)}</Text>
             )}
-          </View>
-        </View>
 
-        {/* Weekly Stopwatch */}
-        <View style={styles.weeklyCard}>
-          <View style={styles.weeklyHeader}>
-            <Text style={styles.weeklyText}>
+            <View style={styles.halfButtons}>
+              {!alarmRinging ? (
+                <>
+                  <TouchableOpacity
+                    style={[styles.halfBtn, isDailyRunning && styles.halfBtnStop]}
+                    onPress={toggleDailyTimer}
+                  >
+                    <Text style={styles.halfBtnText}>
+                      {isDailyRunning ? 'Pause' : 'Start'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.halfBtn, styles.halfBtnSecondary]}
+                    onPress={resetDailyTimer}
+                  >
+                    <Text style={styles.halfBtnText}>Reset</Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.halfBtn, styles.halfBtnStop]}
+                  onPress={stopAlarm}
+                >
+                  <Text style={styles.halfBtnText}>Stop</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <Text style={styles.halfHint}>
+              Use for meditation{'\n'}Race the clock to complete your art challenge{'\n'}Limit the time you spend on this app
+            </Text>
+          </View>
+
+          {/* Weekly Stopwatch */}
+          <View style={styles.timerCardHalf}>
+            <Text style={styles.halfLabel}>Stopwatch</Text>
+            <Text style={styles.halfDisplay}>{formatStopwatch(weeklyTime)}</Text>
+            <Text style={styles.halfSublabel}>weekly</Text>
+
+            <View style={styles.halfButtons}>
+              <TouchableOpacity
+                style={[styles.halfBtn, isWeeklyRunning && styles.halfBtnStop]}
+                onPress={toggleWeeklyStopwatch}
+              >
+                <Text style={styles.halfBtnText}>
+                  {isWeeklyRunning ? 'Stop' : 'Start'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.halfBtn, styles.halfBtnSecondary]}
+                onPress={resetWeeklyStopwatch}
+              >
+                <Text style={styles.halfBtnText}>Reset</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.halfProgressBar}>
+              <View style={[styles.progressFill, { width: `${weeklyProgress}%` }]} />
+            </View>
+            {weeklyGoalMet && <Text style={styles.halfGoalBadge}>✨ Goal Met!</Text>}
+            <Text style={styles.halfHint}>
               120 min of art a week improves mental health
             </Text>
-            {weeklyGoalMet && <Text style={styles.goalBadge}>✨ Goal Met!</Text>}
-          </View>
-          
-          <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${weeklyProgress}%` }]} />
-          </View>
-          
-          <View style={styles.timerIcon}>
-            <Text style={styles.timerEmoji}>⏱️</Text>
-          </View>
-          <Text style={styles.stopwatchDisplay}>{formatStopwatch(weeklyTime)}</Text>
-          <Text style={styles.stopwatchLabel}>weekly stopwatch</Text>
-          
-          <View style={styles.timerButtons}>
-            <TouchableOpacity 
-              style={[styles.timerButton, isWeeklyRunning && styles.timerButtonStop]}
-              onPress={toggleWeeklyStopwatch}
-            >
-              <Text style={styles.timerButtonText}>
-                {isWeeklyRunning ? 'Stop' : 'Start'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.timerButtonSecondary}
-              onPress={resetWeeklyStopwatch}
-            >
-              <Text style={styles.timerButtonText}>Reset</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -1465,7 +1464,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   challengeCard: {
-    backgroundColor: 'rgba(243, 203, 130, 0.5)',
+    backgroundColor: 'transparent',
     borderWidth: 3,
     borderColor: '#f2990a',
     borderRadius: 12,
@@ -1486,7 +1485,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   timerCard: {
-    backgroundColor: 'rgba(243, 203, 130, 0.5)',
+    backgroundColor: 'transparent',
     borderWidth: 3,
     borderColor: '#f2990a',
     borderRadius: 12,
@@ -1495,7 +1494,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   weeklyCard: {
-    backgroundColor: 'rgba(243, 203, 130, 0.5)',
+    backgroundColor: 'transparent',
     borderWidth: 3,
     borderColor: '#f2990a',
     borderRadius: 12,
@@ -1532,6 +1531,104 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     backgroundColor: '#f2990a',
+  },
+  // Side-by-side timer/stopwatch
+  timerRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 20,
+  },
+  timerCardHalf: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 3,
+    borderColor: '#f2990a',
+    borderRadius: 12,
+    padding: 10,
+    alignItems: 'center',
+  },
+  halfLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#332100',
+    marginBottom: 6,
+  },
+  halfInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  halfInput: {
+    fontSize: 20,
+    color: '#332100',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: '#332100',
+    width: 34,
+    paddingVertical: 2,
+  },
+  halfColon: {
+    fontSize: 20,
+    color: '#332100',
+    fontWeight: 'bold',
+    marginHorizontal: 1,
+  },
+  halfDisplay: {
+    fontSize: 22,
+    color: '#332100',
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  halfSublabel: {
+    fontSize: 11,
+    color: '#5a3800',
+    marginBottom: 8,
+  },
+  halfButtons: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 8,
+  },
+  halfBtn: {
+    backgroundColor: '#f2990a',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  halfBtnStop: {
+    backgroundColor: '#FF6B6B',
+  },
+  halfBtnSecondary: {
+    backgroundColor: '#666',
+  },
+  halfBtnText: {
+    color: 'white',
+    fontSize: 13,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  halfHint: {
+    fontSize: 11,
+    color: '#5a3800',
+    textAlign: 'center',
+    lineHeight: 16,
+    marginTop: 4,
+  },
+  halfProgressBar: {
+    width: '100%',
+    height: 6,
+    backgroundColor: '#333',
+    borderRadius: 3,
+    marginBottom: 6,
+    overflow: 'hidden',
+  },
+  halfGoalBadge: {
+    fontSize: 12,
+    color: '#332100',
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
   timerIcon: {
     marginBottom: 10,
