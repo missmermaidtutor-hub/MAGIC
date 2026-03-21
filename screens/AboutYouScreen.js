@@ -151,11 +151,6 @@ export default function AboutYouScreen({ navigation }) {
           )}
         </View>
 
-        {/* Stats Card */}
-        <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Your Journey</Text>
-          <Text style={styles.statsSubtext}>Stats coming soon!</Text>
-        </View>
       </ScrollView>
     </View>
   );
@@ -292,24 +287,5 @@ const styles = StyleSheet.create({
     color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  statsCard: {
-    backgroundColor: '#1a1a1a',
-    borderWidth: 3,
-    borderColor: '#4FC3F7',
-    borderRadius: 12,
-    padding: 30,
-    alignItems: 'center',
-  },
-  statsTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4FC3F7',
-    marginBottom: 10,
-  },
-  statsSubtext: {
-    fontSize: 16,
-    color: '#87CEEB',
-    fontStyle: 'italic',
   },
 });
