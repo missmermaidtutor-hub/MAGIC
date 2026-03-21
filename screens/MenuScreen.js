@@ -3,9 +3,10 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground }
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
 import { showDestructiveConfirm } from '../utils/alertUtils';
+import { canShareApp } from '../utils/premiumUtils';
 
 export default function MenuScreen({ navigation }) {
-  const { user, signOut } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
   const menuItems = [
     { name: 'Home Page', screen: 'Home' },
     { name: 'Quick Launch Info', screen: 'QuickLaunch' },
@@ -13,6 +14,9 @@ export default function MenuScreen({ navigation }) {
     { name: 'About You', screen: 'AboutYou' },
     { name: 'Quotes', screen: 'Quotes' },
     { name: 'Coming Soon', screen: 'ComingSoon' },
+    ...(user && userProfile && canShareApp(userProfile) ? [
+      { name: 'Share the App', screen: 'ShareApp' },
+    ] : []),
     { name: 'Legal Policies', screen: 'Legal' },
     ...(user && isAdmin(user.uid) ? [
       { name: 'Analytics Dashboard', screen: 'Analytics' },

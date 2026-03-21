@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initSentry, Sentry } from './config/sentry';
@@ -50,6 +50,7 @@ import LegalScreen from './screens/menu-pages/LegalScreen';
 import ContactScreen from './screens/menu-pages/ContactScreen';
 import QuickLaunchScreen from './screens/menu-pages/QuickLaunchScreen';
 import ComingSoonScreen from './screens/menu-pages/ComingSoonScreen';
+import ShareAppScreen from './screens/menu-pages/ShareAppScreen';
 import FeatureIdeasScreen from './screens/FeatureIdeasScreen';
 
 const Tab = createBottomTabNavigator();
@@ -271,6 +272,13 @@ function MainTabs({ initialRoute = 'Home' }) {
         }}
       />
       <Tab.Screen
+        name="ShareApp"
+        component={ShareAppScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
         name="FeatureIdeas"
         component={FeatureIdeasScreen}
         options={{
@@ -339,10 +347,16 @@ function AppContent() {
 
   if (loading || checkingLaunch) {
     return (
-      <View style={styles.loadingContainer}>
+      <ImageBackground source={require('./assets/background.png')} style={styles.loadingContainer} resizeMode="cover">
         <ActivityIndicator size="large" color="#FFD700" />
-        <Text style={styles.loadingText}>MAGIC</Text>
-      </View>
+        <View style={styles.loadingLetters}>
+          <Text style={[styles.loadingLetter, { color: '#78000E' }]}>M</Text>
+          <Text style={[styles.loadingLetter, { color: '#9E4502' }]}>A</Text>
+          <Text style={[styles.loadingLetter, { color: '#c1a900' }]}>G</Text>
+          <Text style={[styles.loadingLetter, { color: '#3c9820' }]}>I</Text>
+          <Text style={[styles.loadingLetter, { color: '#5008a7' }]}>C</Text>
+        </View>
+      </ImageBackground>
     );
   }
 
@@ -380,11 +394,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFD700',
+  loadingLetters: {
+    flexDirection: 'row',
     marginTop: 20,
+  },
+  loadingLetter: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    letterSpacing: 2,
   },
   tabBar: {
     backgroundColor: '#fffaec',

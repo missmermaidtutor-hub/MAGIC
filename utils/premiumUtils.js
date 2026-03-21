@@ -126,6 +126,7 @@ const FEATURE_RULES = {
   earlyCuratedAccess: (isPremium) => isPremium,
   studioFullColors: (isPremium) => isPremium,
   studioAdvancedText: (isPremium) => isPremium,
+  pseudonymChange: (isPremium) => isPremium,
 };
 
 /**
@@ -204,6 +205,7 @@ export const FEATURE_DESCRIPTIONS = {
   earlyCuratedAccess: 'Access the curated gallery before the standard 13-day membership waiting period.',
   studioFullColors: 'Unlock the color mixing panel, opacity controls, and custom hex input in the Art Studio.',
   studioAdvancedText: 'Add italic, underline, strikethrough formatting plus font families and all 12 colors to text overlays.',
+  pseudonymChange: 'Change your artist pseudonym as often as you like with premium access.',
 };
 
 /** Feature name → user-friendly label for paywalls. */
@@ -217,4 +219,37 @@ export const FEATURE_LABELS = {
   earlyCuratedAccess: 'Early Gallery Access',
   studioFullColors: 'Full Color Controls',
   studioAdvancedText: 'Advanced Text Styling',
+  pseudonymChange: 'Pseudonym Changes',
+};
+
+// ── Pseudonym change gating ──
+
+/**
+ * Check if a user can change their pseudonym.
+ * First change is always free. After that, requires premium.
+ */
+export const canChangePseudonym = (userProfile) => {
+  if (!userProfile) return false;
+  // First change is always free
+  if ((userProfile.pseudonymChangeCount || 0) === 0) return true;
+  // Premium users can change unlimited
+  return getPremiumStatus(userProfile).isPremium;
+};
+
+// ── Share App gating ──
+
+/**
+ * Check if a user can access the Share App screen.
+ * Requires having had a premium trial that has expired (completed the cycle).
+ */
+export const canShareApp = (userProfile) => {
+  if (!userProfile) return false;
+  // Must have had a premium trial that has expired
+  if (!userProfile.premiumTrialExpiry) return false;
+  const expiry =
+    userProfile.premiumTrialExpiry?.toDate?.() ??
+    (userProfile.premiumTrialExpiry?.seconds
+      ? new Date(userProfile.premiumTrialExpiry.seconds * 1000)
+      : new Date(userProfile.premiumTrialExpiry));
+  return new Date() > expiry; // Trial has ended = cycle complete
 };

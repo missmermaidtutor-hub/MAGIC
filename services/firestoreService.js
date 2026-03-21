@@ -27,6 +27,9 @@ export const createUserProfile = async (uid, data) => {
     uid,
     email: data.email || '',
     accountMethod: data.accountMethod || 'email',
+    firstName: data.firstName || '',
+    lastName: data.lastName || '',
+    username: data.username || '',
     pseudonym: data.pseudonym || '',
     birthdate: data.birthdate || '',
     timezone: data.timezone || 'America/New_York',
@@ -41,6 +44,9 @@ export const createUserProfile = async (uid, data) => {
     isPremium: false,
     premiumTrialExpiry: null,
     premiumExpiry: null,
+    referralCode: 'MAGIC-' + uid.slice(0, 6).toUpperCase(),
+    referralCount: 0,
+    pseudonymChangeCount: data.pseudonymChangeCount || 0,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -988,4 +994,67 @@ export const getAllFeatureIdeas = async () => {
   const q = query(collection(db, 'featureIdeas'), orderBy('createdAt', 'desc'));
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+// ============================================================
+// REFERRALS
+// ============================================================
+
+// Apply a referral code: find the referrer and increment their count
+export const applyReferralCode = async (code, newUserUid) => {
+  const q = query(
+    collection(db, 'users'),
+    where('referralCode', '==', code.trim().toUpperCase()),
+    firestoreLimit(1),
+  );
+  const snap = await getDocs(q);
+  if (snap.empty) return false;
+
+  const referrerDoc = snap.docs[0];
+  const referrerUid = referrerDoc.id;
+
+  // Don't let users refer themselves
+  if (referrerUid === newUserUid) return false;
+
+  // Increment referrer's referralCount
+  const referrerRef = doc(db, 'users', referrerUid);
+  const currentData = referrerDoc.data();
+  await updateDoc(referrerRef, {
+    referralCount: (currentData.referralCount || 0) + 1,
+    updatedAt: serverTimestamp(),
+  });
+
+  // Set referredBy on the new user
+  const newUserRef = doc(db, 'users', newUserUid);
+  await updateDoc(newUserRef, {
+    referredBy: code.trim().toUpperCase(),
+    referredByUid: referrerUid,
+    updatedAt: serverTimestamp(),
+  });
+
+  return true;
+};
+
+// Check if user has earned a referral trial (5+ referrals = 13-day trial)
+export const checkAndGrantReferralTrial = async (uid) => {
+  const userRef = doc(db, 'users', uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return false;
+
+  const data = snap.data();
+  if ((data.referralCount || 0) < 5) return false;
+
+  // Check if already granted a referral trial
+  if (data.referralTrialGranted) return false;
+
+  const expiry = new Date();
+  expiry.setDate(expiry.getDate() + 13);
+
+  await updateDoc(userRef, {
+    premiumTrialExpiry: expiry,
+    referralTrialGranted: true,
+    updatedAt: serverTimestamp(),
+  });
+
+  return true;
 };

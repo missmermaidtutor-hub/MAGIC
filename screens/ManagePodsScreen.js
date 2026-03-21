@@ -64,6 +64,7 @@ export default function ManagePodsScreen({ navigation }) {
   const [filterState, setFilterState] = useState('');
   const [filterHeartCity, setFilterHeartCity] = useState('');
   const [filterMedium, setFilterMedium] = useState('');
+  const [filterReferrer, setFilterReferrer] = useState('');
   const [openDropdown, setOpenDropdown] = useState(null);
   const [expandedUser, setExpandedUser] = useState(null);
 
@@ -103,6 +104,20 @@ export default function ManagePodsScreen({ navigation }) {
     return map;
   }, [pods]);
 
+  // Map referral relationships
+  const { referredByMap, referralsMap } = useMemo(() => {
+    const byMap = {}; // uid → referrerUid
+    const refMap = {}; // referrerUid → [{ uid, username }]
+    allUsers.forEach(u => {
+      if (u.referredByUid) {
+        byMap[u.uid] = u.referredByUid;
+        if (!refMap[u.referredByUid]) refMap[u.referredByUid] = [];
+        refMap[u.referredByUid].push({ uid: u.uid, username: u.username || u.email || u.uid.slice(0, 8) });
+      }
+    });
+    return { referredByMap: byMap, referralsMap: refMap };
+  }, [allUsers]);
+
   // Extract unique filter options from user data
   const filterOptions = useMemo(() => {
     const timezones = new Set();
@@ -119,24 +134,32 @@ export default function ManagePodsScreen({ navigation }) {
       if (heart?.city) heartCities.add(heart.city);
       (u.favoriteMediums || []).forEach(m => mediums.add(m));
     });
+    // Build referrer options: users who have referred others
+    const referrers = Object.keys(referralsMap).map(uid => {
+      const u = allUsers.find(usr => usr.uid === uid);
+      return { uid, username: u?.username || u?.email || uid.slice(0, 8) };
+    }).sort((a, b) => a.username.localeCompare(b.username));
+
     return {
       timezones: [...timezones].sort(),
       countries: [...countries].sort(),
       states: [...states].sort(),
       heartCities: [...heartCities].sort(),
       mediums: [...mediums].sort(),
+      referrers,
     };
-  }, [allUsers]);
+  }, [allUsers, referralsMap]);
 
   // Filter users by search text + dropdown filters
   const filteredUsers = useMemo(() => {
     const q = searchText.toLowerCase().trim();
     return allUsers.filter(u => {
-      // Text search (username + pseudonym)
+      // Text search (username + pseudonym + referralCode)
       if (q) {
         const username = (u.username || '').toLowerCase();
         const pseudonym = (u.pseudonym || '').toLowerCase();
-        if (!username.includes(q) && !pseudonym.includes(q)) {
+        const refCode = (u.referralCode || '').toLowerCase();
+        if (!username.includes(q) && !pseudonym.includes(q) && !refCode.includes(q)) {
           return false;
         }
       }
@@ -150,11 +173,13 @@ export default function ManagePodsScreen({ navigation }) {
       if (filterHeartCity && u.heartLocation?.city !== filterHeartCity) return false;
       // Medium filter
       if (filterMedium && !(u.favoriteMediums || []).includes(filterMedium)) return false;
+      // Referred by filter
+      if (filterReferrer && referredByMap[u.uid] !== filterReferrer) return false;
       return true;
     });
-  }, [allUsers, searchText, filterTimezone, filterCountry, filterState, filterHeartCity, filterMedium]);
+  }, [allUsers, searchText, filterTimezone, filterCountry, filterState, filterHeartCity, filterMedium, filterReferrer, referredByMap]);
 
-  const hasActiveFilters = filterTimezone || filterCountry || filterState || filterHeartCity || filterMedium;
+  const hasActiveFilters = filterTimezone || filterCountry || filterState || filterHeartCity || filterMedium || filterReferrer;
 
   const clearFilters = () => {
     setFilterTimezone('');
@@ -162,6 +187,7 @@ export default function ManagePodsScreen({ navigation }) {
     setFilterState('');
     setFilterHeartCity('');
     setFilterMedium('');
+    setFilterReferrer('');
     setOpenDropdown(null);
   };
 
@@ -294,6 +320,7 @@ export default function ManagePodsScreen({ navigation }) {
                   else if (filterKey === 'state') setFilterState('');
                   else if (filterKey === 'heartCity') setFilterHeartCity('');
                   else if (filterKey === 'medium') setFilterMedium('');
+                  else if (filterKey === 'referrer') setFilterReferrer('');
                   setOpenDropdown(null);
                 }}
               >
@@ -315,6 +342,7 @@ export default function ManagePodsScreen({ navigation }) {
                     else if (filterKey === 'state') setFilterState(opt);
                     else if (filterKey === 'heartCity') setFilterHeartCity(opt);
                     else if (filterKey === 'medium') setFilterMedium(opt);
+                    else if (filterKey === 'referrer') setFilterReferrer(opt);
                     setOpenDropdown(null);
                   }}
                 >
@@ -363,7 +391,7 @@ export default function ManagePodsScreen({ navigation }) {
           style={styles.searchInput}
           value={searchText}
           onChangeText={setSearchText}
-          placeholder="Search by username or pseudonym..."
+          placeholder="Search username, pseudonym, or referral code..."
           placeholderTextColor="#999"
         />
 
@@ -391,6 +419,53 @@ export default function ManagePodsScreen({ navigation }) {
               renderDropdown('Heart City', filterHeartCity, filterOptions.heartCities, 'heartCity')}
             {filterOptions.mediums.length > 0 &&
               renderDropdown('Medium', filterMedium, filterOptions.mediums, 'medium')}
+            {filterOptions.referrers.length > 0 && (
+              <View style={styles.filterDropdownContainer}>
+                <TouchableOpacity
+                  style={[styles.filterDropdown, filterReferrer ? styles.filterDropdownActive : null]}
+                  onPress={() => setOpenDropdown(openDropdown === 'referrer' ? null : 'referrer')}
+                >
+                  <Text
+                    style={[styles.filterDropdownText, filterReferrer ? styles.filterDropdownTextActive : null]}
+                    numberOfLines={1}
+                  >
+                    {filterReferrer
+                      ? (filterOptions.referrers.find(r => r.uid === filterReferrer)?.username || 'Referrer')
+                      : 'Referred By'}
+                  </Text>
+                  <Text style={styles.filterDropdownArrow}>{openDropdown === 'referrer' ? '▲' : '▼'}</Text>
+                </TouchableOpacity>
+                {openDropdown === 'referrer' && (
+                  <ScrollView style={styles.filterDropdownList} nestedScrollEnabled>
+                    {filterReferrer ? (
+                      <TouchableOpacity
+                        style={styles.filterDropdownItem}
+                        onPress={() => { setFilterReferrer(''); setOpenDropdown(null); }}
+                      >
+                        <Text style={[styles.filterDropdownItemText, { fontStyle: 'italic' }]}>Clear</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                    {filterOptions.referrers.map(ref => {
+                      const isSelected = ref.uid === filterReferrer;
+                      return (
+                        <TouchableOpacity
+                          key={ref.uid}
+                          style={[styles.filterDropdownItem, isSelected && styles.filterDropdownItemActive]}
+                          onPress={() => { setFilterReferrer(ref.uid); setOpenDropdown(null); }}
+                        >
+                          <Text style={[
+                            styles.filterDropdownItemText,
+                            isSelected && styles.filterDropdownItemTextActive,
+                          ]}>
+                            {ref.username}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                )}
+              </View>
+            )}
             {hasActiveFilters && (
               <TouchableOpacity style={styles.clearFiltersBtn} onPress={clearFilters}>
                 <Text style={styles.clearFiltersBtnText}>Clear</Text>
@@ -411,6 +486,10 @@ export default function ManagePodsScreen({ navigation }) {
             const displayName = u.username || u.email || u.uid.slice(0, 8);
             const pseudonym = u.pseudonym || '';
             const userPods = userPodMap[u.uid] || [];
+            const referralCount = u.referralCount || 0;
+            const referrerUid = referredByMap[u.uid];
+            const referrerUser = referrerUid ? allUsers.find(usr => usr.uid === referrerUid) : null;
+            const invited = referralsMap[u.uid] || [];
             const locationStr = userLocationStr(u);
             const heartStr = heartLocationStr(u);
             const mediums = u.favoriteMediums || [];
@@ -432,6 +511,13 @@ export default function ManagePodsScreen({ navigation }) {
                         <View style={styles.podBadge}>
                           <Text style={styles.podBadgeText}>
                             In {userPods.length} pod{userPods.length !== 1 ? 's' : ''}
+                          </Text>
+                        </View>
+                      )}
+                      {referralCount > 0 && (
+                        <View style={styles.referralBadge}>
+                          <Text style={styles.referralBadgeText}>
+                            {referralCount} referred
                           </Text>
                         </View>
                       )}
@@ -463,6 +549,15 @@ export default function ManagePodsScreen({ navigation }) {
                     {u.email ? <Text style={styles.detailText}>Email: {u.email}</Text> : null}
                     {userPods.length > 0 && (
                       <Text style={styles.detailText}>Pods: {userPods.map(p => p.name).join(', ')}</Text>
+                    )}
+                    {referrerUser && (
+                      <Text style={styles.detailText}>Referred by: {referrerUser.username || referrerUser.email || referrerUid.slice(0, 8)}</Text>
+                    )}
+                    {invited.length > 0 && (
+                      <Text style={styles.detailText}>Invited: {invited.map(r => r.username).join(', ')}</Text>
+                    )}
+                    {u.referralCode && (
+                      <Text style={styles.detailText}>Referral code: {u.referralCode}</Text>
                     )}
                   </View>
                 )}
@@ -861,6 +956,18 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   podBadgeText: {
+    fontSize: 10,
+    color: '#6B5900',
+    fontWeight: '600',
+  },
+  referralBadge: {
+    backgroundColor: 'rgba(255, 215, 0, 0.25)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+  referralBadgeText: {
     fontSize: 10,
     color: '#6B5900',
     fontWeight: '600',

@@ -15,7 +15,7 @@ import {
 import { showAlert } from '../../utils/alertUtils';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../../config/firebase';
-import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable } from '../../services/firestoreService';
+import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable, applyReferralCode } from '../../services/firestoreService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const TIMEZONES = [
@@ -48,12 +48,11 @@ export default function SignUpScreen({ navigation, route }) {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Step 2: Required profile
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
-  const [pseudonym, setPseudonym] = useState('');
-  const [pseudonymAvailable, setPseudonymAvailable] = useState(null);
-  const [checkingPseudonym, setCheckingPseudonym] = useState(false);
   const [birthdate, setBirthdate] = useState('');
   const [timezone, setTimezone] = useState('America/New_York');
   const [showTimezoneList, setShowTimezoneList] = useState(false);
@@ -63,26 +62,7 @@ export default function SignUpScreen({ navigation, route }) {
   const [heartLocation, setHeartLocation] = useState({ country: '', state: '', city: '' });
   const [bio, setBio] = useState('');
   const [anonymous, setAnonymous] = useState(true);
-
-  // Debounced pseudonym availability check
-  useEffect(() => {
-    if (!pseudonym.trim()) {
-      setPseudonymAvailable(null);
-      return;
-    }
-    setCheckingPseudonym(true);
-    const timer = setTimeout(async () => {
-      try {
-        const available = await checkPseudonymAvailable(pseudonym);
-        setPseudonymAvailable(available);
-      } catch (error) {
-        setPseudonymAvailable(null);
-      }
-      setCheckingPseudonym(false);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [pseudonym]);
+  const [referralCodeInput, setReferralCodeInput] = useState('');
 
   // Debounced username availability check
   useEffect(() => {
@@ -139,20 +119,20 @@ export default function SignUpScreen({ navigation, route }) {
   };
 
   const handleStep2 = () => {
+    if (!firstName.trim()) {
+      showAlert('Missing First Name', 'Please enter your first name.');
+      return;
+    }
+    if (!lastName.trim()) {
+      showAlert('Missing Last Name', 'Please enter your last name.');
+      return;
+    }
     if (!username.trim()) {
       showAlert('Missing Username', 'Please choose a username.');
       return;
     }
     if (!checkingUsername && usernameAvailable === false) {
       showAlert('Username Taken', 'Please choose a different username.');
-      return;
-    }
-    if (!pseudonym.trim()) {
-      showAlert('Missing Pseudonym', 'Please choose a pseudonym.');
-      return;
-    }
-    if (!checkingPseudonym && pseudonymAvailable === false) {
-      showAlert('Pseudonym Taken', 'Please choose a different pseudonym.');
       return;
     }
     if (!birthdate.trim()) {
@@ -164,6 +144,17 @@ export default function SignUpScreen({ navigation, route }) {
       return;
     }
     setStep(3);
+  };
+
+  // Auto-generate a pseudonym from firstName + random number
+  const generatePseudonym = async (name) => {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const candidate = `${name}${Math.floor(Math.random() * 10000)}`;
+      const available = await checkPseudonymAvailable(candidate);
+      if (available) return candidate;
+    }
+    // Fallback: use timestamp-based suffix
+    return `${name}${Date.now() % 100000}`;
   };
 
   const handleFinish = async () => {
@@ -181,16 +172,21 @@ export default function SignUpScreen({ navigation, route }) {
       // Merge any existing AsyncStorage data
       const { settings, profile } = await getExistingData();
 
-      // Step 2: Claim username and pseudonym
+      // Step 2: Claim username
       await claimUsername(username.trim(), uid);
-      await claimPseudonym(pseudonym.trim(), uid);
 
-      // Step 3: Create Firestore profile
+      // Step 3: Auto-generate and claim pseudonym
+      const autoPseudonym = await generatePseudonym(firstName.trim());
+      await claimPseudonym(autoPseudonym, uid);
+
+      // Step 4: Create Firestore profile
       await createUserProfile(uid, {
         email: userEmail,
         accountMethod: existingMethod,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         username: username.trim(),
-        pseudonym: pseudonym.trim(),
+        pseudonym: autoPseudonym,
         birthdate,
         timezone,
         currentLocation: currentLocation.country ? currentLocation : (settings.currentLocation || { country: '', state: '', city: '' }),
@@ -201,6 +197,7 @@ export default function SignUpScreen({ navigation, route }) {
         anonymous,
         bio: bio || profile.bio || '',
         favoritePrompt: profile.favoritePrompt || '',
+        pseudonymChangeCount: 0,
       });
 
       // Update AsyncStorage to stay in sync
@@ -208,8 +205,10 @@ export default function SignUpScreen({ navigation, route }) {
         ...settings,
         accountMethod: existingMethod,
         email: userEmail,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         username: username.trim(),
-        pseudonym: pseudonym.trim(),
+        pseudonym: autoPseudonym,
         timezone,
         anonymous,
       };
@@ -218,10 +217,20 @@ export default function SignUpScreen({ navigation, route }) {
       const updatedProfile = {
         ...profile,
         username: username.trim(),
-        pseudonym: pseudonym.trim(),
+        pseudonym: autoPseudonym,
         bio: bio || profile.bio || '',
       };
       await AsyncStorage.setItem('user_profile', JSON.stringify(updatedProfile));
+
+      // Apply referral code if provided
+      if (referralCodeInput.trim()) {
+        try {
+          await applyReferralCode(referralCodeInput.trim(), uid);
+        } catch (refErr) {
+          console.log('Referral code error:', refErr);
+          // Don't block signup for referral errors
+        }
+      }
 
       // Send email verification (skip for Apple/Google sign-in — already verified)
       if (!skipCredentials) {
@@ -292,6 +301,26 @@ export default function SignUpScreen({ navigation, route }) {
       <Text style={styles.stepTitle}>Your Profile</Text>
       <Text style={styles.stepIndicator}>Step 2 of 3 — Required</Text>
 
+      <Text style={styles.inputLabel}>First Name</Text>
+      <TextInput
+        style={styles.textInput}
+        value={firstName}
+        onChangeText={setFirstName}
+        placeholder="Your first name"
+        placeholderTextColor="#555"
+        autoCapitalize="words"
+      />
+
+      <Text style={styles.inputLabel}>Last Name</Text>
+      <TextInput
+        style={styles.textInput}
+        value={lastName}
+        onChangeText={setLastName}
+        placeholder="Your last name"
+        placeholderTextColor="#555"
+        autoCapitalize="words"
+      />
+
       <Text style={styles.inputLabel}>Username</Text>
       <Text style={styles.fieldHint}>Your login identity (cannot be changed later)</Text>
       <TextInput
@@ -314,27 +343,7 @@ export default function SignUpScreen({ navigation, route }) {
         <Text style={styles.takenText}>Already taken</Text>
       )}
 
-      <Text style={styles.inputLabel}>Pseudonym</Text>
-      <Text style={styles.fieldHint}>Your public artist name shown on art & voting</Text>
-      <TextInput
-        style={[
-          styles.textInput,
-          pseudonymAvailable === true && styles.inputValid,
-          pseudonymAvailable === false && styles.inputInvalid,
-        ]}
-        value={pseudonym}
-        onChangeText={setPseudonym}
-        placeholder="Your creative name"
-        placeholderTextColor="#555"
-        autoCapitalize="none"
-      />
-      {checkingPseudonym && <Text style={styles.checkingText}>Checking availability...</Text>}
-      {!checkingPseudonym && pseudonymAvailable === true && (
-        <Text style={styles.availableText}>Available!</Text>
-      )}
-      {!checkingPseudonym && pseudonymAvailable === false && (
-        <Text style={styles.takenText}>Already taken</Text>
-      )}
+      <Text style={styles.fieldHint}>You'll be auto-assigned a pseudonym. You can change it for free after your first login.</Text>
 
       <Text style={styles.inputLabel}>Birthdate (mm/dd/yyyy)</Text>
       <TextInput
@@ -469,6 +478,17 @@ export default function SignUpScreen({ navigation, route }) {
           thumbColor={anonymous ? '#FFD700' : '#666'}
         />
       </View>
+
+      <Text style={styles.inputLabel}>Referral Code (optional)</Text>
+      <Text style={styles.fieldHint}>Were you invited by a friend? Enter their code here.</Text>
+      <TextInput
+        style={styles.textInput}
+        value={referralCodeInput}
+        onChangeText={setReferralCodeInput}
+        placeholder="e.g. MAGIC-ABC123"
+        placeholderTextColor="#555"
+        autoCapitalize="characters"
+      />
 
       <View style={styles.buttonRow}>
         <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(2)}>

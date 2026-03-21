@@ -23,6 +23,8 @@ import {
 } from '../../services/firestoreService';
 import mediumsData from '../../mediums.json';
 import { scheduleStreakReminder } from '../../utils/notificationUtils';
+import { canChangePseudonym } from '../../utils/premiumUtils';
+import PremiumPaywall from '../../components/premium/PremiumPaywall';
 
 const TIMEZONES = [
   'America/New_York',
@@ -211,7 +213,8 @@ export default function AboutYouScreen({ navigation }) {
         await releasePseudonym(originalUsername);
       }
       await claimPseudonym(newName, user.uid);
-      await updateUserProfile(user.uid, { pseudonym: newName });
+      const newCount = (userProfile?.pseudonymChangeCount || 0) + 1;
+      await updateUserProfile(user.uid, { pseudonym: newName, pseudonymChangeCount: newCount });
 
       // Update AsyncStorage
       const current = await AsyncStorage.getItem('app_settings');
@@ -319,6 +322,16 @@ export default function AboutYouScreen({ navigation }) {
             <Text style={styles.readOnlyText}>{getAccountMethodLabel()}</Text>
           </View>
 
+          <Text style={styles.inputLabel}>First Name</Text>
+          <View style={styles.readOnlyField}>
+            <Text style={styles.readOnlyText}>{userProfile?.firstName || 'Not set'}</Text>
+          </View>
+
+          <Text style={styles.inputLabel}>Last Name</Text>
+          <View style={styles.readOnlyField}>
+            <Text style={styles.readOnlyText}>{userProfile?.lastName || 'Not set'}</Text>
+          </View>
+
           <Text style={styles.inputLabel}>Email</Text>
           <View style={styles.readOnlyField}>
             <Text style={styles.readOnlyText}>{email || 'Not set'}</Text>
@@ -331,28 +344,39 @@ export default function AboutYouScreen({ navigation }) {
           <Text style={styles.fieldHint}>Username cannot be changed after creation</Text>
 
           <Text style={styles.inputLabel}>Pseudonym</Text>
-          <TextInput
-            style={[
-              styles.textInput,
-              pseudonymAvailable === true && styles.inputValid,
-              pseudonymAvailable === false && styles.inputInvalid,
-            ]}
-            value={username}
-            onChangeText={setUsername}
-            placeholder="Your creative name"
-            placeholderTextColor="rgba(255,255,255,0.6)"
-          />
-          {checkingPseudonym && <Text style={styles.checkingText}>Checking availability...</Text>}
-          {!checkingPseudonym && pseudonymAvailable === true && (
-            <Text style={styles.availableText}>Available!</Text>
-          )}
-          {!checkingPseudonym && pseudonymAvailable === false && (
-            <Text style={styles.takenText}>Already taken</Text>
-          )}
-          {username.trim() !== originalUsername && pseudonymAvailable === true && (
-            <TouchableOpacity style={styles.saveNameButton} onPress={handleSavePseudonym}>
-              <Text style={styles.saveNameButtonText}>Save Pseudonym</Text>
-            </TouchableOpacity>
+          {canChangePseudonym(userProfile) ? (
+            <>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  pseudonymAvailable === true && styles.inputValid,
+                  pseudonymAvailable === false && styles.inputInvalid,
+                ]}
+                value={username}
+                onChangeText={setUsername}
+                placeholder="Your creative name"
+                placeholderTextColor="rgba(255,255,255,0.6)"
+              />
+              {checkingPseudonym && <Text style={styles.checkingText}>Checking availability...</Text>}
+              {!checkingPseudonym && pseudonymAvailable === true && (
+                <Text style={styles.availableText}>Available!</Text>
+              )}
+              {!checkingPseudonym && pseudonymAvailable === false && (
+                <Text style={styles.takenText}>Already taken</Text>
+              )}
+              {username.trim() !== originalUsername && pseudonymAvailable === true && (
+                <TouchableOpacity style={styles.saveNameButton} onPress={handleSavePseudonym}>
+                  <Text style={styles.saveNameButtonText}>Save Pseudonym</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          ) : (
+            <>
+              <View style={styles.readOnlyField}>
+                <Text style={styles.readOnlyText}>{username || 'Not set'}</Text>
+              </View>
+              <PremiumPaywall feature="pseudonymChange" compact />
+            </>
           )}
 
           <Text style={styles.inputLabel}>Birthdate (mm/dd/yyyy)</Text>

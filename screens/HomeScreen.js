@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, ImageBackground, Modal } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, ImageBackground, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { showAlert, showConfirm } from '../utils/alertUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
-import { calculateAndSetWinner, getRecentWinners, saveProgress } from '../services/firestoreService';
+import { calculateAndSetWinner, getRecentWinners, saveProgress, checkPseudonymAvailable, claimPseudonym, releasePseudonym, updateUserProfile } from '../services/firestoreService';
 import { getESTDate, getESTYesterday, getESTDayBeforeYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
 import { getTodayQuote } from '../utils/quoteUtils';
@@ -15,6 +15,7 @@ import { trackAction } from '../services/analyticsService';
 import { scheduleStreakReminder } from '../utils/notificationUtils';
 import { getTasksForDate } from '../utils/taskUtils';
 import { openMailto } from '../utils/emailUtils';
+import { getPremiumStatus } from '../utils/premiumUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 
@@ -610,6 +611,17 @@ export default function HomeScreen({ navigation }) {
   const [pastDayTasks, setPastDayTasks] = useState([]); // task data for past streak days
   const [starUnlockModal, setStarUnlockModal] = useState(null);
 
+  // First-login pseudonym change modal
+  const [showPseudonymModal, setShowPseudonymModal] = useState(false);
+  const [newPseudonym, setNewPseudonym] = useState('');
+  const [newPseudonymAvailable, setNewPseudonymAvailable] = useState(null);
+  const [checkingNewPseudonym, setCheckingNewPseudonym] = useState(false);
+  const [savingPseudonym, setSavingPseudonym] = useState(false);
+
+  // Trial ending popup
+  const [showTrialEndingModal, setShowTrialEndingModal] = useState(false);
+  const [trialDaysLeft, setTrialDaysLeft] = useState(0);
+
   const refreshQuote = useCallback(async () => {
     const quote = await getTodayQuote(quotesData);
     setTodayQuote(quote);
@@ -634,23 +646,89 @@ export default function HomeScreen({ navigation }) {
     }
   }, [userProfile]);
 
-  // First-time login prompt — nudge new users to complete their profile settings (once only)
-  const profilePromptShown = useRef(false);
+  // First-login pseudonym change modal — offer to change auto-assigned pseudonym
+  const pseudonymModalChecked = useRef(false);
   useEffect(() => {
-    if (profilePromptShown.current || !userProfile) return;
-    const isIncomplete = !userProfile.pseudonym || !userProfile.birthdate || !userProfile.timezone;
-    if (!isIncomplete) return;
-    // Only show once — check AsyncStorage
-    AsyncStorage.getItem('profile_prompt_dismissed').then(dismissed => {
-      if (dismissed === 'true' || profilePromptShown.current) return;
-      profilePromptShown.current = true;
-      AsyncStorage.setItem('profile_prompt_dismissed', 'true');
-      showConfirm(
-        'Complete Your Profile',
-        'Welcome to MAGIC! Set up your pseudonym, birthdate, and preferences to get the most out of your creative journey.',
-        () => navigation.navigate('AboutYou'),
-        'Go to Settings'
-      );
+    if (pseudonymModalChecked.current || !userProfile) return;
+    pseudonymModalChecked.current = true;
+    AsyncStorage.getItem('first_login_pseudonym_shown').then(shown => {
+      if (shown === 'true') return;
+      // Show the modal for first login
+      setShowPseudonymModal(true);
+    });
+  }, [userProfile]);
+
+  // Debounced pseudonym availability check for the modal
+  useEffect(() => {
+    if (!newPseudonym.trim()) {
+      setNewPseudonymAvailable(null);
+      return;
+    }
+    if (newPseudonym.trim().toLowerCase() === (userProfile?.pseudonym || '').toLowerCase()) {
+      setNewPseudonymAvailable(null);
+      return;
+    }
+    setCheckingNewPseudonym(true);
+    const timer = setTimeout(async () => {
+      try {
+        const available = await checkPseudonymAvailable(newPseudonym);
+        setNewPseudonymAvailable(available);
+      } catch {
+        setNewPseudonymAvailable(null);
+      }
+      setCheckingNewPseudonym(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [newPseudonym]);
+
+  // Handle pseudonym change from the modal
+  const handlePseudonymChange = async () => {
+    const trimmed = newPseudonym.trim();
+    if (!trimmed || newPseudonymAvailable !== true) return;
+    setSavingPseudonym(true);
+    try {
+      const oldPseudonym = userProfile?.pseudonym;
+      if (oldPseudonym) await releasePseudonym(oldPseudonym);
+      await claimPseudonym(trimmed, user.uid);
+      await updateUserProfile(user.uid, { pseudonym: trimmed, pseudonymChangeCount: 1 });
+      setPseudonym(trimmed);
+      await AsyncStorage.setItem('first_login_pseudonym_shown', 'true');
+      setShowPseudonymModal(false);
+      await refreshProfile();
+      trackAction('pseudonym_changed_first_login');
+    } catch (error) {
+      showAlert('Error', error.message || 'Could not change pseudonym.');
+    }
+    setSavingPseudonym(false);
+  };
+
+  const dismissPseudonymModal = async () => {
+    await AsyncStorage.setItem('first_login_pseudonym_shown', 'true');
+    setShowPseudonymModal(false);
+  };
+
+  // Premium trial ending popup
+  const trialPopupChecked = useRef(false);
+  useEffect(() => {
+    if (trialPopupChecked.current || !userProfile) return;
+    trialPopupChecked.current = true;
+
+    const status = getPremiumStatus(userProfile);
+    if (!status.isPremium) return;
+    if (status.reason !== 'streak_trial' && status.reason !== 'new_user') return;
+    if (!status.daysLeft || status.daysLeft > 2) return;
+
+    // Determine the expiry key for this specific trial
+    const expiryKey = status.reason === 'new_user'
+      ? 'new_user_trial'
+      : (userProfile.premiumTrialExpiry?.seconds || 'trial');
+    const storageKey = `trial_ending_popup_shown_${expiryKey}`;
+
+    AsyncStorage.getItem(storageKey).then(shown => {
+      if (shown === 'true') return;
+      setTrialDaysLeft(status.daysLeft);
+      setShowTrialEndingModal(true);
+      AsyncStorage.setItem(storageKey, 'true');
     });
   }, [userProfile]);
 
@@ -1667,6 +1745,123 @@ export default function HomeScreen({ navigation }) {
               style={styles.insightClose}
             >
               <Text style={styles.insightCloseText}>Awesome!</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* First-Login Pseudonym Change Modal */}
+      <Modal
+        visible={showPseudonymModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={dismissPseudonymModal}
+      >
+        <View style={styles.insightOverlay}>
+          <View style={styles.insightCard}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 8 }}>
+              Welcome!
+            </Text>
+            <Text style={{ fontSize: 14, color: '#ccc', textAlign: 'center', lineHeight: 20, marginBottom: 16 }}>
+              You've been assigned the pseudonym{'\n'}
+              <Text style={{ fontWeight: 'bold', color: '#FFD700' }}>{userProfile?.pseudonym}</Text>
+              {'\n'}Would you like to choose your own?
+            </Text>
+
+            <TextInput
+              style={{
+                backgroundColor: 'rgba(24, 112, 162, 0.5)',
+                borderRadius: 8,
+                padding: 12,
+                color: 'white',
+                fontSize: 16,
+                borderWidth: 1,
+                borderColor: newPseudonymAvailable === true ? '#22C55E' : newPseudonymAvailable === false ? '#FF6B6B' : '#444',
+                marginBottom: 8,
+              }}
+              value={newPseudonym}
+              onChangeText={setNewPseudonym}
+              placeholder="Choose a new pseudonym"
+              placeholderTextColor="rgba(255,255,255,0.5)"
+              autoCapitalize="none"
+            />
+            {checkingNewPseudonym && (
+              <Text style={{ color: '#87CEEB', fontSize: 12, marginBottom: 8 }}>Checking availability...</Text>
+            )}
+            {!checkingNewPseudonym && newPseudonymAvailable === true && (
+              <Text style={{ color: '#22C55E', fontSize: 12, marginBottom: 8, fontWeight: '600' }}>Available!</Text>
+            )}
+            {!checkingNewPseudonym && newPseudonymAvailable === false && (
+              <Text style={{ color: '#FF6B6B', fontSize: 12, marginBottom: 8, fontWeight: '600' }}>Already taken</Text>
+            )}
+
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+              <TouchableOpacity
+                onPress={dismissPseudonymModal}
+                style={[styles.insightClose, { flex: 1 }]}
+              >
+                <Text style={styles.insightCloseText}>Keep It</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handlePseudonymChange}
+                disabled={savingPseudonym || !newPseudonym.trim() || newPseudonymAvailable !== true}
+                style={[styles.insightClose, {
+                  flex: 1,
+                  backgroundColor: newPseudonymAvailable === true ? 'rgba(34, 197, 94, 0.3)' : 'rgba(100, 100, 100, 0.3)',
+                }]}
+              >
+                {savingPseudonym ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.insightCloseText}>Change</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Premium Trial Ending Popup */}
+      <Modal
+        visible={showTrialEndingModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowTrialEndingModal(false)}
+      >
+        <View style={styles.insightOverlay}>
+          <View style={styles.insightCard}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 8 }}>
+              Your premium trial is ending!
+            </Text>
+            <Text style={{ fontSize: 14, color: '#ccc', textAlign: 'center', lineHeight: 20, marginBottom: 20 }}>
+              You have {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} left of premium access.
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => {
+                setShowTrialEndingModal(false);
+                openMailto('MAGIC Tracker Feedback - Trial Ending', '');
+              }}
+              style={[styles.insightClose, { width: '100%', marginBottom: 10 }]}
+            >
+              <Text style={styles.insightCloseText}>Leave Feedback</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                setShowTrialEndingModal(false);
+                navigation.navigate('ShareApp');
+              }}
+              style={[styles.insightClose, { width: '100%', marginBottom: 10, backgroundColor: 'rgba(255, 215, 0, 0.2)' }]}
+            >
+              <Text style={styles.insightCloseText}>Invite 5 Friends</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setShowTrialEndingModal(false)}
+              style={[styles.insightClose, { width: '100%' }]}
+            >
+              <Text style={[styles.insightCloseText, { color: '#888' }]}>Maybe Later</Text>
             </TouchableOpacity>
           </View>
         </View>
