@@ -36,7 +36,7 @@ const SLIDE_IMAGES = {
 const PAGES = [
   {
     // Page 1: Welcome / Purpose
-    accent: COLORS.gold,
+    accent: '#4B0082',
     title: 'Welcome to MAGIC',
     body:
       'MAGIC is your daily creative practice — designed to replace mindless scrolling with mindful creating.\n\n' +
@@ -61,8 +61,7 @@ const PAGES = [
     body:
       'Create something today.\n\n' +
       'Use the daily prompt (click nudge if you need more context or work on your own art idea), sketch, paint, write, snap a photo. If you are working out of the app set the art timer and let your creativity flow — even 5 minutes counts.\n\n' +
-      'Every day, submit your work courageously. It doesn\'t need to be perfect, or even good. Share that you\'ve spent time with creativity. Courage is used to Inspire.\n\n' +
-      'Once per day courageously submit for Inspiration! It need not be the best or even good. These will be seen under your pseudonym so don\'t be shy!',
+      'Once per day, courageously submit your work for Inspiration! It doesn\'t need to be perfect, or even good — just share that you\'ve spent time with creativity. These will be seen under your pseudonym so don\'t be shy!',
     image: 'art',
   },
   {
@@ -93,7 +92,7 @@ const PAGES = [
     body:
       'You\'ve uploaded Courage for your final star point, now connect to the art. See your Private gallery that holds your art and those you\'ve lit for inspiration as well as the Curated galleries that hold works that other users hold dear.\n\n' +
       'In 10 days, you\'ll be able to start curating your gallery too, but for now get used to these 5 creative steps!\n\n' +
-      'You are about to go to the home page which will show you your star streak. Your streak continues with input in any category you see on the home page: Manifest, Art Studio Prompt, Goal setting, Inspiration ranking, and Courage (see current and previous Winners here). Do one, or do them all to earn your gold star today.',
+      'You are about to go to the home page which will show you your star streak. Your streak continues with input in any category you see on the home page: Manifest, Art Studio Prompt, Goal setting, Inspiration ranking, and Courage. Click on the star to see how to fill it if you\'ve forgotten.',
     image: 'connect',
     isLast: true,
   },
@@ -178,7 +177,7 @@ export default function IntroScreen({ navigation, route }) {
         <ScrollView contentContainerStyle={styles.contentArea} showsVerticalScrollIndicator={false}>
           {/* Step indicator */}
           {current.hasStar ? (
-            <View style={[styles.letterCircle, { borderColor: COLORS.gold }]}>
+            <View style={[styles.letterCircle, { borderColor: current.accent }]}>
               <IntroStar size={48} />
             </View>
           ) : current.letter ? (
