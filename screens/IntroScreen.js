@@ -50,7 +50,7 @@ const PAGES = [
     letter: 'M',
     title: 'Manifest',
     body:
-      'Start each day with a Creativity quote to light the way. Next choose a Muse prompt, dump your thoughts, or set your vision. This is your private space to process and create clarity for the day.',
+      'Start each day with a Creativity quote to light the way. Next create a goal, muse about what inspires you, dump the thoughts that hold you back, or set your vision. This is your private space to process and create clarity for the day.',
     image: 'manifest',
   },
   {
@@ -60,8 +60,9 @@ const PAGES = [
     title: 'Art',
     body:
       'Create something today.\n\n' +
-      'Use the daily prompt (or don\'t), sketch, paint, write, snap a photo. Set the art timer and let your creativity flow — even 5 minutes counts. (If the Be Creative Prompt isn\'t inspiring, click the nudge for more ideas)\n\n' +
-      'Every day, submit your work courageously. It doesn\'t need to be perfect, or even good. Share that you\'ve spent time with creativity. Courage is used to Inspire.',
+      'Use the daily prompt (click nudge if you need more context or work on your own art idea), sketch, paint, write, snap a photo. If you are working out of the app set the art timer and let your creativity flow — even 5 minutes counts.\n\n' +
+      'Every day, submit your work courageously. It doesn\'t need to be perfect, or even good. Share that you\'ve spent time with creativity. Courage is used to Inspire.\n\n' +
+      'Once per day courageously submit for Inspiration! It need not be the best or even good. These will be seen under your pseudonym so don\'t be shy!',
     image: 'art',
   },
   {
@@ -90,10 +91,9 @@ const PAGES = [
     letter: 'C',
     title: 'Connect',
     body:
-      'Share your creation with the community.\n\n' +
-      'Upload your Courage in the form of your art for voting, browse the winner gallery, or send inspiration to a friend. Being brave enough to share earns your final star point.\n\n' +
-      'Also connect with the art by reviewing the art you submitted that you weren\'t ready to share, and the art that lit your candle in the Private Gallery.\n\n' +
-      'You\'ll get started on the home page where you\'ll see your streak and be guided through each task.',
+      'You\'ve uploaded Courage for your final star point, now connect to the art. See your Private gallery that holds your art and those you\'ve lit for inspiration as well as the Curated galleries that hold works that other users hold dear.\n\n' +
+      'In 10 days, you\'ll be able to start curating your gallery too, but for now get used to these 5 creative steps!\n\n' +
+      'You are about to go to the home page which will show you your star streak. Your streak continues with input in any category you see on the home page: Manifest, Art Studio Prompt, Goal setting, Inspiration ranking, and Courage (see current and previous Winners here). Do one, or do them all to earn your gold star today.',
     image: 'connect',
     isLast: true,
   },
