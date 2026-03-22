@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  ImageBackground,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
 import { signInWithEmailAndPassword, signInWithCredential, OAuthProvider, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -114,11 +113,7 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/background.png')}
-      style={styles.container}
-      resizeMode="cover"
-    >
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -142,7 +137,7 @@ export default function LoginScreen({ navigation }) {
               value={email}
               onChangeText={setEmail}
               placeholder="your@email.com"
-              placeholderTextColor="#555"
+              placeholderTextColor="#999"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -154,7 +149,7 @@ export default function LoginScreen({ navigation }) {
               value={password}
               onChangeText={setPassword}
               placeholder="Password"
-              placeholderTextColor="#555"
+              placeholderTextColor="#999"
               secureTextEntry
             />
 
@@ -207,14 +202,14 @@ export default function LoginScreen({ navigation }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: '#FAEBD7',
   },
   keyboardView: {
     flex: 1,
@@ -227,47 +222,41 @@ const styles = StyleSheet.create({
   appTitle: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#FFD700',
     textAlign: 'center',
-    textShadowColor: 'rgba(255, 215, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 15,
   },
   appSubtitle: {
     fontSize: 16,
-    color: '#6366F1',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 30,
     fontStyle: 'italic',
   },
   card: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderWidth: 3,
-    borderColor: '#6366F1',
+    borderColor: '#4B0082',
     borderRadius: 12,
     padding: 24,
   },
   cardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#6366F1',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 24,
   },
   inputLabel: {
     fontSize: 14,
-    color: '#6366F1',
+    color: '#4B0082',
     marginBottom: 6,
     fontWeight: '600',
   },
   textInput: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 8,
     padding: 14,
-    color: 'white',
+    color: '#4B0082',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#4B0082',
     marginBottom: 16,
   },
   primaryButton: {
@@ -278,12 +267,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   primaryButtonText: {
-    color: '#000',
+    color: '#4B0082',
     fontSize: 18,
     fontWeight: 'bold',
   },
   linkText: {
-    color: '#ffffff',
+    color: '#4B0082',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 16,
@@ -296,38 +285,36 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#444',
+    backgroundColor: '#4B0082',
   },
   dividerText: {
-    color: '#ffffff',
+    color: '#4B0082',
     paddingHorizontal: 12,
     fontSize: 14,
   },
   appleButton: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#4B0082',
   },
   appleButtonText: {
-    color: '#fff',
+    color: '#4B0082',
     fontSize: 16,
     fontWeight: '600',
   },
   googleButton: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#4B0082',
   },
   googleButtonText: {
-    color: '#fff',
+    color: '#4B0082',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -336,11 +323,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   signUpText: {
-    color: '#ffffff',
+    color: '#4B0082',
     fontSize: 14,
   },
   signUpLink: {
-    color: '#ffffff',
+    color: '#4B0082',
     fontSize: 14,
     fontWeight: '600',
   },

@@ -10,7 +10,6 @@ import {
   Platform,
   ScrollView,
   Switch,
-  ImageBackground,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
 import { createUserWithEmailAndPassword, sendEmailVerification, signInWithCredential, OAuthProvider, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -111,8 +110,15 @@ export default function SignUpScreen({ navigation, route }) {
     }
   };
 
+  const formatBirthdate = (text) => {
+    const digits = text.replace(/\D/g, '').slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  };
+
   const validateBirthdate = (value) => {
-    const regex = /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/\d{4}$/;
+    const regex = /^\d{2}\/\d{2}\/\d{4}$/;
     return regex.test(value);
   };
 
@@ -223,7 +229,7 @@ export default function SignUpScreen({ navigation, route }) {
       return;
     }
     if (!validateBirthdate(birthdate)) {
-      showAlert('Invalid Date', 'Please enter birthdate as mm/dd/yyyy (with leading zeros, e.g. 03/05/1990).');
+      showAlert('Invalid Date', 'Please enter a complete birthdate (mm/dd/yyyy).');
       return;
     }
     if (!gender) {
@@ -237,15 +243,45 @@ export default function SignUpScreen({ navigation, route }) {
     setStep(3);
   };
 
-  // Auto-generate a pseudonym from firstName + random number
-  const generatePseudonym = async (name) => {
-    for (let attempt = 0; attempt < 4; attempt++) {
-      const candidate = `${name}${Math.floor(Math.random() * 10000)}`;
+  // Auto-generate a memorable pseudonym (no connection to real name)
+  const PSEUDONYM_NOUNS = [
+    // Birds
+    'Finch', 'Wren', 'Sparrow', 'Robin', 'Lark', 'Heron', 'Dove', 'Falcon',
+    'Starling', 'Crane', 'Owl', 'Swan', 'Raven', 'Jay', 'Oriole', 'Kingfisher',
+    // Flowers
+    'Dahlia', 'Jasmine', 'Iris', 'Violet', 'Clover', 'Poppy', 'Aster', 'Lily',
+    'Marigold', 'Peony', 'Sage', 'Fern', 'Zinnia', 'Ivy', 'Lotus', 'Azalea',
+    // Animals
+    'Fox', 'Otter', 'Lynx', 'Hare', 'Badger', 'Fawn', 'Mink', 'Panda',
+    'Gazelle', 'Osprey', 'Elk', 'Moth', 'Newt', 'Pike', 'Vole', 'Wolf',
+    // Fruits
+    'Peach', 'Plum', 'Berry', 'Cherry', 'Mango', 'Quince', 'Fig', 'Olive',
+    'Lemon', 'Clementine', 'Melon', 'Apricot', 'Kiwi', 'Tangerine',
+    // Literary characters (public domain)
+    'Darcy', 'Gatsby', 'Cosette', 'Portia', 'Pip', 'Ariel', 'Eyre', 'Heidi',
+    'Oberon', 'Wendy', 'Bronte', 'Frost', 'Bennet', 'Austen', 'Marlowe', 'Eliot',
+  ];
+
+  const PSEUDONYM_PREFIXES = [
+    // Colors
+    'Scarlet', 'Golden', 'Silver', 'Coral', 'Indigo', 'Amber', 'Crimson',
+    'Jade', 'Cobalt', 'Ivory', 'Russet', 'Teal', 'Copper', 'Pearl', 'Violet', 'Onyx',
+  ];
+
+  const generatePseudonym = async () => {
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const useNumber = attempt >= 4; // try color prefix first, add number if collisions
+      const prefix = pick(PSEUDONYM_PREFIXES);
+      const noun = pick(PSEUDONYM_NOUNS);
+      const candidate = useNumber
+        ? `${prefix}${noun}${Math.floor(Math.random() * 99) + 1}`
+        : `${prefix}${noun}`;
       const available = await checkPseudonymAvailable(candidate);
       if (available) return candidate;
     }
-    // Fallback: use timestamp-based suffix
-    return `${name}${Date.now() % 100000}`;
+    // Fallback: color + noun + timestamp fragment
+    return `${pick(PSEUDONYM_PREFIXES)}${pick(PSEUDONYM_NOUNS)}${Date.now() % 1000}`;
   };
 
   const handleFinish = async () => {
@@ -267,7 +303,7 @@ export default function SignUpScreen({ navigation, route }) {
       await claimUsername(username.trim(), uid);
 
       // Step 3: Auto-generate and claim pseudonym
-      const autoPseudonym = await generatePseudonym(firstName.trim());
+      const autoPseudonym = await generatePseudonym();
       await claimPseudonym(autoPseudonym, uid);
 
       // Step 4: Create Firestore profile
@@ -380,7 +416,7 @@ export default function SignUpScreen({ navigation, route }) {
         value={email}
         onChangeText={setEmail}
         placeholder="your@email.com"
-        placeholderTextColor="#555"
+        placeholderTextColor="#999"
         keyboardType="email-address"
         autoCapitalize="none"
       />
@@ -391,7 +427,7 @@ export default function SignUpScreen({ navigation, route }) {
         value={password}
         onChangeText={setPassword}
         placeholder="At least 6 characters"
-        placeholderTextColor="#555"
+        placeholderTextColor="#999"
         secureTextEntry
       />
 
@@ -401,7 +437,7 @@ export default function SignUpScreen({ navigation, route }) {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         placeholder="Re-enter password"
-        placeholderTextColor="#555"
+        placeholderTextColor="#999"
         secureTextEntry
       />
 
@@ -422,7 +458,7 @@ export default function SignUpScreen({ navigation, route }) {
         value={firstName}
         onChangeText={setFirstName}
         placeholder="Your first name"
-        placeholderTextColor="#555"
+        placeholderTextColor="#999"
         autoCapitalize="words"
       />
 
@@ -432,7 +468,7 @@ export default function SignUpScreen({ navigation, route }) {
         value={lastName}
         onChangeText={setLastName}
         placeholder="Your last name"
-        placeholderTextColor="#555"
+        placeholderTextColor="#999"
         autoCapitalize="words"
       />
 
@@ -447,7 +483,7 @@ export default function SignUpScreen({ navigation, route }) {
         value={username}
         onChangeText={setUsername}
         placeholder="Choose a username"
-        placeholderTextColor="#555"
+        placeholderTextColor="#999"
         autoCapitalize="none"
       />
       {checkingUsername && <Text style={styles.checkingText}>Checking availability...</Text>}
@@ -460,13 +496,13 @@ export default function SignUpScreen({ navigation, route }) {
 
       <Text style={styles.fieldHint}>You'll be auto-assigned a pseudonym. You can change it for free after your first login.</Text>
 
-      <Text style={styles.inputLabel}>Birthdate (mm/dd/yyyy)</Text>
+      <Text style={styles.inputLabel}>Birthdate</Text>
       <TextInput
         style={styles.textInput}
         value={birthdate}
-        onChangeText={setBirthdate}
-        placeholder="01/15/1990"
-        placeholderTextColor="#555"
+        onChangeText={(text) => setBirthdate(formatBirthdate(text))}
+        placeholder="mm/dd/yyyy"
+        placeholderTextColor="#999"
         keyboardType="numeric"
         maxLength={10}
       />
@@ -508,7 +544,7 @@ export default function SignUpScreen({ navigation, route }) {
         value={phoneNumber}
         onChangeText={setPhoneNumber}
         placeholder="555-123-4567"
-        placeholderTextColor="#555"
+        placeholderTextColor="#999"
         keyboardType="phone-pad"
       />
 
@@ -567,7 +603,7 @@ export default function SignUpScreen({ navigation, route }) {
         value={bio}
         onChangeText={setBio}
         placeholder="Tell us about yourself..."
-        placeholderTextColor="#555"
+        placeholderTextColor="#999"
         multiline
         numberOfLines={3}
       />
@@ -579,21 +615,21 @@ export default function SignUpScreen({ navigation, route }) {
           value={currentLocation.country}
           onChangeText={v => setCurrentLocation(p => ({ ...p, country: v }))}
           placeholder="Country"
-          placeholderTextColor="#555"
+          placeholderTextColor="#999"
         />
         <TextInput
           style={[styles.textInput, styles.locationInput]}
           value={currentLocation.state}
           onChangeText={v => setCurrentLocation(p => ({ ...p, state: v }))}
           placeholder="State"
-          placeholderTextColor="#555"
+          placeholderTextColor="#999"
         />
         <TextInput
           style={[styles.textInput, styles.locationInput]}
           value={currentLocation.city}
           onChangeText={v => setCurrentLocation(p => ({ ...p, city: v }))}
           placeholder="City"
-          placeholderTextColor="#555"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -604,21 +640,21 @@ export default function SignUpScreen({ navigation, route }) {
           value={heartLocation.country}
           onChangeText={v => setHeartLocation(p => ({ ...p, country: v }))}
           placeholder="Country"
-          placeholderTextColor="#555"
+          placeholderTextColor="#999"
         />
         <TextInput
           style={[styles.textInput, styles.locationInput]}
           value={heartLocation.state}
           onChangeText={v => setHeartLocation(p => ({ ...p, state: v }))}
           placeholder="State"
-          placeholderTextColor="#555"
+          placeholderTextColor="#999"
         />
         <TextInput
           style={[styles.textInput, styles.locationInput]}
           value={heartLocation.city}
           onChangeText={v => setHeartLocation(p => ({ ...p, city: v }))}
           placeholder="City"
-          placeholderTextColor="#555"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -630,8 +666,8 @@ export default function SignUpScreen({ navigation, route }) {
         <Switch
           value={anonymous}
           onValueChange={setAnonymous}
-          trackColor={{ false: '#333', true: '#9C27B0' }}
-          thumbColor={anonymous ? '#FFD700' : '#666'}
+          trackColor={{ false: '#ccc', true: '#4B0082' }}
+          thumbColor={anonymous ? '#FFD700' : '#999'}
         />
       </View>
 
@@ -642,7 +678,7 @@ export default function SignUpScreen({ navigation, route }) {
         value={referralCodeInput}
         onChangeText={setReferralCodeInput}
         placeholder="e.g. MAGIC-ABC123"
-        placeholderTextColor="#555"
+        placeholderTextColor="#999"
         autoCapitalize="characters"
       />
 
@@ -656,7 +692,7 @@ export default function SignUpScreen({ navigation, route }) {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#000" />
+            <ActivityIndicator color="#4B0082" />
           ) : (
             <Text style={styles.primaryButtonText}>Create Account</Text>
           )}
@@ -666,11 +702,7 @@ export default function SignUpScreen({ navigation, route }) {
   );
 
   return (
-    <ImageBackground
-      source={require('../../assets/background.png')}
-      style={styles.container}
-      resizeMode="cover"
-    >
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -692,14 +724,14 @@ export default function SignUpScreen({ navigation, route }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: '#FAEBD7',
   },
   keyboardView: {
     flex: 1,
@@ -710,29 +742,28 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    backgroundColor: '#1a1a1a',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#4B0082',
     borderRadius: 12,
     padding: 24,
   },
   stepTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 4,
   },
   stepIndicator: {
     fontSize: 13,
-    color: '#87CEEB',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 24,
     fontStyle: 'italic',
   },
   inputLabel: {
     fontSize: 14,
-    color: '#DDA0DD',
+    color: '#4B0082',
     marginBottom: 6,
     fontWeight: '600',
   },
@@ -743,13 +774,12 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   textInput: {
-    backgroundColor: '#2a2a3a',
     borderRadius: 8,
     padding: 14,
-    color: 'white',
+    color: '#4B0082',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#4B0082',
     marginBottom: 16,
   },
   inputValid: {
@@ -763,7 +793,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   checkingText: {
-    color: '#87CEEB',
+    color: '#4B0082',
     fontSize: 12,
     marginTop: -12,
     marginBottom: 12,
@@ -790,46 +820,44 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dropdownButton: {
-    backgroundColor: '#2a2a3a',
     borderRadius: 8,
     padding: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#4B0082',
     marginBottom: 16,
   },
   dropdownText: {
-    color: 'white',
+    color: '#4B0082',
     fontSize: 16,
   },
   dropdownArrow: {
-    color: '#FFD700',
+    color: '#4B0082',
     fontSize: 14,
   },
   dropdownList: {
-    backgroundColor: '#2a2a3a',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#4B0082',
     marginBottom: 16,
     maxHeight: 200,
   },
   dropdownItem: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#333',
+    borderBottomColor: '#ddd',
   },
   dropdownItemActive: {
-    backgroundColor: '#2a2a1a',
+    backgroundColor: 'rgba(75, 0, 130, 0.1)',
   },
   dropdownItemText: {
-    color: '#ccc',
+    color: '#4B0082',
     fontSize: 15,
   },
   dropdownItemTextActive: {
-    color: '#FFD700',
+    color: '#4B0082',
     fontWeight: '600',
   },
   settingRow: {
@@ -845,12 +873,12 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 16,
-    color: '#DDA0DD',
+    color: '#4B0082',
     fontWeight: '600',
   },
   settingDescription: {
     fontSize: 13,
-    color: '#666',
+    color: '#888',
     marginTop: 2,
   },
   primaryButton: {
@@ -861,21 +889,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   primaryButtonText: {
-    color: '#000',
+    color: '#4B0082',
     fontSize: 18,
     fontWeight: 'bold',
   },
   secondaryButton: {
-    backgroundColor: '#2a2a3a',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#4B0082',
     marginRight: 10,
   },
   secondaryButtonText: {
-    color: '#87CEEB',
+    color: '#4B0082',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -884,16 +911,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   socialButton: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#333',
+    borderColor: '#4B0082',
   },
   socialButtonText: {
-    color: '#fff',
+    color: '#4B0082',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -905,10 +931,10 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#444',
+    backgroundColor: '#4B0082',
   },
   dividerText: {
-    color: '#ffffff',
+    color: '#4B0082',
     paddingHorizontal: 12,
     fontSize: 14,
   },
@@ -918,11 +944,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   loginText: {
-    color: '#888',
+    color: '#4B0082',
     fontSize: 14,
   },
   loginLink: {
-    color: '#FFD700',
+    color: '#4B0082',
     fontSize: 14,
     fontWeight: '600',
   },
