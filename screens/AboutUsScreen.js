@@ -70,7 +70,7 @@ export default function AboutUsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: '#FAEBD7',
   },
   content: {
     padding: 20,
@@ -85,16 +85,15 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#1a1a1a',
     borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#FFD700',
+    borderWidth: 3,
+    borderColor: '#4B0082',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonText: {
     fontSize: 24,
-    color: '#FFD700',
+    color: '#4B0082',
     fontWeight: 'bold',
   },
   backButtonPlaceholder: {
@@ -103,27 +102,26 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#4B0082',
     textAlign: 'center',
     flex: 1,
   },
   card: {
-    backgroundColor: '#1a1a1a',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#4B0082',
     borderRadius: 12,
     padding: 20,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#DDA0DD',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
@@ -134,22 +132,22 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#87CEEB',
+    color: '#4B0082',
     marginBottom: 10,
   },
   text: {
     fontSize: 16,
-    color: '#DDA0DD',
+    color: '#4B0082',
     lineHeight: 24,
   },
   magicItem: {
     fontSize: 16,
-    color: '#DDA0DD',
+    color: '#4B0082',
     marginBottom: 8,
     lineHeight: 24,
   },
   bold: {
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#4B0082',
   },
 });

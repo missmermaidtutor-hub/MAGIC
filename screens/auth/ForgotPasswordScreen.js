@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ImageBackground,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
 import { sendPasswordResetEmail } from 'firebase/auth';
@@ -38,11 +37,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/background.png')}
-      style={styles.container}
-      resizeMode="cover"
-    >
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -79,7 +74,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                   value={email}
                   onChangeText={setEmail}
                   placeholder="your@email.com"
-                  placeholderTextColor="#555"
+                  placeholderTextColor="#999"
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
@@ -90,7 +85,7 @@ export default function ForgotPasswordScreen({ navigation }) {
                   disabled={loading}
                 >
                   {loading ? (
-                    <ActivityIndicator color="#000" />
+                    <ActivityIndicator color="#4B0082" />
                   ) : (
                     <Text style={styles.primaryButtonText}>Send Reset Link</Text>
                   )}
@@ -104,14 +99,14 @@ export default function ForgotPasswordScreen({ navigation }) {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: '#FAEBD7',
   },
   keyboardView: {
     flex: 1,
@@ -122,21 +117,20 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    backgroundColor: '#1a1a1a',
     borderWidth: 3,
-    borderColor: '#FFD700',
+    borderColor: '#4B0082',
     borderRadius: 12,
     padding: 24,
   },
   cardTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 16,
   },
   instructionText: {
-    color: '#ccc',
+    color: '#4B0082',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 24,
@@ -150,23 +144,22 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   emailHighlight: {
-    color: '#FFD700',
+    color: '#4B0082',
     fontWeight: '600',
   },
   inputLabel: {
     fontSize: 14,
-    color: '#DDA0DD',
+    color: '#4B0082',
     marginBottom: 6,
     fontWeight: '600',
   },
   textInput: {
-    backgroundColor: '#2a2a3a',
     borderRadius: 8,
     padding: 14,
-    color: 'white',
+    color: '#4B0082',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#4B0082',
     marginBottom: 20,
   },
   primaryButton: {
@@ -177,12 +170,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   primaryButtonText: {
-    color: '#000',
+    color: '#4B0082',
     fontSize: 18,
     fontWeight: 'bold',
   },
   linkText: {
-    color: '#87CEEB',
+    color: '#4B0082',
     fontSize: 14,
     textAlign: 'center',
   },

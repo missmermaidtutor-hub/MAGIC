@@ -1,10 +1,10 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground, Linking, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { openMailto } from '../../utils/emailUtils';
 
 export default function AboutUsScreen({ navigation }) {
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header with Back Button */}
         <View style={styles.headerContainer}>
@@ -124,14 +124,14 @@ export default function AboutUsScreen({ navigation }) {
           </View>
         </View>
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: '#FAEBD7',
   },
   content: {
     padding: 20,
@@ -146,45 +146,40 @@ const styles = StyleSheet.create({
   backButton: {
     width: 44,
     height: 44,
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#8E0DD3',
+    borderWidth: 3,
+    borderColor: '#4B0082',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonText: {
     fontSize: 24,
-    color: '#8E0DD3',
+    color: '#4B0082',
     fontWeight: 'bold',
-  },
-  backButtonPlaceholder: {
-    width: 44,
   },
   header: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#8E0DD3',
+    color: '#4B0082',
     textAlign: 'center',
     flex: 1,
   },
   card: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderWidth: 3,
-    borderColor: '#8E0DD3',
+    borderColor: '#4B0082',
     borderRadius: 12,
     padding: 20,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#8E0DD3',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#E0E0E0',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
@@ -195,17 +190,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#E0E0E0',
+    color: '#4B0082',
     marginBottom: 10,
   },
   text: {
     fontSize: 16,
-    color: '#E0E0E0',
+    color: '#4B0082',
     lineHeight: 24,
   },
   magicItem: {
     fontSize: 16,
-    color: '#E0E0E0',
+    color: '#4B0082',
     marginBottom: 8,
     lineHeight: 24,
   },
@@ -232,53 +227,50 @@ const styles = StyleSheet.create({
   hamburgerButton: {
     width: 44,
     height: 44,
-    backgroundColor: '#050d61',
     borderRadius: 22,
-    borderWidth: 2,
-    borderColor: '#B8860B',
+    borderWidth: 3,
+    borderColor: '#4B0082',
     justifyContent: 'center',
     alignItems: 'center',
   },
   hamburgerText: {
     fontSize: 24,
-    color: '#8E0DD3',
+    color: '#4B0082',
     fontWeight: 'bold',
   },
   articlesContainer: {
     marginTop: 15,
   },
   articleCard: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 8,
     padding: 15,
     marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#444',
+    borderWidth: 3,
+    borderColor: '#4B0082',
   },
   articleTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#8E0DD3',
+    color: '#4B0082',
     marginBottom: 5,
   },
   articleDescription: {
     fontSize: 14,
-    color: '#E0E0E0',
+    color: '#4B0082',
     marginBottom: 8,
   },
   articleLink: {
     fontSize: 14,
-    color: '#E0E0E0',
+    color: '#4B0082',
     fontWeight: '600',
   },
   contactButton: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginTop: 12,
-    borderWidth: 2,
-    borderColor: '#8E0DD3',
+    borderWidth: 3,
+    borderColor: '#4B0082',
   },
   contactIcon: {
     fontSize: 28,
@@ -286,7 +278,7 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: 15,
-    color: '#E0E0E0',
+    color: '#4B0082',
     fontWeight: 'bold',
   },
 });

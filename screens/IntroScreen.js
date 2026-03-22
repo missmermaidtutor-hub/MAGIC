@@ -4,7 +4,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  ImageBackground,
   Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,7 +19,7 @@ const COLORS = {
   I: '#3c9820',
   C: '#5008a7',
   gold: '#FFD700',
-  bg: '#0a0e27',
+  bg: '#FAEBD7',
 };
 
 const PAGES = [
@@ -103,11 +102,7 @@ export default function IntroScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground
-      source={require('../assets/background.png')}
-      style={styles.container}
-      resizeMode="cover"
-    >
+    <View style={styles.container}>
       <View style={styles.inner}>
         {/* Page content */}
         <View style={styles.contentArea}>
@@ -160,7 +155,7 @@ export default function IntroScreen({ navigation }) {
                 styles.dot,
                 i === page
                   ? { backgroundColor: current.accent }
-                  : { backgroundColor: 'rgba(255,255,255,0.25)' },
+                  : { backgroundColor: 'rgba(75, 0, 130, 0.2)' },
               ]}
             />
           ))}
@@ -202,14 +197,14 @@ export default function IntroScreen({ navigation }) {
           </TouchableOpacity>
         )}
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: '#FAEBD7',
   },
   inner: {
     flex: 1,
@@ -271,12 +266,12 @@ const styles = StyleSheet.create({
   },
   contactLabel: {
     fontSize: 13,
-    color: '#aaa',
+    color: '#4B0082',
     marginBottom: 6,
   },
   contactEmail: {
     fontSize: 15,
-    color: '#FFD700',
+    color: '#4B0082',
     fontWeight: '700',
     textDecorationLine: 'underline',
   },
@@ -307,7 +302,7 @@ const styles = StyleSheet.create({
   },
   navButtonText: {
     fontSize: 15,
-    color: '#aaa',
+    color: '#4B0082',
     fontWeight: '600',
   },
   nextButton: {
@@ -328,7 +323,7 @@ const styles = StyleSheet.create({
   getStartedText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0a0e27',
+    color: '#FAEBD7',
   },
 
   // Skip
@@ -338,6 +333,6 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 13,
-    color: '#666',
+    color: '#4B0082',
   },
 });

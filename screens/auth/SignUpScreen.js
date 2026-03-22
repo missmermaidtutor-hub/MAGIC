@@ -372,6 +372,9 @@ export default function SignUpScreen({ navigation, route }) {
         }
       }
 
+      // Reset intro flag so new account sees the slide deck
+      await AsyncStorage.removeItem('quick_launch_dismissed');
+
       // Auth listener in AuthContext will automatically redirect to main app
     } catch (error) {
       let message = 'Could not create account. Please try again.';
