@@ -735,7 +735,7 @@ export default function AboutYouScreen({ navigation }) {
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>
               <Text style={styles.settingLabel}>Open to Discussion Pods</Text>
-              <Text style={styles.settingDescription}>Let admins know you'd like to join a discussion group</Text>
+              <Text style={styles.settingDescription}>Opt in to be assigned to a pod based on your interests</Text>
             </View>
             <Switch
               value={openToPods}

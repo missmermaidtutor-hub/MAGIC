@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, ImageBackground, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ImageBackground, TouchableOpacity, TextInput, ActivityIndicator, Modal } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { showAlert } from '../../utils/alertUtils';
 import {
@@ -10,19 +10,76 @@ import {
   submitFeatureIdea,
 } from '../../services/firestoreService';
 
-const COMING_SOON_FEATURES = [
-  { key: 'boutique', emoji: '\uD83D\uDECD\uFE0F', label: 'Boutique' },
-  { key: 'premium', emoji: '\uD83D\uDC51', label: 'Premium Membership' },
-  { key: 'challenges', emoji: '\uD83C\uDFA8', label: 'Art Challenges' },
-  { key: 'mentorship', emoji: '\uD83C\uDF1F', label: 'Mentorship' },
-  { key: 'discussionPods', emoji: '\uD83D\uDCAC', label: 'Discussion Pods' },
-];
-
 const BOUTIQUE_ITEMS = [
   { emoji: '\uD83D\uDDBC\uFE0F', label: 'Prints' },
   { emoji: '\u2615', label: 'Mugs' },
   { emoji: '\uD83D\uDC55', label: 'Apparel' },
   { emoji: '\uD83D\uDCF1', label: 'Cases' },
+];
+
+const PREMIUM_FEATURES = [
+  'Advanced per-MAGIC-category statistics',
+  'Inspiration impact tracking',
+  'Past diary & journal entries',
+  'Favorite quote archive',
+  'Expanded curated gallery (25 slots)',
+  'Full goal history & stats',
+  'Early curated gallery access',
+  'Full color controls in Art Studio',
+  'Advanced text styling in Art Studio',
+  'Unlimited pseudonym changes',
+  'Gallery organizing (folders, tags, sorting)',
+  'Streak Pause (up to 3 days/month)',
+  'Streak Saver (auto-save missed days)',
+];
+
+const COMING_SOON_FEATURES = [
+  {
+    key: 'boutique',
+    emoji: '\uD83D\uDECD\uFE0F',
+    label: 'Boutique',
+    expandable: true,
+  },
+  {
+    key: 'premium',
+    emoji: '\uD83D\uDC51',
+    label: 'Premium Membership',
+    popup: {
+      title: 'Premium Membership',
+      body: PREMIUM_FEATURES,
+      type: 'list',
+    },
+  },
+  {
+    key: 'challenges',
+    emoji: '\uD83C\uDFA8',
+    label: 'Art Challenges',
+    popup: {
+      title: 'Art Challenges',
+      body: 'Competitions where artists can enter for prizes! Some challenges may have an entry fee. Winners receive recognition and rewards from the MAGIC community.',
+      type: 'text',
+    },
+  },
+  {
+    key: 'classes',
+    emoji: '\uD83C\uDF1F',
+    label: 'Classes',
+    popup: {
+      title: 'Classes',
+      body: 'Creative classes led by experienced artists and mentors. Initially, classes will be held via Zoom so you can learn and create together in real time from anywhere.',
+      type: 'text',
+    },
+  },
+  {
+    key: 'discussionPods',
+    emoji: '\uD83D\uDCAC',
+    label: 'Discussion Pods',
+    popup: {
+      title: 'Discussion Pods',
+      body: 'Small group conversations with other MAGIC artists! Pods will be assigned based on your interests and creative mediums. You can opt in or out of pods anytime on your About You page.',
+      type: 'text',
+    },
+  },
 ];
 
 export default function ComingSoonScreen({ route, navigation }) {
@@ -32,6 +89,9 @@ export default function ComingSoonScreen({ route, navigation }) {
   const [ideaText, setIdeaText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [boutiqueExpanded, setBoutiqueExpanded] = useState(false);
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [popupData, setPopupData] = useState(null);
 
   useEffect(() => {
     loadVoteData();
@@ -90,6 +150,15 @@ export default function ComingSoonScreen({ route, navigation }) {
     }
   };
 
+  const handleFeaturePress = (feature) => {
+    if (feature.expandable) {
+      setBoutiqueExpanded(!boutiqueExpanded);
+    } else if (feature.popup) {
+      setPopupData(feature.popup);
+      setPopupVisible(true);
+    }
+  };
+
   const handleSubmitIdea = async () => {
     const trimmed = ideaText.trim();
     if (!trimmed) {
@@ -114,27 +183,13 @@ export default function ComingSoonScreen({ route, navigation }) {
   return (
     <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
       <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
-        <Text style={styles.closeBtnText}>✕</Text>
+        <Text style={styles.closeBtnText}>{'\u2715'}</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
-        <Text style={styles.menuBtnText}>☰</Text>
+        <Text style={styles.menuBtnText}>{'\u2630'}</Text>
       </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Coming Soon</Text>
-
-        {/* Boutique Preview */}
-        <View style={styles.boutiqueCard}>
-          <Text style={styles.boutiqueTitle}>Boutique</Text>
-          <Text style={styles.boutiqueSubtitle}>Turn your art into physical products</Text>
-          <View style={styles.boutiqueItems}>
-            {BOUTIQUE_ITEMS.map((item) => (
-              <View key={item.label} style={styles.boutiqueItem}>
-                <Text style={styles.boutiqueEmoji}>{item.emoji}</Text>
-                <Text style={styles.boutiqueLabel}>{item.label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
 
         {/* Most Excited About */}
         <Text style={styles.sectionTitle}>Most Excited About</Text>
@@ -148,19 +203,50 @@ export default function ComingSoonScreen({ route, navigation }) {
               const hasVoted = userVotes.has(feature.key);
               const count = voteCounts[feature.key] || 0;
               return (
-                <TouchableOpacity
-                  key={feature.key}
-                  style={[styles.voteRow, hasVoted && styles.voteRowVoted]}
-                  onPress={() => handleVote(feature.key)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.voteEmoji}>{feature.emoji}</Text>
-                  <Text style={styles.voteLabel}>{feature.label}</Text>
-                  <View style={styles.voteBadge}>
-                    <Text style={styles.voteBadgeText}>{count}</Text>
+                <View key={feature.key}>
+                  <View style={styles.featureRow}>
+                    {/* Vote button (left side) */}
+                    <TouchableOpacity
+                      style={[styles.voteButton, hasVoted && styles.voteButtonVoted]}
+                      onPress={() => handleVote(feature.key)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.voteBadgeText}>{count}</Text>
+                      {hasVoted && <Text style={styles.voteCheck}>{'\u2713'}</Text>}
+                    </TouchableOpacity>
+
+                    {/* Feature label (tappable for popup/expand) */}
+                    <TouchableOpacity
+                      style={styles.featureLabelArea}
+                      onPress={() => handleFeaturePress(feature)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.voteEmoji}>{feature.emoji}</Text>
+                      <Text style={styles.voteLabel}>{feature.label}</Text>
+                      {feature.expandable && (
+                        <Text style={styles.expandArrow}>{boutiqueExpanded ? '\u25B2' : '\u25BC'}</Text>
+                      )}
+                      {feature.popup && (
+                        <Text style={styles.infoIcon}>i</Text>
+                      )}
+                    </TouchableOpacity>
                   </View>
-                  {hasVoted && <Text style={styles.voteCheck}>{'\u2713'}</Text>}
-                </TouchableOpacity>
+
+                  {/* Boutique expansion */}
+                  {feature.expandable && boutiqueExpanded && (
+                    <View style={styles.boutiqueExpansion}>
+                      <Text style={styles.boutiqueSubtitle}>Turn your art into physical products</Text>
+                      <View style={styles.boutiqueItems}>
+                        {BOUTIQUE_ITEMS.map((item) => (
+                          <View key={item.label} style={styles.boutiqueItem}>
+                            <Text style={styles.boutiqueEmoji}>{item.emoji}</Text>
+                            <Text style={styles.boutiqueLabel}>{item.label}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
               );
             })}
           </View>
@@ -191,6 +277,40 @@ export default function ComingSoonScreen({ route, navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Feature Info Popup */}
+      <Modal
+        visible={popupVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPopupVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{popupData?.title}</Text>
+
+            {popupData?.type === 'list' ? (
+              <ScrollView style={styles.modalScroll}>
+                {popupData.body.map((item, i) => (
+                  <View key={i} style={styles.modalListItem}>
+                    <Text style={styles.modalBullet}>{'\u2605'}</Text>
+                    <Text style={styles.modalListText}>{item}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={styles.modalBody}>{popupData?.body}</Text>
+            )}
+
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setPopupVisible(false)}
+            >
+              <Text style={styles.modalCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -213,47 +333,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
-  // Boutique card
-  boutiqueCard: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#4B0082',
-    borderRadius: 16,
-    padding: 20,
-    width: '100%',
-    maxWidth: 400,
-    alignItems: 'center',
-    marginBottom: 28,
-  },
-  boutiqueTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4B0082',
-    marginBottom: 4,
-  },
-  boutiqueSubtitle: {
-    fontSize: 14,
-    color: '#4B0082',
-    marginBottom: 16,
-  },
-  boutiqueItems: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  boutiqueItem: {
-    alignItems: 'center',
-  },
-  boutiqueEmoji: {
-    fontSize: 36,
-    marginBottom: 4,
-  },
-  boutiqueLabel: {
-    fontSize: 12,
-    color: '#4B0082',
-    fontWeight: '600',
-  },
-
   // Voting section
   sectionTitle: {
     fontSize: 20,
@@ -272,20 +351,39 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
   },
-  voteRow: {
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  voteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(75, 0, 130, 0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(75, 0, 130, 0.25)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    minWidth: 56,
+    gap: 4,
+  },
+  voteButtonVoted: {
+    borderColor: '#4B0082',
+    backgroundColor: 'rgba(75, 0, 130, 0.15)',
+  },
+  featureLabelArea: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(75, 0, 130, 0.06)',
     borderWidth: 1,
     borderColor: 'rgba(75, 0, 130, 0.25)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
+    borderRadius: 10,
+    paddingHorizontal: 14,
     paddingVertical: 14,
-    marginBottom: 10,
-  },
-  voteRowVoted: {
-    borderColor: '#4B0082',
-    backgroundColor: 'rgba(75, 0, 130, 0.12)',
+    marginLeft: 8,
   },
   voteEmoji: {
     fontSize: 24,
@@ -297,22 +395,68 @@ const styles = StyleSheet.create({
     color: '#4B0082',
     fontWeight: '600',
   },
-  voteBadge: {
-    backgroundColor: 'rgba(75, 0, 130, 0.15)',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    marginRight: 8,
-  },
   voteBadgeText: {
     color: '#4B0082',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '700',
   },
   voteCheck: {
     color: '#4B0082',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
+  },
+  expandArrow: {
+    color: '#4B0082',
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  infoIcon: {
+    color: '#4B0082',
+    fontSize: 14,
+    fontWeight: 'bold',
+    fontStyle: 'italic',
+    backgroundColor: 'rgba(75, 0, 130, 0.12)',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginLeft: 4,
+  },
+
+  // Boutique expansion
+  boutiqueExpansion: {
+    backgroundColor: 'rgba(75, 0, 130, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(75, 0, 130, 0.2)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 10,
+    marginLeft: 64,
+    alignItems: 'center',
+  },
+  boutiqueSubtitle: {
+    fontSize: 13,
+    color: '#4B0082',
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  boutiqueItems: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
+  boutiqueItem: {
+    alignItems: 'center',
+  },
+  boutiqueEmoji: {
+    fontSize: 32,
+    marginBottom: 4,
+  },
+  boutiqueLabel: {
+    fontSize: 12,
+    color: '#4B0082',
+    fontWeight: '600',
   },
 
   // Idea submission
@@ -373,6 +517,71 @@ const styles = StyleSheet.create({
   menuBtnText: {
     color: '#fff',
     fontSize: 20,
+    fontWeight: 'bold',
+  },
+
+  // Modal popup
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: '#FAEBD7',
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: '#4B0082',
+    padding: 24,
+    width: '100%',
+    maxWidth: 380,
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#4B0082',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalBody: {
+    fontSize: 15,
+    color: '#4B0082',
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  modalScroll: {
+    maxHeight: 300,
+  },
+  modalListItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    paddingRight: 8,
+  },
+  modalBullet: {
+    color: '#FFD700',
+    fontSize: 14,
+    marginRight: 8,
+    marginTop: 2,
+  },
+  modalListText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#4B0082',
+    lineHeight: 20,
+  },
+  modalCloseButton: {
+    backgroundColor: '#FFD700',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  modalCloseText: {
+    color: '#4B0082',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });
