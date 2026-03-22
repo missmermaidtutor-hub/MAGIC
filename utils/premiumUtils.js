@@ -211,7 +211,7 @@ export const FEATURE_DESCRIPTIONS = {
   studioAdvancedText: 'Add italic, underline, strikethrough formatting plus font families and all 12 colors to text overlays.',
   pseudonymChange: 'Change your artist pseudonym as often as you like with premium access.',
   galleryOrganizing: 'Organize your gallery with folders, custom ordering, tags, and sorting to showcase your art your way.',
-  streakPause: 'Take a break without losing your streak. Pause up to 3 days per month while keeping your progress intact.',
+  streakPause: 'Take a break without losing your streak. Pause up to 3 days per month while keeping your progress intact or save them up for one big vacation.',
   streakSaver: 'Automatically save your streak when you miss a day. One free save per 13-day cycle.',
 };
 

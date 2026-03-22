@@ -849,62 +849,69 @@ export default function StreakScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Streak protection — premium (left-aligned to balance right boxes) */}
-        <PremiumGate feature="streakPause" compact align="left">
-          <View />
-        </PremiumGate>
-        <PremiumGate feature="streakSaver" compact align="left">
-          <View />
-        </PremiumGate>
-
-        {/* Row 2–4: Premium stats (MAGIC categories, goals, inspiring) */}
-        <PremiumGate feature="advancedStats" compact>
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={[styles.statNumber, { color: MAGIC_COLORS.manifest }]}>{streakData.manifestDays}</Text>
-              <Text style={styles.statLabel}>Manifest{'\n'}Days</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={[styles.statNumber, { color: MAGIC_COLORS.art }]}>{streakData.artDays}</Text>
-              <Text style={styles.statLabel}>Art{'\n'}Days</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={[styles.statNumber, { color: MAGIC_COLORS.inspire }]}>{streakData.inspireDays}</Text>
-              <Text style={styles.statLabel}>Inspire{'\n'}Days</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={[styles.statNumber, { color: MAGIC_COLORS.connect }]}>{streakData.couragePosts}</Text>
-              <Text style={styles.statLabel}>Connect{'\n'}Days</Text>
-            </View>
+        {/* Premium features — 2×2 grid */}
+        <View style={styles.premiumGrid}>
+          <View style={styles.premiumGridItem}>
+            <PremiumGate feature="streakPause" compact>
+              <View />
+            </PremiumGate>
           </View>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsSet}</Text>
-              <Text style={styles.statLabel}>Goals Set</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsMet}</Text>
-              <Text style={styles.statLabel}>Goals Met</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{goalPct}%</Text>
-              <Text style={styles.statLabel}>Goal Rate</Text>
-            </View>
+          <View style={styles.premiumGridItem}>
+            <PremiumGate feature="streakSaver" compact>
+              <View />
+            </PremiumGate>
           </View>
-        </PremiumGate>
-
-        {/* Inspiring others count — premium */}
-        {user && user.uid !== 'local' && (
-          <PremiumGate feature="inspiringOthers" compact>
-            <View style={styles.statsRow}>
-              <View style={[styles.statBox, { flex: 1 }]}>
-                <Text style={[styles.statNumber, { color: '#FF69B4' }]}>{inspiringSaveCount}</Text>
-                <Text style={styles.statLabel}>Times Your Courages{'\n'}Inspired Others</Text>
+          <View style={styles.premiumGridItem}>
+            <PremiumGate feature="advancedStats" compact>
+              <View style={styles.statsRow}>
+                <View style={styles.statBox}>
+                  <Text style={[styles.statNumber, { color: MAGIC_COLORS.manifest }]}>{streakData.manifestDays}</Text>
+                  <Text style={styles.statLabel}>Manifest{'\n'}Days</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={[styles.statNumber, { color: MAGIC_COLORS.art }]}>{streakData.artDays}</Text>
+                  <Text style={styles.statLabel}>Art{'\n'}Days</Text>
+                </View>
               </View>
+              <View style={styles.statsRow}>
+                <View style={styles.statBox}>
+                  <Text style={[styles.statNumber, { color: MAGIC_COLORS.inspire }]}>{streakData.inspireDays}</Text>
+                  <Text style={styles.statLabel}>Inspire{'\n'}Days</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={[styles.statNumber, { color: MAGIC_COLORS.connect }]}>{streakData.couragePosts}</Text>
+                  <Text style={styles.statLabel}>Connect{'\n'}Days</Text>
+                </View>
+              </View>
+              <View style={styles.statsRow}>
+                <View style={styles.statBox}>
+                  <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsSet}</Text>
+                  <Text style={styles.statLabel}>Goals{'\n'}Set</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsMet}</Text>
+                  <Text style={styles.statLabel}>Goals{'\n'}Met</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{goalPct}%</Text>
+                  <Text style={styles.statLabel}>Goal{'\n'}Rate</Text>
+                </View>
+              </View>
+            </PremiumGate>
+          </View>
+          {user && user.uid !== 'local' && (
+            <View style={styles.premiumGridItem}>
+              <PremiumGate feature="inspiringOthers" compact>
+                <View style={styles.statsRow}>
+                  <View style={[styles.statBox, { flex: 1 }]}>
+                    <Text style={[styles.statNumber, { color: '#FF69B4' }]}>{inspiringSaveCount}</Text>
+                    <Text style={styles.statLabel}>Times Your Courages{'\n'}Inspired Others</Text>
+                  </View>
+                </View>
+              </PremiumGate>
             </View>
-          </PremiumGate>
-        )}
+          )}
+        </View>
 
         {/* Clear Data */}
         <TouchableOpacity style={styles.dangerButton} onPress={handleClearData}>
@@ -1224,6 +1231,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#c1a900',
     fontWeight: '600',
+  },
+
+  // Premium 2×2 grid
+  premiumGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginVertical: 8,
+  },
+  premiumGridItem: {
+    width: '48%',
   },
 
   // Stats

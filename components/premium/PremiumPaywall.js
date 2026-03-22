@@ -141,11 +141,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FFD700',
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 10,
     marginVertical: 4,
-    alignSelf: 'flex-end',
-    width: '50%',
+    width: '100%',
   },
   compactContainerLeft: {
     alignSelf: 'flex-start',
@@ -156,13 +155,13 @@ const styles = StyleSheet.create({
   },
   compactText: {
     color: '#FFD700',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   compactDescription: {
     color: '#ffffff',
-    fontSize: 12,
+    fontSize: 11,
     marginTop: 3,
-    lineHeight: 17,
+    lineHeight: 15,
   },
 });

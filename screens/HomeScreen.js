@@ -652,7 +652,6 @@ export default function HomeScreen({ navigation }) {
   const [streakData, setStreakData] = useState({ yearDots: 0, monthStars: 0, weekStars: 0, dayStars: 0, total: 0 });
   const [realStreakData, setRealStreakData] = useState(null);
   const [todayTasks, setTodayTasks] = useState({ manifest: false, art: false, goal: false, inspire: false, courage: false });
-  const [previewIndex, setPreviewIndex] = useState(-1); // -1 = real data
   const [showInsightModal, setShowInsightModal] = useState(false);
   const [isShowingYesterday, setIsShowingYesterday] = useState(false);
   const [pastDayTasks, setPastDayTasks] = useState([]); // task data for past streak days
@@ -1238,24 +1237,6 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // Preview mode: tap streak count to cycle through demo streaks
-  const PREVIEW_STREAKS = [10, 45, 200, 400, 800]; // days
-  const togglePreview = () => {
-    const nextIndex = previewIndex + 1;
-    if (nextIndex >= PREVIEW_STREAKS.length) {
-      // Back to real data
-      setPreviewIndex(-1);
-      if (realStreakData) setStreakData(realStreakData);
-      setTodayTasks(prev => prev); // keep real tasks
-    } else {
-      setPreviewIndex(nextIndex);
-      const demoStreak = PREVIEW_STREAKS[nextIndex];
-      setStreakData(getStreakStars(demoStreak));
-      // Show all tasks complete in preview
-      setTodayTasks({ manifest: true, art: true, goal: true, inspire: true, courage: true });
-    }
-  };
-
   // Build the arrow: all earned items from smallest (bottom-left) to biggest (top-right)
   // Order: year dots → month stars → week stars → past day stars → TODAY's big MAGIC star
   const buildArrowItems = () => {
@@ -1352,20 +1333,12 @@ export default function HomeScreen({ navigation }) {
             ))}
           </View>
 
-          {/* Streak count — tap to preview different streak levels */}
-          <TouchableOpacity onPress={togglePreview}>
-            <Text style={styles.streakCount}>
-              {previewIndex >= 0
-                ? `Preview: ${PREVIEW_STREAKS[previewIndex]} day streak (tap to cycle)`
-                : streakData.total > 0
-                  ? `${streakData.total} day streak`
-                  : 'Start your streak today!'
-              }
-            </Text>
-            {previewIndex === -1 && (
-              <Text style={styles.previewHint}>tap to preview</Text>
-            )}
-          </TouchableOpacity>
+          <Text style={styles.streakCount}>
+            {streakData.total > 0
+              ? `${streakData.total} day streak`
+              : 'Start your streak today!'
+            }
+          </Text>
         </View>
 
         <Text style={styles.tagline}>
@@ -1971,12 +1944,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     fontWeight: '600',
-  },
-  previewHint: {
-    fontSize: 10,
-    color: '#3a4a6a',
-    textAlign: 'center',
-    marginTop: 2,
   },
   tagline: {
     fontSize: 18,

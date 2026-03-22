@@ -100,23 +100,34 @@ const PAGES = [
 ];
 
 const IntroStar = ({ size = 48 }) => {
-  const r = size / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+  const outerR = size / 2;
+  const innerR = outerR * 0.38;
   const colors = ['#DC143C', '#FF7F00', '#FFD700', '#22C55E', '#6366F1'];
-  const wedgeAngles = [-90, -18, 54, 126, 198];
+  // 5-pointed star: each wedge is a triangle from center through one outer point
+  // Point angles: -90, -18, 54, 126, 198 (top, then clockwise)
+  const pointAngles = [-90, -18, 54, 126, 198];
+  // Inner valley angles halfway between points
+  const valleyAngles = [-54, 18, 90, 162, 234];
+
   return (
     <Svg width={size} height={size}>
-      {wedgeAngles.map((angle, i) => {
-        const startRad = (angle - 36) * Math.PI / 180;
-        const endRad = (angle + 36) * Math.PI / 180;
-        const x1 = r + r * Math.cos(startRad);
-        const y1 = r + r * Math.sin(startRad);
-        const x2 = r + r * Math.cos(endRad);
-        const y2 = r + r * Math.sin(endRad);
+      {colors.map((color, i) => {
+        const pRad = (pointAngles[i] * Math.PI) / 180;
+        const v1Rad = (valleyAngles[(i + 4) % 5] * Math.PI) / 180;
+        const v2Rad = (valleyAngles[i] * Math.PI) / 180;
+        const px = cx + outerR * Math.cos(pRad);
+        const py = cy + outerR * Math.sin(pRad);
+        const v1x = cx + innerR * Math.cos(v1Rad);
+        const v1y = cy + innerR * Math.sin(v1Rad);
+        const v2x = cx + innerR * Math.cos(v2Rad);
+        const v2y = cy + innerR * Math.sin(v2Rad);
         return (
           <Path
             key={i}
-            d={`M ${r} ${r} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`}
-            fill={colors[i]}
+            d={`M ${cx} ${cy} L ${v1x} ${v1y} L ${px} ${py} L ${v2x} ${v2y} Z`}
+            fill={color}
           />
         );
       })}
