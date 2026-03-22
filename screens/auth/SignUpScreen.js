@@ -13,10 +13,15 @@ import {
   ImageBackground,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signInWithCredential, OAuthProvider, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import * as Crypto from 'expo-crypto';
+import * as WebBrowser from 'expo-web-browser';
 import { auth } from '../../config/firebase';
 import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable, applyReferralCode } from '../../services/firestoreService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+WebBrowser.maybeCompleteAuthSession();
 
 const GENDER_OPTIONS = [
   { key: 'female', label: 'Identify Female' },
@@ -40,17 +45,16 @@ const TIMEZONES = [
 ];
 
 export default function SignUpScreen({ navigation, route }) {
-  // If coming from Apple/Google sign-in, skip credential step
-  const skipCredentials = route.params?.skipCredentials || false;
-  const existingUid = route.params?.uid || null;
-  const existingEmail = route.params?.email || '';
-  const existingMethod = route.params?.accountMethod || 'email';
+  // If coming from Apple/Google sign-in (via LoginScreen), skip credential step
+  const [skipCredentials, setSkipCredentials] = useState(route.params?.skipCredentials || false);
+  const [socialUid, setSocialUid] = useState(route.params?.uid || null);
+  const [socialMethod, setSocialMethod] = useState(route.params?.accountMethod || 'email');
 
   const [step, setStep] = useState(skipCredentials ? 2 : 1);
   const [loading, setLoading] = useState(false);
 
   // Step 1: Credentials
-  const [email, setEmail] = useState(existingEmail);
+  const [email, setEmail] = useState(route.params?.email || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
@@ -128,6 +132,75 @@ export default function SignUpScreen({ navigation, route }) {
     setStep(2);
   };
 
+  const handleAppleSignUp = async () => {
+    try {
+      const nonce = Math.random().toString(36).substring(2, 10);
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        nonce
+      );
+
+      const appleCredential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+        nonce: hashedNonce,
+      });
+
+      const provider = new OAuthProvider('apple.com');
+      const credential = provider.credential({
+        idToken: appleCredential.identityToken,
+        rawNonce: nonce,
+      });
+
+      setLoading(true);
+      const result = await signInWithCredential(auth, credential);
+
+      if (result._tokenResponse?.isNewUser) {
+        // New user — stay on SignUpScreen, jump to step 2
+        setEmail(result.user.email || appleCredential.email || '');
+        setSocialUid(result.user.uid);
+        setSocialMethod('apple');
+        setSkipCredentials(true);
+        setStep(2);
+      }
+      // Existing user → auth state change handles navigation
+    } catch (error) {
+      if (error.code !== 'ERR_CANCELED') {
+        showAlert('Apple Sign In Failed', 'Could not sign in with Apple.');
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleSignUp = async () => {
+    if (Platform.OS !== 'web') {
+      showAlert('Web Only', 'Google Sign-In is available on the web version.');
+      return;
+    }
+    try {
+      setLoading(true);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+
+      if (result._tokenResponse?.isNewUser) {
+        // New user — stay on SignUpScreen, jump to step 2
+        setEmail(result.user.email || '');
+        setSocialUid(result.user.uid);
+        setSocialMethod('google');
+        setSkipCredentials(true);
+        setStep(2);
+      }
+      // Existing user → auth state change handles navigation
+    } catch (error) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        showAlert('Google Sign In Failed', 'Could not sign in with Google.');
+      }
+    }
+    setLoading(false);
+  };
+
   const handleStep2 = () => {
     if (!firstName.trim()) {
       showAlert('Missing First Name', 'Please enter your first name.');
@@ -178,7 +251,7 @@ export default function SignUpScreen({ navigation, route }) {
   const handleFinish = async () => {
     setLoading(true);
     try {
-      let uid = existingUid;
+      let uid = socialUid;
       let userEmail = email.trim();
 
       // Step 1: Create Firebase Auth account (email sign-up only)
@@ -200,7 +273,7 @@ export default function SignUpScreen({ navigation, route }) {
       // Step 4: Create Firestore profile
       await createUserProfile(uid, {
         email: userEmail,
-        accountMethod: existingMethod,
+        accountMethod: socialMethod,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         username: username.trim(),
@@ -223,7 +296,7 @@ export default function SignUpScreen({ navigation, route }) {
       // Update AsyncStorage to stay in sync
       const updatedSettings = {
         ...settings,
-        accountMethod: existingMethod,
+        accountMethod: socialMethod,
         email: userEmail,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
@@ -279,6 +352,28 @@ export default function SignUpScreen({ navigation, route }) {
       <Text style={styles.stepTitle}>Create Your Account</Text>
       <Text style={styles.stepIndicator}>Step 1 of 3</Text>
 
+      <TouchableOpacity
+        style={styles.socialButton}
+        onPress={handleAppleSignUp}
+        disabled={loading}
+      >
+        <Text style={styles.socialButtonText}> Sign up with Apple</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.socialButton}
+        onPress={handleGoogleSignUp}
+        disabled={loading}
+      >
+        <Text style={styles.socialButtonText}>G  Sign up with Google</Text>
+      </TouchableOpacity>
+
+      <View style={styles.divider}>
+        <View style={styles.dividerLine} />
+        <Text style={styles.dividerText}>or</Text>
+        <View style={styles.dividerLine} />
+      </View>
+
       <Text style={styles.inputLabel}>Email</Text>
       <TextInput
         style={styles.textInput}
@@ -311,7 +406,7 @@ export default function SignUpScreen({ navigation, route }) {
       />
 
       <TouchableOpacity style={styles.primaryButton} onPress={handleStep1}>
-        <Text style={styles.primaryButtonText}>Next</Text>
+        <Text style={styles.primaryButtonText}>Continue with Email</Text>
       </TouchableOpacity>
     </>
   );
@@ -787,6 +882,35 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     marginTop: 8,
+  },
+  socialButton: {
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  socialButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#444',
+  },
+  dividerText: {
+    color: '#ffffff',
+    paddingHorizontal: 12,
+    fontSize: 14,
   },
   loginRow: {
     flexDirection: 'row',

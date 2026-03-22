@@ -12,7 +12,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
-import { signInWithEmailAndPassword, signInWithCredential, OAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithCredential, OAuthProvider, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
@@ -86,6 +86,32 @@ export default function LoginScreen({ navigation }) {
     setLoading(false);
   };
 
+  const handleGoogleLogin = async () => {
+    if (Platform.OS !== 'web') {
+      showAlert('Web Only', 'Google Sign-In is available on the web version.');
+      return;
+    }
+    try {
+      setLoading(true);
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+
+      // If new user, redirect to profile setup
+      if (result._tokenResponse?.isNewUser) {
+        navigation.replace('SignUp', {
+          uid: result.user.uid,
+          email: result.user.email || '',
+          accountMethod: 'google',
+          skipCredentials: true,
+        });
+      }
+    } catch (error) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+        showAlert('Google Sign In Failed', 'Could not sign in with Google.');
+      }
+    }
+    setLoading(false);
+  };
 
   return (
     <ImageBackground
@@ -164,6 +190,13 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.appleButtonText}> Sign in with Apple</Text>
             </TouchableOpacity>
 
+            <TouchableOpacity
+              style={styles.googleButton}
+              onPress={handleGoogleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.googleButtonText}>G  Sign in with Google</Text>
+            </TouchableOpacity>
 
             <View style={styles.signUpRow}>
               <Text style={styles.signUpText}>Don't have an account? </Text>
@@ -284,7 +317,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  // Google Sign-In styles removed — not available without EAS build
+  googleButton: {
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  googleButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   signUpRow: {
     flexDirection: 'row',
     justifyContent: 'center',
