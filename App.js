@@ -52,6 +52,7 @@ import QuickLaunchScreen from './screens/menu-pages/QuickLaunchScreen';
 import ComingSoonScreen from './screens/menu-pages/ComingSoonScreen';
 import ShareAppScreen from './screens/menu-pages/ShareAppScreen';
 import FeatureIdeasScreen from './screens/FeatureIdeasScreen';
+import IntroScreen from './screens/IntroScreen';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
@@ -230,6 +231,13 @@ function MainTabs({ initialRoute = 'Home' }) {
         }}
       />
       <Tab.Screen
+        name="Intro"
+        component={IntroScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
         name="DiscussionPods"
         component={DiscussionPodsScreen}
         options={{
@@ -299,7 +307,7 @@ function AppContent() {
     const checkQuickLaunch = async () => {
       try {
         const dismissed = await AsyncStorage.getItem('quick_launch_dismissed');
-        setInitialRoute(dismissed === 'true' ? 'Home' : 'QuickLaunch');
+        setInitialRoute(dismissed === 'true' ? 'Home' : 'Intro');
       } catch {
         setInitialRoute('Home');
       }
