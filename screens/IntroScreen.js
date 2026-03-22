@@ -5,9 +5,12 @@ import {
   View,
   TouchableOpacity,
   Dimensions,
+  Image,
+  ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { openMailto } from '../utils/emailUtils';
+import Svg, { Path } from 'react-native-svg';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -22,6 +25,14 @@ const COLORS = {
   bg: '#FAEBD7',
 };
 
+const SLIDE_IMAGES = {
+  manifest: require('../assets/Slide deck 2.jpg'),
+  art: require('../assets/Slide deck 3.jpg'),
+  grow: require('../assets/Slide deck 4.jpg'),
+  inspire: require('../assets/Slide deck 5.jpg'),
+  connect: require('../assets/Slide deck 6.jpg'),
+};
+
 const PAGES = [
   {
     // Page 1: Welcome / Purpose
@@ -30,7 +41,8 @@ const PAGES = [
     body:
       'MAGIC is your daily creative practice — designed to replace mindless scrolling with mindful creating.\n\n' +
       'Each day, complete 5 simple tasks to earn your MAGIC star. Keep your streak alive and watch your creativity grow.\n\n' +
-      'Your first 13 Magical Nights are completely free.',
+      'There is no cost to get started. You\'ll have the opportunity to test premium features after 13 days.',
+    hasStar: true,
   },
   {
     // Page 2: Manifest
@@ -38,8 +50,8 @@ const PAGES = [
     letter: 'M',
     title: 'Manifest',
     body:
-      'Start each day by writing in your journal.\n\n' +
-      'Choose a Muse prompt, dump your thoughts, or set your vision. This is your private space to process and create clarity.',
+      'Start each day with a Creativity quote to light the way. Next choose a Muse prompt, dump your thoughts, or set your vision. This is your private space to process and create clarity for the day.',
+    image: 'manifest',
   },
   {
     // Page 3: Art
@@ -48,7 +60,8 @@ const PAGES = [
     title: 'Art',
     body:
       'Create something today.\n\n' +
-      'Use the daily prompt, sketch, paint, write, or snap a photo. Set the art timer and let your creativity flow — even 5 minutes counts.',
+      'Use the daily prompt (or don\'t), sketch, paint, write, snap a photo. Set the art timer and let your creativity flow — even 5 minutes counts. (If the Be Creative Prompt isn\'t inspiring, click the nudge for more ideas)',
+    image: 'art',
   },
   {
     // Page 4: Grow
@@ -57,7 +70,8 @@ const PAGES = [
     title: 'Grow',
     body:
       'Set one growth goal each day.\n\n' +
-      'Check in on yesterday\'s goal — did you meet it? Carry it forward or set a new one. Small steps build big change.',
+      'Check in on yesterday\'s goal — did you meet it? Small steps build big change. The Grow page shows your streak or click today to see which tasks still need to be done to earn a gold star!',
+    image: 'grow',
   },
   {
     // Page 5: Inspire
@@ -65,8 +79,9 @@ const PAGES = [
     letter: 'I',
     title: 'Inspire',
     body:
-      'Vote on today\'s community artwork.\n\n' +
-      'Rank submissions, discover new artists, and save pieces that move you. Your vote helps choose the daily winner.',
+      'Vote on today\'s community artwork based on today\'s ranking criteria, not what\'s the "best" — maybe which is the most blue or the messiest, or which shows Conviction.\n\n' +
+      'Rank submissions so each image is ranked 1-4. Discover new artists, and light the candle next to the ones that inspire you. Your vote helps choose the daily winner, which is revealed the next day.',
+    image: 'inspire',
   },
   {
     // Page 6: Connect + Contact
@@ -75,10 +90,38 @@ const PAGES = [
     title: 'Connect',
     body:
       'Share your creation with the community.\n\n' +
-      'Upload your artwork for voting, browse the winner gallery, or send inspiration to a friend. Being brave enough to share earns your final star.',
+      'Upload your Courage in the form of your art for voting, browse the winner gallery, or send inspiration to a friend. Being brave enough to share earns your final star point.\n\n' +
+      'Also connect with the art by reviewing the art you submitted that you weren\'t ready to share, and the art that lit your candle in the Private Gallery.\n\n' +
+      'You\'ll get started on the home page where you\'ll see your streak and be guided through each task.',
+    image: 'connect',
     isLast: true,
   },
 ];
+
+const IntroStar = ({ size = 48 }) => {
+  const r = size / 2;
+  const colors = ['#DC143C', '#FF7F00', '#FFD700', '#22C55E', '#6366F1'];
+  const wedgeAngles = [-90, -18, 54, 126, 198];
+  return (
+    <Svg width={size} height={size}>
+      {wedgeAngles.map((angle, i) => {
+        const startRad = (angle - 36) * Math.PI / 180;
+        const endRad = (angle + 36) * Math.PI / 180;
+        const x1 = r + r * Math.cos(startRad);
+        const y1 = r + r * Math.sin(startRad);
+        const x2 = r + r * Math.cos(endRad);
+        const y2 = r + r * Math.sin(endRad);
+        return (
+          <Path
+            key={i}
+            d={`M ${r} ${r} L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`}
+            fill={colors[i]}
+          />
+        );
+      })}
+    </Svg>
+  );
+};
 
 export default function IntroScreen({ navigation }) {
   const [page, setPage] = useState(0);
@@ -105,9 +148,13 @@ export default function IntroScreen({ navigation }) {
     <View style={styles.container}>
       <View style={styles.inner}>
         {/* Page content */}
-        <View style={styles.contentArea}>
+        <ScrollView contentContainerStyle={styles.contentArea} showsVerticalScrollIndicator={false}>
           {/* Step indicator */}
-          {current.letter ? (
+          {current.hasStar ? (
+            <View style={[styles.letterCircle, { borderColor: COLORS.gold }]}>
+              <IntroStar size={48} />
+            </View>
+          ) : current.letter ? (
             <View style={[styles.letterCircle, { borderColor: current.accent }]}>
               <Text style={[styles.letterText, { color: current.accent }]}>
                 {current.letter}
@@ -125,10 +172,19 @@ export default function IntroScreen({ navigation }) {
 
           {/* Content box */}
           <View style={[styles.contentBox, { borderColor: current.accent }]}>
-            <Text style={[styles.bodyText, { color: current.accent }]}>
+            <Text style={[styles.bodyText, { color: '#4B0082' }]}>
               {current.body}
             </Text>
           </View>
+
+          {/* Slide image */}
+          {current.image && (
+            <Image
+              source={SLIDE_IMAGES[current.image]}
+              style={styles.slideImage}
+              resizeMode="contain"
+            />
+          )}
 
           {/* Contact info on last page */}
           {current.isLast && (
@@ -144,7 +200,7 @@ export default function IntroScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           )}
-        </View>
+        </ScrollView>
 
         {/* Page dots */}
         <View style={styles.dotsRow}>
@@ -214,7 +270,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   contentArea: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -257,6 +313,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     textAlign: 'center',
+  },
+
+  // Slide image
+  slideImage: {
+    width: '100%',
+    maxWidth: 380,
+    height: 200,
+    borderRadius: 8,
+    marginTop: 16,
+    borderWidth: 2,
+    borderColor: '#4B0082',
   },
 
   // Contact section (last page)
