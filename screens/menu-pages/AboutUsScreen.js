@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#061679',
+    color: '#E0E0E0',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
@@ -195,17 +195,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#061679',
+    color: '#E0E0E0',
     marginBottom: 10,
   },
   text: {
     fontSize: 16,
-    color: '#061679',
+    color: '#E0E0E0',
     lineHeight: 24,
   },
   magicItem: {
     fontSize: 16,
-    color: '#061679',
+    color: '#E0E0E0',
     marginBottom: 8,
     lineHeight: 24,
   },
@@ -263,12 +263,12 @@ const styles = StyleSheet.create({
   },
   articleDescription: {
     fontSize: 14,
-    color: '#061679',
+    color: '#E0E0E0',
     marginBottom: 8,
   },
   articleLink: {
     fontSize: 14,
-    color: '#061679',
+    color: '#E0E0E0',
     fontWeight: '600',
   },
   contactButton: {
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: 15,
-    color: '#061679',
+    color: '#E0E0E0',
     fontWeight: 'bold',
   },
 });

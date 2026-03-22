@@ -444,7 +444,7 @@ export default function ManifestScreen() {
             <TextInput
               style={styles.searchInput}
               placeholder="Search entries..."
-              placeholderTextColor="#666"
+              placeholderTextColor="#aaa"
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -563,7 +563,7 @@ export default function ManifestScreen() {
               <TextInput
                 style={styles.shortInput}
                 placeholder="What will you achieve today?"
-                placeholderTextColor="#666"
+                placeholderTextColor="#aaa"
                 value={growthGoal}
                 onChangeText={handleGoalChange}
                 onFocus={() => handleFieldFocus('goal')}
@@ -580,7 +580,7 @@ export default function ManifestScreen() {
               <TextInput
                 style={styles.longInput}
                 placeholder="What inspires you? What sparks your creativity?"
-                placeholderTextColor="#666"
+                placeholderTextColor="#aaa"
                 value={callMuse}
                 onChangeText={setCallMuse}
                 onFocus={() => handleFieldFocus('muse')}
@@ -599,7 +599,7 @@ export default function ManifestScreen() {
               <TextInput
                 style={styles.longInput}
                 placeholder="What's holding you back? Release it here..."
-                placeholderTextColor="#666"
+                placeholderTextColor="#aaa"
                 value={dumpStalls}
                 onChangeText={setDumpStalls}
                 onFocus={() => handleFieldFocus('dump')}
@@ -618,7 +618,7 @@ export default function ManifestScreen() {
               <TextInput
                 style={styles.longInput}
                 placeholder="Describe your vision in vivid detail..."
-                placeholderTextColor="#666"
+                placeholderTextColor="#aaa"
                 value={manifestVision}
                 onChangeText={setManifestVision}
                 onFocus={() => handleFieldFocus('vision')}
@@ -683,23 +683,23 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   quoteCard: {
-    backgroundColor: '#4A148C',
+    backgroundColor: 'transparent',
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
-    borderWidth: 3,
-    borderColor: '#ff7795',
+    borderWidth: 5,
+    borderColor: '#78000E',
     position: 'relative',
   },
   quoteText: {
     fontSize: 16,
-    color: 'white',
+    color: '#78000E',
     marginBottom: 10,
     lineHeight: 24,
   },
   quoteAuthor: {
     fontSize: 14,
-    color: '#E1BEE7',
+    color: '#78000E',
     fontStyle: 'italic',
   },
   heartButton: {
@@ -716,12 +716,12 @@ const styles = StyleSheet.create({
     color: '#E91E63',
   },
   favoriteQuoteCard: {
-    backgroundColor: '#4A148C',
+    backgroundColor: 'transparent',
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#ff7795',
+    borderWidth: 5,
+    borderColor: '#78000E',
     position: 'relative',
   },
   viewPastButton: {
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   viewPastButtonText: {
-    color: '#FF8A80',
+    color: '#78000E',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -739,8 +739,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderRadius: 12,
     padding: 20,
-    borderWidth: 3,
-    borderColor: '#ff7795',
+    borderWidth: 5,
+    borderColor: '#78000E',
     marginBottom: 20,
   },
   journalTitle: {
@@ -756,7 +756,7 @@ const styles = StyleSheet.create({
   },
   promptNumber: {
     fontSize: 18,
-    color: '#660008',
+    color: '#78000E',
     fontWeight: 'bold',
     marginRight: 10,
     marginTop: 5,
@@ -771,22 +771,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   shortInput: {
-    backgroundColor: '#ffe4ed',
+    backgroundColor: 'transparent',
     borderRadius: 8,
     padding: 12,
-    color: '#333',
+    color: '#78000E',
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ff7795',
+    borderWidth: 5,
+    borderColor: '#78000E',
   },
   longInput: {
-    backgroundColor: '#ffe4ed',
+    backgroundColor: 'transparent',
     borderRadius: 8,
     padding: 12,
-    color: '#333',
+    color: '#78000E',
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: '#ff7795',
+    borderWidth: 5,
+    borderColor: '#78000E',
     minHeight: 100,
     textAlignVertical: 'top',
   },
@@ -803,15 +803,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   viewEntriesButton: {
-    backgroundColor: '#4A148C',
+    backgroundColor: 'transparent',
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#FFD700',
+    borderWidth: 5,
+    borderColor: '#78000E',
   },
   viewEntriesButtonText: {
-    color: '#FFD700',
+    color: '#78000E',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -819,24 +819,24 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   searchInput: {
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'transparent',
     borderRadius: 8,
     padding: 12,
-    color: 'white',
+    color: '#78000E',
     fontSize: 16,
-    borderWidth: 2,
-    borderColor: '#FFD700',
+    borderWidth: 5,
+    borderColor: '#78000E',
   },
   backButton: {
-    backgroundColor: '#4A148C',
+    backgroundColor: 'transparent',
     borderRadius: 8,
     padding: 12,
     marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#FFD700',
+    borderWidth: 5,
+    borderColor: '#78000E',
   },
   backButtonText: {
-    color: '#FFD700',
+    color: '#78000E',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
@@ -851,17 +851,17 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   entryCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'transparent',
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#4A148C',
+    borderWidth: 5,
+    borderColor: '#78000E',
   },
   entryDate: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#78000E',
     marginBottom: 15,
   },
   entrySection: {
@@ -869,13 +869,13 @@ const styles = StyleSheet.create({
   },
   entrySectionTitle: {
     fontSize: 14,
-    color: '#9C9FFF',
+    color: '#78000E',
     fontWeight: '600',
     marginBottom: 4,
   },
   entrySectionText: {
     fontSize: 15,
-    color: '#DDA0DD',
+    color: '#78000E',
     lineHeight: 22,
   },
 
@@ -889,31 +889,31 @@ const styles = StyleSheet.create({
 
   // Midnight warning banner
   midnightBanner: {
-    backgroundColor: '#4A148C',
-    borderWidth: 2,
-    borderColor: '#FFD700',
+    backgroundColor: 'transparent',
+    borderWidth: 5,
+    borderColor: '#78000E',
     borderRadius: 10,
     padding: 16,
     marginBottom: 16,
   },
   midnightBannerText: {
-    color: '#FFD700',
+    color: '#78000E',
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'center',
     fontStyle: 'italic',
   },
   saveToast: {
-    backgroundColor: '#4A148C',
+    backgroundColor: 'transparent',
     borderRadius: 8,
     padding: 12,
     marginTop: 12,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FFD700',
+    borderWidth: 5,
+    borderColor: '#78000E',
   },
   saveToastText: {
-    color: '#FFD700',
+    color: '#78000E',
     fontSize: 16,
     fontWeight: '600',
   },

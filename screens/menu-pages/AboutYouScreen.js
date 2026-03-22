@@ -64,6 +64,13 @@ const TIMEZONE_LABELS = {
   'Australia/Sydney': 'Sydney (AEST/AEDT)',
 };
 
+const GENDER_OPTIONS = [
+  { key: 'female', label: 'Identify Female' },
+  { key: 'male', label: 'Identify Male' },
+  { key: 'non-binary', label: 'Non-Binary' },
+  { key: 'prefer-not-to-say', label: 'Prefer Not to Say' },
+];
+
 const NOTIFICATION_OPTIONS = [
   { key: 'daily', label: 'Daily Reminder' },
   { key: 'weekly', label: 'Weekly Reminder' },
@@ -86,6 +93,10 @@ export default function AboutYouScreen({ navigation }) {
   const [birthdate, setBirthdate] = useState('');
   const [bio, setBio] = useState('');
   const [favoritePrompt, setFavoritePrompt] = useState('');
+  const [gender, setGender] = useState('');
+  const [showGenderList, setShowGenderList] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [openToPods, setOpenToPods] = useState(false);
 
   // Preferences
   const [notificationPreference, setNotificationPreference] = useState('daily');
@@ -127,6 +138,9 @@ export default function AboutYouScreen({ navigation }) {
       setNotificationPreference(userProfile.notificationPreference || 'daily');
       setAllowWorkBoutique(userProfile.allowWorkBoutique ?? false);
       setAnonymous(userProfile.anonymous ?? true);
+      setGender(userProfile.gender || '');
+      setPhoneNumber(userProfile.phoneNumber || '');
+      setOpenToPods(userProfile.openToPods ?? false);
     }
   }, [userProfile]);
 
@@ -389,6 +403,49 @@ export default function AboutYouScreen({ navigation }) {
             placeholderTextColor="rgba(255,255,255,0.6)"
             keyboardType="numeric"
             maxLength={10}
+          />
+
+          <Text style={styles.inputLabel}>Gender</Text>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => setShowGenderList(!showGenderList)}
+          >
+            <Text style={styles.dropdownText}>
+              {gender ? GENDER_OPTIONS.find(g => g.key === gender)?.label : 'Select gender...'}
+            </Text>
+            <Text style={styles.dropdownArrow}>{showGenderList ? '▲' : '▼'}</Text>
+          </TouchableOpacity>
+
+          {showGenderList && (
+            <View style={styles.dropdownList}>
+              {GENDER_OPTIONS.map(opt => (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={[styles.dropdownItem, gender === opt.key && styles.dropdownItemActive]}
+                  onPress={() => {
+                    setGender(opt.key);
+                    saveSettings('gender', opt.key);
+                    setShowGenderList(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.dropdownItemText,
+                    gender === opt.key && styles.dropdownItemTextActive,
+                  ]}>{opt.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <Text style={styles.inputLabel}>Phone Number</Text>
+          <TextInput
+            style={styles.textInput}
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            onEndEditing={() => saveSettings('phoneNumber', phoneNumber)}
+            placeholder="555-123-4567"
+            placeholderTextColor="rgba(255,255,255,0.6)"
+            keyboardType="phone-pad"
           />
 
           {accountMethod === 'email' && (
@@ -672,6 +729,22 @@ export default function AboutYouScreen({ navigation }) {
               }}
               trackColor={{ false: '#333', true: '#9C27B0' }}
               thumbColor={allowWorkBoutique ? '#8E0DD3' : '#666'}
+            />
+          </View>
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingLabel}>Open to Discussion Pods</Text>
+              <Text style={styles.settingDescription}>Let admins know you'd like to join a discussion group</Text>
+            </View>
+            <Switch
+              value={openToPods}
+              onValueChange={(value) => {
+                setOpenToPods(value);
+                saveSettings('openToPods', value);
+              }}
+              trackColor={{ false: '#333', true: '#9C27B0' }}
+              thumbColor={openToPods ? '#8E0DD3' : '#666'}
             />
           </View>
         </View>

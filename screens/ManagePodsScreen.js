@@ -20,6 +20,7 @@ import {
   updatePodName,
   deletePod,
 } from '../services/firestoreService';
+import UserProfileModal from '../components/admin/UserProfileModal';
 
 const TIMEZONE_SHORT = {
   'America/New_York': 'EST',
@@ -65,8 +66,11 @@ export default function ManagePodsScreen({ navigation }) {
   const [filterHeartCity, setFilterHeartCity] = useState('');
   const [filterMedium, setFilterMedium] = useState('');
   const [filterReferrer, setFilterReferrer] = useState('');
+  const [filterGender, setFilterGender] = useState('');
+  const [filterOpenToPods, setFilterOpenToPods] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [expandedUser, setExpandedUser] = useState(null);
+  const [selectedProfile, setSelectedProfile] = useState(null);
 
   useEffect(() => {
     if (!user || !isAdmin(user.uid)) {
@@ -125,6 +129,7 @@ export default function ManagePodsScreen({ navigation }) {
     const states = new Set();
     const heartCities = new Set();
     const mediums = new Set();
+    const genders = new Set();
     allUsers.forEach(u => {
       if (u.timezone) timezones.add(u.timezone);
       const loc = u.currentLocation;
@@ -133,6 +138,7 @@ export default function ManagePodsScreen({ navigation }) {
       const heart = u.heartLocation;
       if (heart?.city) heartCities.add(heart.city);
       (u.favoriteMediums || []).forEach(m => mediums.add(m));
+      if (u.gender) genders.add(u.gender);
     });
     // Build referrer options: users who have referred others
     const referrers = Object.keys(referralsMap).map(uid => {
@@ -146,6 +152,7 @@ export default function ManagePodsScreen({ navigation }) {
       states: [...states].sort(),
       heartCities: [...heartCities].sort(),
       mediums: [...mediums].sort(),
+      genders: [...genders].sort(),
       referrers,
     };
   }, [allUsers, referralsMap]);
@@ -154,12 +161,13 @@ export default function ManagePodsScreen({ navigation }) {
   const filteredUsers = useMemo(() => {
     const q = searchText.toLowerCase().trim();
     return allUsers.filter(u => {
-      // Text search (username + pseudonym + referralCode)
+      // Text search (username + pseudonym + referralCode + bio)
       if (q) {
         const username = (u.username || '').toLowerCase();
         const pseudonym = (u.pseudonym || '').toLowerCase();
         const refCode = (u.referralCode || '').toLowerCase();
-        if (!username.includes(q) && !pseudonym.includes(q) && !refCode.includes(q)) {
+        const bio = (u.bio || '').toLowerCase();
+        if (!username.includes(q) && !pseudonym.includes(q) && !refCode.includes(q) && !bio.includes(q)) {
           return false;
         }
       }
@@ -175,11 +183,15 @@ export default function ManagePodsScreen({ navigation }) {
       if (filterMedium && !(u.favoriteMediums || []).includes(filterMedium)) return false;
       // Referred by filter
       if (filterReferrer && referredByMap[u.uid] !== filterReferrer) return false;
+      // Gender filter
+      if (filterGender && u.gender !== filterGender) return false;
+      // Open to pods filter
+      if (filterOpenToPods && !u.openToPods) return false;
       return true;
     });
-  }, [allUsers, searchText, filterTimezone, filterCountry, filterState, filterHeartCity, filterMedium, filterReferrer, referredByMap]);
+  }, [allUsers, searchText, filterTimezone, filterCountry, filterState, filterHeartCity, filterMedium, filterReferrer, filterGender, filterOpenToPods, referredByMap]);
 
-  const hasActiveFilters = filterTimezone || filterCountry || filterState || filterHeartCity || filterMedium || filterReferrer;
+  const hasActiveFilters = filterTimezone || filterCountry || filterState || filterHeartCity || filterMedium || filterReferrer || filterGender || filterOpenToPods;
 
   const clearFilters = () => {
     setFilterTimezone('');
@@ -188,6 +200,8 @@ export default function ManagePodsScreen({ navigation }) {
     setFilterHeartCity('');
     setFilterMedium('');
     setFilterReferrer('');
+    setFilterGender('');
+    setFilterOpenToPods(false);
     setOpenDropdown(null);
   };
 
@@ -321,6 +335,7 @@ export default function ManagePodsScreen({ navigation }) {
                   else if (filterKey === 'heartCity') setFilterHeartCity('');
                   else if (filterKey === 'medium') setFilterMedium('');
                   else if (filterKey === 'referrer') setFilterReferrer('');
+                  else if (filterKey === 'gender') setFilterGender('');
                   setOpenDropdown(null);
                 }}
               >
@@ -343,6 +358,7 @@ export default function ManagePodsScreen({ navigation }) {
                     else if (filterKey === 'heartCity') setFilterHeartCity(opt);
                     else if (filterKey === 'medium') setFilterMedium(opt);
                     else if (filterKey === 'referrer') setFilterReferrer(opt);
+                    else if (filterKey === 'gender') setFilterGender(opt);
                     setOpenDropdown(null);
                   }}
                 >
@@ -391,7 +407,7 @@ export default function ManagePodsScreen({ navigation }) {
           style={styles.searchInput}
           value={searchText}
           onChangeText={setSearchText}
-          placeholder="Search username, pseudonym, or referral code..."
+          placeholder="Search username, pseudonym, referral code, or bio..."
           placeholderTextColor="#999"
         />
 
@@ -419,6 +435,16 @@ export default function ManagePodsScreen({ navigation }) {
               renderDropdown('Heart City', filterHeartCity, filterOptions.heartCities, 'heartCity')}
             {filterOptions.mediums.length > 0 &&
               renderDropdown('Medium', filterMedium, filterOptions.mediums, 'medium')}
+            {filterOptions.genders.length > 0 &&
+              renderDropdown('Gender', filterGender, filterOptions.genders, 'gender')}
+            <TouchableOpacity
+              style={[styles.filterDropdown, filterOpenToPods ? styles.filterDropdownActive : null]}
+              onPress={() => setFilterOpenToPods(f => !f)}
+            >
+              <Text style={[styles.filterDropdownText, filterOpenToPods ? styles.filterDropdownTextActive : null]}>
+                {filterOpenToPods ? 'Open to Pods ✓' : 'Open to Pods'}
+              </Text>
+            </TouchableOpacity>
             {filterOptions.referrers.length > 0 && (
               <View style={styles.filterDropdownContainer}>
                 <TouchableOpacity
@@ -529,6 +555,15 @@ export default function ManagePodsScreen({ navigation }) {
                       <Text style={styles.userMeta} numberOfLines={1}>{locationStr}</Text>
                     ) : null}
                   </View>
+                  <TouchableOpacity
+                    style={styles.profileBtn}
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      setSelectedProfile(u);
+                    }}
+                  >
+                    <Text style={styles.profileBtnText}>👤</Text>
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.expandBtn}
                     onPress={(e) => {
@@ -712,6 +747,12 @@ export default function ManagePodsScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <UserProfileModal
+        visible={!!selectedProfile}
+        profile={selectedProfile}
+        onClose={() => setSelectedProfile(null)}
+      />
     </ImageBackground>
   );
 }
@@ -983,10 +1024,19 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 1,
   },
+  profileBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    marginLeft: 6,
+    marginTop: 2,
+  },
+  profileBtnText: {
+    fontSize: 14,
+  },
   expandBtn: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    marginLeft: 6,
+    marginLeft: 4,
     marginTop: 2,
   },
   expandBtnText: {

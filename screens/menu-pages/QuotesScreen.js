@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 18,
-    color: '#061679',
+    color: '#E0E0E0',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   quoteAuthor: {
     fontSize: 14,
-    color: '#061679',
+    color: '#E0E0E0',
     fontStyle: 'italic',
   },
   heartBadge: {
@@ -193,14 +193,14 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 20,
-    color: '#061679',
+    color: '#E0E0E0',
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#061679',
+    color: '#E0E0E0',
     textAlign: 'center',
     lineHeight: 22,
   },

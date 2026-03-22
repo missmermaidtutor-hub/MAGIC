@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { FEATURE_LABELS, FEATURE_DESCRIPTIONS, getPremiumLabel } from '../../utils/premiumUtils';
 import { trackAction } from '../../services/analyticsService';
 
@@ -40,8 +39,7 @@ export default function PremiumPaywall({ feature, message, compact = false, onUp
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#1a1040', '#0d0a25']}
+      <View
         style={styles.card}
       >
         <Text style={styles.lockIcon}>&#x2B50;</Text>
@@ -63,16 +61,15 @@ export default function PremiumPaywall({ feature, message, compact = false, onUp
             <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
           </TouchableOpacity>
         )}
-      </LinearGradient>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: 'flex-end',
   },
   card: {
     borderRadius: 12,
@@ -80,7 +77,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#FFD700',
-    width: '100%',
+    width: '50%',
+    backgroundColor: '#1a2244',
   },
   lockIcon: {
     fontSize: 36,
@@ -134,13 +132,15 @@ const styles = StyleSheet.create({
   compactContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(20, 15, 50, 0.9)',
+    backgroundColor: '#1a2244',
     borderWidth: 1,
     borderColor: '#FFD700',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginVertical: 4,
+    alignSelf: 'flex-end',
+    width: '50%',
   },
   compactLock: {
     fontSize: 14,

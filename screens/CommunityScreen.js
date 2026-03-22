@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   Text,
@@ -34,6 +34,7 @@ import {
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 import { getMemberDayCount as getMemberDayCountUtil, getCuratedLimit, canAccessFeature } from '../utils/premiumUtils';
+import PremiumPaywall from '../components/premium/PremiumPaywall';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -145,6 +146,24 @@ export default function CommunityScreen({ navigation, route }) {
 
   // Day 13 popup
   const [showDay13Popup, setShowDay13Popup] = useState(false);
+
+  // Private tab side-by-side scroll refs
+  const privateScrollRef = useRef(null);
+  const inspirationScrollRef = useRef(null);
+  const privateScrollOffset = useRef(0);
+  const inspirationScrollOffset = useRef(0);
+  const SCROLL_STEP = 200;
+
+  const scrollColumn = (ref, offsetRef, direction) => {
+    const newOffset = Math.max(0, offsetRef.current + direction * SCROLL_STEP);
+    offsetRef.current = newOffset;
+    ref.current?.scrollTo({ y: newOffset, animated: true });
+  };
+
+  const scrollBothColumns = (direction) => {
+    scrollColumn(privateScrollRef, privateScrollOffset, direction);
+    scrollColumn(inspirationScrollRef, inspirationScrollOffset, direction);
+  };
 
   // 13-day membership check (premium users get early access)
   const memberDays = getMemberDayCountUtil(userProfile);
@@ -1021,6 +1040,101 @@ export default function CommunityScreen({ navigation, route }) {
     );
   };
 
+  // ─── Single-column gallery item for side-by-side private tab ───
+  const renderColumnItem = (artwork, fromGallery) => {
+    const imageSource = getArtworkImageSource(artwork);
+    const hasText = artwork.text && artwork.text.trim().length > 0;
+    const isCurated = curatedArtworks.some(a => a.id === artwork.id);
+    const isPrivateGallery = fromGallery === 'personal' || fromGallery === 'inspiration';
+
+    const handleFramePress = () => {
+      if (imageSource) {
+        setFullViewImage({ source: imageSource, artwork });
+      } else if (hasText) {
+        setFullViewText({ text: artwork.text, title: artwork.title, textStyle: artwork.textStyle });
+      }
+    };
+
+    return (
+      <View key={artwork.id} style={styles.columnItem}>
+        <GoldFrame
+          onPress={handleFramePress}
+          thickness={3}
+        >
+          {imageSource ? (
+            <View style={styles.columnImageBg}>
+              <Image source={imageSource} style={styles.galleryImage} resizeMode="contain" />
+            </View>
+          ) : hasText ? (
+            <View style={[styles.columnImageBg, styles.textArtBg]}>
+              <ScrollView contentContainerStyle={styles.textArtScroll} showsVerticalScrollIndicator={false}>
+                <Text style={[
+                  styles.textArtContent,
+                  artwork.textStyle && {
+                    fontFamily: artwork.textStyle.fontFamily,
+                    fontWeight: artwork.textStyle.fontWeight,
+                    fontStyle: artwork.textStyle.fontStyle,
+                    textDecorationLine: artwork.textStyle.textDecorationLine,
+                    textAlign: artwork.textStyle.textAlign,
+                    color: artwork.textStyle.color,
+                  },
+                ]} numberOfLines={8}>{artwork.text}</Text>
+              </ScrollView>
+              {artwork.title ? (
+                <Text style={styles.textArtTitle}>{artwork.title}</Text>
+              ) : null}
+            </View>
+          ) : (
+            <View style={[styles.columnImageBg, styles.placeholderArt]}>
+              <Text style={styles.placeholderEmoji}>🎨</Text>
+              <Text style={styles.placeholderLabel}>{artwork.title || 'Artwork'}</Text>
+            </View>
+          )}
+        </GoldFrame>
+
+        {/* Actions row: right-aligned */}
+        <View style={styles.artworkActions}>
+          {isPrivateGallery && (
+            <TouchableOpacity
+              style={[styles.curateBtn, isCurated && styles.curateBtnActive, !canCurate && styles.curateBtnDisabled]}
+              onPress={() => {
+                if (!canCurate) {
+                  showAlert('Gallery Locked', `Curating unlocks on Day 13. You are on Day ${getMemberDayCount()}.`);
+                  trackAction('curate_blocked_day_gate');
+                  return;
+                }
+                handleToggleCurate(artwork, fromGallery);
+              }}
+            >
+              <Text style={styles.curateBtnText}>
+                {!canCurate ? '🔒 Day 13' : (isCurated ? '🖼️ Public' : '🖼️ Private')}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          <Candle
+            lit={savedNewsfeedArt.has(artwork.id)}
+            onPress={() => handleCandleSave(artwork)}
+            size={24}
+          />
+
+          {isPrivateGallery && (
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              onPress={() => handleDeleteArtwork(artwork, fromGallery)}
+            >
+              <Text style={styles.deleteBtnText}>✕</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {artwork.date && (
+          <Text style={styles.artworkDate}>{artwork.title || artwork.date}</Text>
+        )}
+      </View>
+    );
+  };
+
   // ─── Gallery content switcher ───
   const renderGalleryContent = () => {
     switch (activeGallery) {
@@ -1055,20 +1169,20 @@ export default function CommunityScreen({ navigation, route }) {
       case 'inspiring':
         if (!canAccessFeature('inspiringOthers', userProfile)) {
           return (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>&#x2B50;</Text>
-              <Text style={[styles.emptyText, { color: '#FFD700' }]}>
-                Premium Feature
-              </Text>
-              <Text style={styles.emptyText}>
-                See which of your artworks inspire others! Unlock with premium or get a free trial after a 13-day streak.
-              </Text>
-            </View>
+            <PremiumPaywall feature="inspiringOthers" />
           );
         }
         return renderInspiringWorks();
 
-      case 'private':
+      case 'private': {
+        // Sort newest first
+        const sortedPersonal = [...personalArtworks].sort((a, b) =>
+          (b.savedAt || b.date || '').localeCompare(a.savedAt || a.date || '')
+        );
+        const sortedInspirations = [...inspirationArtworks].sort((a, b) =>
+          (b.savedAt || b.date || '').localeCompare(a.savedAt || a.date || '')
+        );
+
         return (
           <>
             {/* Link to Art Studio */}
@@ -1082,38 +1196,115 @@ export default function CommunityScreen({ navigation, route }) {
               </Text>
             </Text>
 
-            {/* My Uploads section */}
-            <Text style={styles.privateSubheader}>My Gallery</Text>
-            {personalArtworks.length > 0 ? (
-              <View style={styles.galleryGrid}>
-                {personalArtworks.map(artwork => renderGalleryItem(artwork, 'personal'))}
-              </View>
-            ) : (
-              <View style={styles.emptyStateSmall}>
-                <Text style={styles.emptyText}>
-                  No art yet. Create something in the Art Studio!
-                </Text>
-              </View>
-            )}
+            {/* Column headers */}
+            <View style={styles.columnHeaderRow}>
+              <Text style={styles.columnHeader}>My Private Gallery</Text>
+              <Text style={styles.columnHeader}>My Inspirations</Text>
+            </View>
 
-            {/* Divider */}
-            <View style={styles.sectionDivider} />
+            {/* Scroll arrows row */}
+            <View style={styles.scrollArrowRow}>
+              {/* Left column arrows */}
+              <View style={styles.scrollArrowGroup}>
+                <TouchableOpacity
+                  style={styles.scrollArrowBtn}
+                  onPress={() => scrollColumn(privateScrollRef, privateScrollOffset, -1)}
+                >
+                  <Text style={styles.scrollArrowText}>▲</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.scrollArrowBtn}
+                  onPress={() => scrollColumn(privateScrollRef, privateScrollOffset, 1)}
+                >
+                  <Text style={styles.scrollArrowText}>▼</Text>
+                </TouchableOpacity>
+              </View>
 
-            {/* My Inspirations section */}
-            <Text style={styles.privateSubheader}>My Inspirations</Text>
-            {inspirationArtworks.length > 0 ? (
-              <View style={styles.galleryGrid}>
-                {inspirationArtworks.map(artwork => renderGalleryItem(artwork, 'inspiration'))}
+              {/* Center (both) arrows */}
+              <View style={styles.scrollArrowGroup}>
+                <TouchableOpacity
+                  style={[styles.scrollArrowBtn, styles.scrollArrowBtnCenter]}
+                  onPress={() => scrollBothColumns(-1)}
+                >
+                  <Text style={styles.scrollArrowTextCenter}>▲</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.scrollArrowBtn, styles.scrollArrowBtnCenter]}
+                  onPress={() => scrollBothColumns(1)}
+                >
+                  <Text style={styles.scrollArrowTextCenter}>▼</Text>
+                </TouchableOpacity>
               </View>
-            ) : (
-              <View style={styles.emptyStateSmall}>
-                <Text style={styles.emptyText}>
-                  No saved inspirations yet. Light the candle on artworks you love!
-                </Text>
+
+              {/* Right column arrows */}
+              <View style={styles.scrollArrowGroup}>
+                <TouchableOpacity
+                  style={styles.scrollArrowBtn}
+                  onPress={() => scrollColumn(inspirationScrollRef, inspirationScrollOffset, -1)}
+                >
+                  <Text style={styles.scrollArrowText}>▲</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.scrollArrowBtn}
+                  onPress={() => scrollColumn(inspirationScrollRef, inspirationScrollOffset, 1)}
+                >
+                  <Text style={styles.scrollArrowText}>▼</Text>
+                </TouchableOpacity>
               </View>
-            )}
+            </View>
+
+            {/* Side-by-side columns */}
+            <View style={styles.sideBySideContainer}>
+              {/* Left column: Private Gallery */}
+              <View style={styles.column}>
+                <ScrollView
+                  ref={privateScrollRef}
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                  onScroll={(e) => { privateScrollOffset.current = e.nativeEvent.contentOffset.y; }}
+                  scrollEventThrottle={16}
+                  style={styles.columnScroll}
+                >
+                  {sortedPersonal.length > 0 ? (
+                    sortedPersonal.map(artwork => renderColumnItem(artwork, 'personal'))
+                  ) : (
+                    <View style={styles.emptyStateSmall}>
+                      <Text style={styles.emptyText}>
+                        No art yet. Create something in the Art Studio!
+                      </Text>
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+
+              {/* Vertical divider */}
+              <View style={styles.columnDivider} />
+
+              {/* Right column: Inspirations */}
+              <View style={styles.column}>
+                <ScrollView
+                  ref={inspirationScrollRef}
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                  onScroll={(e) => { inspirationScrollOffset.current = e.nativeEvent.contentOffset.y; }}
+                  scrollEventThrottle={16}
+                  style={styles.columnScroll}
+                >
+                  {sortedInspirations.length > 0 ? (
+                    sortedInspirations.map(artwork => renderColumnItem(artwork, 'inspiration'))
+                  ) : (
+                    <View style={styles.emptyStateSmall}>
+                      <Text style={styles.emptyText}>
+                        No saved inspirations yet. Light the candle on artworks you love!
+                      </Text>
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+            </View>
           </>
         );
+      }
 
       default:
         return null;
@@ -1474,7 +1665,7 @@ const styles = StyleSheet.create({
   // Artwork Actions
   artworkActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginTop: 6,
     gap: 4,
@@ -1543,19 +1734,81 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
 
-  // Private galleries
-  privateSubheader: {
-    fontSize: 18,
+  // Side-by-side private tab
+  columnHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 6,
+  },
+  columnHeader: {
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#050d61',
-    marginBottom: 12,
-    marginTop: 5,
+    textAlign: 'center',
+    flex: 1,
   },
-  sectionDivider: {
-    height: 1,
+  scrollArrowRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  scrollArrowGroup: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  scrollArrowBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(5, 13, 97, 0.3)',
+    borderWidth: 1,
+    borderColor: '#050d61',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollArrowBtnCenter: {
+    backgroundColor: 'rgba(255, 215, 0, 0.25)',
+    borderColor: '#FFD700',
+  },
+  scrollArrowText: {
+    fontSize: 14,
+    color: '#050d61',
+    fontWeight: 'bold',
+  },
+  scrollArrowTextCenter: {
+    fontSize: 14,
+    color: '#FFD700',
+    fontWeight: 'bold',
+  },
+  sideBySideContainer: {
+    flexDirection: 'row',
+    minHeight: 400,
+    maxHeight: 600,
+  },
+  column: {
+    flex: 1,
+  },
+  columnScroll: {
+    flex: 1,
+  },
+  columnDivider: {
+    width: 1,
     backgroundColor: '#FFD700',
-    marginVertical: 18,
     opacity: 0.4,
+    marginHorizontal: 4,
+  },
+  columnItem: {
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  columnImageBg: {
+    alignSelf: 'stretch',
+    aspectRatio: 1,
+    backgroundColor: '#0a0e27',
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
   },
   emptyStateSmall: {
     padding: 20,
@@ -1655,7 +1908,7 @@ const styles = StyleSheet.create({
   fullViewCandleRow: {
     position: 'absolute',
     bottom: 40,
-    alignSelf: 'center',
+    right: 20,
   },
 
   // Newsfeed Styles

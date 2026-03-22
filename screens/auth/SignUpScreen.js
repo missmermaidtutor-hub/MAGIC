@@ -18,6 +18,13 @@ import { auth } from '../../config/firebase';
 import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable, applyReferralCode } from '../../services/firestoreService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const GENDER_OPTIONS = [
+  { key: 'female', label: 'Identify Female' },
+  { key: 'male', label: 'Identify Male' },
+  { key: 'non-binary', label: 'Non-Binary' },
+  { key: 'prefer-not-to-say', label: 'Prefer Not to Say' },
+];
+
 const TIMEZONES = [
   { key: 'America/New_York', label: 'Eastern (EST/EDT)' },
   { key: 'America/Chicago', label: 'Central (CST/CDT)' },
@@ -56,6 +63,9 @@ export default function SignUpScreen({ navigation, route }) {
   const [birthdate, setBirthdate] = useState('');
   const [timezone, setTimezone] = useState('America/New_York');
   const [showTimezoneList, setShowTimezoneList] = useState(false);
+  const [gender, setGender] = useState('');
+  const [showGenderList, setShowGenderList] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   // Step 3: Optional
   const [currentLocation, setCurrentLocation] = useState({ country: '', state: '', city: '' });
@@ -143,6 +153,14 @@ export default function SignUpScreen({ navigation, route }) {
       showAlert('Invalid Date', 'Please enter birthdate as mm/dd/yyyy (with leading zeros, e.g. 03/05/1990).');
       return;
     }
+    if (!gender) {
+      showAlert('Missing Gender', 'Please select a gender option.');
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      showAlert('Missing Phone Number', 'Please enter your phone number.');
+      return;
+    }
     setStep(3);
   };
 
@@ -195,6 +213,8 @@ export default function SignUpScreen({ navigation, route }) {
         notificationPreference: settings.dailyReminder === false ? 'none' : 'daily',
         allowWorkBoutique: false,
         anonymous,
+        gender,
+        phoneNumber: phoneNumber.trim(),
         bio: bio || profile.bio || '',
         favoritePrompt: profile.favoritePrompt || '',
         pseudonymChangeCount: 0,
@@ -356,10 +376,51 @@ export default function SignUpScreen({ navigation, route }) {
         maxLength={10}
       />
 
+      <Text style={styles.inputLabel}>Gender</Text>
+      <TouchableOpacity
+        style={styles.dropdownButton}
+        onPress={() => { setShowGenderList(!showGenderList); setShowTimezoneList(false); }}
+      >
+        <Text style={styles.dropdownText}>
+          {gender ? GENDER_OPTIONS.find(g => g.key === gender)?.label : 'Select gender...'}
+        </Text>
+        <Text style={styles.dropdownArrow}>{showGenderList ? '▲' : '▼'}</Text>
+      </TouchableOpacity>
+
+      {showGenderList && (
+        <View style={styles.dropdownList}>
+          {GENDER_OPTIONS.map(opt => (
+            <TouchableOpacity
+              key={opt.key}
+              style={[styles.dropdownItem, gender === opt.key && styles.dropdownItemActive]}
+              onPress={() => {
+                setGender(opt.key);
+                setShowGenderList(false);
+              }}
+            >
+              <Text style={[
+                styles.dropdownItemText,
+                gender === opt.key && styles.dropdownItemTextActive,
+              ]}>{opt.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      <Text style={styles.inputLabel}>Phone Number</Text>
+      <TextInput
+        style={styles.textInput}
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+        placeholder="555-123-4567"
+        placeholderTextColor="#555"
+        keyboardType="phone-pad"
+      />
+
       <Text style={styles.inputLabel}>Timezone</Text>
       <TouchableOpacity
         style={styles.dropdownButton}
-        onPress={() => setShowTimezoneList(!showTimezoneList)}
+        onPress={() => { setShowTimezoneList(!showTimezoneList); setShowGenderList(false); }}
       >
         <Text style={styles.dropdownText}>
           {TIMEZONES.find(t => t.key === timezone)?.label || timezone}

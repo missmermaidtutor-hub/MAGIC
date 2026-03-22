@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dismissButtonText: {
-    color: '#050d61',
+    color: '#E0E0E0',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   keepButtonText: {
-    color: '#050d61',
+    color: '#E0E0E0',
     fontSize: 16,
     fontWeight: '600',
   },

@@ -112,39 +112,86 @@ const MonthStar = ({ size = 18 }) => {
   );
 };
 
-// 7-pointed Week Star — earned every 7 consecutive days, sharp triangle points
-const WeekStar = ({ size = 24 }) => {
+// 7-pointed Week Star — earned every 7 consecutive days
+// Gold points with SVG pie-wedge center (7 gold wedges aligned to points)
+const WeekStar = ({ size = 28 }) => {
   const points = 7;
+  const wedgeAngle = 360 / points; // ~51.43° per wedge
+  const centerSize = size * 0.32;
+  const cr = centerSize / 2;
+
+  // 7 point angles starting at top (-90°), evenly spaced
+  const pointAngles = [...Array(points)].map((_, i) => (i * wedgeAngle) - 90);
+
   return (
-    <View style={{ width: size, height: size, margin: 4, justifyContent: 'center', alignItems: 'center' }}>
+    <View style={{ width: size + 4, height: size + 4, margin: 4, justifyContent: 'center', alignItems: 'center' }}>
+      {/* Gold glow */}
       <View style={{
-        width: size * 0.35,
-        height: size * 0.35,
-        borderRadius: size * 0.175,
-        backgroundColor: '#4FC3F7',
         position: 'absolute',
-        zIndex: 5,
+        width: size + 8,
+        height: size + 8,
+        borderRadius: (size + 8) / 2,
+        backgroundColor: 'rgba(255, 215, 0, 0.2)',
       }} />
-      {[...Array(points)].map((_, i) => {
-        const angle = (i * 360 / points) - 90;
-        return (
-          <View key={i} style={{
-            position: 'absolute',
-            width: 0,
-            height: 0,
-            borderLeftWidth: size * 0.09,
-            borderRightWidth: size * 0.09,
-            borderBottomWidth: size * 0.4,
-            borderLeftColor: 'transparent',
-            borderRightColor: 'transparent',
-            borderBottomColor: '#4FC3F7',
-            transform: [
-              { rotate: `${angle + 90}deg` },
-              { translateY: -size * 0.15 },
-            ],
-          }} />
-        );
-      })}
+      {/* Gold outline — slightly larger triangles behind */}
+      {pointAngles.map((angle, i) => (
+        <View key={`o-${i}`} style={{
+          position: 'absolute',
+          width: 0,
+          height: 0,
+          borderLeftWidth: size * 0.12,
+          borderRightWidth: size * 0.12,
+          borderBottomWidth: size * 0.44,
+          borderLeftColor: 'transparent',
+          borderRightColor: 'transparent',
+          borderBottomColor: '#B8860B',
+          transform: [
+            { rotate: `${angle + 90}deg` },
+            { translateY: -size * 0.14 },
+          ],
+        }} />
+      ))}
+      {/* SVG pie-wedge center — 7 gold wedges tethered to points */}
+      <Svg width={centerSize} height={centerSize} style={{ position: 'absolute', zIndex: 10 }}>
+        {pointAngles.map((angle, i) => {
+          const halfWedge = wedgeAngle / 2;
+          const startRad = (angle - halfWedge) * Math.PI / 180;
+          const endRad = (angle + halfWedge) * Math.PI / 180;
+          const x1 = cr + cr * Math.cos(startRad);
+          const y1 = cr + cr * Math.sin(startRad);
+          const x2 = cr + cr * Math.cos(endRad);
+          const y2 = cr + cr * Math.sin(endRad);
+          return (
+            <Path
+              key={i}
+              d={`M ${cr} ${cr} L ${x1} ${y1} A ${cr} ${cr} 0 0 1 ${x2} ${y2} Z`}
+              fill={i % 2 === 0 ? '#FFD700' : '#DAA520'}
+            />
+          );
+        })}
+      </Svg>
+      {/* Gold star points */}
+      {pointAngles.map((angle, i) => (
+        <View key={i} style={{
+          position: 'absolute',
+          width: 0,
+          height: 0,
+          borderLeftWidth: size * 0.09,
+          borderRightWidth: size * 0.09,
+          borderBottomWidth: size * 0.38,
+          borderLeftColor: 'transparent',
+          borderRightColor: 'transparent',
+          borderBottomColor: '#FFD700',
+          transform: [
+            { rotate: `${angle + 90}deg` },
+            { translateY: -size * 0.13 },
+          ],
+          shadowColor: '#FFD700',
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.6,
+          shadowRadius: 3,
+        }} />
+      ))}
     </View>
   );
 };
@@ -1124,10 +1171,13 @@ export default function HomeScreen({ navigation }) {
       }
 
       // Check if streak qualifies for a premium trial (milestones ending in 13)
+      // Delay if star unlock modal is showing to prevent alert from clobbering it
       if (checkStreakTrial && streak > 0) {
         const trialGranted = await checkStreakTrial(streak);
         if (trialGranted) {
-          showAlert('Premium Trial Unlocked!', `Congratulations on your ${streak}-day streak! You've earned a free 13-day premium trial.`);
+          setTimeout(() => {
+            showAlert('Premium Trial Unlocked!', `Congratulations on your ${streak}-day streak! You've earned a free 13-day premium trial.`);
+          }, starUnlockModal ? 3000 : 0);
         }
       }
 
@@ -1729,7 +1779,13 @@ export default function HomeScreen({ navigation }) {
       >
         <View style={styles.insightOverlay}>
           <View style={styles.insightCard}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 16 }}>
+            <TouchableOpacity
+              onPress={() => setStarUnlockModal(null)}
+              style={{ position: 'absolute', top: 10, right: 14, zIndex: 1 }}
+            >
+              <Text style={{ fontSize: 24, color: '#FFD700', fontWeight: 'bold' }}>✕</Text>
+            </TouchableOpacity>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 16, marginTop: 8 }}>
               You've unlocked the {starUnlockModal?.name}!
             </Text>
             <View style={{ alignItems: 'center', marginBottom: 16 }}>

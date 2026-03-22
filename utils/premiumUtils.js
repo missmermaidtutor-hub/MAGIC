@@ -114,6 +114,7 @@ export const checkPremium = (userProfile) => getPremiumStatus(userProfile).isPre
  *   - earlyCuratedAccess  → curated gallery before 13-day mark
  *   - studioFullColors    → hue bar, opacity, custom hex in Art Studio
  *   - studioAdvancedText  → extra fonts, italic, underline, strikethrough
+ *   - galleryOrganizing   → folders, custom ordering, tags, sorting
  */
 
 const FEATURE_RULES = {
@@ -127,6 +128,7 @@ const FEATURE_RULES = {
   studioFullColors: (isPremium) => isPremium,
   studioAdvancedText: (isPremium) => isPremium,
   pseudonymChange: (isPremium) => isPremium,
+  galleryOrganizing: (isPremium) => isPremium,
 };
 
 /**
@@ -206,6 +208,7 @@ export const FEATURE_DESCRIPTIONS = {
   studioFullColors: 'Unlock the color mixing panel, opacity controls, and custom hex input in the Art Studio.',
   studioAdvancedText: 'Add italic, underline, strikethrough formatting plus font families and all 12 colors to text overlays.',
   pseudonymChange: 'Change your artist pseudonym as often as you like with premium access.',
+  galleryOrganizing: 'Organize your gallery with folders, custom ordering, tags, and sorting to showcase your art your way.',
 };
 
 /** Feature name → user-friendly label for paywalls. */
@@ -220,6 +223,7 @@ export const FEATURE_LABELS = {
   studioFullColors: 'Full Color Controls',
   studioAdvancedText: 'Advanced Text Styling',
   pseudonymChange: 'Pseudonym Changes',
+  galleryOrganizing: 'Gallery Organizing',
 };
 
 // ── Pseudonym change gating ──

@@ -8,22 +8,22 @@ import { canShareApp } from '../utils/premiumUtils';
 export default function MenuScreen({ navigation }) {
   const { user, userProfile, signOut } = useAuth();
   const menuItems = [
-    { name: 'Home Page', screen: 'Home' },
-    { name: 'Quick Launch Info', screen: 'QuickLaunch' },
     { name: 'About Us', screen: 'AboutUs' },
     { name: 'About You', screen: 'AboutYou' },
-    { name: 'Quotes', screen: 'Quotes' },
     { name: 'Coming Soon', screen: 'ComingSoon' },
+    { name: 'Home Page', screen: 'Home' },
+    { name: 'Legal Policies', screen: 'Legal' },
+    { name: 'Quick Launch Info', screen: 'QuickLaunch' },
+    { name: 'Quotes', screen: 'Quotes' },
     ...(user && userProfile && canShareApp(userProfile) ? [
       { name: 'Share the App', screen: 'ShareApp' },
     ] : []),
-    { name: 'Legal Policies', screen: 'Legal' },
+    { name: 'Log Out', screen: null },
     ...(user && isAdmin(user.uid) ? [
-      { name: 'Analytics Dashboard', screen: 'Analytics' },
-      { name: 'Bug Check', screen: 'Diagnostics' },
-      { name: 'Feature Ideas', screen: 'FeatureIdeas' },
+      { name: '_Admin Analytics', screen: 'Analytics' },
+      { name: '_Admin Bug Check', screen: 'Diagnostics' },
+      { name: '_Admin Feature Ideas', screen: 'FeatureIdeas' },
     ] : []),
-    { name: 'Log Out', screen: null }
   ];
 
   const handleItemPress = async (item) => {
@@ -80,10 +80,8 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   menuContainer: {
-    backgroundColor: 'rgba(24, 112, 162, 0.5)',
+    backgroundColor: 'transparent',
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#8E0DD3',
     overflow: 'hidden',
   },
   menuItem: {
@@ -96,11 +94,11 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 18,
-    color: '#061679',
+    color: '#E0E0E0',
     fontWeight: '500',
   },
   arrow: {
     fontSize: 24,
-    color: '#1226A1',
+    color: '#E0E0E0',
   },
 });

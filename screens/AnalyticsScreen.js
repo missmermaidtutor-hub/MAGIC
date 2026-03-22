@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
-import { getAnalyticsForDate } from '../services/firestoreService';
+import { getAnalyticsForDate, getAllUsers } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
+import UserProfileModal from '../components/admin/UserProfileModal';
 
 const ACTION_LABELS = {
   courage_uploaded_write: 'Courage (Write)',
@@ -61,6 +62,8 @@ export default function AnalyticsScreen({ navigation }) {
   const [userData, setUserData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedUser, setExpandedUser] = useState(null);
+  const [profileMap, setProfileMap] = useState({});
+  const [selectedProfile, setSelectedProfile] = useState(null);
 
   const today = getESTDate();
 
@@ -69,8 +72,20 @@ export default function AnalyticsScreen({ navigation }) {
       navigation.goBack();
       return;
     }
+    loadProfiles();
     loadData(selectedDate);
   }, [selectedDate]);
+
+  const loadProfiles = async () => {
+    try {
+      const users = await getAllUsers();
+      const map = {};
+      users.forEach(u => { map[u.uid] = u; });
+      setProfileMap(map);
+    } catch (error) {
+      console.log('Error loading profiles:', error);
+    }
+  };
 
   const loadData = async (date) => {
     setLoading(true);
@@ -253,6 +268,8 @@ export default function AnalyticsScreen({ navigation }) {
                 sortedUsers.map((u) => {
                   const { secs, acts } = getUserTotal(u);
                   const isExpanded = expandedUser === u.uid;
+                  const profile = profileMap[u.uid];
+                  const displayName = profile?.pseudonym || profile?.username || u.uid.slice(0, 12) + '...';
                   const userScreens = u.screenTime
                     ? Object.entries(u.screenTime).sort(([, a], [, b]) => b - a)
                     : [];
@@ -267,7 +284,7 @@ export default function AnalyticsScreen({ navigation }) {
                         onPress={() => setExpandedUser(isExpanded ? null : u.uid)}
                       >
                         <Text style={styles.userUid} numberOfLines={1}>
-                          {u.uid.slice(0, 12)}...
+                          {displayName}
                         </Text>
                         <Text style={styles.userStat}>{formatSeconds(secs)}</Text>
                         <Text style={styles.userStat}>{acts} actions</Text>
@@ -276,6 +293,14 @@ export default function AnalyticsScreen({ navigation }) {
 
                       {isExpanded && (
                         <View style={styles.userDetail}>
+                          {profile && (
+                            <TouchableOpacity
+                              style={styles.viewProfileBtn}
+                              onPress={() => setSelectedProfile(profile)}
+                            >
+                              <Text style={styles.viewProfileBtnText}>View Profile</Text>
+                            </TouchableOpacity>
+                          )}
                           {userScreens.length > 0 && (
                             <>
                               <Text style={styles.detailHeader}>Screens:</Text>
@@ -312,6 +337,12 @@ export default function AnalyticsScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <UserProfileModal
+        visible={!!selectedProfile}
+        profile={selectedProfile}
+        onClose={() => setSelectedProfile(null)}
+      />
     </ImageBackground>
   );
 }
@@ -478,6 +509,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 10,
     marginBottom: 6,
+  },
+  viewProfileBtn: {
+    backgroundColor: 'rgba(255, 215, 0, 0.8)',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  viewProfileBtnText: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: '600',
   },
   detailHeader: {
     fontSize: 12,
