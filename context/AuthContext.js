@@ -197,10 +197,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const refreshProfile = async () => {
-    if (!isFirebaseConfigured || !user) return;
+  const refreshProfile = async (overrideUid) => {
+    const uid = overrideUid || user?.uid;
+    if (!isFirebaseConfigured || !uid) return;
     try {
-      const profile = await getUserProfile(user.uid);
+      const profile = await getUserProfile(uid);
       if (profile) {
         setUserProfile(profile);
         await AsyncStorage.setItem('cached_user_profile', JSON.stringify(profile));

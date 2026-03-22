@@ -1,0 +1,14 @@
+{
+  "firestore": {
+    "clear": [
+      {"collection": "users", "doc": "UID_VARIABLE", "subcollections": [{"collection": "artworks"}]},
+      {"collection": "users", "doc": "UID_VARIABLE", "subcollections": [{"collection": "inspirations"}]},
+      {"collection": "users", "doc": "UID_VARIABLE", "subcollections": [{"collection": "curated"}]},
+      {"collection": "users", "doc": "UID_VARIABLE", "subcollections": [{"collection": "manifests"}]},
+      {"collection": "users", "doc": "UID_VARIABLE", "subcollections": [{"collection": "progress"}]},
+      {"collection": "users", "doc": "UID_VARIABLE", "subcollections": [{"collection": "artTime"}]},
+      {"collection": "users", "doc": "UID_VARIABLE", "subcollections": [{"collection": "goals"}]},
+      {"collection": "users", "doc": "UID_VARIABLE"}
+    ]
+  }
+}

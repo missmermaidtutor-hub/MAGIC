@@ -16,6 +16,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
 import { auth } from '../../config/firebase';
+import { getUserProfile } from '../../services/firestoreService';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -31,7 +32,17 @@ export default function LoginScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const result = await signInWithEmailAndPassword(auth, email.trim(), password);
+      // Check if user has a profile — if not, redirect to complete signup
+      const profile = await getUserProfile(result.user.uid);
+      if (!profile) {
+        navigation.replace('SignUp', {
+          uid: result.user.uid,
+          email: result.user.email || email.trim(),
+          accountMethod: 'email',
+          skipCredentials: true,
+        });
+      }
     } catch (error) {
       let message = 'Could not sign in. Please check your credentials.';
       if (error.code === 'auth/user-not-found') message = 'No account found with this email.';
@@ -68,7 +79,7 @@ export default function LoginScreen({ navigation }) {
       setLoading(true);
       const result = await signInWithCredential(auth, credential);
 
-      // If new user, navigate to profile setup
+      // If new user OR existing user with no profile, navigate to profile setup
       if (result._tokenResponse?.isNewUser) {
         navigation.replace('SignUp', {
           uid: result.user.uid,
@@ -76,6 +87,16 @@ export default function LoginScreen({ navigation }) {
           accountMethod: 'apple',
           skipCredentials: true,
         });
+      } else {
+        const profile = await getUserProfile(result.user.uid);
+        if (!profile) {
+          navigation.replace('SignUp', {
+            uid: result.user.uid,
+            email: result.user.email || '',
+            accountMethod: 'apple',
+            skipCredentials: true,
+          });
+        }
       }
     } catch (error) {
       if (error.code !== 'ERR_CANCELED') {
@@ -95,7 +116,7 @@ export default function LoginScreen({ navigation }) {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
-      // If new user, redirect to profile setup
+      // If new user OR existing user with no profile, redirect to profile setup
       if (result._tokenResponse?.isNewUser) {
         navigation.replace('SignUp', {
           uid: result.user.uid,
@@ -103,6 +124,16 @@ export default function LoginScreen({ navigation }) {
           accountMethod: 'google',
           skipCredentials: true,
         });
+      } else {
+        const profile = await getUserProfile(result.user.uid);
+        if (!profile) {
+          navigation.replace('SignUp', {
+            uid: result.user.uid,
+            email: result.user.email || '',
+            accountMethod: 'google',
+            skipCredentials: true,
+          });
+        }
       }
     } catch (error) {
       if (error.code !== 'auth/popup-closed-by-user') {
@@ -177,13 +208,15 @@ export default function LoginScreen({ navigation }) {
               <View style={styles.dividerLine} />
             </View>
 
-            <TouchableOpacity
-              style={styles.appleButton}
-              onPress={handleAppleLogin}
-              disabled={loading}
-            >
-              <Text style={styles.appleButtonText}> Sign in with Apple</Text>
-            </TouchableOpacity>
+            {Platform.OS !== 'web' && (
+              <TouchableOpacity
+                style={styles.appleButton}
+                onPress={handleAppleLogin}
+                disabled={loading}
+              >
+                <Text style={styles.appleButtonText}> Sign in with Apple</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.googleButton}

@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Switch,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
 import { createUserWithEmailAndPassword, sendEmailVerification, signInWithCredential, OAuthProvider, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -72,12 +71,6 @@ export default function SignUpScreen({ navigation, route }) {
   const [gender, setGender] = useState('');
   const [showGenderList, setShowGenderList] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
-
-  // Step 3: Optional
-  const [currentLocation, setCurrentLocation] = useState({ country: '', state: '', city: '' });
-  const [heartLocation, setHeartLocation] = useState({ country: '', state: '', city: '' });
-  const [bio, setBio] = useState('');
-  const [anonymous, setAnonymous] = useState(true);
   const [referralCodeInput, setReferralCodeInput] = useState('');
 
   // Debounced username availability check
@@ -166,18 +159,16 @@ export default function SignUpScreen({ navigation, route }) {
       setLoading(true);
       const result = await signInWithCredential(auth, credential);
 
-      if (result._tokenResponse?.isNewUser) {
-        // New user — stay on SignUpScreen, jump to step 2
-        setEmail(result.user.email || appleCredential.email || '');
-        setSocialUid(result.user.uid);
-        setSocialMethod('apple');
-        setSkipCredentials(true);
-        setStep(2);
-      }
-      // Existing user → auth state change handles navigation
+      // New user or existing user with no profile — jump to step 2
+      setEmail(result.user.email || appleCredential.email || '');
+      setSocialUid(result.user.uid);
+      setSocialMethod('apple');
+      setSkipCredentials(true);
+      setStep(2);
     } catch (error) {
       if (error.code !== 'ERR_CANCELED') {
-        showAlert('Apple Sign In Failed', 'Could not sign in with Apple.');
+        console.log('Apple Sign In error:', error.code, error.message);
+        showAlert('Apple Sign In Failed', error.message || 'Could not sign in with Apple.');
       }
     }
     setLoading(false);
@@ -193,18 +184,16 @@ export default function SignUpScreen({ navigation, route }) {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
 
-      if (result._tokenResponse?.isNewUser) {
-        // New user — stay on SignUpScreen, jump to step 2
-        setEmail(result.user.email || '');
-        setSocialUid(result.user.uid);
-        setSocialMethod('google');
-        setSkipCredentials(true);
-        setStep(2);
-      }
-      // Existing user → auth state change handles navigation
+      // New user or existing user with no profile — jump to step 2
+      setEmail(result.user.email || '');
+      setSocialUid(result.user.uid);
+      setSocialMethod('google');
+      setSkipCredentials(true);
+      setStep(2);
     } catch (error) {
       if (error.code !== 'auth/popup-closed-by-user') {
-        showAlert('Google Sign In Failed', 'Could not sign in with Google.');
+        console.log('Google Sign In error:', error.code, error.message);
+        showAlert('Google Sign In Failed', error.message || 'Could not sign in with Google.');
       }
     }
     setLoading(false);
@@ -295,8 +284,14 @@ export default function SignUpScreen({ navigation, route }) {
 
       // Step 1: Create Firebase Auth account (email sign-up only)
       if (!skipCredentials) {
-        const result = await createUserWithEmailAndPassword(auth, userEmail, password);
-        uid = result.user.uid;
+        if (auth.currentUser) {
+          // Already created from a previous partial signup attempt — reuse
+          uid = auth.currentUser.uid;
+          userEmail = auth.currentUser.email || userEmail;
+        } else {
+          const result = await createUserWithEmailAndPassword(auth, userEmail, password);
+          uid = result.user.uid;
+        }
       }
 
       // Merge any existing AsyncStorage data
@@ -319,15 +314,15 @@ export default function SignUpScreen({ navigation, route }) {
         pseudonym: autoPseudonym,
         birthdate,
         timezone,
-        currentLocation: currentLocation.country ? currentLocation : (settings.currentLocation || { country: '', state: '', city: '' }),
-        heartLocation: heartLocation.country ? heartLocation : (settings.heartLocation || { country: '', state: '', city: '' }),
+        currentLocation: settings.currentLocation || { country: '', state: '', city: '' },
+        heartLocation: settings.heartLocation || { country: '', state: '', city: '' },
         favoriteMediums: settings.favoriteMediums || [],
         notificationPreference: settings.dailyReminder === false ? 'none' : 'daily',
         allowWorkBoutique: false,
-        anonymous,
+        anonymous: true,
         gender,
         phoneNumber: phoneNumber.trim(),
-        bio: bio || profile.bio || '',
+        bio: profile.bio || '',
         favoritePrompt: profile.favoritePrompt || '',
         pseudonymChangeCount: 0,
       });
@@ -342,7 +337,7 @@ export default function SignUpScreen({ navigation, route }) {
         username: username.trim(),
         pseudonym: autoPseudonym,
         timezone,
-        anonymous,
+        anonymous: true,
       };
       await AsyncStorage.setItem('app_settings', JSON.stringify(updatedSettings));
 
@@ -350,7 +345,7 @@ export default function SignUpScreen({ navigation, route }) {
         ...profile,
         username: username.trim(),
         pseudonym: autoPseudonym,
-        bio: bio || profile.bio || '',
+        bio: profile.bio || '',
       };
       await AsyncStorage.setItem('user_profile', JSON.stringify(updatedProfile));
 
@@ -379,7 +374,7 @@ export default function SignUpScreen({ navigation, route }) {
       await AsyncStorage.removeItem('quick_launch_dismissed');
 
       // Signal to AuthContext that profile is ready — triggers navigation to MainTabs
-      await refreshProfile();
+      await refreshProfile(uid);
     } catch (error) {
       let message = 'Could not create account. Please try again.';
       if (error.code === 'auth/email-already-in-use') message = 'An account with this email already exists.';
@@ -393,15 +388,17 @@ export default function SignUpScreen({ navigation, route }) {
   const renderStep1 = () => (
     <>
       <Text style={styles.stepTitle}>Create Your Account</Text>
-      <Text style={styles.stepIndicator}>Step 1 of 3</Text>
+      <Text style={styles.stepIndicator}>Step 1 of 2</Text>
 
-      <TouchableOpacity
-        style={styles.socialButton}
-        onPress={handleAppleSignUp}
-        disabled={loading}
-      >
-        <Text style={styles.socialButtonText}> Sign up with Apple</Text>
-      </TouchableOpacity>
+      {Platform.OS !== 'web' && (
+        <TouchableOpacity
+          style={styles.socialButton}
+          onPress={handleAppleSignUp}
+          disabled={loading}
+        >
+          <Text style={styles.socialButtonText}> Sign up with Apple</Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         style={styles.socialButton}
@@ -457,7 +454,7 @@ export default function SignUpScreen({ navigation, route }) {
   const renderStep2 = () => (
     <>
       <Text style={styles.stepTitle}>Your Profile</Text>
-      <Text style={styles.stepIndicator}>Step 2 of 3 — Required</Text>
+      <Text style={styles.stepIndicator}>Step 2 of 2</Text>
 
       <Text style={styles.inputLabel}>First Name</Text>
       <TextInput
@@ -586,6 +583,17 @@ export default function SignUpScreen({ navigation, route }) {
         </View>
       )}
 
+      <Text style={styles.inputLabel}>Referral Code (optional)</Text>
+      <Text style={styles.fieldHint}>Were you invited by a friend? Enter their code here.</Text>
+      <TextInput
+        style={styles.textInput}
+        value={referralCodeInput}
+        onChangeText={setReferralCodeInput}
+        placeholder="e.g. MAGIC-ABC123"
+        placeholderTextColor="#999"
+        autoCapitalize="characters"
+      />
+
       <View style={styles.buttonRow}>
         {!skipCredentials && (
           <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(1)}>
@@ -601,93 +609,35 @@ export default function SignUpScreen({ navigation, route }) {
 
   const renderStep3 = () => (
     <>
-      <Text style={styles.stepTitle}>Optional Details</Text>
-      <Text style={styles.stepIndicator}>Step 3 of 3 — Optional</Text>
+      <Text style={styles.stepTitle}>Confirm Your Account</Text>
+      <Text style={styles.stepIndicator}>Almost there!</Text>
 
-      <Text style={styles.inputLabel}>Bio</Text>
-      <TextInput
-        style={[styles.textInput, styles.textArea]}
-        value={bio}
-        onChangeText={setBio}
-        placeholder="Tell us about yourself..."
-        placeholderTextColor="#999"
-        multiline
-        numberOfLines={3}
-      />
+      <View style={styles.confirmSection}>
+        <Text style={styles.confirmLabel}>Name</Text>
+        <Text style={styles.confirmValue}>{firstName} {lastName}</Text>
 
-      <Text style={styles.inputLabel}>Current Location</Text>
-      <View style={styles.locationRow}>
-        <TextInput
-          style={[styles.textInput, styles.locationInput]}
-          value={currentLocation.country}
-          onChangeText={v => setCurrentLocation(p => ({ ...p, country: v }))}
-          placeholder="Country"
-          placeholderTextColor="#999"
-        />
-        <TextInput
-          style={[styles.textInput, styles.locationInput]}
-          value={currentLocation.state}
-          onChangeText={v => setCurrentLocation(p => ({ ...p, state: v }))}
-          placeholder="State"
-          placeholderTextColor="#999"
-        />
-        <TextInput
-          style={[styles.textInput, styles.locationInput]}
-          value={currentLocation.city}
-          onChangeText={v => setCurrentLocation(p => ({ ...p, city: v }))}
-          placeholder="City"
-          placeholderTextColor="#999"
-        />
+        <Text style={styles.confirmLabel}>Username</Text>
+        <Text style={styles.confirmValue}>{username}</Text>
+
+        <Text style={styles.confirmLabel}>Email</Text>
+        <Text style={styles.confirmValue}>{email}</Text>
+
+        <Text style={styles.confirmLabel}>Birthdate</Text>
+        <Text style={styles.confirmValue}>{birthdate}</Text>
+
+        <Text style={styles.confirmLabel}>Gender</Text>
+        <Text style={styles.confirmValue}>{GENDER_OPTIONS.find(g => g.key === gender)?.label || gender}</Text>
+
+        <Text style={styles.confirmLabel}>Timezone</Text>
+        <Text style={styles.confirmValue}>{TIMEZONES.find(t => t.key === timezone)?.label || timezone}</Text>
       </View>
 
-      <Text style={styles.inputLabel}>Heart Location</Text>
-      <View style={styles.locationRow}>
-        <TextInput
-          style={[styles.textInput, styles.locationInput]}
-          value={heartLocation.country}
-          onChangeText={v => setHeartLocation(p => ({ ...p, country: v }))}
-          placeholder="Country"
-          placeholderTextColor="#999"
-        />
-        <TextInput
-          style={[styles.textInput, styles.locationInput]}
-          value={heartLocation.state}
-          onChangeText={v => setHeartLocation(p => ({ ...p, state: v }))}
-          placeholder="State"
-          placeholderTextColor="#999"
-        />
-        <TextInput
-          style={[styles.textInput, styles.locationInput]}
-          value={heartLocation.city}
-          onChangeText={v => setHeartLocation(p => ({ ...p, city: v }))}
-          placeholder="City"
-          placeholderTextColor="#999"
-        />
+      <View style={styles.confirmNote}>
+        <Text style={styles.confirmNoteText}>
+          You can update your bio, location, and other details anytime from the{' '}
+          <Text style={styles.confirmNoteBold}>About You</Text> page in the menu.
+        </Text>
       </View>
-
-      <View style={styles.settingRow}>
-        <View style={styles.settingInfo}>
-          <Text style={styles.settingLabel}>Post Anonymously</Text>
-          <Text style={styles.settingDescription}>Hide your name on public posts</Text>
-        </View>
-        <Switch
-          value={anonymous}
-          onValueChange={setAnonymous}
-          trackColor={{ false: '#ccc', true: '#4B0082' }}
-          thumbColor={anonymous ? '#FFD700' : '#999'}
-        />
-      </View>
-
-      <Text style={styles.inputLabel}>Referral Code (optional)</Text>
-      <Text style={styles.fieldHint}>Were you invited by a friend? Enter their code here.</Text>
-      <TextInput
-        style={styles.textInput}
-        value={referralCodeInput}
-        onChangeText={setReferralCodeInput}
-        placeholder="e.g. MAGIC-ABC123"
-        placeholderTextColor="#999"
-        autoCapitalize="characters"
-      />
 
       <View style={styles.buttonRow}>
         <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(2)}>
@@ -795,9 +745,34 @@ const styles = StyleSheet.create({
   inputInvalid: {
     borderColor: '#FF6B6B',
   },
-  textArea: {
-    minHeight: 80,
-    textAlignVertical: 'top',
+  confirmSection: {
+    marginBottom: 16,
+  },
+  confirmLabel: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 2,
+    fontWeight: '600',
+  },
+  confirmValue: {
+    fontSize: 16,
+    color: '#4B0082',
+    marginBottom: 12,
+  },
+  confirmNote: {
+    backgroundColor: 'rgba(75, 0, 130, 0.08)',
+    borderRadius: 8,
+    padding: 14,
+    marginBottom: 16,
+  },
+  confirmNoteText: {
+    fontSize: 14,
+    color: '#4B0082',
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  confirmNoteBold: {
+    fontWeight: 'bold',
   },
   checkingText: {
     color: '#4B0082',
@@ -818,13 +793,6 @@ const styles = StyleSheet.create({
     marginTop: -12,
     marginBottom: 12,
     fontWeight: '600',
-  },
-  locationRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  locationInput: {
-    flex: 1,
   },
   dropdownButton: {
     borderRadius: 8,
@@ -866,27 +834,6 @@ const styles = StyleSheet.create({
   dropdownItemTextActive: {
     color: '#4B0082',
     fontWeight: '600',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    marginBottom: 16,
-  },
-  settingInfo: {
-    flex: 1,
-    marginRight: 15,
-  },
-  settingLabel: {
-    fontSize: 16,
-    color: '#4B0082',
-    fontWeight: '600',
-  },
-  settingDescription: {
-    fontSize: 13,
-    color: '#888',
-    marginTop: 2,
   },
   primaryButton: {
     backgroundColor: '#FFD700',
