@@ -94,11 +94,11 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 18,
-    color: '#E0E0E0',
+    color: '#4B0082',
     fontWeight: '500',
   },
   arrow: {
     fontSize: 24,
-    color: '#E0E0E0',
+    color: '#4B0082',
   },
 });

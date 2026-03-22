@@ -116,6 +116,9 @@ export default function ComingSoonScreen({ route, navigation }) {
       <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
         <Text style={styles.closeBtnText}>✕</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
+        <Text style={styles.menuBtnText}>☰</Text>
+      </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Coming Soon</Text>
 
@@ -204,7 +207,7 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#4B0082',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 24,
@@ -214,7 +217,7 @@ const styles = StyleSheet.create({
   boutiqueCard: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#FFD700',
+    borderColor: '#4B0082',
     borderRadius: 16,
     padding: 20,
     width: '100%',
@@ -225,12 +228,12 @@ const styles = StyleSheet.create({
   boutiqueTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#4B0082',
     marginBottom: 4,
   },
   boutiqueSubtitle: {
     fontSize: 14,
-    color: '#ccc',
+    color: '#4B0082',
     marginBottom: 16,
   },
   boutiqueItems: {
@@ -247,7 +250,7 @@ const styles = StyleSheet.create({
   },
   boutiqueLabel: {
     fontSize: 12,
-    color: '#FFD700',
+    color: '#4B0082',
     fontWeight: '600',
   },
 
@@ -255,13 +258,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 4,
   },
   sectionSubtitle: {
     fontSize: 13,
-    color: '#aaa',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -272,17 +275,17 @@ const styles = StyleSheet.create({
   voteRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.06)',
+    backgroundColor: 'rgba(75, 0, 130, 0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
+    borderColor: 'rgba(75, 0, 130, 0.25)',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 10,
   },
   voteRowVoted: {
-    borderColor: '#FFD700',
-    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    borderColor: '#4B0082',
+    backgroundColor: 'rgba(75, 0, 130, 0.12)',
   },
   voteEmoji: {
     fontSize: 24,
@@ -291,23 +294,23 @@ const styles = StyleSheet.create({
   voteLabel: {
     flex: 1,
     fontSize: 16,
-    color: '#fff',
+    color: '#4B0082',
     fontWeight: '600',
   },
   voteBadge: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(75, 0, 130, 0.15)',
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 3,
     marginRight: 8,
   },
   voteBadgeText: {
-    color: '#FFD700',
+    color: '#4B0082',
     fontSize: 13,
     fontWeight: '700',
   },
   voteCheck: {
-    color: '#FFD700',
+    color: '#4B0082',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -318,10 +321,10 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(75, 0, 130, 0.3)',
     borderRadius: 12,
     padding: 14,
-    color: '#fff',
+    color: '#4B0082',
     fontSize: 14,
     minHeight: 100,
     textAlignVertical: 'top',
@@ -353,6 +356,23 @@ const styles = StyleSheet.create({
   closeBtnText: {
     color: '#fff',
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  menuBtn: {
+    position: 'absolute',
+    top: 44,
+    left: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  menuBtnText: {
+    color: '#fff',
+    fontSize: 20,
     fontWeight: 'bold',
   },
 });

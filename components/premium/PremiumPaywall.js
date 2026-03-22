@@ -12,7 +12,7 @@ import { trackAction } from '../../services/analyticsService';
  *   compact   – if true, renders a small inline banner instead of full card
  *   onUpgrade – optional callback when "Upgrade" is tapped (future IAP flow)
  */
-export default function PremiumPaywall({ feature, message, compact = false, onUpgrade }) {
+export default function PremiumPaywall({ feature, message, compact = false, align = 'right', onUpgrade }) {
   const label = FEATURE_LABELS[feature] || 'This Feature';
   const description = FEATURE_DESCRIPTIONS[feature];
   const defaultMessage = description
@@ -23,9 +23,11 @@ export default function PremiumPaywall({ feature, message, compact = false, onUp
     trackAction('premium_paywall_shown');
   }, []);
 
+  const isLeft = align === 'left';
+
   if (compact) {
     return (
-      <View style={styles.compactContainer}>
+      <View style={[styles.compactContainer, isLeft && styles.compactContainerLeft]}>
         <Text style={styles.compactLock}>&#x1F512;</Text>
         <View style={{ flex: 1 }}>
           <Text style={styles.compactText}>{message || `${label} — Premium Feature`}</Text>
@@ -38,7 +40,7 @@ export default function PremiumPaywall({ feature, message, compact = false, onUp
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isLeft && styles.containerLeft]}>
       <View
         style={styles.card}
       >
@@ -70,6 +72,9 @@ const styles = StyleSheet.create({
   container: {
     paddingVertical: 12,
     alignItems: 'flex-end',
+  },
+  containerLeft: {
+    alignItems: 'flex-start',
   },
   card: {
     borderRadius: 12,
@@ -141,6 +146,9 @@ const styles = StyleSheet.create({
     marginVertical: 4,
     alignSelf: 'flex-end',
     width: '50%',
+  },
+  compactContainerLeft: {
+    alignSelf: 'flex-start',
   },
   compactLock: {
     fontSize: 14,

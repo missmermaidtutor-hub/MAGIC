@@ -14,7 +14,7 @@ import PremiumPaywall from './PremiumPaywall';
  *   message   – optional custom paywall message
  *   children  – the gated content
  */
-export default function PremiumGate({ feature, fallback, compact, message, children }) {
+export default function PremiumGate({ feature, fallback, compact, message, align, children }) {
   const { userProfile } = useAuth();
   const hasAccess = canAccessFeature(feature, userProfile);
 
@@ -22,5 +22,5 @@ export default function PremiumGate({ feature, fallback, compact, message, child
 
   if (fallback) return <>{fallback}</>;
 
-  return <PremiumPaywall feature={feature} compact={compact} message={message} />;
+  return <PremiumPaywall feature={feature} compact={compact} message={message} align={align} />;
 }

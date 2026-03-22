@@ -9,23 +9,42 @@ import {
   ImageBackground
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../context/AuthContext';
+import { canAccessFeature } from '../../utils/premiumUtils';
+import PremiumPaywall from '../../components/premium/PremiumPaywall';
+import { getQuoteLikeCounts } from '../../services/firestoreService';
+
+const quoteKeyFromText = (text) => text.slice(0, 80).replace(/[^a-zA-Z0-9]/g, '_');
 
 export default function QuotesScreen({ navigation }) {
+  const { userProfile } = useAuth();
   const [favoriteQuotes, setFavoriteQuotes] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [likeCounts, setLikeCounts] = useState({});
+  const isPremium = canAccessFeature('favoriteQuotes', userProfile);
 
   useEffect(() => {
     loadFavorites();
+    loadLikeCounts();
   }, []);
 
   const loadFavorites = async () => {
     try {
-      const saved = await AsyncStorage.getItem('favorite_quotes');
+      const saved = await AsyncStorage.getItem('hearted_quotes');
       if (saved) {
         setFavoriteQuotes(JSON.parse(saved));
       }
     } catch (error) {
       console.log('Error loading favorites:', error);
+    }
+  };
+
+  const loadLikeCounts = async () => {
+    try {
+      const counts = await getQuoteLikeCounts();
+      setLikeCounts(counts);
+    } catch (error) {
+      console.log('Error loading quote like counts:', error);
     }
   };
 
@@ -39,7 +58,7 @@ export default function QuotesScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header with Back Button */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
@@ -56,39 +75,65 @@ export default function QuotesScreen({ navigation }) {
 
         <Text style={styles.subtitle}>Your Favorite Quotes</Text>
 
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search quotes..."
-            placeholderTextColor="#666"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-
-        {filteredQuotes.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>💜</Text>
-            <Text style={styles.emptyText}>
-              {searchQuery 
-                ? 'No quotes found' 
-                : 'No favorite quotes yet'}
+        {/* Premium gate check */}
+        {!isPremium ? (
+          <View style={styles.premiumGateContainer}>
+            <Text style={styles.premiumGateText}>
+              Browsing your favorite quote archive is a premium feature.
             </Text>
-            <Text style={styles.emptySubtext}>
-              {!searchQuery && 'Heart a quote from the Manifest page to save it here!'}
+            <Text style={styles.premiumGateHint}>
+              You have {favoriteQuotes.length} saved quote{favoriteQuotes.length !== 1 ? 's' : ''} waiting for you!
             </Text>
+            <PremiumPaywall feature="favoriteQuotes" compact />
           </View>
         ) : (
-          filteredQuotes.map((item, index) => (
-            <View key={index} style={styles.quoteCard}>
-              <Text style={styles.quoteText}>"{item.quote}"</Text>
-              <Text style={styles.quoteAuthor}>~ {item.author}</Text>
-              <View style={styles.heartBadge}>
-                <Text style={styles.heartIcon}>💜</Text>
-              </View>
+          <>
+            {/* Search */}
+            <View style={styles.searchContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search quotes..."
+                placeholderTextColor="#666"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
             </View>
-          ))
+
+            {filteredQuotes.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>💜</Text>
+                <Text style={styles.emptyText}>
+                  {searchQuery
+                    ? 'No quotes found'
+                    : 'No favorite quotes yet'}
+                </Text>
+                <Text style={styles.emptySubtext}>
+                  {!searchQuery && 'Heart a quote from the Manifest page to save it here!'}
+                </Text>
+              </View>
+            ) : (
+              filteredQuotes.map((item, index) => {
+                const key = quoteKeyFromText(item.quote);
+                const count = likeCounts[key] || 0;
+                return (
+                  <View key={index} style={styles.quoteCard}>
+                    <Text style={styles.quoteText}>"{item.quote}"</Text>
+                    <Text style={styles.quoteAuthor}>~ {item.author}</Text>
+                    <View style={styles.cardFooter}>
+                      <View style={styles.likeCount}>
+                        <Text style={styles.likeCountText}>
+                          {count} {count === 1 ? 'like' : 'likes'}
+                        </Text>
+                      </View>
+                      <View style={styles.heartBadge}>
+                        <Text style={styles.heartIcon}>💜</Text>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+          </>
         )}
       </ScrollView>
     </ImageBackground>
@@ -125,9 +170,6 @@ const styles = StyleSheet.create({
     color: '#8E0DD3',
     fontWeight: 'bold',
   },
-  backButtonPlaceholder: {
-    width: 44,
-  },
   header: {
     fontSize: 32,
     fontWeight: 'bold',
@@ -140,6 +182,29 @@ const styles = StyleSheet.create({
     color: '#E0E0E0',
     textAlign: 'center',
     marginBottom: 20,
+    fontStyle: 'italic',
+  },
+  premiumGateContainer: {
+    backgroundColor: 'rgba(24, 112, 162, 0.5)',
+    borderWidth: 2,
+    borderColor: '#9C27B0',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  premiumGateText: {
+    fontSize: 16,
+    color: '#E0E0E0',
+    textAlign: 'center',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  premiumGateHint: {
+    fontSize: 14,
+    color: '#FFD700',
+    textAlign: 'center',
+    marginBottom: 16,
     fontStyle: 'italic',
   },
   searchContainer: {
@@ -161,7 +226,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 3,
     borderColor: '#9C27B0',
-    position: 'relative',
   },
   quoteText: {
     fontSize: 16,
@@ -173,12 +237,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#E0E0E0',
     fontStyle: 'italic',
+    marginBottom: 8,
   },
-  heartBadge: {
-    position: 'absolute',
-    top: 15,
-    right: 15,
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
   },
+  likeCount: {
+    backgroundColor: 'rgba(156, 39, 176, 0.25)',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  likeCountText: {
+    fontSize: 12,
+    color: '#DDA0DD',
+    fontWeight: '600',
+  },
+  heartBadge: {},
   heartIcon: {
     fontSize: 24,
   },

@@ -13,7 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getESTDate, msUntilESTMidnight } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
-import { saveManifest } from '../services/firestoreService';
+import { saveManifest, likeQuote, unlikeQuote } from '../services/firestoreService';
 import { canAccessFeature } from '../utils/premiumUtils';
 import { showAlert } from '../utils/alertUtils';
 import PremiumPaywall from '../components/premium/PremiumPaywall';
@@ -319,8 +319,18 @@ export default function ManifestScreen() {
 
       if (exists) {
         saved = saved.filter(q => q.quote !== quoteObj.quote);
+        trackAction('quote_unhearted');
+        // Remove Firestore like
+        if (user) {
+          unlikeQuote(user.uid, quoteObj.quote).catch(e => console.log('Unlike quote error:', e));
+        }
       } else {
         saved.push({ ...quoteObj, heartedAt: new Date().toISOString() });
+        trackAction('quote_hearted');
+        // Record Firestore like
+        if (user) {
+          likeQuote(user.uid, quoteObj.quote, quoteObj.author).catch(e => console.log('Like quote error:', e));
+        }
       }
 
       await AsyncStorage.setItem('hearted_quotes', JSON.stringify(saved));

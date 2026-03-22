@@ -129,6 +129,8 @@ const FEATURE_RULES = {
   studioAdvancedText: (isPremium) => isPremium,
   pseudonymChange: (isPremium) => isPremium,
   galleryOrganizing: (isPremium) => isPremium,
+  streakPause: (isPremium) => isPremium,
+  streakSaver: (isPremium) => isPremium,
 };
 
 /**
@@ -209,6 +211,8 @@ export const FEATURE_DESCRIPTIONS = {
   studioAdvancedText: 'Add italic, underline, strikethrough formatting plus font families and all 12 colors to text overlays.',
   pseudonymChange: 'Change your artist pseudonym as often as you like with premium access.',
   galleryOrganizing: 'Organize your gallery with folders, custom ordering, tags, and sorting to showcase your art your way.',
+  streakPause: 'Take a break without losing your streak. Pause up to 3 days per month while keeping your progress intact.',
+  streakSaver: 'Automatically save your streak when you miss a day. One free save per 13-day cycle.',
 };
 
 /** Feature name → user-friendly label for paywalls. */
@@ -224,6 +228,8 @@ export const FEATURE_LABELS = {
   studioAdvancedText: 'Advanced Text Styling',
   pseudonymChange: 'Pseudonym Changes',
   galleryOrganizing: 'Gallery Organizing',
+  streakPause: 'Streak Pause',
+  streakSaver: 'Streak Saver',
 };
 
 // ── Pseudonym change gating ──

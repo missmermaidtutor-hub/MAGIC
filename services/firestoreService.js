@@ -1061,3 +1061,54 @@ export const checkAndGrantReferralTrial = async (uid) => {
 
   return true;
 };
+
+// ============================================================
+// QUOTE LIKES (global tracking of how many users liked each quote)
+// ============================================================
+
+// Generate a stable key from quote text
+const quoteKey = (text) => text.slice(0, 80).replace(/[^a-zA-Z0-9]/g, '_');
+
+// Like a quote (one like per user per quote)
+export const likeQuote = async (uid, quoteText, author) => {
+  const key = quoteKey(quoteText);
+  const q = query(
+    collection(db, 'quoteLikes'),
+    where('quoteKey', '==', key),
+    where('uid', '==', uid),
+  );
+  const snap = await getDocs(q);
+  if (!snap.empty) return; // already liked
+  await addDoc(collection(db, 'quoteLikes'), {
+    quoteKey: key,
+    quoteText,
+    author: author || '',
+    uid,
+    createdAt: serverTimestamp(),
+  });
+};
+
+// Unlike a quote
+export const unlikeQuote = async (uid, quoteText) => {
+  const key = quoteKey(quoteText);
+  const q = query(
+    collection(db, 'quoteLikes'),
+    where('quoteKey', '==', key),
+    where('uid', '==', uid),
+  );
+  const snap = await getDocs(q);
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+  if (!snap.empty) await batch.commit();
+};
+
+// Get like counts for all quotes (returns { quoteKey: count })
+export const getQuoteLikeCounts = async () => {
+  const snap = await getDocs(collection(db, 'quoteLikes'));
+  const counts = {};
+  snap.docs.forEach(d => {
+    const k = d.data().quoteKey;
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  return counts;
+};

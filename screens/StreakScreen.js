@@ -29,6 +29,13 @@ const MAGIC_COLORS = {
   inspire:  '#34D058',  // Bright Green
   connect:  '#8B5CF6',  // Bright Violet
 };
+const MAGIC_DARK = {
+  manifest: '#78000E',
+  art:      '#9E4502',
+  grow:     '#c1a900',
+  inspire:  '#3c9820',
+  connect:  '#5008a7',
+};
 const MAGIC_KEYS = ['manifest', 'art', 'goal', 'inspire', 'courage'];
 const MAGIC_COLOR_ARRAY = [MAGIC_COLORS.manifest, MAGIC_COLORS.art, MAGIC_COLORS.grow, MAGIC_COLORS.inspire, MAGIC_COLORS.connect];
 const MAGIC_LABELS = ['Manifest', 'Art', 'Grow', 'Inspire', 'Connect'];
@@ -535,16 +542,16 @@ export default function StreakScreen() {
         {/* Legend */}
         <View style={styles.legendCard}>
           <View style={styles.legendRowH}>
-            <View style={[styles.legendDot, { backgroundColor: MAGIC_COLORS.manifest }]} />
-            <Text style={[styles.legendLetter, { color: MAGIC_COLORS.manifest }]}>M</Text>
-            <View style={[styles.legendDot, { backgroundColor: MAGIC_COLORS.art }]} />
-            <Text style={[styles.legendLetter, { color: MAGIC_COLORS.art }]}>A</Text>
-            <View style={[styles.legendDot, { backgroundColor: MAGIC_COLORS.grow }]} />
-            <Text style={[styles.legendLetter, { color: MAGIC_COLORS.grow }]}>G</Text>
-            <View style={[styles.legendDot, { backgroundColor: MAGIC_COLORS.inspire }]} />
-            <Text style={[styles.legendLetter, { color: MAGIC_COLORS.inspire }]}>I</Text>
-            <View style={[styles.legendDot, { backgroundColor: MAGIC_COLORS.connect }]} />
-            <Text style={[styles.legendLetter, { color: MAGIC_COLORS.connect }]}>C</Text>
+            <View style={[styles.legendDot, { backgroundColor: MAGIC_DARK.manifest }]} />
+            <Text style={[styles.legendLetter, { color: MAGIC_DARK.manifest }]}>M</Text>
+            <View style={[styles.legendDot, { backgroundColor: MAGIC_DARK.art }]} />
+            <Text style={[styles.legendLetter, { color: MAGIC_DARK.art }]}>A</Text>
+            <View style={[styles.legendDot, { backgroundColor: MAGIC_DARK.grow }]} />
+            <Text style={[styles.legendLetter, { color: MAGIC_DARK.grow }]}>G</Text>
+            <View style={[styles.legendDot, { backgroundColor: MAGIC_DARK.inspire }]} />
+            <Text style={[styles.legendLetter, { color: MAGIC_DARK.inspire }]}>I</Text>
+            <View style={[styles.legendDot, { backgroundColor: MAGIC_DARK.connect }]} />
+            <Text style={[styles.legendLetter, { color: MAGIC_DARK.connect }]}>C</Text>
           </View>
         </View>
 
@@ -604,6 +611,14 @@ export default function StreakScreen() {
             <Text style={styles.statLabel}>Total Active</Text>
           </View>
         </View>
+
+        {/* Streak protection — premium (left-aligned to balance right boxes) */}
+        <PremiumGate feature="streakPause" compact align="left">
+          <View />
+        </PremiumGate>
+        <PremiumGate feature="streakSaver" compact align="left">
+          <View />
+        </PremiumGate>
 
         {/* Row 2–4: Premium stats (MAGIC categories, goals, inspiring) */}
         <PremiumGate feature="advancedStats" compact>
@@ -970,7 +985,7 @@ const styles = StyleSheet.create({
   },
   todayButtonText: {
     fontSize: 13,
-    color: '#87CEEB',
+    color: '#c1a900',
     fontWeight: '600',
   },
 
@@ -994,12 +1009,12 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#4FC3F7',
+    color: '#c1a900',
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 10,
-    color: '#888',
+    color: '#c1a900',
     textAlign: 'center',
   },
 

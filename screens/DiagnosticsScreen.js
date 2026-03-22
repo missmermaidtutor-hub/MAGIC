@@ -170,6 +170,9 @@ export default function DiagnosticsScreen({ navigation }) {
       <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
         <Text style={styles.closeBtnText}>✕</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
+        <Text style={styles.menuBtnText}>☰</Text>
+      </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Bug Check</Text>
         <Text style={styles.subtitle}>Firestore Diagnostics</Text>
@@ -239,14 +242,14 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#4B0082',
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#aaa',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -255,7 +258,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   loadingText: {
-    color: '#FFD700',
+    color: '#4B0082',
     fontSize: 14,
     marginTop: 12,
   },
@@ -273,9 +276,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   checkCard: {
-    backgroundColor: 'rgba(255, 215, 0, 0.06)',
+    backgroundColor: 'rgba(75, 0, 130, 0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.2)',
+    borderColor: 'rgba(75, 0, 130, 0.25)',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -288,7 +291,7 @@ const styles = StyleSheet.create({
   checkTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFD700',
+    color: '#4B0082',
     flex: 1,
   },
   countBadge: {
@@ -306,12 +309,12 @@ const styles = StyleSheet.create({
   detailList: {
     marginTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 215, 0, 0.15)',
+    borderTopColor: 'rgba(75, 0, 130, 0.15)',
     paddingTop: 10,
   },
   detailItem: {
     fontSize: 12,
-    color: '#ccc',
+    color: '#4B0082',
     lineHeight: 18,
     paddingVertical: 3,
   },
@@ -336,6 +339,23 @@ const styles = StyleSheet.create({
   closeBtnText: {
     color: '#fff',
     fontSize: 18,
+    fontWeight: 'bold',
+  },
+  menuBtn: {
+    position: 'absolute',
+    top: 44,
+    left: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  menuBtnText: {
+    color: '#fff',
+    fontSize: 20,
     fontWeight: 'bold',
   },
 });
