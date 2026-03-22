@@ -1176,12 +1176,16 @@ export default function CommunityScreen({ navigation, route }) {
 
       case 'private': {
         // Sort newest first
-        const sortedPersonal = [...personalArtworks].sort((a, b) =>
-          (b.savedAt || b.date || '').localeCompare(a.savedAt || a.date || '')
-        );
-        const sortedInspirations = [...inspirationArtworks].sort((a, b) =>
-          (b.savedAt || b.date || '').localeCompare(a.savedAt || a.date || '')
-        );
+        const sortedPersonal = [...personalArtworks].sort((a, b) => {
+          const aTime = a.savedAt?.toMillis?.() || a.savedAt || a.date || 0;
+          const bTime = b.savedAt?.toMillis?.() || b.savedAt || b.date || 0;
+          return bTime - aTime;
+        });
+        const sortedInspirations = [...inspirationArtworks].sort((a, b) => {
+          const aTime = a.savedAt?.toMillis?.() || a.savedAt || a.date || 0;
+          const bTime = b.savedAt?.toMillis?.() || b.savedAt || b.date || 0;
+          return bTime - aTime;
+        });
 
         return (
           <>
