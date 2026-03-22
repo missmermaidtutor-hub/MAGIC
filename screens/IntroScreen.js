@@ -60,7 +60,8 @@ const PAGES = [
     title: 'Art',
     body:
       'Create something today.\n\n' +
-      'Use the daily prompt (or don\'t), sketch, paint, write, snap a photo. Set the art timer and let your creativity flow — even 5 minutes counts. (If the Be Creative Prompt isn\'t inspiring, click the nudge for more ideas)',
+      'Use the daily prompt (or don\'t), sketch, paint, write, snap a photo. Set the art timer and let your creativity flow — even 5 minutes counts. (If the Be Creative Prompt isn\'t inspiring, click the nudge for more ideas)\n\n' +
+      'Every day, submit your work courageously. It doesn\'t need to be perfect, or even good. Share that you\'ve spent time with creativity. Courage is used to Inspire.',
     image: 'art',
   },
   {
@@ -123,7 +124,8 @@ const IntroStar = ({ size = 48 }) => {
   );
 };
 
-export default function IntroScreen({ navigation }) {
+export default function IntroScreen({ navigation, route }) {
+  const fromMenu = route.params?.fromMenu || false;
   const [page, setPage] = useState(0);
   const current = PAGES[page];
 
@@ -140,13 +142,27 @@ export default function IntroScreen({ navigation }) {
   };
 
   const handleGetStarted = async () => {
-    await AsyncStorage.setItem('quick_launch_dismissed', 'true');
-    navigation.navigate('Home');
+    if (fromMenu) {
+      navigation.navigate('Menu');
+    } else {
+      await AsyncStorage.setItem('quick_launch_dismissed', 'true');
+      navigation.navigate('Home');
+    }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.inner}>
+        {/* Menu button */}
+        {fromMenu && (
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => navigation.navigate('Menu')}
+          >
+            <Text style={styles.menuButtonText}>&#9776;</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Page content */}
         <ScrollView contentContainerStyle={styles.contentArea} showsVerticalScrollIndicator={false}>
           {/* Step indicator */}
@@ -268,6 +284,17 @@ const styles = StyleSheet.create({
     paddingTop: 80,
     paddingBottom: 40,
     justifyContent: 'space-between',
+  },
+  menuButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 10,
+    padding: 8,
+  },
+  menuButtonText: {
+    fontSize: 28,
+    color: '#4B0082',
   },
   contentArea: {
     flexGrow: 1,
