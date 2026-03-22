@@ -304,6 +304,14 @@ function AppContent() {
   const navigationRef = useNavigationContainerRef();
 
   useEffect(() => {
+    // Only determine initial route when user is fully authenticated with a profile
+    // This ensures we re-check after signup (which clears quick_launch_dismissed)
+    if (!user || !userProfile) {
+      setInitialRoute(null);
+      setCheckingLaunch(true);
+      return;
+    }
+
     const checkQuickLaunch = async () => {
       try {
         const dismissed = await AsyncStorage.getItem('quick_launch_dismissed');
@@ -314,7 +322,7 @@ function AppContent() {
       setCheckingLaunch(false);
     };
     checkQuickLaunch();
-  }, []);
+  }, [user, userProfile]);
 
   // Initialize/teardown analytics when user changes
   useEffect(() => {
@@ -353,7 +361,7 @@ function AppContent() {
     }
   };
 
-  if (loading || checkingLaunch) {
+  if (loading || (user && userProfile && checkingLaunch)) {
     return (
       <ImageBackground source={require('./assets/background.png')} style={styles.loadingContainer} resizeMode="cover">
         <ActivityIndicator size="large" color="#FFD700" />
@@ -377,7 +385,7 @@ function AppContent() {
       }}
       onStateChange={handleNavigationStateChange}
     >
-      {user ? <MainTabs initialRoute={initialRoute} /> : <AuthNavigator />}
+      {user && userProfile ? <MainTabs initialRoute={initialRoute} /> : <AuthNavigator />}
     </NavigationContainer>
   );
 }

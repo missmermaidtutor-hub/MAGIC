@@ -49,27 +49,9 @@ export function AuthProvider({ children }) {
             // Trigger non-blocking background sync
             backgroundSync(firebaseUser.uid);
           } else {
-            // Auto-create profile for signed-in users who don't have one
-            try {
-              await createUserProfile(firebaseUser.uid, {
-                email: firebaseUser.email || '',
-                accountMethod: firebaseUser.providerData?.[0]?.providerId === 'google.com' ? 'google'
-                  : firebaseUser.providerData?.[0]?.providerId === 'apple.com' ? 'apple'
-                  : 'email',
-                pseudonym: firebaseUser.displayName || '',
-              });
-              const newProfile = await getUserProfile(firebaseUser.uid);
-              if (newProfile) {
-                setUserProfile(newProfile);
-                await AsyncStorage.setItem('cached_user_profile', JSON.stringify(newProfile));
-              }
-            } catch (createError) {
-              console.log('Error creating profile:', createError);
-              captureError(createError, { context: 'createProfile' });
-              // Fallback to cached profile
-              const cached = await AsyncStorage.getItem('cached_user_profile');
-              if (cached) setUserProfile(JSON.parse(cached));
-            }
+            // No profile yet — user needs to complete signup flow
+            // Don't auto-create; SignUpScreen will create the full profile
+            console.log('No profile found for user:', firebaseUser.uid, '— awaiting signup completion');
           }
         } catch (error) {
           console.log('Error loading profile, using cache:', error);

@@ -19,6 +19,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { auth } from '../../config/firebase';
 import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable, applyReferralCode } from '../../services/firestoreService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../context/AuthContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -44,6 +45,8 @@ const TIMEZONES = [
 ];
 
 export default function SignUpScreen({ navigation, route }) {
+  const { refreshProfile } = useAuth();
+
   // If coming from Apple/Google sign-in (via LoginScreen), skip credential step
   const [skipCredentials, setSkipCredentials] = useState(route.params?.skipCredentials || false);
   const [socialUid, setSocialUid] = useState(route.params?.uid || null);
@@ -375,7 +378,8 @@ export default function SignUpScreen({ navigation, route }) {
       // Reset intro flag so new account sees the slide deck
       await AsyncStorage.removeItem('quick_launch_dismissed');
 
-      // Auth listener in AuthContext will automatically redirect to main app
+      // Signal to AuthContext that profile is ready — triggers navigation to MainTabs
+      await refreshProfile();
     } catch (error) {
       let message = 'Could not create account. Please try again.';
       if (error.code === 'auth/email-already-in-use') message = 'An account with this email already exists.';
