@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyCBZkuUSS2jCj2F5YsS0PjRGlhFiI5MB-I',
-  authDomain: '13magicalnights.com',
+  authDomain: 'magicnestlings.firebaseapp.com',
   projectId: 'magicnestlings',
   storageBucket: 'magicnestlings.firebasestorage.app',
   messagingSenderId: '220647543282',
