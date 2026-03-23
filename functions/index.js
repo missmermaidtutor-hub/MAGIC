@@ -18,13 +18,13 @@ function getESTYesterday() {
 }
 
 /**
- * Runs at midnight EST (5:00 AM UTC) every day.
+ * Runs at midnight Eastern (America/New_York) every day.
  * Copies all dailyCourages from yesterday into votingGallery/{date}/entries/
  * so the Inspire screen can display them for voting.
  */
 exports.transferCouragesToVoting = onSchedule(
   {
-    schedule: '0 5 * * *', // 5:00 AM UTC = midnight EST
+    schedule: '0 0 * * *', // midnight Eastern (cron interpreted in timeZone below)
     timeZone: 'America/New_York',
     region: 'us-east1',
   },
