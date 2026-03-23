@@ -20,6 +20,43 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext({});
 
+// Keys that hold per-user data and must be cleared on account switch
+const USER_DATA_KEYS = [
+  'personal_artworks',
+  'public_artworks',
+  'favorite_artworks',
+  'followed_users',
+  'hearted_quotes',
+  'favorite_quotes',
+  'pending_voting_artworks',
+  'cached_user_profile',
+  'user_profile',
+  'app_settings',
+  'current_grow_goal',
+  'goal_set_date',
+  'goal_acknowledged_date',
+  'first_login_pseudonym_shown',
+  'day13_popup_shown',
+];
+
+// Clear all user-specific AsyncStorage data (including date-keyed entries)
+const clearUserData = async () => {
+  try {
+    await AsyncStorage.multiRemove(USER_DATA_KEYS);
+    // Also clear date-keyed entries (manifest_*, progress_*, art_time_*, ranked_*)
+    const allKeys = await AsyncStorage.getAllKeys();
+    const dateKeys = allKeys.filter(k =>
+      k.startsWith('manifest_') || k.startsWith('progress_') ||
+      k.startsWith('art_time_') || k.startsWith('ranked_') ||
+      k.startsWith('courage_')
+    );
+    if (dateKeys.length > 0) await AsyncStorage.multiRemove(dateKeys);
+    console.log('Cleared user-specific AsyncStorage data');
+  } catch (error) {
+    console.log('Error clearing user data:', error);
+  }
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
@@ -38,6 +75,14 @@ export function AuthProvider({ children }) {
       setUser(firebaseUser);
 
       if (firebaseUser) {
+        // Detect account switch: clear stale data if a different user logged in
+        const lastUid = await AsyncStorage.getItem('current_user_uid');
+        if (lastUid && lastUid !== firebaseUser.uid) {
+          console.log('Account switch detected, clearing previous user data');
+          await clearUserData();
+        }
+        await AsyncStorage.setItem('current_user_uid', firebaseUser.uid);
+
         setSentryUser(firebaseUser.uid, firebaseUser.email);
         try {
           // Try Firestore first
@@ -164,7 +209,7 @@ export function AuthProvider({ children }) {
     try {
       await firebaseSignOut(auth);
       setUserProfile(null);
-      await AsyncStorage.removeItem('cached_user_profile');
+      await clearUserData();
     } catch (error) {
       console.log('Sign out error:', error);
     }
