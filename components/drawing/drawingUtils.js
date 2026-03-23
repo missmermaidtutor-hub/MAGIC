@@ -109,7 +109,7 @@ export function appendToSvgPath(existingPath, points, fromIndex) {
 
   // Append new Q segments from fromIndex-1 onward
   let appended = '';
-  for (let i = Math.max(fromIndex - 1, 1); i < points.length - 1; i++) {
+  for (let i = Math.max(fromIndex, 1); i < points.length - 1; i++) {
     const midX = (points[i].x + points[i + 1].x) / 2;
     const midY = (points[i].y + points[i + 1].y) / 2;
     appended += ` Q ${points[i].x} ${points[i].y} ${midX} ${midY}`;
@@ -171,6 +171,104 @@ export function hexToHsv(hex) {
   const v = max;
 
   return { h, s, v };
+}
+
+/**
+ * Hit-test whether a point is near a given stroke.
+ * Returns true if the point is within tolerance of the stroke.
+ */
+export function hitTestStroke(stroke, point, tolerance = 10) {
+  const { x, y } = point;
+  const pad = (stroke.size || 2) / 2 + tolerance;
+
+  if (stroke.type === 'rect') {
+    const r = rectFromPoints(stroke.startPoint, stroke.endPoint);
+    return (
+      x >= r.x - pad && x <= r.x + r.width + pad &&
+      y >= r.y - pad && y <= r.y + r.height + pad
+    );
+  }
+
+  if (stroke.type === 'circle') {
+    const c = circleFromPoints(stroke.startPoint, stroke.endPoint);
+    const dist = Math.sqrt((x - c.cx) ** 2 + (y - c.cy) ** 2);
+    return dist <= c.r + pad;
+  }
+
+  if (stroke.type === 'line') {
+    const { startPoint: a, endPoint: b } = stroke;
+    const lenSq = (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
+    if (lenSq === 0) return Math.sqrt((x - a.x) ** 2 + (y - a.y) ** 2) <= pad;
+    let t = ((x - a.x) * (b.x - a.x) + (y - a.y) * (b.y - a.y)) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const projX = a.x + t * (b.x - a.x);
+    const projY = a.y + t * (b.y - a.y);
+    const dist = Math.sqrt((x - projX) ** 2 + (y - projY) ** 2);
+    return dist <= pad;
+  }
+
+  if (stroke.type === 'triangle') {
+    const s = stroke.startPoint, e = stroke.endPoint;
+    const minX = Math.min(s.x, e.x);
+    const maxX = Math.max(s.x, e.x);
+    const minY = Math.min(s.y, e.y);
+    const maxY = Math.max(s.y, e.y);
+    return x >= minX - pad && x <= maxX + pad && y >= minY - pad && y <= maxY + pad;
+  }
+
+  // Freehand path — check bounding box of all points
+  if (stroke.type === 'path' && stroke.points && stroke.points.length > 0) {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of stroke.points) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+    if (x < minX - pad || x > maxX + pad || y < minY - pad || y > maxY + pad) return false;
+    // Fine check: is point near any segment?
+    for (let i = 0; i < stroke.points.length - 1; i++) {
+      const a = stroke.points[i], b = stroke.points[i + 1];
+      const lenSq = (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
+      if (lenSq === 0) continue;
+      let t = ((x - a.x) * (b.x - a.x) + (y - a.y) * (b.y - a.y)) / lenSq;
+      t = Math.max(0, Math.min(1, t));
+      const projX = a.x + t * (b.x - a.x);
+      const projY = a.y + t * (b.y - a.y);
+      if (Math.sqrt((x - projX) ** 2 + (y - projY) ** 2) <= pad) return true;
+    }
+    // Single point path
+    if (stroke.points.length === 1) {
+      return Math.sqrt((x - stroke.points[0].x) ** 2 + (y - stroke.points[0].y) ** 2) <= pad;
+    }
+    return false;
+  }
+
+  return false;
+}
+
+/**
+ * Return a new stroke shifted by (dx, dy).
+ * Regenerates pathData for freehand paths.
+ */
+export function moveStroke(stroke, dx, dy) {
+  const shift = (p) => ({ x: p.x + dx, y: p.y + dy });
+
+  if (stroke.type === 'path') {
+    const newPoints = stroke.points.map(shift);
+    return {
+      ...stroke,
+      points: newPoints,
+      pathData: pointsToSvgPath(newPoints),
+    };
+  }
+
+  // Shape strokes (line, rect, circle, triangle) have startPoint + endPoint
+  return {
+    ...stroke,
+    startPoint: shift(stroke.startPoint),
+    endPoint: shift(stroke.endPoint),
+  };
 }
 
 /**

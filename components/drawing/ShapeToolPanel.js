@@ -14,19 +14,6 @@ export default function ShapeToolPanel({ activeTool, onSelectTool, shapeFill, on
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.label}>Shape Tools</Text>
-        <TouchableOpacity
-          style={[styles.fillBtn, shapeFill && styles.fillBtnActive]}
-          onPress={onToggleFill}
-        >
-          <View style={[
-            styles.fillSwatch,
-            { backgroundColor: shapeFill ? fillColor : 'transparent' },
-            !shapeFill && styles.fillSwatchEmpty,
-          ]} />
-          <Text style={[styles.fillLabel, shapeFill && styles.fillLabelActive]}>
-            {shapeFill ? 'Fill On' : 'Fill Off'}
-          </Text>
-        </TouchableOpacity>
       </View>
       <View style={styles.row}>
         {SHAPE_OPTIONS.map((shape) => (
@@ -46,6 +33,21 @@ export default function ShapeToolPanel({ activeTool, onSelectTool, shapeFill, on
           </TouchableOpacity>
         ))}
       </View>
+      <View style={styles.fillRow}>
+        <TouchableOpacity
+          style={[styles.fillBtn, shapeFill && styles.fillBtnActive]}
+          onPress={onToggleFill}
+        >
+          <View style={[
+            styles.fillSwatch,
+            { backgroundColor: shapeFill ? fillColor : 'transparent' },
+            !shapeFill && styles.fillSwatchEmpty,
+          ]} />
+          <Text style={[styles.fillLabel, shapeFill && styles.fillLabelActive]}>
+            {shapeFill ? 'Fill On' : 'Fill Off'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -63,6 +65,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
+  },
+  fillRow: {
+    flexDirection: 'row',
+    marginTop: 8,
   },
   label: {
     color: '#999',

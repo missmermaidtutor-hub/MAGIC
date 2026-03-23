@@ -9,6 +9,7 @@ export const TOOLS = {
   CIRCLE: 'circle',
   TRIANGLE: 'triangle',
   TEXT: 'text',
+  MOVE: 'move',
 };
 
 // Brush presets per tool type

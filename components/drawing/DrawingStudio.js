@@ -18,7 +18,7 @@ import BrushSettings from './BrushSettings';
 import ShapeToolPanel from './ShapeToolPanel';
 import TextOverlay from './TextOverlay';
 import { TOOLS, FREEHAND_TOOLS, SHAPE_TOOLS, BRUSH_PRESETS } from './drawingConstants';
-import { pointsToSvgPath, simplifyPoints, appendToSvgPath } from './drawingUtils';
+import { pointsToSvgPath, simplifyPoints, appendToSvgPath, hitTestStroke, moveStroke } from './drawingUtils';
 import { showAlert } from '../../utils/alertUtils';
 import { useAuth } from '../../context/AuthContext';
 import { canAccessFeature } from '../../utils/premiumUtils';
@@ -81,6 +81,17 @@ export default function DrawingStudio({
   const textPlacementModeRef = useRef(textPlacementMode);
   const pendingTextRef = useRef(pendingText);
 
+  // Move tool refs
+  const movingStrokeIndexRef = useRef(null);
+  const moveStartPosRef = useRef(null);
+  const originalStrokeRef = useRef(null);
+  const moveDeltaRef = useRef({ dx: 0, dy: 0 }); // accumulated delta for RAF batching
+  const strokesRef = useRef(strokes);
+
+  // Undo operations stack — tracks whether each action was 'draw' or 'move'
+  const undoOpsRef = useRef([]);
+  const redoOpsRef = useRef([]);
+
   // Keep refs in sync with state
   activeToolRef.current = activeTool;
   brushColorRef.current = brushColor;
@@ -90,6 +101,7 @@ export default function DrawingStudio({
   shapeFillRef.current = shapeFill;
   textPlacementModeRef.current = textPlacementMode;
   pendingTextRef.current = pendingText;
+  strokesRef.current = strokes;
 
   const getStrokeColor = () => {
     if (activeToolRef.current === TOOLS.ERASER) return backgroundColorRef.current;
@@ -133,6 +145,26 @@ export default function DrawingStudio({
 
     const tool = activeToolRef.current;
 
+    if (tool === TOOLS.MOVE) {
+      // Hit-test strokes from topmost to bottom
+      const currentStrokes = strokesRef.current;
+      for (let i = currentStrokes.length - 1; i >= 0; i--) {
+        if (hitTestStroke(currentStrokes[i], pos)) {
+          movingStrokeIndexRef.current = i;
+          moveStartPosRef.current = pos;
+          originalStrokeRef.current = { ...currentStrokes[i] };
+          // Deep copy points array for path strokes
+          if (currentStrokes[i].type === 'path' && currentStrokes[i].points) {
+            originalStrokeRef.current.points = currentStrokes[i].points.map(p => ({ ...p }));
+          }
+          return;
+        }
+      }
+      // No stroke found at this position
+      movingStrokeIndexRef.current = null;
+      return;
+    }
+
     if (FREEHAND_TOOLS.includes(tool)) {
       pointsRef.current = [pos];
       pathRef.current = '';
@@ -172,6 +204,27 @@ export default function DrawingStudio({
   const handleStrokeMove = useCallback((pos) => {
     const tool = activeToolRef.current;
 
+    if (tool === TOOLS.MOVE && movingStrokeIndexRef.current !== null) {
+      const prevPos = moveStartPosRef.current;
+      moveStartPosRef.current = pos;
+      moveDeltaRef.current.dx += pos.x - prevPos.x;
+      moveDeltaRef.current.dy += pos.y - prevPos.y;
+      const idx = movingStrokeIndexRef.current;
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = null;
+          const { dx, dy } = moveDeltaRef.current;
+          moveDeltaRef.current = { dx: 0, dy: 0 };
+          setStrokes((prev) => {
+            const updated = [...prev];
+            updated[idx] = moveStroke(updated[idx], dx, dy);
+            return updated;
+          });
+        });
+      }
+      return;
+    }
+
     if (FREEHAND_TOOLS.includes(tool) && pointsRef.current.length > 0) {
       pointsRef.current.push(pos);
 
@@ -183,7 +236,7 @@ export default function DrawingStudio({
           // Incremental path: only compute new segments
           const newPath = appendToSvgPath(pathRef.current, pts, lastPathIndexRef.current);
           pathRef.current = newPath;
-          lastPathIndexRef.current = Math.max(0, pts.length - 2);
+          lastPathIndexRef.current = Math.max(0, pts.length - 1);
           const updated = {
             ...currentStrokeRef.current,
             points: pts,
@@ -201,6 +254,36 @@ export default function DrawingStudio({
   }, []);
 
   const handleStrokeEnd = useCallback(() => {
+    // Handle move tool end
+    if (activeToolRef.current === TOOLS.MOVE && movingStrokeIndexRef.current !== null) {
+      // Flush any pending accumulated delta
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      const { dx, dy } = moveDeltaRef.current;
+      if (dx !== 0 || dy !== 0) {
+        const idx = movingStrokeIndexRef.current;
+        setStrokes((prev) => {
+          const updated = [...prev];
+          updated[idx] = moveStroke(updated[idx], dx, dy);
+          return updated;
+        });
+      }
+      moveDeltaRef.current = { dx: 0, dy: 0 };
+
+      const origStroke = originalStrokeRef.current;
+      if (origStroke) {
+        undoOpsRef.current.push({ type: 'move', index: movingStrokeIndexRef.current, originalStroke: origStroke });
+        setRedoStack([]);
+        redoOpsRef.current = [];
+      }
+      movingStrokeIndexRef.current = null;
+      moveStartPosRef.current = null;
+      originalStrokeRef.current = null;
+      return;
+    }
+
     // Cancel any pending RAF
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
@@ -219,6 +302,8 @@ export default function DrawingStudio({
 
       setStrokes((prev) => [...prev, finalStroke]);
       setRedoStack([]);
+      undoOpsRef.current.push({ type: 'draw' });
+      redoOpsRef.current = [];
       setCurrentStroke(null);
       currentStrokeRef.current = null;
       pointsRef.current = [];
@@ -231,21 +316,53 @@ export default function DrawingStudio({
   // --- Actions ---
 
   const handleUndo = () => {
-    setStrokes((prev) => {
-      if (prev.length === 0) return prev;
-      const last = prev[prev.length - 1];
-      setRedoStack((redo) => [...redo, last]);
-      return prev.slice(0, -1);
-    });
+    const op = undoOpsRef.current.pop();
+    if (!op) return;
+
+    if (op.type === 'move') {
+      // Restore the original stroke at its index
+      setStrokes((prev) => {
+        const updated = [...prev];
+        const movedStroke = updated[op.index];
+        updated[op.index] = op.originalStroke;
+        redoOpsRef.current.push({ type: 'move', index: op.index, originalStroke: movedStroke });
+        return updated;
+      });
+    } else {
+      // Normal draw undo — pop last stroke
+      setStrokes((prev) => {
+        if (prev.length === 0) return prev;
+        const last = prev[prev.length - 1];
+        setRedoStack((redo) => [...redo, last]);
+        redoOpsRef.current.push({ type: 'draw' });
+        return prev.slice(0, -1);
+      });
+    }
   };
 
   const handleRedo = () => {
-    setRedoStack((prev) => {
-      if (prev.length === 0) return prev;
-      const last = prev[prev.length - 1];
-      setStrokes((s) => [...s, last]);
-      return prev.slice(0, -1);
-    });
+    const op = redoOpsRef.current.pop();
+    if (!op) return;
+
+    if (op.type === 'move') {
+      // Re-apply the move: swap back
+      setStrokes((prev) => {
+        const updated = [...prev];
+        const currentStroke = updated[op.index];
+        updated[op.index] = op.originalStroke;
+        undoOpsRef.current.push({ type: 'move', index: op.index, originalStroke: currentStroke });
+        return updated;
+      });
+    } else {
+      // Normal draw redo — push stroke back
+      setRedoStack((prev) => {
+        if (prev.length === 0) return prev;
+        const last = prev[prev.length - 1];
+        setStrokes((s) => [...s, last]);
+        undoOpsRef.current.push({ type: 'draw' });
+        return prev.slice(0, -1);
+      });
+    }
   };
 
   const handleClear = () => {
@@ -253,6 +370,8 @@ export default function DrawingStudio({
     setRedoStack([]);
     setTextOverlays([]);
     setCurrentStroke(null);
+    undoOpsRef.current = [];
+    redoOpsRef.current = [];
   };
 
   const handleSelectTool = (tool) => {
@@ -345,6 +464,8 @@ export default function DrawingStudio({
     setColorBgMode(false);
     setTextPlacementMode(false);
     setPendingText(null);
+    undoOpsRef.current = [];
+    redoOpsRef.current = [];
     onClose();
   };
 
@@ -368,8 +489,8 @@ export default function DrawingStudio({
           onClear={handleClear}
           onToggleShapes={handleToggleShapes}
           onToggleText={handleToggleText}
-          canUndo={strokes.length > 0}
-          canRedo={redoStack.length > 0}
+          canUndo={strokes.length > 0 || undoOpsRef.current.length > 0}
+          canRedo={redoStack.length > 0 || redoOpsRef.current.length > 0}
           shapesActive={showShapes}
           showBrushSettings={showBrushSettings}
           onToggleBrushSettings={() => {
@@ -428,6 +549,13 @@ export default function DrawingStudio({
         {textPlacementMode && (
           <View style={styles.textHint}>
             <Text style={styles.textHintText}>Tap on the canvas to place your text</Text>
+          </View>
+        )}
+
+        {/* Move tool hint */}
+        {activeTool === TOOLS.MOVE && (
+          <View style={styles.textHint}>
+            <Text style={styles.textHintText}>Tap and drag a shape or stroke to move it</Text>
           </View>
         )}
 

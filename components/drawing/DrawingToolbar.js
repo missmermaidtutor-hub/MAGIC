@@ -14,6 +14,7 @@ const ACTION_ITEMS = [
   { key: 'undo', label: 'Undo', icon: '↩️' },
   { key: 'redo', label: 'Redo', icon: '↪️' },
   { key: 'shapes', label: 'Shapes', icon: '⬡' },
+  { key: TOOLS.MOVE, label: 'Move', icon: '✥' },
   { key: 'text', label: 'Text', icon: 'Aa' },
   { key: 'clear', label: 'Clear', icon: '🗑️' },
 ];
@@ -50,6 +51,9 @@ export default function DrawingToolbar({
         break;
       case 'shapes':
         onToggleShapes();
+        break;
+      case TOOLS.MOVE:
+        onSelectTool(TOOLS.MOVE);
         break;
       case 'text':
         onToggleText();
@@ -116,7 +120,9 @@ export default function DrawingToolbar({
           const disabled =
             (item.key === 'undo' && !canUndo) ||
             (item.key === 'redo' && !canRedo);
-          const isActive = item.key === 'shapes' && shapesActive;
+          const isActive =
+            (item.key === 'shapes' && shapesActive) ||
+            (item.key === TOOLS.MOVE && activeTool === TOOLS.MOVE);
 
           return (
             <TouchableOpacity
