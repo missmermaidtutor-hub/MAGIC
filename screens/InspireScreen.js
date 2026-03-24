@@ -328,14 +328,38 @@ export default function InspireScreen({ navigation }) {
             setCurrentSet([]);
           }
         }
+      } else if (eligible.length > 0) {
+        // 1–3 real courages — mix with stock images to fill a set of 4
+        const unvoted = eligible.filter(c => !alreadyVotedIds.has(c.id));
+        if (unvoted.length === 0) {
+          // Already voted on all real courages — fall back to stock
+          const stockSet = pickStockSet(alreadyVotedIds);
+          if (stockSet.length >= 4) {
+            setCurrentSet(stockSet);
+            setAllDone(false);
+          } else {
+            setAllDone(true);
+            setCurrentSet([]);
+          }
+        } else {
+          const excludeIds = new Set([...alreadyVotedIds, ...unvoted.map(c => c.id)]);
+          const stockFill = pickStockSet(excludeIds).slice(0, 4 - unvoted.length);
+          const mixed = [...unvoted, ...stockFill];
+          if (mixed.length >= 4) {
+            setCurrentSet(mixed);
+            setAllDone(false);
+          } else {
+            setAllDone(true);
+            setCurrentSet([]);
+          }
+        }
       } else {
-        // Not enough real courages — use stock images
+        // No real courages at all — use stock images
         const stockSet = pickStockSet(alreadyVotedIds);
         if (stockSet.length >= 4) {
           setCurrentSet(stockSet);
           setAllDone(false);
         } else {
-          // All stock images voted on today
           setAllDone(true);
           setCurrentSet([]);
         }
