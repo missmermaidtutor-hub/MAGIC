@@ -16,7 +16,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
 import { auth } from '../../config/firebase';
-import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable, applyReferralCode } from '../../services/firestoreService';
+import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable, applyReferralCode, checkAndConvertInvitation } from '../../services/firestoreService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 
@@ -357,6 +357,13 @@ export default function SignUpScreen({ navigation, route }) {
           console.log('Referral code error:', refErr);
           // Don't block signup for referral errors
         }
+      }
+
+      // Check if this email was invited by someone — mark invitation as converted
+      try {
+        await checkAndConvertInvitation(userEmail);
+      } catch (convErr) {
+        console.log('Invitation conversion check error:', convErr);
       }
 
       // Send email verification (skip for Apple/Google sign-in — already verified)

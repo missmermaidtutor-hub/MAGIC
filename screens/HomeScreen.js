@@ -15,7 +15,7 @@ import { trackAction } from '../services/analyticsService';
 import { scheduleStreakReminder } from '../utils/notificationUtils';
 import { getTasksForDate } from '../utils/taskUtils';
 import { openMailto } from '../utils/emailUtils';
-import { getPremiumStatus } from '../utils/premiumUtils';
+import { getPremiumStatus, getMemberDayCount } from '../utils/premiumUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 
@@ -668,6 +668,9 @@ export default function HomeScreen({ navigation }) {
   const [showTrialEndingModal, setShowTrialEndingModal] = useState(false);
   const [trialDaysLeft, setTrialDaysLeft] = useState(0);
 
+  // Day 26 invite friends modal
+  const [showDay26InviteModal, setShowDay26InviteModal] = useState(false);
+
   const refreshQuote = useCallback(async () => {
     const quote = await getTodayQuote(quotesData);
     setTodayQuote(quote);
@@ -775,6 +778,20 @@ export default function HomeScreen({ navigation }) {
       setTrialDaysLeft(status.daysLeft);
       setShowTrialEndingModal(true);
       AsyncStorage.setItem(storageKey, 'true');
+    });
+  }, [userProfile]);
+
+  // Day 26 invite friends modal — prompt to invite friends before free access ends
+  const day26InviteChecked = useRef(false);
+  useEffect(() => {
+    if (day26InviteChecked.current || !userProfile) return;
+    day26InviteChecked.current = true;
+
+    if (getMemberDayCount(userProfile) < 26) return;
+
+    AsyncStorage.getItem('day26_invite_shown').then(shown => {
+      if (shown === 'true') return;
+      setShowDay26InviteModal(true);
     });
   }, [userProfile]);
 
@@ -1888,6 +1905,52 @@ export default function HomeScreen({ navigation }) {
 
             <TouchableOpacity
               onPress={() => setShowTrialEndingModal(false)}
+              style={[styles.insightClose, { width: '100%' }]}
+            >
+              <Text style={[styles.insightCloseText, { color: '#888' }]}>Maybe Later</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Day 26 Invite Friends Modal */}
+      <Modal
+        visible={showDay26InviteModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          AsyncStorage.setItem('day26_invite_shown', 'true');
+          setShowDay26InviteModal(false);
+        }}
+      >
+        <View style={styles.insightOverlay}>
+          <View style={styles.insightCard}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 8 }}>
+              Your Free Trial is Ending Soon!
+            </Text>
+            <Text style={{ fontSize: 14, color: '#ccc', textAlign: 'center', lineHeight: 20, marginBottom: 6 }}>
+              Your free access to all premium features is coming to an end.
+            </Text>
+            <Text style={{ fontSize: 14, color: '#ccc', textAlign: 'center', lineHeight: 20, marginBottom: 20 }}>
+              Invite friends and earn +7 days of premium per invite — up to 6 friends for 42 extra days free!
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => {
+                AsyncStorage.setItem('day26_invite_shown', 'true');
+                setShowDay26InviteModal(false);
+                navigation.navigate('InviteFriends');
+              }}
+              style={[styles.insightClose, { width: '100%', marginBottom: 10 }]}
+            >
+              <Text style={styles.insightCloseText}>Invite Friends</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                AsyncStorage.setItem('day26_invite_shown', 'true');
+                setShowDay26InviteModal(false);
+              }}
               style={[styles.insightClose, { width: '100%' }]}
             >
               <Text style={[styles.insightCloseText, { color: '#888' }]}>Maybe Later</Text>

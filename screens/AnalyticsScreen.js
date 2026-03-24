@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
-import { getAnalyticsForDate, getAllUsers } from '../services/firestoreService';
+import { getAnalyticsForDate, getAllUsers, getAllInvitations } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 import UserProfileModal from '../components/admin/UserProfileModal';
 
@@ -64,6 +64,7 @@ export default function AnalyticsScreen({ navigation }) {
   const [expandedUser, setExpandedUser] = useState(null);
   const [profileMap, setProfileMap] = useState({});
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [inviteData, setInviteData] = useState({ total: 0, converted: 0, perUser: [] });
 
   const today = getESTDate();
 
@@ -74,6 +75,7 @@ export default function AnalyticsScreen({ navigation }) {
     }
     loadProfiles();
     loadData(selectedDate);
+    loadInviteData();
   }, [selectedDate]);
 
   const loadProfiles = async () => {
@@ -97,6 +99,32 @@ export default function AnalyticsScreen({ navigation }) {
       setUserData([]);
     }
     setLoading(false);
+  };
+
+  const loadInviteData = async () => {
+    try {
+      const allInvites = await getAllInvitations();
+      const total = allInvites.length;
+      const converted = allInvites.filter(i => i.converted).length;
+
+      // Group by inviter
+      const byUser = {};
+      for (const inv of allInvites) {
+        if (!byUser[inv.inviterUid]) {
+          byUser[inv.inviterUid] = { sent: 0, converted: 0 };
+        }
+        byUser[inv.inviterUid].sent++;
+        if (inv.converted) byUser[inv.inviterUid].converted++;
+      }
+
+      const perUser = Object.entries(byUser)
+        .map(([uid, stats]) => ({ uid, ...stats }))
+        .sort((a, b) => b.sent - a.sent);
+
+      setInviteData({ total, converted, perUser });
+    } catch (error) {
+      console.log('Error loading invite data:', error);
+    }
   };
 
   const goBack = () => {
@@ -333,6 +361,42 @@ export default function AnalyticsScreen({ navigation }) {
             </View>
           </>
         )}
+
+        {/* Invitations (all-time, not date-filtered) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Invitations (All Time)</Text>
+          <View style={styles.inviteSummaryRow}>
+            <View style={styles.inviteStat}>
+              <Text style={styles.inviteStatNumber}>{inviteData.total}</Text>
+              <Text style={styles.inviteStatLabel}>Sent</Text>
+            </View>
+            <View style={styles.inviteStat}>
+              <Text style={styles.inviteStatNumber}>{inviteData.converted}</Text>
+              <Text style={styles.inviteStatLabel}>Converted</Text>
+            </View>
+            <View style={styles.inviteStat}>
+              <Text style={styles.inviteStatNumber}>
+                {inviteData.total > 0 ? Math.round((inviteData.converted / inviteData.total) * 100) : 0}%
+              </Text>
+              <Text style={styles.inviteStatLabel}>Rate</Text>
+            </View>
+          </View>
+          {inviteData.perUser.length === 0 ? (
+            <Text style={styles.emptyText}>No invitations sent yet</Text>
+          ) : (
+            inviteData.perUser.map((u) => {
+              const profile = profileMap[u.uid];
+              const name = profile?.pseudonym || profile?.username || u.uid.slice(0, 12) + '...';
+              return (
+                <View key={u.uid} style={styles.inviteUserRow}>
+                  <Text style={styles.inviteUserName} numberOfLines={1}>{name}</Text>
+                  <Text style={styles.inviteUserStat}>{u.sent} sent</Text>
+                  <Text style={styles.inviteUserStat}>{u.converted} joined</Text>
+                </View>
+              );
+            })
+          )}
+        </View>
 
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>Back</Text>
@@ -582,5 +646,41 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  inviteSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 12,
+  },
+  inviteStat: {
+    alignItems: 'center',
+  },
+  inviteStatNumber: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#050d61',
+  },
+  inviteStatLabel: {
+    fontSize: 11,
+    color: '#050d61',
+    marginTop: 2,
+  },
+  inviteUserRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(5, 13, 97, 0.15)',
+  },
+  inviteUserName: {
+    flex: 1,
+    fontSize: 13,
+    color: '#050d61',
+    fontWeight: '600',
+  },
+  inviteUserStat: {
+    fontSize: 12,
+    color: '#050d61',
+    marginLeft: 12,
   },
 });

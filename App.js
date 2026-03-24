@@ -51,8 +51,11 @@ import ContactScreen from './screens/menu-pages/ContactScreen';
 import QuickLaunchScreen from './screens/menu-pages/QuickLaunchScreen';
 import ComingSoonScreen from './screens/menu-pages/ComingSoonScreen';
 import ShareAppScreen from './screens/menu-pages/ShareAppScreen';
+import InviteFriendsScreen from './screens/menu-pages/InviteFriendsScreen';
+import InviteTemplateScreen from './screens/admin/InviteTemplateScreen';
 import FeatureIdeasScreen from './screens/FeatureIdeasScreen';
 import IntroScreen from './screens/IntroScreen';
+import PremiumSignupScreen from './screens/menu-pages/PremiumSignupScreen';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
@@ -289,6 +292,27 @@ function MainTabs({ initialRoute = 'Home' }) {
       <Tab.Screen
         name="FeatureIdeas"
         component={FeatureIdeasScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="InviteFriends"
+        component={InviteFriendsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="InviteTemplate"
+        component={InviteTemplateScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="PremiumSignup"
+        component={PremiumSignupScreen}
         options={{
           tabBarButton: () => null,
         }}

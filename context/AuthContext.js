@@ -37,6 +37,7 @@ const USER_DATA_KEYS = [
   'goal_acknowledged_date',
   'first_login_pseudonym_shown',
   'day13_popup_shown',
+  'day26_invite_shown',
 ];
 
 // Clear all user-specific AsyncStorage data (including date-keyed entries)

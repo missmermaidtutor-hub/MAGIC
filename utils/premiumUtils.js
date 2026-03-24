@@ -198,6 +198,40 @@ export const getPremiumLabel = (userProfile) => {
   }
 };
 
+/** Human-readable expiry/status string for display on PremiumSignupScreen. */
+export const formatPremiumExpiry = (userProfile) => {
+  const status = getPremiumStatus(userProfile);
+  if (!status.isPremium) return 'No active premium access';
+  switch (status.reason) {
+    case 'paid': {
+      if (userProfile.premiumExpiry) {
+        const expiry =
+          userProfile.premiumExpiry?.toDate?.() ??
+          (userProfile.premiumExpiry?.seconds
+            ? new Date(userProfile.premiumExpiry.seconds * 1000)
+            : new Date(userProfile.premiumExpiry));
+        return `Premium until ${expiry.toLocaleDateString()}`;
+      }
+      return 'Active premium subscription';
+    }
+    case 'new_user':
+      return `Free trial \u2014 ${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} remaining`;
+    case 'streak_trial': {
+      if (userProfile.premiumTrialExpiry) {
+        const trialExpiry =
+          userProfile.premiumTrialExpiry?.toDate?.() ??
+          (userProfile.premiumTrialExpiry?.seconds
+            ? new Date(userProfile.premiumTrialExpiry.seconds * 1000)
+            : new Date(userProfile.premiumTrialExpiry));
+        return `Premium trial until ${trialExpiry.toLocaleDateString()}`;
+      }
+      return `Premium trial \u2014 ${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} remaining`;
+    }
+    default:
+      return 'Premium active';
+  }
+};
+
 /** Feature name → description of what the feature does. */
 export const FEATURE_DESCRIPTIONS = {
   advancedStats: 'See your progress across all 5 MAGIC categories with per-day breakdowns and goal completion rates.',

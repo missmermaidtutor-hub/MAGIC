@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { FEATURE_LABELS, FEATURE_DESCRIPTIONS, getPremiumLabel } from '../../utils/premiumUtils';
 import { trackAction } from '../../services/analyticsService';
 
@@ -13,6 +14,9 @@ import { trackAction } from '../../services/analyticsService';
  *   onUpgrade – optional callback when "Upgrade" is tapped (future IAP flow)
  */
 export default function PremiumPaywall({ feature, message, compact = false, align = 'right', onUpgrade }) {
+  const navigation = useNavigation();
+  const defaultOnUpgrade = () => navigation.navigate('PremiumSignup');
+  const handleUpgrade = onUpgrade || defaultOnUpgrade;
   const label = FEATURE_LABELS[feature] || 'This Feature';
   const description = FEATURE_DESCRIPTIONS[feature];
   const defaultMessage = description
@@ -52,17 +56,15 @@ export default function PremiumPaywall({ feature, message, compact = false, alig
         <Text style={styles.hint}>
           Reach a 13-day streak to unlock a free trial!
         </Text>
-        {onUpgrade && (
-          <TouchableOpacity
-            style={styles.upgradeButton}
-            onPress={() => {
-              trackAction('premium_upgrade_tapped');
-              onUpgrade();
-            }}
-          >
-            <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={styles.upgradeButton}
+          onPress={() => {
+            trackAction('premium_upgrade_tapped');
+            handleUpgrade();
+          }}
+        >
+          <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

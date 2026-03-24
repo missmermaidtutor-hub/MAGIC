@@ -5,10 +5,11 @@ import { Platform, Linking } from 'react-native';
  * On web, Linking.openURL uses window.open() which gets blocked by popup blockers.
  * Using window.location.href for mailto: links works reliably without triggering blockers.
  */
-export const openMailto = (subject, body) => {
+export const openMailto = (subject, body, to = '') => {
   const encodedSubject = encodeURIComponent(subject);
   const encodedBody = encodeURIComponent(body);
-  const url = `mailto:?subject=${encodedSubject}&body=${encodedBody}`;
+  const recipient = to ? encodeURIComponent(to) : '';
+  const url = `mailto:${recipient}?subject=${encodedSubject}&body=${encodedBody}`;
 
   if (Platform.OS === 'web') {
     window.location.href = url;

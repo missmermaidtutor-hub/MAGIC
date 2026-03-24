@@ -64,6 +64,14 @@ service cloud.firestore {
       match /goals/{date} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Invitations — owner read/write, all-auth read for collectionGroup queries (conversion check)
+      match /invitations/{inviteId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null && request.auth.uid == userId;
+        allow update: if request.auth != null;
+        allow delete: if false;
+      }
     }
 
     // ===== PSEUDONYMS COLLECTION =====
@@ -254,6 +262,18 @@ service cloud.firestore {
       allow create: if request.auth != null
                     && request.resource.data.submitterUid == request.auth.uid;
       allow update, delete: if false;
+    }
+
+    // ===== APP CONFIG (admin-editable settings) =====
+    match /appConfig/{configId} {
+      // All authenticated users can read (e.g. invite template)
+      allow read: if request.auth != null;
+
+      // Only admin can write
+      allow create, update: if request.auth != null
+                            && request.auth.uid == 'VYnCl7waz4VyxRhryIAOTA9NBMg2';
+
+      allow delete: if false;
     }
 
     // Deny everything else by default

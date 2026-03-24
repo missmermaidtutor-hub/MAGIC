@@ -1066,6 +1066,110 @@ export const checkAndGrantReferralTrial = async (uid) => {
 // QUOTE LIKES (global tracking of how many users liked each quote)
 // ============================================================
 
+// ============================================================
+// INVITATIONS (Invite Friends)
+// ============================================================
+
+// Save an invitation record under the user's subcollection
+export const saveInvitation = async (uid, email) => {
+  const ref = await addDoc(collection(db, 'users', uid, 'invitations'), {
+    email: email.toLowerCase().trim(),
+    sentAt: serverTimestamp(),
+    converted: false,
+  });
+  return ref.id;
+};
+
+// Get all invitations sent by a user
+export const getUserInvitations = async (uid) => {
+  const q = query(
+    collection(db, 'users', uid, 'invitations'),
+    orderBy('sentAt', 'desc'),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+// Grant +7 days of premium trial for sending an invitation
+export const grantInviteWeek = async (uid) => {
+  const userRef = doc(db, 'users', uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+  const now = new Date();
+  let expiry;
+
+  if (data.premiumTrialExpiry) {
+    // Convert Firestore Timestamp to Date if needed
+    const currentExpiry = data.premiumTrialExpiry.toDate
+      ? data.premiumTrialExpiry.toDate()
+      : new Date(data.premiumTrialExpiry);
+    if (currentExpiry > now) {
+      // Still active — extend by 7 days
+      expiry = new Date(currentExpiry.getTime() + 7 * 24 * 60 * 60 * 1000);
+    } else {
+      // Expired — start fresh from now
+      expiry = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    }
+  } else {
+    // No existing trial — set from now
+    expiry = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  }
+
+  await updateDoc(userRef, {
+    premiumTrialExpiry: expiry,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Check if a newly signed-up user's email matches any pending invitation, mark converted
+export const checkAndConvertInvitation = async (newUserEmail) => {
+  if (!newUserEmail) return;
+  const normalizedEmail = newUserEmail.toLowerCase().trim();
+
+  // Query across all users' invitations subcollections
+  const q = query(
+    collectionGroup(db, 'invitations'),
+    where('email', '==', normalizedEmail),
+    where('converted', '==', false),
+  );
+  const snap = await getDocs(q);
+
+  for (const d of snap.docs) {
+    await updateDoc(d.ref, { converted: true, convertedAt: serverTimestamp() });
+  }
+};
+
+// Get the admin-editable invite email template
+export const getInviteTemplate = async () => {
+  const ref = doc(db, 'appConfig', 'inviteTemplate');
+  const snap = await getDoc(ref);
+  if (snap.exists()) return snap.data();
+  return null;
+};
+
+// Save the invite email template (admin only)
+export const saveInviteTemplate = async (subject, body) => {
+  const ref = doc(db, 'appConfig', 'inviteTemplate');
+  await setDoc(ref, {
+    subject,
+    body,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Get all invitations across all users (admin — for analytics)
+export const getAllInvitations = async () => {
+  const q = query(collectionGroup(db, 'invitations'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => {
+    const data = d.data();
+    const pathParts = d.ref.path.split('/');
+    return { ...data, docId: d.id, inviterUid: pathParts[1] };
+  });
+};
+
 // Generate a stable key from quote text
 const quoteKey = (text) => text.slice(0, 80).replace(/[^a-zA-Z0-9]/g, '_');
 

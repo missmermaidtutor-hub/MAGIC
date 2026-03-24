@@ -12,7 +12,9 @@ export default function MenuScreen({ navigation }) {
     { name: 'About You', screen: 'AboutYou' },
     { name: 'Coming Soon', screen: 'ComingSoon' },
     { name: 'Home Page', screen: 'Home' },
+    { name: 'Invite Friends', screen: 'InviteFriends' },
     { name: 'Legal Policies', screen: 'Legal' },
+    { name: 'Premium Membership', screen: 'PremiumSignup' },
     { name: 'Quick Launch Info', screen: 'QuickLaunch' },
     { name: 'Quotes', screen: 'Quotes' },
     ...(user && userProfile && canShareApp(userProfile) ? [
@@ -24,6 +26,7 @@ export default function MenuScreen({ navigation }) {
       { name: '_Admin Bug Check', screen: 'Diagnostics' },
       { name: '_Admin Feature Ideas', screen: 'FeatureIdeas' },
       { name: '_Admin Intro Preview', screen: 'Intro', params: { fromMenu: true } },
+      { name: '_Admin Invite Template', screen: 'InviteTemplate' },
     ] : []),
   ];
 
