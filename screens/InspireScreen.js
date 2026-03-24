@@ -555,7 +555,7 @@ export default function InspireScreen({ navigation }) {
             onPress={() => {
               if (isAudio) {
                 playAudio(courage);
-              } else if (courage.mediaUrl || courage.source) {
+              } else {
                 setFullViewArtwork(courage);
               }
             }}
@@ -680,22 +680,33 @@ export default function InspireScreen({ navigation }) {
             const hasNext = currentIndex < viewableSet.length - 1;
             return (
               <View style={styles.modalContent}>
-                <ScrollView
-                  maximumZoomScale={5}
-                  minimumZoomScale={1}
-                  bouncesZoom={true}
-                  showsHorizontalScrollIndicator={false}
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.zoomContainer}
-                  style={styles.zoomScroll}
-                >
-                  <Image
-                    source={fullViewArtwork.source || { uri: fullViewArtwork.mediaUrl }}
-                    style={styles.modalImage}
-                    resizeMode="contain"
-                  />
-                </ScrollView>
-                <Text style={styles.modalTitle}>{fullViewArtwork.title}</Text>
+                {fullViewArtwork.mediaUrl || fullViewArtwork.source ? (
+                  <ScrollView
+                    maximumZoomScale={5}
+                    minimumZoomScale={1}
+                    bouncesZoom={true}
+                    showsHorizontalScrollIndicator={false}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.zoomContainer}
+                    style={styles.zoomScroll}
+                  >
+                    <Image
+                      source={fullViewArtwork.source || { uri: fullViewArtwork.mediaUrl }}
+                      style={styles.modalImage}
+                      resizeMode="contain"
+                    />
+                  </ScrollView>
+                ) : (
+                  <ScrollView
+                    style={styles.zoomScroll}
+                    contentContainerStyle={styles.textFullViewContainer}
+                  >
+                    <Text style={styles.textFullViewContent}>{fullViewArtwork.title}</Text>
+                  </ScrollView>
+                )}
+                {(fullViewArtwork.mediaUrl || fullViewArtwork.source) && (
+                  <Text style={styles.modalTitle}>{fullViewArtwork.title}</Text>
+                )}
                 {viewableSet.length > 1 && (
                   <View style={styles.fullViewNav}>
                     <TouchableOpacity
@@ -819,9 +830,7 @@ export default function InspireScreen({ navigation }) {
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.imageFrame, !courage.mediaUrl && !courage.source && styles.textOnlyFrame]}
-                        onPress={() => {
-                          if (courage.mediaUrl || courage.source) setFullViewArtwork(courage);
-                        }}
+                        onPress={() => setFullViewArtwork(courage)}
                       >
                         {courage.source ? (
                           <Image source={courage.source} style={styles.artworkImage} resizeMode="cover" />
@@ -1217,6 +1226,18 @@ const styles = StyleSheet.create({
     color: '#cfe8c7',
     fontStyle: 'italic',
     marginTop: 15,
+  },
+  textFullViewContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  textFullViewContent: {
+    fontSize: 20,
+    color: '#cfe8c7',
+    textAlign: 'center',
+    lineHeight: 30,
   },
   modalHint: {
     fontSize: 12,
