@@ -549,47 +549,57 @@ export default function InspireScreen({ navigation }) {
             <Text style={styles.envelopeIcon}>✉️</Text>
           </TouchableOpacity>
 
-          {/* Image or Audio Player */}
-          <TouchableOpacity
-            style={[styles.imageFrame, isTextOnly && styles.textOnlyFrame]}
-            onPress={() => {
-              if (isAudio) {
-                playAudio(courage);
-              } else {
-                setFullViewArtwork(courage);
-              }
-            }}
-          >
-            {courage.source ? (
-              <Image
-                source={courage.source}
-                style={styles.artworkImage}
-                resizeMode="cover"
-              />
-            ) : isAudio ? (
-              <View style={styles.audioFrame}>
-                <Text style={styles.audioIcon}>{isPlaying ? '⏸' : '▶️'}</Text>
-                <Text style={styles.audioLabel}>{isPlaying ? 'Playing...' : 'Tap to Play'}</Text>
-              </View>
-            ) : courage.mediaUrl ? (
-              <Image
-                source={{ uri: courage.mediaUrl }}
-                style={styles.artworkImage}
-                resizeMode="cover"
-              />
-            ) : (
-              <View style={styles.textCourageFrame}>
-                <Text style={styles.textCourageContent}>
-                  {courage.title}
-                </Text>
-              </View>
-            )}
-            {currentRank && (
-              <View style={styles.rankBadge}>
-                <Text style={styles.rankBadgeText}>#{currentRank}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+          {/* Image, Audio, or Text */}
+          {isTextOnly ? (
+            <TouchableOpacity
+              style={styles.textOnlyFrame}
+              onPress={() => setFullViewArtwork(courage)}
+            >
+              <Text style={styles.textCourageContent}>
+                {courage.title}
+              </Text>
+              {currentRank && (
+                <View style={styles.rankBadge}>
+                  <Text style={styles.rankBadgeText}>#{currentRank}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.imageFrame}
+              onPress={() => {
+                if (isAudio) {
+                  playAudio(courage);
+                } else {
+                  setFullViewArtwork(courage);
+                }
+              }}
+            >
+              {courage.source ? (
+                <Image
+                  source={courage.source}
+                  style={styles.artworkImage}
+                  resizeMode="cover"
+                />
+              ) : isAudio ? (
+                <View style={styles.audioFrame}>
+                  <Text style={styles.audioIcon}>{isPlaying ? '⏸' : '▶️'}</Text>
+                  <Text style={styles.audioLabel}>{isPlaying ? 'Playing...' : 'Tap to Play'}</Text>
+                </View>
+              ) : (
+                <Image
+                  source={{ uri: courage.mediaUrl }}
+                  style={styles.artworkImage}
+                  resizeMode="cover"
+                />
+              )}
+              {currentRank && (
+                <View style={styles.rankBadge}>
+                  <Text style={styles.rankBadgeText}>#{currentRank}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
 
           {/* Candle on the right */}
           <View style={styles.sideAction}>
@@ -601,12 +611,14 @@ export default function InspireScreen({ navigation }) {
           </View>
         </View>
 
-        {/* Title only — anonymous, no artist name */}
-        <View style={styles.artistInfo}>
-          <Text style={styles.artworkTitle} numberOfLines={2}>
-            {courage.title || 'Untitled'}
-          </Text>
-        </View>
+        {/* Title only — skip for text-only courages (already visible in frame) */}
+        {!isTextOnly && (
+          <View style={styles.artistInfo}>
+            <Text style={styles.artworkTitle} numberOfLines={2}>
+              {courage.title || 'Untitled'}
+            </Text>
+          </View>
+        )}
 
         {/* Ranking Buttons */}
         <View style={styles.rankingContainer}>
@@ -828,20 +840,25 @@ export default function InspireScreen({ navigation }) {
                       <TouchableOpacity style={styles.sideAction} onPress={() => handleEmailShare(courage)}>
                         <Text style={styles.envelopeIcon}>✉️</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.imageFrame, !courage.mediaUrl && !courage.source && styles.textOnlyFrame]}
-                        onPress={() => setFullViewArtwork(courage)}
-                      >
-                        {courage.source ? (
-                          <Image source={courage.source} style={styles.artworkImage} resizeMode="cover" />
-                        ) : courage.mediaUrl ? (
-                          <Image source={{ uri: courage.mediaUrl }} style={styles.artworkImage} resizeMode="cover" />
-                        ) : (
-                          <View style={styles.textCourageFrame}>
-                            <Text style={styles.textCourageContent}>{courage.title}</Text>
-                          </View>
-                        )}
-                      </TouchableOpacity>
+                      {!courage.mediaUrl && !courage.source ? (
+                        <TouchableOpacity
+                          style={styles.textOnlyFrame}
+                          onPress={() => setFullViewArtwork(courage)}
+                        >
+                          <Text style={styles.textCourageContent}>{courage.title}</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.imageFrame}
+                          onPress={() => setFullViewArtwork(courage)}
+                        >
+                          {courage.source ? (
+                            <Image source={courage.source} style={styles.artworkImage} resizeMode="cover" />
+                          ) : (
+                            <Image source={{ uri: courage.mediaUrl }} style={styles.artworkImage} resizeMode="cover" />
+                          )}
+                        </TouchableOpacity>
+                      )}
                       <View style={styles.sideAction}>
                         <Candle lit={isSaved} onPress={() => handleCandleSave(courage)} size={32} />
                       </View>
@@ -1017,9 +1034,16 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   textOnlyFrame: {
-    aspectRatio: undefined,
+    flex: 1,
+    backgroundColor: '#1a2a1a',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#004225',
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
     minHeight: 120,
-    overflow: 'visible',
+    position: 'relative',
   },
   artworkImage: {
     width: '100%',
