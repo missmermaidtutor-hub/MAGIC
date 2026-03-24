@@ -1019,6 +1019,7 @@ const styles = StyleSheet.create({
   textOnlyFrame: {
     aspectRatio: undefined,
     minHeight: 120,
+    overflow: 'visible',
   },
   artworkImage: {
     width: '100%',
@@ -1040,11 +1041,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   textCourageFrame: {
-    flex: 1,
     backgroundColor: '#1a2a1a',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 10,
+    minHeight: 120,
   },
   textCourageContent: {
     fontSize: 12,
