@@ -1790,12 +1790,12 @@ const styles = StyleSheet.create({
   },
   writeModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: '#FFF8E7',
     justifyContent: 'center',
     padding: 20,
   },
   writeModalCard: {
-    backgroundColor: 'rgba(243, 203, 130, 0.5)',
+    backgroundColor: '#FFF8E7',
     borderWidth: 3,
     borderColor: '#f2990a',
     borderRadius: 16,
@@ -1835,7 +1835,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   titleInput: {
-    backgroundColor: 'rgba(243, 203, 130, 0.5)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 2,
     borderColor: '#f7bc6e',
     borderRadius: 10,
@@ -1845,7 +1845,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   writeTextInput: {
-    backgroundColor: 'rgba(243, 203, 130, 0.5)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 2,
     borderColor: '#f7bc6e',
     borderRadius: 10,
