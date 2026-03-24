@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     aspectRatio: 1,
     borderWidth: 2,
-    borderColor: '#c8875a',
+    borderColor: '#D4C4A0',
   },
   canvasWrap: {
     flex: 1,

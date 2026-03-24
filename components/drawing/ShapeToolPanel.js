@@ -54,7 +54,7 @@ export default function ShapeToolPanel({ activeTool, onSelectTool, shapeFill, on
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#E2A06E',
+    backgroundColor: '#FFF8E7',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderTopWidth: 1,
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   label: {
-    color: '#999',
+    color: '#666',
     fontSize: 12,
   },
   fillBtn: {
@@ -85,15 +85,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   fillBtnActive: {
-    borderColor: '#FFD700',
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderColor: '#B8860B',
+    backgroundColor: 'rgba(184, 134, 11, 0.15)',
   },
   fillSwatch: {
     width: 16,
     height: 16,
     borderRadius: 3,
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: '#B8860B',
   },
   fillSwatchEmpty: {
     borderStyle: 'dashed',
@@ -101,11 +101,11 @@ const styles = StyleSheet.create({
   },
   fillLabel: {
     fontSize: 11,
-    color: '#999',
+    color: '#666',
     fontWeight: '600',
   },
   fillLabelActive: {
-    color: '#FFD700',
+    color: '#B8860B',
   },
   row: {
     flexDirection: 'row',
@@ -117,23 +117,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#999',
   },
   shapeBtnActive: {
-    borderColor: '#FFD700',
-    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    borderColor: '#B8860B',
+    backgroundColor: 'rgba(184, 134, 11, 0.15)',
   },
   shapeIcon: {
     fontSize: 22,
-    color: '#fff',
+    color: '#332100',
     marginBottom: 2,
   },
   shapeLabel: {
     fontSize: 10,
-    color: '#999',
+    color: '#666',
   },
   shapeLabelActive: {
-    color: '#FFD700',
+    color: '#B8860B',
     fontWeight: '600',
   },
 });

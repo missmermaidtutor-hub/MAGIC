@@ -111,7 +111,7 @@ export default function BrushSettings({ brushSize, onChangeBrushSize }) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#E2A06E',
+    backgroundColor: '#FFF8E7',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderTopWidth: 1,

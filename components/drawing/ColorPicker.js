@@ -377,7 +377,7 @@ export default function ColorPicker({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#E2A06E',
+    backgroundColor: '#FFF8E7',
     borderTopWidth: 1,
     borderTopColor: '#333',
     paddingVertical: 8,

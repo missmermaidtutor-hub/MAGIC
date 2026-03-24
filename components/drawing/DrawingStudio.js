@@ -87,6 +87,7 @@ export default function DrawingStudio({
   const originalStrokeRef = useRef(null);
   const moveDeltaRef = useRef({ dx: 0, dy: 0 }); // accumulated delta for RAF batching
   const strokesRef = useRef(strokes);
+  const [lastMovedIndex, setLastMovedIndex] = useState(null);
 
   // Undo operations stack — tracks whether each action was 'draw' or 'move'
   const undoOpsRef = useRef([]);
@@ -278,6 +279,7 @@ export default function DrawingStudio({
         setRedoStack([]);
         redoOpsRef.current = [];
       }
+      setLastMovedIndex(movingStrokeIndexRef.current);
       movingStrokeIndexRef.current = null;
       moveStartPosRef.current = null;
       originalStrokeRef.current = null;
@@ -365,6 +367,22 @@ export default function DrawingStudio({
     }
   };
 
+  const handleDuplicate = () => {
+    if (lastMovedIndex === null || lastMovedIndex >= strokes.length) return;
+    const source = strokes[lastMovedIndex];
+    const duplicate = moveStroke({ ...source, id: Date.now() }, 20, 20);
+    // Deep copy points for path strokes
+    if (duplicate.type === 'path' && duplicate.points) {
+      duplicate.points = duplicate.points.map(p => ({ ...p }));
+    }
+    setStrokes((prev) => [...prev, duplicate]);
+    undoOpsRef.current.push({ type: 'draw' });
+    setRedoStack([]);
+    redoOpsRef.current = [];
+    // Point lastMovedIndex to the new copy so user can duplicate again
+    setLastMovedIndex(strokes.length);
+  };
+
   const handleClear = () => {
     setStrokes([]);
     setRedoStack([]);
@@ -372,6 +390,7 @@ export default function DrawingStudio({
     setCurrentStroke(null);
     undoOpsRef.current = [];
     redoOpsRef.current = [];
+    setLastMovedIndex(null);
   };
 
   const handleSelectTool = (tool) => {
@@ -464,6 +483,7 @@ export default function DrawingStudio({
     setColorBgMode(false);
     setTextPlacementMode(false);
     setPendingText(null);
+    setLastMovedIndex(null);
     undoOpsRef.current = [];
     redoOpsRef.current = [];
     onClose();
@@ -489,8 +509,10 @@ export default function DrawingStudio({
           onClear={handleClear}
           onToggleShapes={handleToggleShapes}
           onToggleText={handleToggleText}
+          onDuplicate={handleDuplicate}
           canUndo={strokes.length > 0 || undoOpsRef.current.length > 0}
           canRedo={redoStack.length > 0 || redoOpsRef.current.length > 0}
+          canDuplicate={lastMovedIndex !== null && lastMovedIndex < strokes.length}
           shapesActive={showShapes}
           showBrushSettings={showBrushSettings}
           onToggleBrushSettings={() => {
@@ -632,7 +654,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#E2A06E',
+    backgroundColor: '#FFF8E7',
   },
   header: {
     flexDirection: 'row',
@@ -640,9 +662,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#E2A06E',
+    backgroundColor: '#FFF8E7',
     borderBottomWidth: 1,
-    borderBottomColor: '#c8875a',
+    borderBottomColor: '#D4C4A0',
   },
   closeBtn: {
     width: 36,
@@ -658,7 +680,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   title: {
-    color: '#FFD700',
+    color: '#332100',
     fontSize: 16,
     fontWeight: 'bold',
     flex: 1,
@@ -666,12 +688,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   textHint: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(180, 140, 60, 0.15)',
     paddingVertical: 6,
     alignItems: 'center',
   },
   textHintText: {
-    color: '#FFD700',
+    color: '#7A6520',
     fontSize: 13,
     fontStyle: 'italic',
   },
@@ -679,9 +701,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 10,
     gap: 10,
-    backgroundColor: '#E2A06E',
+    backgroundColor: '#FFF8E7',
     borderTopWidth: 1,
-    borderTopColor: '#c8875a',
+    borderTopColor: '#D4C4A0',
   },
   savePersonalBtn: {
     flex: 1,
@@ -725,6 +747,6 @@ const styles = StyleSheet.create({
     color: '#333',
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#c8875a',
+    borderColor: '#D4C4A0',
   },
 });

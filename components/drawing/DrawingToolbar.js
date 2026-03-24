@@ -15,6 +15,7 @@ const ACTION_ITEMS = [
   { key: 'redo', label: 'Redo', icon: '↪️' },
   { key: 'shapes', label: 'Shapes', icon: '⬡' },
   { key: TOOLS.MOVE, label: 'Move', icon: '✥' },
+  { key: 'duplicate', label: 'Copy', icon: '⧉' },
   { key: 'text', label: 'Text', icon: 'Aa' },
   { key: 'clear', label: 'Clear', icon: '🗑️' },
 ];
@@ -27,8 +28,10 @@ export default function DrawingToolbar({
   onClear,
   onToggleShapes,
   onToggleText,
+  onDuplicate,
   canUndo,
   canRedo,
+  canDuplicate,
   shapesActive,
   showBrushSettings,
   onToggleBrushSettings,
@@ -54,6 +57,9 @@ export default function DrawingToolbar({
         break;
       case TOOLS.MOVE:
         onSelectTool(TOOLS.MOVE);
+        break;
+      case 'duplicate':
+        if (onDuplicate) onDuplicate();
         break;
       case 'text':
         onToggleText();
@@ -119,7 +125,8 @@ export default function DrawingToolbar({
         {ACTION_ITEMS.map((item) => {
           const disabled =
             (item.key === 'undo' && !canUndo) ||
-            (item.key === 'redo' && !canRedo);
+            (item.key === 'redo' && !canRedo) ||
+            (item.key === 'duplicate' && !canDuplicate);
           const isActive =
             (item.key === 'shapes' && shapesActive) ||
             (item.key === TOOLS.MOVE && activeTool === TOOLS.MOVE);
@@ -153,9 +160,9 @@ export default function DrawingToolbar({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#E2A06E',
+    backgroundColor: '#FFF8E7',
     borderBottomWidth: 1,
-    borderBottomColor: '#c8875a',
+    borderBottomColor: '#D4C4A0',
     paddingVertical: 6,
     paddingHorizontal: 4,
   },
@@ -174,9 +181,9 @@ const styles = StyleSheet.create({
     minWidth: 44,
   },
   toolBtnActive: {
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(184, 134, 11, 0.15)',
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: '#B8860B',
   },
   toolBtnDisabled: {
     opacity: 0.3,
@@ -193,7 +200,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   toolLabelActive: {
-    color: '#FFD700',
+    color: '#B8860B',
     fontWeight: '600',
   },
   labelDisabled: {
@@ -202,7 +209,7 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 30,
-    backgroundColor: '#c8875a',
+    backgroundColor: '#D4C4A0',
     marginHorizontal: 4,
   },
   colorPreview: {
