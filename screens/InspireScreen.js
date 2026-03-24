@@ -535,6 +535,7 @@ export default function InspireScreen({ navigation }) {
     const isAudio = courage.mediaType === 'audio';
     const isPlaying = playingAudioId === courage.id;
     const isSaved = savedInspirations.has(courage.id);
+    const isTextOnly = !courage.mediaUrl && !courage.source && !isAudio;
 
     return (
       <View key={courage.id} style={styles.artworkCard}>
@@ -550,7 +551,7 @@ export default function InspireScreen({ navigation }) {
 
           {/* Image or Audio Player */}
           <TouchableOpacity
-            style={styles.imageFrame}
+            style={[styles.imageFrame, isTextOnly && styles.textOnlyFrame]}
             onPress={() => {
               if (isAudio) {
                 playAudio(courage);
@@ -578,7 +579,7 @@ export default function InspireScreen({ navigation }) {
               />
             ) : (
               <View style={styles.textCourageFrame}>
-                <Text style={styles.textCourageContent} numberOfLines={6}>
+                <Text style={styles.textCourageContent}>
                   {courage.title}
                 </Text>
               </View>
@@ -817,7 +818,7 @@ export default function InspireScreen({ navigation }) {
                         <Text style={styles.envelopeIcon}>✉️</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={styles.imageFrame}
+                        style={[styles.imageFrame, !courage.mediaUrl && !courage.source && styles.textOnlyFrame]}
                         onPress={() => {
                           if (courage.mediaUrl || courage.source) setFullViewArtwork(courage);
                         }}
@@ -828,7 +829,7 @@ export default function InspireScreen({ navigation }) {
                           <Image source={{ uri: courage.mediaUrl }} style={styles.artworkImage} resizeMode="cover" />
                         ) : (
                           <View style={styles.textCourageFrame}>
-                            <Text style={styles.textCourageContent} numberOfLines={6}>{courage.title}</Text>
+                            <Text style={styles.textCourageContent}>{courage.title}</Text>
                           </View>
                         )}
                       </TouchableOpacity>
@@ -1005,6 +1006,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#004225',
     position: 'relative',
+  },
+  textOnlyFrame: {
+    aspectRatio: undefined,
+    minHeight: 120,
   },
   artworkImage: {
     width: '100%',

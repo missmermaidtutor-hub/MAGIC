@@ -1294,6 +1294,7 @@ export default function ArtScreen() {
               placeholderTextColor="#666"
               value={writeText}
               onChangeText={setWriteText}
+              maxLength={200}
               autoFocus
             />
             <View style={styles.writeButtonRow}>
