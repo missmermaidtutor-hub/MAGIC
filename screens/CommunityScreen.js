@@ -180,12 +180,9 @@ export default function CommunityScreen({ navigation, route }) {
   }, [userProfile]);
 
   useEffect(() => {
-    loadAllGalleries();
+    // Only load things NOT already in useFocusEffect to avoid double-execution race conditions
     loadFollowedUsers();
-    loadSavedArt();
-    promotePendingVotingArtworks();
     loadUserIdentity();
-    loadNewsfeed();
   }, []);
 
   // Day 13 popup (one-time)
@@ -335,16 +332,19 @@ export default function CommunityScreen({ navigation, route }) {
       const stillPending = pending.filter(a => a.votingSubmitDate >= today);
 
       if (ready.length > 0) {
-        // Move ready artworks to curated gallery
+        // Move ready artworks to curated gallery (with dedup)
         const curatedData = await AsyncStorage.getItem('public_artworks');
         const curated = curatedData ? JSON.parse(curatedData) : [];
-        const promoted = ready.map(a => ({
-          ...a,
-          pendingVoting: false,
-          isPublic: true,
-          madePublic: true,
-          publicDate: new Date().toISOString(),
-        }));
+        const existingIds = new Set(curated.map(a => a.id));
+        const promoted = ready
+          .filter(a => !existingIds.has(a.id)) // skip if already curated
+          .map(a => ({
+            ...a,
+            pendingVoting: false,
+            isPublic: true,
+            madePublic: true,
+            publicDate: new Date().toISOString(),
+          }));
         const updatedCurated = [...curated, ...promoted];
         await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
 
@@ -451,11 +451,30 @@ export default function CommunityScreen({ navigation, route }) {
     setCarouselModal(prev => ({ ...prev, currentIndex: newIndex }));
   };
 
+  // Deduplicate an array by id field
+  const dedupeById = (arr) => {
+    const seen = new Set();
+    return arr.filter(item => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  };
+
   const loadAllGalleries = async () => {
     try {
       const publicData = await AsyncStorage.getItem('public_artworks');
-      if (publicData) setCuratedArtworks(JSON.parse(publicData));
-      else setCuratedArtworks([]);
+      if (publicData) {
+        const deduped = dedupeById(JSON.parse(publicData));
+        setCuratedArtworks(deduped);
+        // Fix AsyncStorage if duplicates were found
+        const parsed = JSON.parse(publicData);
+        if (deduped.length !== parsed.length) {
+          await AsyncStorage.setItem('public_artworks', JSON.stringify(deduped));
+        }
+      } else {
+        setCuratedArtworks([]);
+      }
 
       const personalData = await AsyncStorage.getItem('personal_artworks');
       if (personalData) setPersonalArtworks(JSON.parse(personalData));
@@ -629,7 +648,10 @@ export default function CommunityScreen({ navigation, route }) {
               );
             }
           } else if (fromGallery === 'curated') {
-            const updated = curatedArtworks.filter(a => a.id !== artwork.id);
+            // Read fresh from AsyncStorage to avoid stale state
+            const freshData = await AsyncStorage.getItem('public_artworks');
+            const freshCurated = freshData ? JSON.parse(freshData) : [];
+            const updated = freshCurated.filter(a => a.id !== artwork.id);
             setCuratedArtworks(updated);
             await AsyncStorage.setItem('public_artworks', JSON.stringify(updated));
             if (user) {
@@ -640,8 +662,10 @@ export default function CommunityScreen({ navigation, route }) {
           }
           // Also remove from curated if it was there
           if (fromGallery !== 'curated') {
-            const updatedCurated = curatedArtworks.filter(a => a.id !== artwork.id);
-            if (updatedCurated.length !== curatedArtworks.length) {
+            const freshData = await AsyncStorage.getItem('public_artworks');
+            const freshCurated = freshData ? JSON.parse(freshData) : [];
+            const updatedCurated = freshCurated.filter(a => a.id !== artwork.id);
+            if (updatedCurated.length !== freshCurated.length) {
               setCuratedArtworks(updatedCurated);
               await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
               if (user) {
