@@ -1,9 +1,10 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Linking, Alert, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import { openMailto } from '../../utils/emailUtils';
 
 export default function ContactScreen({ navigation }) {
   const handleEmail = () => {
-    Linking.openURL('mailto:missmermaidtutor@gmail.com');
+    openMailto('MAGIC Tracker Feedback', '', 'missmermaidtutor@gmail.com');
   };
 
   return (

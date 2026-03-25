@@ -562,8 +562,6 @@ const Candle = ({ lit = false, onPress, size = 40 }) => (
 // HELPER FUNCTIONS
 // ============================================================
 
-const getDateString = (date) => date.toISOString().split('T')[0];
-
 // Check if a specific date had ANY MAGIC activity (matches Grow calendar criteria)
 // Check if there was ANY MAGIC activity on a given date (for streak calculation)
 // Uses the shared getTasksForDate so streak criteria matches star criteria exactly

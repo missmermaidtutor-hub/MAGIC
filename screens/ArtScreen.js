@@ -268,13 +268,13 @@ export default function ArtScreen() {
     }
   };
 
-  // Get start of current week (Monday)
+  // Get start of current week (Monday) in EST
   const getWeekStart = (date) => {
     const d = new Date(date);
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
     const monday = new Date(d.setDate(diff));
-    return monday.toISOString().split('T')[0];
+    return getESTDate(monday);
   };
 
   // Save weekly time
@@ -630,6 +630,18 @@ export default function ArtScreen() {
         setCourageUploadedToday(true);
         await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
 
+        // Persist to Firestore private gallery so it survives across sessions/devices
+        saveArtwork(user.uid, {
+          type: writeMode,
+          text: writeText.trim(),
+          artist: 'You',
+          title,
+          date: today,
+          isPublic: false,
+          pendingVoting: true,
+          textStyle,
+        }).catch(err => console.log('Firestore artwork backup error:', err));
+
         const successMsg = isAnonymous
           ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
           : 'Your Courage has been registered for Voting tomorrow. When voting is over, your Courage will also show your pseudonym in Winner Circle, and galleries.';
@@ -758,6 +770,18 @@ export default function ArtScreen() {
 
         setCourageUploadedToday(true);
         await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
+
+        // Persist to Firestore private gallery so it survives across sessions/devices
+        saveArtwork(user.uid, {
+          type: 'sketch',
+          imageUrl: persistedUri,
+          artist: 'You',
+          title,
+          prompt: todaysChallenge,
+          date: today,
+          isPublic: false,
+          pendingVoting: true,
+        }).catch(err => console.log('Firestore artwork backup error:', err));
 
         const successMsg = isAnonymous
           ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
@@ -939,6 +963,17 @@ export default function ArtScreen() {
 
         setCourageUploadedToday(true);
         await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
+
+        // Persist to Firestore private gallery so it survives across sessions/devices
+        saveArtwork(user.uid, {
+          type: 'capture',
+          imageUrl: persistedUri,
+          artist: 'You',
+          title,
+          date: today,
+          isPublic: false,
+          pendingVoting: true,
+        }).catch(err => console.log('Firestore artwork backup error:', err));
 
         const successMsg = isAnonymous
           ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
@@ -1294,15 +1329,22 @@ export default function ArtScreen() {
               placeholderTextColor="#666"
               value={writeText}
               onChangeText={setWriteText}
-              maxLength={200}
+              maxLength={2500}
+              scrollEnabled
               autoFocus
             />
             <View style={styles.writeButtonRow}>
               <TouchableOpacity style={styles.writePersonalBtn} onPress={saveWriteToPersonal}>
                 <Text style={styles.writeBtnText}>Save to{'\n'}Personal</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.writeCourageBtn} onPress={saveWriteToCourage}>
-                <Text style={styles.writeBtnText}>Save to{'\n'}Courage</Text>
+              <TouchableOpacity
+                style={[styles.writeCourageBtn, courageUploadedToday && { opacity: 0.4 }]}
+                onPress={saveWriteToCourage}
+                disabled={courageUploadedToday}
+              >
+                <Text style={styles.writeBtnText}>
+                  {courageUploadedToday ? 'Courage achieved.\nCome back tomorrow.' : 'Save to\nCourage'}
+                </Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity style={styles.writeCloseBtn} onPress={() => setWriteModalVisible(false)}>
@@ -1364,7 +1406,7 @@ export default function ArtScreen() {
                 disabled={courageUploadedToday}
               >
                 <Text style={styles.writeBtnText}>
-                  {courageUploadedToday ? 'Courage\nSent' : 'Share as\nCourage'}
+                  {courageUploadedToday ? 'Courage achieved.\nCome back tomorrow.' : 'Share as\nCourage'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1852,7 +1894,8 @@ const styles = StyleSheet.create({
     color: '#332100',
     fontSize: 16,
     padding: 15,
-    minHeight: 200,
+    minHeight: 150,
+    maxHeight: 300,
     textAlignVertical: 'top',
     marginBottom: 16,
   },

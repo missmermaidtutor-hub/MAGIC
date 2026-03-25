@@ -15,6 +15,7 @@ import {
   getArtTime,
 } from '../services/firestoreService';
 import { getPremiumStatus, checkStreakTrialEligibility } from '../utils/premiumUtils';
+import { getESTDate } from '../utils/dateUtils';
 import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -120,7 +121,7 @@ export function AuthProvider({ children }) {
   // Background sync: pull Firestore data into AsyncStorage (non-blocking)
   const backgroundSync = async (uid) => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getESTDate();
 
       // Sync artworks
       const [artworks, inspirations, curated] = await Promise.all([

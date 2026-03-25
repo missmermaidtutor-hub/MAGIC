@@ -629,7 +629,7 @@ export default function DrawingStudio({
             disabled={courageUploadedToday}
           >
             <Text style={styles.saveCourageText}>
-              {courageUploadedToday ? 'Courage Sent' : 'Share as Courage'}
+              {courageUploadedToday ? 'Courage achieved. Come back tomorrow.' : 'Share as Courage'}
             </Text>
           </TouchableOpacity>
         </View>
