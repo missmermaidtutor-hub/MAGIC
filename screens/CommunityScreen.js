@@ -799,9 +799,9 @@ export default function CommunityScreen({ navigation, route }) {
       showAlert('Nothing to Clear', 'All items in your private gallery are candlelit.');
       return;
     }
-    showDestructiveConfirm(
+    showConfirm(
       'Clear Non-Candlelit Items',
-      `Move ${nonCandlelit.length} non-candlelit item${nonCandlelit.length > 1 ? 's' : ''} to trash? You can recover them within 24 hours.`,
+      `This will move ${nonCandlelit.length} non-candlelit item${nonCandlelit.length > 1 ? 's' : ''} to your trash.\n\nYou will have 24 hours to recover them before they are permanently deleted.\n\nAre you sure?`,
       async () => {
         try {
           // Keep only candlelit items
@@ -823,12 +823,12 @@ export default function CommunityScreen({ navigation, route }) {
           setPersonalArtworks(kept);
           setTrashedArtworks(trashArr);
 
-          showAlert('Cleared', `${nonCandlelit.length} item${nonCandlelit.length > 1 ? 's' : ''} moved to trash.`);
+          showAlert('Moved to Trash', `${nonCandlelit.length} item${nonCandlelit.length > 1 ? 's' : ''} moved to trash. You can restore them within 24 hours from the Trash section below.`);
         } catch (e) {
           console.log('Error clearing non-candlelit:', e);
         }
       },
-      'Clear'
+      'Yes, Clear'
     );
   };
 
@@ -2549,7 +2549,7 @@ const styles = StyleSheet.create({
   // Clear Non-Candlelit button
   clearNonCandlelitBtn: {
     borderWidth: 1,
-    borderColor: '#B22222',
+    borderColor: '#4B0082',
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
@@ -2557,7 +2557,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   clearNonCandlelitText: {
-    color: '#B22222',
+    color: '#4B0082',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -2574,12 +2574,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   trashToggleText: {
-    color: '#999',
+    color: '#4B0082',
     fontSize: 14,
     fontWeight: '600',
   },
   trashHint: {
-    color: '#666',
+    color: '#4B0082',
     fontSize: 11,
     marginTop: 2,
   },
@@ -2603,7 +2603,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   trashTimer: {
-    color: '#999',
+    color: '#4B0082',
     fontSize: 10,
     marginTop: 4,
   },
