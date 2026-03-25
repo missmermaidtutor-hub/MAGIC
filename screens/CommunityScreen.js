@@ -130,8 +130,9 @@ export default function CommunityScreen({ navigation, route }) {
   const [fullViewImage, setFullViewImage] = useState(null);
   const [fullViewText, setFullViewText] = useState(null);
   const [followedUsers, setFollowedUsers] = useState([]);
-  const [newsfeedImageIndex, setNewsfeedImageIndex] = useState({});
   const [savedNewsfeedArt, setSavedNewsfeedArt] = useState(new Set());
+  // Carousel modal: { feedUser, currentIndex }
+  const [carouselModal, setCarouselModal] = useState(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [userPseudonym, setUserPseudonym] = useState('');
 
@@ -433,20 +434,20 @@ export default function CommunityScreen({ navigation, route }) {
     await AsyncStorage.setItem('followed_users', JSON.stringify(updated));
   };
 
-  const navigateNewsfeed = (userId, direction) => {
+  const openCarousel = (feedUser, startIndex = 0) => {
     // Mark as connected for today's Connect (C) star point
     const today = getESTDate();
     AsyncStorage.setItem(`connected_${today}`, 'true');
-    setNewsfeedImageIndex(prev => {
-      const currentIndex = prev[userId] || 0;
-      const feedUser = newsfeedUsers.find(u => u.uid === userId);
-      if (!feedUser) return prev;
-      const maxIndex = feedUser.artworks.length - 1;
-      let newIndex = currentIndex + direction;
-      if (newIndex < 0) newIndex = 0;
-      if (newIndex > maxIndex) newIndex = maxIndex;
-      return { ...prev, [userId]: newIndex };
-    });
+    setCarouselModal({ feedUser, currentIndex: startIndex });
+  };
+
+  const navigateCarousel = (direction) => {
+    if (!carouselModal) return;
+    const maxIndex = carouselModal.feedUser.artworks.length - 1;
+    let newIndex = carouselModal.currentIndex + direction;
+    if (newIndex < 0) newIndex = 0;
+    if (newIndex > maxIndex) newIndex = maxIndex;
+    setCarouselModal(prev => ({ ...prev, currentIndex: newIndex }));
   };
 
   const loadAllGalleries = async () => {
@@ -556,9 +557,12 @@ export default function CommunityScreen({ navigation, route }) {
         setCuratedArtworks(updatedCurated);
         await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
         trackAction('artwork_curated');
-        // Sync to Firestore curated
+        // Sync to Firestore curated (include curator's pseudonym for community newsfeed)
         if (user) {
-          saveCuratedWork(user.uid, curatedArt).catch(err =>
+          saveCuratedWork(user.uid, {
+            ...curatedArt,
+            pseudonym: userProfile?.pseudonym || '',
+          }).catch(err =>
             console.log('Firestore save curated error:', err)
           );
         }
@@ -834,6 +838,43 @@ export default function CommunityScreen({ navigation, route }) {
     );
   };
 
+  // ─── Render a single thumbnail in the horizontal strip ───
+  const renderThumbnail = (artwork, index, feedUser) => {
+    const imageSource = getArtworkImageSource(artwork);
+    const hasText = artwork.text && artwork.text.trim().length > 0;
+
+    return (
+      <TouchableOpacity
+        key={artwork.docId || artwork.id || index}
+        style={styles.thumbWrapper}
+        onPress={() => openCarousel(feedUser, index)}
+        activeOpacity={0.8}
+      >
+        <GoldFrame thickness={3} style={styles.thumbFrameInner}>
+          {imageSource ? (
+            <View style={styles.thumbImageBg}>
+              <Image source={imageSource} style={styles.thumbImage} resizeMode="cover" />
+            </View>
+          ) : hasText ? (
+            <View style={[styles.thumbImageBg, styles.textArtBg]}>
+              <Text style={[
+                styles.thumbTextContent,
+                artwork.textStyle && {
+                  fontFamily: artwork.textStyle.fontFamily,
+                  color: artwork.textStyle.color,
+                },
+              ]} numberOfLines={4}>{artwork.text}</Text>
+            </View>
+          ) : (
+            <View style={[styles.thumbImageBg, styles.placeholderArt]}>
+              <Text style={{ fontSize: 24 }}>🎨</Text>
+            </View>
+          )}
+        </GoldFrame>
+      </TouchableOpacity>
+    );
+  };
+
   // ─── Newsfeed (Visit Curations) ───
   const renderNewsfeed = () => {
     if (newsfeedLoading) {
@@ -857,15 +898,12 @@ export default function CommunityScreen({ navigation, route }) {
     }
 
     return newsfeedUsers.map((feedUser) => {
-      const currentIndex = newsfeedImageIndex[feedUser.uid] || 0;
-      const artwork = feedUser.artworks[currentIndex];
-      if (!artwork) return null;
-      const imageSource = getArtworkImageSource(artwork);
       const isFollowed = followedUsers.includes(feedUser.uid);
       const firstLetter = (feedUser.pseudonym || 'A').charAt(0).toUpperCase();
 
       return (
         <View key={feedUser.uid} style={styles.newsfeedCard}>
+          {/* Header: avatar + pseudonym + follow */}
           <View style={styles.newsfeedHeader}>
             <View style={styles.newsfeedUserInfo}>
               <View style={styles.newsfeedAvatarCircle}>
@@ -888,81 +926,16 @@ export default function CommunityScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.newsfeedArtContainer}>
-            <TouchableOpacity
-              style={[styles.navArrow, currentIndex === 0 && styles.navArrowDisabled]}
-              onPress={() => navigateNewsfeed(feedUser.uid, -1)}
-              disabled={currentIndex === 0}
-            >
-              <Text style={[styles.navArrowText, currentIndex === 0 && styles.navArrowTextDisabled]}>‹</Text>
-            </TouchableOpacity>
+          {/* Horizontal thumbnail strip */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.thumbStrip}
+          >
+            {feedUser.artworks.map((artwork, i) => renderThumbnail(artwork, i, feedUser))}
+          </ScrollView>
 
-            <View style={styles.newsfeedFrameArea}>
-              <GoldFrame
-                style={styles.newsfeedFrameInner}
-                onPress={() => {
-                  if (imageSource) setFullViewImage({ source: imageSource, artwork, curatorUid: feedUser.uid });
-                  else if (artwork.text) setFullViewText({ text: artwork.text, title: artwork.title, textStyle: artwork.textStyle });
-                }}
-                thickness={6}
-              >
-                {imageSource ? (
-                  <View style={styles.newsfeedImageBg}>
-                    <Image source={imageSource} style={styles.newsfeedImage} resizeMode="contain" />
-                  </View>
-                ) : artwork.text ? (
-                  <View style={[styles.newsfeedImageBg, styles.textArtBg]}>
-                    <Text style={[
-                      styles.textArtContent,
-                      artwork.textStyle && {
-                        fontFamily: artwork.textStyle.fontFamily,
-                        fontWeight: artwork.textStyle.fontWeight,
-                        fontStyle: artwork.textStyle.fontStyle,
-                        textDecorationLine: artwork.textStyle.textDecorationLine,
-                        textAlign: artwork.textStyle.textAlign,
-                        color: artwork.textStyle.color,
-                      },
-                    ]} numberOfLines={8}>{artwork.text}</Text>
-                  </View>
-                ) : (
-                  <View style={[styles.newsfeedImageBg, styles.placeholderArt]}>
-                    <Text style={styles.placeholderEmoji}>🎨</Text>
-                  </View>
-                )}
-              </GoldFrame>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.navArrow, currentIndex >= feedUser.artworks.length - 1 && styles.navArrowDisabled]}
-              onPress={() => navigateNewsfeed(feedUser.uid, 1)}
-              disabled={currentIndex >= feedUser.artworks.length - 1}
-            >
-              <Text style={[styles.navArrowText, currentIndex >= feedUser.artworks.length - 1 && styles.navArrowTextDisabled]}>›</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Email + info + Candle */}
-          <View style={styles.newsfeedArtInfo}>
-            <TouchableOpacity onPress={() => handleEmailShare(artwork)}>
-              <Text style={styles.newsfeedEnvelope}>✉️</Text>
-            </TouchableOpacity>
-            <View style={styles.newsfeedArtInfoCenter}>
-              <Text style={styles.newsfeedArtTitle}>{artwork.title || 'Untitled'}</Text>
-            </View>
-            <Candle
-              lit={savedNewsfeedArt.has(artwork.docId || artwork.id)}
-              onPress={() => handleCandleSave(artwork, feedUser.uid)}
-              size={36}
-            />
-          </View>
-
-          {feedUser.artworks.length > 1 && (
-            <View style={styles.dotRow}>
-              {feedUser.artworks.map((_, i) => (
-                <View key={i} style={[styles.dot, i === currentIndex && styles.dotActive]} />
-              ))}
-            </View>
-          )}
+          <Text style={styles.thumbHint}>Tap to view full size</Text>
         </View>
       );
     });
@@ -1467,6 +1440,123 @@ export default function CommunityScreen({ navigation, route }) {
               },
             ]}>{fullViewText?.text}</Text>
           </ScrollView>
+        </View>
+      </Modal>
+
+      {/* Carousel modal — full-screen viewer for community curations */}
+      <Modal
+        visible={carouselModal !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setCarouselModal(null)}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setCarouselModal(null)}
+          >
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+
+          {carouselModal && (() => {
+            const artwork = carouselModal.feedUser.artworks[carouselModal.currentIndex];
+            if (!artwork) return null;
+            const imageSource = getArtworkImageSource(artwork);
+            const hasText = artwork.text && artwork.text.trim().length > 0;
+            const atStart = carouselModal.currentIndex === 0;
+            const atEnd = carouselModal.currentIndex >= carouselModal.feedUser.artworks.length - 1;
+
+            return (
+              <View style={styles.carouselContent}>
+                {/* Pseudonym header */}
+                <Text style={styles.carouselPseudonym}>{carouselModal.feedUser.pseudonym}</Text>
+
+                {/* Main artwork display */}
+                <View style={styles.carouselArtRow}>
+                  <TouchableOpacity
+                    style={[styles.carouselArrow, atStart && styles.navArrowDisabled]}
+                    onPress={() => navigateCarousel(-1)}
+                    disabled={atStart}
+                  >
+                    <Text style={[styles.carouselArrowText, atStart && { color: '#555' }]}>‹</Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.carouselFrameArea}>
+                    {imageSource ? (
+                      <ScrollView
+                        contentContainerStyle={styles.carouselImageScroll}
+                        maximumZoomScale={5}
+                        minimumZoomScale={1}
+                        bouncesZoom={true}
+                      >
+                        <Image source={imageSource} style={styles.carouselImage} resizeMode="contain" />
+                      </ScrollView>
+                    ) : hasText ? (
+                      <ScrollView style={styles.carouselTextScroll} contentContainerStyle={styles.carouselTextContainer}>
+                        {artwork.title ? (
+                          <Text style={styles.carouselTextTitle}>{artwork.title}</Text>
+                        ) : null}
+                        <Text style={[
+                          styles.carouselTextContent,
+                          artwork.textStyle && {
+                            fontFamily: artwork.textStyle.fontFamily,
+                            fontWeight: artwork.textStyle.fontWeight,
+                            fontStyle: artwork.textStyle.fontStyle,
+                            textDecorationLine: artwork.textStyle.textDecorationLine,
+                            textAlign: artwork.textStyle.textAlign,
+                            color: artwork.textStyle.color || '#fff',
+                          },
+                        ]}>{artwork.text}</Text>
+                      </ScrollView>
+                    ) : (
+                      <View style={styles.carouselPlaceholder}>
+                        <Text style={{ fontSize: 60 }}>🎨</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.carouselArrow, atEnd && styles.navArrowDisabled]}
+                    onPress={() => navigateCarousel(1)}
+                    disabled={atEnd}
+                  >
+                    <Text style={[styles.carouselArrowText, atEnd && { color: '#555' }]}>›</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Title + actions */}
+                <Text style={styles.carouselTitle}>{artwork.title || 'Untitled'}</Text>
+                <Text style={styles.carouselCounter}>
+                  {carouselModal.currentIndex + 1} of {carouselModal.feedUser.artworks.length}
+                </Text>
+
+                <View style={styles.carouselActions}>
+                  <TouchableOpacity onPress={() => handleEmailShare(artwork)}>
+                    <Text style={{ fontSize: 30 }}>✉️</Text>
+                  </TouchableOpacity>
+                  <Candle
+                    lit={savedNewsfeedArt.has(artwork.docId || artwork.id)}
+                    onPress={() => handleCandleSave(artwork, carouselModal.feedUser.uid)}
+                    size={44}
+                  />
+                </View>
+
+                {/* Dot indicators */}
+                {carouselModal.feedUser.artworks.length > 1 && (
+                  <View style={styles.carouselDots}>
+                    {carouselModal.feedUser.artworks.map((_, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        onPress={() => setCarouselModal(prev => ({ ...prev, currentIndex: i }))}
+                      >
+                        <View style={[styles.dot, i === carouselModal.currentIndex && styles.dotActive, { width: 9, height: 9 }]} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+            );
+          })()}
         </View>
       </Modal>
 
@@ -1979,72 +2069,48 @@ const styles = StyleSheet.create({
   followBtnTextActive: {
     color: '#0a0e27',
   },
-  newsfeedArtContainer: {
+  // Thumbnail strip
+  thumbStrip: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(184, 200, 232, 0.5)',
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    gap: 8,
   },
-  navArrow: {
-    width: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 40,
-    zIndex: 2,
+  thumbWrapper: {
+    width: 100,
+    height: 100,
   },
-  navArrowDisabled: {
-    opacity: 0.2,
-  },
-  navArrowText: {
-    fontSize: 36,
-    color: '#050d61',
-    fontWeight: 'bold',
-  },
-  navArrowTextDisabled: {
-    color: '#555',
-  },
-  newsfeedFrameArea: {
-    flex: 1,
-    alignItems: 'stretch',
-    justifyContent: 'center',
-  },
-  newsfeedFrameInner: {
+  thumbFrameInner: {
     alignSelf: 'stretch',
   },
-  newsfeedImageBg: {
-    alignSelf: 'stretch',
+  thumbImageBg: {
+    width: '100%',
     aspectRatio: 1,
     backgroundColor: '#0a0e27',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
-  newsfeedImage: {
+  thumbImage: {
     width: '100%',
     height: '100%',
   },
-  newsfeedArtInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 10,
-    paddingHorizontal: 14,
+  thumbTextContent: {
+    fontSize: 8,
+    color: '#332100',
+    lineHeight: 11,
+    textAlign: 'center',
+    padding: 2,
   },
-  newsfeedArtInfoCenter: {
-    flex: 1,
-    alignItems: 'center',
+  thumbHint: {
+    fontSize: 11,
+    color: '#777',
+    textAlign: 'center',
+    paddingBottom: 10,
+    fontStyle: 'italic',
   },
-  newsfeedArtTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#050d61',
-  },
-  newsfeedArtDate: {
-    fontSize: 12,
-    color: '#050d61',
-    marginTop: 2,
-  },
-  newsfeedEnvelope: {
-    fontSize: 28,
+  navArrowDisabled: {
+    opacity: 0.2,
   },
   dotRow: {
     flexDirection: 'row',
@@ -2060,6 +2126,106 @@ const styles = StyleSheet.create({
   },
   dotActive: {
     backgroundColor: '#FFD700',
+  },
+  // Carousel modal
+  carouselContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingBottom: 30,
+  },
+  carouselPseudonym: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 12,
+  },
+  carouselArtRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    width: '100%',
+  },
+  carouselArrow: {
+    width: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  carouselArrowText: {
+    fontSize: 44,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  carouselFrameArea: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  carouselImageScroll: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  carouselImage: {
+    width: SCREEN_WIDTH - 120,
+    height: SCREEN_HEIGHT * 0.5,
+  },
+  carouselTextScroll: {
+    maxHeight: SCREEN_HEIGHT * 0.5,
+    width: SCREEN_WIDTH - 120,
+  },
+  carouselTextContainer: {
+    backgroundColor: '#fdf6e3',
+    borderRadius: 8,
+    padding: 20,
+    minHeight: 200,
+  },
+  carouselTextTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#332100',
+    textAlign: 'center',
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  carouselTextContent: {
+    fontSize: 16,
+    color: '#332100',
+    lineHeight: 24,
+  },
+  carouselPlaceholder: {
+    width: SCREEN_WIDTH - 120,
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 8,
+  },
+  carouselTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  carouselCounter: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
+  },
+  carouselActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 30,
+    marginTop: 16,
+  },
+  carouselDots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 8,
   },
 
   // Curate button disabled

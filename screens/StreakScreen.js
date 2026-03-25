@@ -14,7 +14,7 @@ import Svg, { Path } from 'react-native-svg';
 import { getESTDate } from '../utils/dateUtils';
 import { getTasksForDate } from '../utils/taskUtils';
 import { useAuth } from '../context/AuthContext';
-import { getMyArtSaves } from '../services/firestoreService';
+import { getMyArtSaves, getUserWinCount } from '../services/firestoreService';
 import { showAlert, showDestructiveConfirm } from '../utils/alertUtils';
 import { useFocusEffect } from '@react-navigation/native';
 import PremiumGate from '../components/premium/PremiumGate';
@@ -291,6 +291,7 @@ export default function StreakScreen({ navigation }) {
   const [month2Data, setMonth2Data] = useState({});
   const [selectedDay, setSelectedDay] = useState(null); // { day, month, year, tasks }
   const [inspiringSaveCount, setInspiringSaveCount] = useState(0);
+  const [winningCourages, setWinningCourages] = useState(0);
 
   // Goal assessment state (matches HomeScreen)
   const [goalAcknowledged, setGoalAcknowledged] = useState(false);
@@ -327,6 +328,7 @@ export default function StreakScreen({ navigation }) {
   useEffect(() => {
     loadStreakStats();
     loadInspiringCount();
+    loadWinCount();
     loadGoals();
   }, []);
 
@@ -337,6 +339,16 @@ export default function StreakScreen({ navigation }) {
       setInspiringSaveCount(saves.length);
     } catch (e) {
       console.log('Error loading inspiring count:', e);
+    }
+  };
+
+  const loadWinCount = async () => {
+    if (!user || user.uid === 'local') return;
+    try {
+      const count = await getUserWinCount(user.uid);
+      setWinningCourages(count);
+    } catch (e) {
+      console.log('Error loading win count:', e);
     }
   };
 
@@ -909,6 +921,18 @@ export default function StreakScreen({ navigation }) {
                   </View>
                 </View>
               </PremiumGate>
+            </View>
+          )}
+          {user && user.uid !== 'local' && (
+            <View style={styles.premiumGridItem}>
+              <View style={styles.statsRow}>
+                <View style={[styles.statBox, { flex: 1 }]}>
+                  <Text style={[styles.statNumber, { color: '#B8860B' }]}>
+                    {winningCourages > 0 ? '🏆 ' : ''}{winningCourages}
+                  </Text>
+                  <Text style={styles.statLabel}>Winning Courages</Text>
+                </View>
+              </View>
             </View>
           )}
         </View>

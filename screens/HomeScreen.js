@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
-import { calculateAndSetWinner, getRecentWinners, saveProgress, checkPseudonymAvailable, claimPseudonym, releasePseudonym, updateUserProfile } from '../services/firestoreService';
+import { calculateAndSetWinner, getRecentWinners, saveProgress, checkPseudonymAvailable, claimPseudonym, releasePseudonym, updateUserProfile, getUserWinCount } from '../services/firestoreService';
 import { getESTDate, getESTYesterday, getESTDayBeforeYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
 import { getTodayQuote } from '../utils/quoteUtils';
@@ -645,6 +645,7 @@ export default function HomeScreen({ navigation }) {
   const [todaysChallenge, setTodaysChallenge] = useState('');
   const [todaysCriterion, setTodaysCriterion] = useState('');
   const [pseudonym, setPseudonym] = useState('PSEUDONYM');
+  const [hasWon, setHasWon] = useState(false);
 
   // Streak state
   const [streakData, setStreakData] = useState({ yearDots: 0, monthStars: 0, weekStars: 0, dayStars: 0, total: 0 });
@@ -686,10 +687,13 @@ export default function HomeScreen({ navigation }) {
     loadWinners();
   }, []);
 
-  // Re-sync pseudonym when userProfile updates
+  // Re-sync pseudonym when userProfile updates + check if user has won
   useEffect(() => {
     if (userProfile?.pseudonym) {
       setPseudonym(userProfile.pseudonym);
+    }
+    if (user && user.uid !== 'local') {
+      getUserWinCount(user.uid).then(count => setHasWon(count > 0)).catch(() => {});
     }
   }, [userProfile]);
 
@@ -1354,10 +1358,11 @@ export default function HomeScreen({ navigation }) {
               : 'Start your streak today!'
             }
           </Text>
+
         </View>
 
         <Text style={styles.tagline}>
-          Reach for a star everyday, {pseudonym}
+          Reach for a star everyday, {hasWon ? '🏆 ' : ''}{pseudonym}
         </Text>
 
         <View style={styles.divider} />

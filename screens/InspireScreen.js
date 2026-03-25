@@ -535,7 +535,7 @@ export default function InspireScreen({ navigation }) {
     const isAudio = courage.mediaType === 'audio';
     const isPlaying = playingAudioId === courage.id;
     const isSaved = savedInspirations.has(courage.id);
-    const isTextOnly = !courage.mediaUrl && !courage.source && !isAudio;
+    const isTextOnly = courage.mediaType === 'text' || (!courage.mediaUrl && !courage.source && !isAudio);
 
     return (
       <View key={courage.id} style={styles.artworkCard}>
@@ -554,10 +554,30 @@ export default function InspireScreen({ navigation }) {
             <TouchableOpacity
               style={styles.textOnlyFrame}
               onPress={() => setFullViewArtwork(courage)}
+              activeOpacity={0.8}
             >
-              <Text style={styles.textCourageContent}>
-                {courage.title}
-              </Text>
+              {courage.text ? (
+                <>
+                  {courage.title ? (
+                    <Text style={styles.textCourageTitle} numberOfLines={1}>{courage.title}</Text>
+                  ) : null}
+                  <ScrollView
+                    style={styles.textCourageScroll}
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator={true}
+                  >
+                    <Text style={styles.textCourageContent}>{courage.text}</Text>
+                  </ScrollView>
+                </>
+              ) : (
+                <ScrollView
+                  style={styles.textCourageScroll}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator={true}
+                >
+                  <Text style={styles.textCourageContent}>{courage.title}</Text>
+                </ScrollView>
+              )}
               {currentRank && (
                 <View style={styles.rankBadge}>
                   <Text style={styles.rankBadgeText}>#{currentRank}</Text>
@@ -713,7 +733,10 @@ export default function InspireScreen({ navigation }) {
                     style={styles.zoomScroll}
                     contentContainerStyle={styles.textFullViewContainer}
                   >
-                    <Text style={styles.textFullViewContent}>{fullViewArtwork.title}</Text>
+                    {fullViewArtwork.title && fullViewArtwork.text ? (
+                      <Text style={[styles.textFullViewContent, { fontSize: 16, fontStyle: 'italic', marginBottom: 12, opacity: 0.7 }]}>{fullViewArtwork.title}</Text>
+                    ) : null}
+                    <Text style={styles.textFullViewContent}>{fullViewArtwork.text || fullViewArtwork.title}</Text>
                   </ScrollView>
                 )}
                 {(fullViewArtwork.mediaUrl || fullViewArtwork.source) && (
@@ -1040,9 +1063,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#004225',
     padding: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 120,
+    height: 180,
     position: 'relative',
   },
   artworkImage: {
@@ -1070,6 +1091,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     minHeight: 120,
+  },
+  textCourageTitle: {
+    fontSize: 11,
+    color: '#cfe8c7',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    opacity: 0.6,
+    marginBottom: 4,
+  },
+  textCourageScroll: {
+    flex: 1,
   },
   textCourageContent: {
     fontSize: 12,

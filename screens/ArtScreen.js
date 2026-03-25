@@ -620,11 +620,13 @@ export default function ArtScreen() {
       try {
         await uploadCourage(user.uid, {
           pseudonym: userProfile?.pseudonym || '',
-          title: `${title}: ${writeText.trim()}`,
-          mediaType: 'image',
+          title,
+          text: writeText.trim(),
+          mediaType: 'text',
           mediaUrl: '',
           date: today,
           anonymous: isAnonymous,
+          textStyle,
         });
 
         setCourageUploadedToday(true);

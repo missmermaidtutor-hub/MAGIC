@@ -152,7 +152,7 @@ export const getUserCourageForDate = async (uid, dateStr) => {
 
 // Upload a new courage
 export const uploadCourage = async (uid, data) => {
-  const docRef = await addDoc(collection(db, 'dailyCourages'), {
+  const doc_data = {
     uid,
     pseudonym: data.pseudonym || '',
     title: data.title || '',
@@ -161,8 +161,22 @@ export const uploadCourage = async (uid, data) => {
     date: data.date,
     anonymous: data.anonymous ?? false,
     createdAt: serverTimestamp(),
-  });
+  };
+  // Store text content separately for text-type courages
+  if (data.text) doc_data.text = data.text;
+  if (data.textStyle) doc_data.textStyle = data.textStyle;
+  const docRef = await addDoc(collection(db, 'dailyCourages'), doc_data);
   return docRef.id;
+};
+
+// Count how many times a user has won the daily courage vote
+export const getUserWinCount = async (uid) => {
+  const q = query(
+    collection(db, 'dailyWinners'),
+    where('uid', '==', uid),
+  );
+  const snap = await getDocs(q);
+  return snap.size;
 };
 
 // Get all courages by a specific user (for "My Inspiring Works")
@@ -545,8 +559,14 @@ export const saveCuratedWork = async (uid, work) => {
   if (existing.length >= 25) {
     throw new Error('Curated gallery is full (max 25). Remove a work first.');
   }
+  // Deduplicate: skip if same localId already exists
+  const localId = work.id || work.localId || '';
+  if (localId && existing.some(e => e.localId === localId)) {
+    return existing.find(e => e.localId === localId).id;
+  }
   const ref = await addDoc(collection(db, 'users', uid, 'curated'), {
     ...work,
+    localId,
     pseudonym: work.pseudonym || '',
     curatedAt: serverTimestamp(),
   });
@@ -563,10 +583,17 @@ export const getUserCurated = async (uid) => {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
-// Remove from curated
-export const removeCuratedWork = async (uid, workId) => {
-  const ref = doc(db, 'users', uid, 'curated', workId);
-  await deleteDoc(ref);
+// Remove from curated — finds by localId field, not Firestore doc ID
+export const removeCuratedWork = async (uid, localId) => {
+  const q = query(
+    collection(db, 'users', uid, 'curated'),
+    where('localId', '==', localId),
+    firestoreLimit(1),
+  );
+  const snap = await getDocs(q);
+  if (!snap.empty) {
+    await deleteDoc(snap.docs[0].ref);
+  }
 };
 
 // Get all users' curated works for "Visit Community Curations"
@@ -591,13 +618,25 @@ export const getAllCuratedGalleriesGrouped = async (excludeUid) => {
     if (!grouped[work.curatorUid]) {
       grouped[work.curatorUid] = {
         uid: work.curatorUid,
-        pseudonym: work.pseudonym || 'Anonymous',
+        pseudonym: work.pseudonym || null, // resolved below if missing
         artworks: [],
       };
     }
     grouped[work.curatorUid].artworks.push(work);
   }
-  return Object.values(grouped);
+  // Resolve missing pseudonyms from user profiles
+  const entries = Object.values(grouped);
+  for (const entry of entries) {
+    if (!entry.pseudonym) {
+      try {
+        const profile = await getUserProfile(entry.uid);
+        entry.pseudonym = profile?.pseudonym || 'Anonymous';
+      } catch {
+        entry.pseudonym = 'Anonymous';
+      }
+    }
+  }
+  return entries;
 };
 
 // ============================================================
