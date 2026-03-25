@@ -675,9 +675,10 @@ export default function ArtScreen() {
         await AsyncStorage.setItem(`art_time_${today}`, '1');
       }
 
-      const persistedUri = await persistImageUri(imageUri, user?.uid);
+      const artworkId = Date.now();
+      const persistedUri = await persistImageUri(imageUri, user?.uid, String(artworkId));
       const artwork = {
-        id: Date.now(),
+        id: artworkId,
         type: 'sketch',
         imageUrl: persistedUri,
         artist: 'You',
@@ -726,14 +727,15 @@ export default function ArtScreen() {
         await AsyncStorage.setItem(`art_time_${today}`, '1');
       }
 
-      const persistedUri = await persistImageUri(imageUri, user?.uid);
+      const artworkId = Date.now();
+      const persistedUri = await persistImageUri(imageUri, user?.uid, String(artworkId));
 
       // Save locally
       try {
         const personalRaw = await AsyncStorage.getItem('personal_artworks');
         const personal = personalRaw ? JSON.parse(personalRaw) : [];
         personal.push({
-          id: Date.now(),
+          id: artworkId,
           type: 'sketch',
           imageUrl: persistedUri,
           artist: 'You',
@@ -869,9 +871,10 @@ export default function ArtScreen() {
         await AsyncStorage.setItem(`art_time_${today}`, '1');
       }
 
-      const persistedUri = await persistImageUri(capturedImageUri, user?.uid);
+      const artworkId = Date.now();
+      const persistedUri = await persistImageUri(capturedImageUri, user?.uid, String(artworkId));
       const artwork = {
-        id: Date.now(),
+        id: artworkId,
         type: 'capture',
         imageUrl: persistedUri,
         artist: 'You',
@@ -920,13 +923,14 @@ export default function ArtScreen() {
         await AsyncStorage.setItem(`art_time_${today}`, '1');
       }
 
-      const persistedUri = await persistImageUri(capturedImageUri, user?.uid);
+      const artworkId = Date.now();
+      const persistedUri = await persistImageUri(capturedImageUri, user?.uid, String(artworkId));
 
       try {
         const personalRaw = await AsyncStorage.getItem('personal_artworks');
         const personal = personalRaw ? JSON.parse(personalRaw) : [];
         personal.push({
-          id: Date.now(),
+          id: artworkId,
           type: 'capture',
           imageUrl: persistedUri,
           artist: 'You',

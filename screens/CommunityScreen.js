@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
-import { persistImageUri } from '../utils/imageUtils';
+import { persistImageUri, migrateGalleryImages } from '../utils/imageUtils';
 import { openMailto } from '../utils/emailUtils';
 import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -148,6 +148,11 @@ export default function CommunityScreen({ navigation, route }) {
 
   // Day 13 popup
   const [showDay13Popup, setShowDay13Popup] = useState(false);
+
+  // Trash system (24-hour recovery)
+  const [trashedArtworks, setTrashedArtworks] = useState([]);
+  const [showTrash, setShowTrash] = useState(false);
+  const trashCleanedRef = useRef(false); // only clean trash once per session
 
   // Private tab side-by-side scroll refs
   const privateScrollRef = useRef(null);
@@ -477,12 +482,78 @@ export default function CommunityScreen({ navigation, route }) {
       }
 
       const personalData = await AsyncStorage.getItem('personal_artworks');
-      if (personalData) setPersonalArtworks(JSON.parse(personalData));
-      else setPersonalArtworks([]);
+      if (personalData) {
+        const dedupedP = dedupeById(JSON.parse(personalData));
+        setPersonalArtworks(dedupedP);
+        if (dedupedP.length !== JSON.parse(personalData).length) {
+          await AsyncStorage.setItem('personal_artworks', JSON.stringify(dedupedP));
+        }
+      } else {
+        setPersonalArtworks([]);
+      }
 
       const favData = await AsyncStorage.getItem('favorite_artworks');
-      if (favData) setInspirationArtworks(JSON.parse(favData));
-      else setInspirationArtworks([]);
+      if (favData) {
+        const dedupedF = dedupeById(JSON.parse(favData));
+        setInspirationArtworks(dedupedF);
+        if (dedupedF.length !== JSON.parse(favData).length) {
+          await AsyncStorage.setItem('favorite_artworks', JSON.stringify(dedupedF));
+        }
+      } else {
+        setInspirationArtworks([]);
+      }
+
+      // Load trash (clean up expired items only once per session)
+      const trashData = await AsyncStorage.getItem('trashed_artworks');
+      if (trashData) {
+        const allTrashed = JSON.parse(trashData);
+        if (!trashCleanedRef.current) {
+          const now = Date.now();
+          const stillRecoverable = allTrashed.filter(a => now - a.trashedAt < 24 * 60 * 60 * 1000);
+          setTrashedArtworks(stillRecoverable);
+          if (stillRecoverable.length !== allTrashed.length) {
+            await AsyncStorage.setItem('trashed_artworks', JSON.stringify(stillRecoverable));
+          }
+          trashCleanedRef.current = true;
+        } else {
+          setTrashedArtworks(allTrashed);
+        }
+      } else {
+        setTrashedArtworks([]);
+      }
+      // Background: migrate any remaining data:/blob: URIs to Firebase Storage
+      if (user?.uid) {
+        (async () => {
+          try {
+            const pData = await AsyncStorage.getItem('personal_artworks');
+            if (pData) {
+              const { migrated, changed } = await migrateGalleryImages(JSON.parse(pData), user.uid);
+              if (changed) {
+                await AsyncStorage.setItem('personal_artworks', JSON.stringify(migrated));
+                setPersonalArtworks(migrated);
+              }
+            }
+            const fData = await AsyncStorage.getItem('favorite_artworks');
+            if (fData) {
+              const { migrated, changed } = await migrateGalleryImages(JSON.parse(fData), user.uid);
+              if (changed) {
+                await AsyncStorage.setItem('favorite_artworks', JSON.stringify(migrated));
+                setInspirationArtworks(migrated);
+              }
+            }
+            const cData = await AsyncStorage.getItem('public_artworks');
+            if (cData) {
+              const { migrated, changed } = await migrateGalleryImages(JSON.parse(cData), user.uid);
+              if (changed) {
+                await AsyncStorage.setItem('public_artworks', JSON.stringify(migrated));
+                setCuratedArtworks(migrated);
+              }
+            }
+          } catch (e) {
+            console.log('Background migration error:', e);
+          }
+        })();
+      }
     } catch (error) {
       console.log('Error loading galleries:', error);
     }
@@ -503,9 +574,10 @@ export default function CommunityScreen({ navigation, route }) {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const uri = await persistImageUri(result.assets[0].uri, user?.uid);
+        const artworkId = `personal_${Date.now()}`;
+        const uri = await persistImageUri(result.assets[0].uri, user?.uid, artworkId);
         const newArtwork = {
-          id: `personal_${Date.now()}`,
+          id: artworkId,
           imageUrl: uri,
           title: `My Art ${personalArtworks.length + 1}`,
           date: getESTDate(),
@@ -618,37 +690,88 @@ export default function CommunityScreen({ navigation, route }) {
     }
   };
 
+  // Restore artwork from trash back to its original gallery (batched write)
+  const handleRestoreFromTrash = async (artwork) => {
+    try {
+      const freshTrash = await AsyncStorage.getItem('trashed_artworks');
+      const trashArr = freshTrash ? JSON.parse(freshTrash) : [];
+      const updatedTrash = trashArr.filter(a => a.id !== artwork.id);
+
+      const restoredItem = { ...artwork };
+      delete restoredItem.trashedAt;
+      delete restoredItem.trashedFrom;
+
+      const galleryKey = artwork.trashedFrom === 'personal' ? 'personal_artworks' : 'favorite_artworks';
+      const freshData = await AsyncStorage.getItem(galleryKey);
+      const galleryArr = freshData ? JSON.parse(freshData) : [];
+      galleryArr.push(restoredItem);
+
+      // Single batched write: trash + gallery updated together
+      await AsyncStorage.multiSet([
+        ['trashed_artworks', JSON.stringify(updatedTrash)],
+        [galleryKey, JSON.stringify(galleryArr)],
+      ]);
+
+      setTrashedArtworks(updatedTrash);
+      if (artwork.trashedFrom === 'personal') {
+        setPersonalArtworks(galleryArr);
+      } else {
+        setInspirationArtworks(galleryArr);
+        setSavedNewsfeedArt(prev => new Set(prev).add(artwork.id));
+      }
+      showAlert('Restored', 'Artwork has been restored to your gallery.');
+    } catch (e) {
+      console.log('Error restoring from trash:', e);
+    }
+  };
+
   const handleDeleteArtwork = (artwork, fromGallery) => {
     showDestructiveConfirm(
       'Remove Artwork',
-      'Are you sure you want to remove this from your gallery?',
+      fromGallery === 'curated'
+        ? 'Remove this from your curated gallery?'
+        : 'This will be moved to trash. You can recover it within 24 hours.',
       async () => {
         try {
           if (fromGallery === 'personal') {
-            const updated = personalArtworks.filter(a => a.id !== artwork.id);
+            const freshData = await AsyncStorage.getItem('personal_artworks');
+            const freshArr = freshData ? JSON.parse(freshData) : [];
+            const updated = freshArr.filter(a => a.id !== artwork.id);
+            const trashedItem = { ...artwork, trashedAt: Date.now(), trashedFrom: 'personal' };
+            const freshTrash = await AsyncStorage.getItem('trashed_artworks');
+            const trashArr = freshTrash ? JSON.parse(freshTrash) : [];
+            trashArr.push(trashedItem);
+            // Batched write: gallery + trash updated atomically
+            await AsyncStorage.multiSet([
+              ['personal_artworks', JSON.stringify(updated)],
+              ['trashed_artworks', JSON.stringify(trashArr)],
+            ]);
             setPersonalArtworks(updated);
-            await AsyncStorage.setItem('personal_artworks', JSON.stringify(updated));
-            if (user) {
-              deleteArtwork(user.uid, String(artwork.id)).catch(err =>
-                console.log('Firestore delete artwork error:', err)
-              );
-            }
+            setTrashedArtworks(trashArr);
+            // NOTE: Does NOT touch curated or inspiration — galleries are independent
           } else if (fromGallery === 'inspiration') {
-            const updated = inspirationArtworks.filter(a => a.id !== artwork.id);
+            const freshData = await AsyncStorage.getItem('favorite_artworks');
+            const freshArr = freshData ? JSON.parse(freshData) : [];
+            const updated = freshArr.filter(a => a.id !== artwork.id);
+            const trashedItem = { ...artwork, trashedAt: Date.now(), trashedFrom: 'inspiration' };
+            const freshTrash = await AsyncStorage.getItem('trashed_artworks');
+            const trashArr = freshTrash ? JSON.parse(freshTrash) : [];
+            trashArr.push(trashedItem);
+            // Batched write: gallery + trash updated atomically
+            await AsyncStorage.multiSet([
+              ['favorite_artworks', JSON.stringify(updated)],
+              ['trashed_artworks', JSON.stringify(trashArr)],
+            ]);
             setInspirationArtworks(updated);
-            await AsyncStorage.setItem('favorite_artworks', JSON.stringify(updated));
+            setTrashedArtworks(trashArr);
             setSavedNewsfeedArt(prev => {
               const next = new Set(prev);
               next.delete(artwork.id);
               return next;
             });
-            if (user) {
-              deleteInspiration(user.uid, String(artwork.id)).catch(err =>
-                console.log('Firestore delete inspiration error:', err)
-              );
-            }
+            // NOTE: Does NOT touch curated or personal — galleries are independent
           } else if (fromGallery === 'curated') {
-            // Read fresh from AsyncStorage to avoid stale state
+            // Curated deletes immediately (no trash — it's a public gallery)
             const freshData = await AsyncStorage.getItem('public_artworks');
             const freshCurated = freshData ? JSON.parse(freshData) : [];
             const updated = freshCurated.filter(a => a.id !== artwork.id);
@@ -659,27 +782,53 @@ export default function CommunityScreen({ navigation, route }) {
                 console.log('Firestore delete curated error:', err)
               );
             }
-          }
-          // Also remove from curated if it was there
-          if (fromGallery !== 'curated') {
-            const freshData = await AsyncStorage.getItem('public_artworks');
-            const freshCurated = freshData ? JSON.parse(freshData) : [];
-            const updatedCurated = freshCurated.filter(a => a.id !== artwork.id);
-            if (updatedCurated.length !== freshCurated.length) {
-              setCuratedArtworks(updatedCurated);
-              await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
-              if (user) {
-                removeCuratedWork(user.uid, String(artwork.id)).catch(err =>
-                  console.log('Firestore remove curated error:', err)
-                );
-              }
-            }
+            // NOTE: Does NOT touch personal or inspiration — galleries are independent
           }
         } catch (error) {
           console.log('Error deleting artwork:', error);
         }
       },
       'Remove'
+    );
+  };
+
+  // Clear all non-candlelit items from private gallery → move to trash
+  const handleClearNonCandlelit = () => {
+    const nonCandlelit = personalArtworks.filter(a => !savedNewsfeedArt.has(a.id));
+    if (nonCandlelit.length === 0) {
+      showAlert('Nothing to Clear', 'All items in your private gallery are candlelit.');
+      return;
+    }
+    showDestructiveConfirm(
+      'Clear Non-Candlelit Items',
+      `Move ${nonCandlelit.length} non-candlelit item${nonCandlelit.length > 1 ? 's' : ''} to trash? You can recover them within 24 hours.`,
+      async () => {
+        try {
+          // Keep only candlelit items
+          const kept = personalArtworks.filter(a => savedNewsfeedArt.has(a.id));
+
+          // Build trash entries
+          const freshTrash = await AsyncStorage.getItem('trashed_artworks');
+          const trashArr = freshTrash ? JSON.parse(freshTrash) : [];
+          const now = Date.now();
+          nonCandlelit.forEach(a => {
+            trashArr.push({ ...a, trashedAt: now, trashedFrom: 'personal' });
+          });
+
+          // Single batched write
+          await AsyncStorage.multiSet([
+            ['personal_artworks', JSON.stringify(kept)],
+            ['trashed_artworks', JSON.stringify(trashArr)],
+          ]);
+          setPersonalArtworks(kept);
+          setTrashedArtworks(trashArr);
+
+          showAlert('Cleared', `${nonCandlelit.length} item${nonCandlelit.length > 1 ? 's' : ''} moved to trash.`);
+        } catch (e) {
+          console.log('Error clearing non-candlelit:', e);
+        }
+      },
+      'Clear'
     );
   };
 
@@ -1315,6 +1464,60 @@ export default function CommunityScreen({ navigation, route }) {
                 </ScrollView>
               </View>
             </View>
+
+            {/* Clear Non-Candlelit + Trash */}
+            {personalArtworks.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearNonCandlelitBtn}
+                onPress={handleClearNonCandlelit}
+              >
+                <Text style={styles.clearNonCandlelitText}>Clear Non-Candlelit Items</Text>
+              </TouchableOpacity>
+            )}
+
+            {trashedArtworks.length > 0 && (
+              <View style={styles.trashSection}>
+                <TouchableOpacity
+                  style={styles.trashToggle}
+                  onPress={() => setShowTrash(!showTrash)}
+                >
+                  <Text style={styles.trashToggleText}>
+                    Trash ({trashedArtworks.length}) — {showTrash ? 'Hide' : 'Show'}
+                  </Text>
+                  <Text style={styles.trashHint}>Items are permanently deleted after 24 hours</Text>
+                </TouchableOpacity>
+                {showTrash && (
+                  <View style={styles.trashGrid}>
+                    {trashedArtworks.map(artwork => {
+                      const imageSource = getArtworkImageSource(artwork);
+                      const hoursLeft = Math.max(0, Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - artwork.trashedAt)) / (60 * 60 * 1000)));
+                      return (
+                        <View key={artwork.id} style={styles.trashItem}>
+                          {imageSource ? (
+                            <Image source={imageSource} style={styles.trashImage} resizeMode="cover" />
+                          ) : artwork.text ? (
+                            <View style={[styles.trashImage, styles.textArtBg]}>
+                              <Text style={{ color: '#333', fontSize: 10 }} numberOfLines={3}>{artwork.text}</Text>
+                            </View>
+                          ) : (
+                            <View style={[styles.trashImage, styles.placeholderArt]}>
+                              <Text style={{ fontSize: 16 }}>🎨</Text>
+                            </View>
+                          )}
+                          <Text style={styles.trashTimer}>{hoursLeft}h left</Text>
+                          <TouchableOpacity
+                            style={styles.trashRestoreBtn}
+                            onPress={() => handleRestoreFromTrash(artwork)}
+                          >
+                            <Text style={styles.trashRestoreText}>Restore</Text>
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            )}
           </>
         );
       }
@@ -2341,5 +2544,81 @@ const styles = StyleSheet.create({
   day13DismissText: {
     fontSize: 14,
     color: '#999',
+  },
+
+  // Clear Non-Candlelit button
+  clearNonCandlelitBtn: {
+    borderWidth: 1,
+    borderColor: '#B22222',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  clearNonCandlelitText: {
+    color: '#B22222',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // Trash section
+  trashSection: {
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.15)',
+    paddingTop: 12,
+  },
+  trashToggle: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  trashToggleText: {
+    color: '#999',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  trashHint: {
+    color: '#666',
+    fontSize: 11,
+    marginTop: 2,
+  },
+  trashGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 12,
+    justifyContent: 'center',
+  },
+  trashItem: {
+    alignItems: 'center',
+    width: 80,
+  },
+  trashImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#555',
+    opacity: 0.6,
+  },
+  trashTimer: {
+    color: '#999',
+    fontSize: 10,
+    marginTop: 4,
+  },
+  trashRestoreBtn: {
+    backgroundColor: 'rgba(255,215,0,0.15)',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginTop: 4,
+  },
+  trashRestoreText: {
+    color: '#FFD700',
+    fontSize: 11,
+    fontWeight: '600',
   },
 });
