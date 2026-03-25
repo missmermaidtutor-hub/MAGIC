@@ -115,6 +115,8 @@ export default function InspireScreen({ navigation }) {
   const [playingAudioId, setPlayingAudioId] = useState(null);
   const [savedInspirations, setSavedInspirations] = useState(new Set());
   const [voteCountMap, setVoteCountMap] = useState({}); // courageId → number of votes received
+  const [hasRankedToday, setHasRankedToday] = useState(false);
+  const [continueVoting, setContinueVoting] = useState(false);
   const soundRef = useRef(null);
 
   // Load criterion + saved inspirations
@@ -308,6 +310,11 @@ export default function InspireScreen({ navigation }) {
           JSON.parse(stockVoted).forEach(id => stockVotedIds.add(id));
         }
       } catch (e) {}
+
+      // Check if user already voted today
+      const alreadyRanked = await AsyncStorage.getItem(`ranked_${today}`);
+      setHasRankedToday(!!alreadyRanked);
+      setContinueVoting(false);
 
       setAvailableCourages(eligible);
       setVotedCourageIds(alreadyVotedIds);
@@ -826,7 +833,9 @@ export default function InspireScreen({ navigation }) {
               <Text style={styles.completeText}>
                 {availableCourages.length === 0
                   ? 'No courages available for voting yet!'
-                  : 'You have voted on all available courages!'}
+                  : hasRankedToday
+                    ? 'You already voted today!'
+                    : 'You have voted on all available courages!'}
               </Text>
               <Text style={styles.completeSubtext}>
                 {availableCourages.length === 0
@@ -834,6 +843,15 @@ export default function InspireScreen({ navigation }) {
                   : 'Come back tomorrow for new submissions!'}
               </Text>
             </View>
+            {/* Offer browse option even when all done, if there are courages to browse */}
+            {availableCourages.length > 0 && (
+              <TouchableOpacity
+                style={styles.postVoteBtnSecondary}
+                onPress={() => { setAllDone(false); setBrowseMode(true); }}
+              >
+                <Text style={styles.postVoteBtnSecondaryText}>Browse Yesterday's Courages</Text>
+              </TouchableOpacity>
+            )}
           </>
         )}
 
@@ -892,8 +910,32 @@ export default function InspireScreen({ navigation }) {
           </>
         )}
 
+        {/* Return Visit — already voted today, but more courages available */}
+        {!allDone && !browseMode && hasRankedToday && !continueVoting && currentSet.length === 4 && (
+          <View style={styles.completeCard}>
+            <Text style={styles.completeText}>You already voted today!</Text>
+            <Text style={styles.completeSubtext}>
+              There are new courages from yesterday you haven't seen yet.
+            </Text>
+            <View style={{ width: '100%', marginTop: 16, gap: 12 }}>
+              <TouchableOpacity
+                style={styles.postVoteBtn}
+                onPress={() => setContinueVoting(true)}
+              >
+                <Text style={styles.postVoteBtnText}>Rank New Images</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.postVoteBtnSecondary}
+                onPress={() => { setBrowseMode(true); setCurrentSet([]); }}
+              >
+                <Text style={styles.postVoteBtnSecondaryText}>Browse Without Voting</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         {/* Voting Mode */}
-        {!allDone && !browseMode && currentSet.length === 4 && (
+        {!allDone && !browseMode && (!hasRankedToday || continueVoting) && currentSet.length === 4 && (
           <>
             {/* Progress */}
             <View style={styles.progressContainer}>
