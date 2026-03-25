@@ -258,26 +258,35 @@ export default function InspireScreen({ navigation }) {
     setLoading(true);
     try {
       const votingDate = getESTYesterday();
+      const today = getESTDate();
 
-      // Try to fetch real courages
+      // Try to fetch real courages from yesterday
       let courages = [];
       try {
         courages = await getCouragesForDate(votingDate);
       } catch (e) {
-        console.log('Could not fetch courages, using stock images:', e);
+        console.log('Could not fetch courages:', e);
       }
 
       // Filter out user's own courage
       const eligible = courages.filter(c => c.uid !== user.uid);
 
-      // Get user's existing votes
+      // Get user's existing votes (Firestore)
       let alreadyVotedIds = new Set();
       try {
         const existingVotes = await getUserVotesForDate(user.uid, votingDate);
         alreadyVotedIds = new Set(existingVotes.map(v => v.courageId));
       } catch (e) {
-        console.log('Could not fetch votes:', e);
+        console.log('Could not fetch votes from Firestore:', e);
       }
+
+      // Local fallback: also check AsyncStorage for voted IDs (guards against Firestore query failures)
+      try {
+        const localVoted = await AsyncStorage.getItem(`voted_ids_${votingDate}`);
+        if (localVoted) {
+          JSON.parse(localVoted).forEach(id => alreadyVotedIds.add(id));
+        }
+      } catch (e) {}
 
       // Fetch ALL votes for this date to build vote count map (for fair exposure)
       let countMap = {};
@@ -291,87 +300,45 @@ export default function InspireScreen({ navigation }) {
       }
       setVoteCountMap(countMap);
 
-      // Also check locally-voted stock image IDs for today
-      const today = getESTDate();
+      // Load stock images already voted today (stored separately by today's date)
+      let stockVotedIds = new Set();
       try {
-        const localVoted = await AsyncStorage.getItem(`stock_voted_${today}`);
-        if (localVoted) {
-          JSON.parse(localVoted).forEach(id => alreadyVotedIds.add(id));
+        const stockVoted = await AsyncStorage.getItem(`stock_voted_${today}`);
+        if (stockVoted) {
+          JSON.parse(stockVoted).forEach(id => stockVotedIds.add(id));
         }
       } catch (e) {}
 
       setAvailableCourages(eligible);
       setVotedCourageIds(alreadyVotedIds);
 
-      if (eligible.length >= 4) {
-        // Enough real courages — use them
-        const unvoted = eligible.filter(c => !alreadyVotedIds.has(c.id));
-        if (unvoted.length === 0) {
-          setAllDone(true);
-          setCurrentSet([]);
-        } else if (unvoted.length >= 4) {
-          // Sort by vote count ascending — least-voted courages shown first for equal exposure
-          const sorted = [...unvoted].sort((a, b) =>
-            (countMap[a.id] || 0) - (countMap[b.id] || 0)
-          );
-          setCurrentSet(sorted.slice(0, 4));
-          setAllDone(false);
-        } else {
-          // Mix real courages + stock to reach 4
-          const stockFill = pickStockSet(new Set([...alreadyVotedIds, ...unvoted.map(c => c.id)]));
-          const mixed = [...unvoted, ...stockFill].slice(0, 4);
-          if (mixed.length >= 4) {
-            setCurrentSet(mixed);
-            setAllDone(false);
-          } else {
-            setAllDone(true);
-            setCurrentSet([]);
-          }
-        }
-      } else if (eligible.length > 0) {
-        // 1–3 real courages — mix with stock images to fill a set of 4
-        const unvoted = eligible.filter(c => !alreadyVotedIds.has(c.id));
-        if (unvoted.length === 0) {
-          // Already voted on all real courages — fall back to stock
-          const stockSet = pickStockSet(alreadyVotedIds);
-          if (stockSet.length >= 4) {
-            setCurrentSet(stockSet);
-            setAllDone(false);
-          } else {
-            setAllDone(true);
-            setCurrentSet([]);
-          }
-        } else {
-          const excludeIds = new Set([...alreadyVotedIds, ...unvoted.map(c => c.id)]);
-          const stockFill = pickStockSet(excludeIds).slice(0, 4 - unvoted.length);
-          const mixed = [...unvoted, ...stockFill];
-          if (mixed.length >= 4) {
-            setCurrentSet(mixed);
-            setAllDone(false);
-          } else {
-            setAllDone(true);
-            setCurrentSet([]);
-          }
-        }
+      // Build voting set: real courages first, pad with stock if < 4
+      const unvoted = eligible.filter(c => !alreadyVotedIds.has(c.id));
+      if (unvoted.length >= 4) {
+        // Plenty of real courages — sort by least-voted for equal exposure
+        const sorted = [...unvoted].sort((a, b) =>
+          (countMap[a.id] || 0) - (countMap[b.id] || 0)
+        );
+        setCurrentSet(sorted.slice(0, 4));
+        setAllDone(false);
       } else {
-        // No real courages at all — use stock images
-        const stockSet = pickStockSet(alreadyVotedIds);
-        if (stockSet.length >= 4) {
-          setCurrentSet(stockSet);
-          setAllDone(false);
-        } else {
+        // Fewer than 4 real courages — pad with stock images
+        const availableStock = ARTOWORKS_IMAGES.filter(img => !stockVotedIds.has(img.id));
+        const stockFiller = availableStock.sort(() => Math.random() - 0.5).slice(0, 4 - unvoted.length);
+        const combined = [...unvoted, ...stockFiller];
+        if (combined.length < 4) {
+          // Not enough items even with stock — all done
           setAllDone(true);
           setCurrentSet([]);
+        } else {
+          setCurrentSet(combined);
+          setAllDone(false);
         }
       }
     } catch (error) {
       console.log('Error loading voting data:', error);
-      // Fallback: show stock images even if everything fails
-      const stockSet = pickStockSet(new Set());
-      if (stockSet.length >= 4) {
-        setCurrentSet(stockSet);
-        setAllDone(false);
-      }
+      setAllDone(true);
+      setCurrentSet([]);
     }
     setLoading(false);
   };
@@ -448,6 +415,16 @@ export default function InspireScreen({ navigation }) {
       currentIds.forEach(id => newVotedIds.add(id));
       setVotedCourageIds(newVotedIds);
 
+      // Save real voted IDs to AsyncStorage as local fallback (guards against Firestore query failures)
+      if (realVotes.length > 0) {
+        try {
+          const existingLocal = await AsyncStorage.getItem(`voted_ids_${votingDate}`);
+          const prev = existingLocal ? JSON.parse(existingLocal) : [];
+          const merged = [...new Set([...prev, ...realVotes.map(v => v.courageId)])];
+          await AsyncStorage.setItem(`voted_ids_${votingDate}`, JSON.stringify(merged));
+        } catch (e) {}
+      }
+
       // Reset rankings
       setRankings({});
 
@@ -460,20 +437,33 @@ export default function InspireScreen({ navigation }) {
       setVoteCountMap(updatedCounts);
 
       // Check if more courages are available
-      const nextStock = pickStockSet(newVotedIds);
       const unvotedReal = availableCourages.filter(c => !newVotedIds.has(c.id));
-      const hasMore = unvotedReal.length >= 4 || nextStock.length >= 4;
 
-      if (hasMore) {
-        // Prepare next set but show choice modal
-        if (unvotedReal.length >= 4) {
-          const sorted = [...unvotedReal].sort((a, b) =>
-            (updatedCounts[a.id] || 0) - (updatedCounts[b.id] || 0)
-          );
-          setCurrentSet(sorted.slice(0, 4));
-        } else {
-          setCurrentSet(nextStock);
-        }
+      // Merge all stock voted IDs (previous sessions + current) for accurate filtering
+      const allStockVoted = new Set();
+      try {
+        const stored = await AsyncStorage.getItem(`stock_voted_${today}`);
+        if (stored) JSON.parse(stored).forEach(id => allStockVoted.add(id));
+      } catch (e) {}
+      currentIds.forEach(id => {
+        if (currentSet.find(c => c.id === id)?.isFiller) allStockVoted.add(id);
+      });
+      const availableStockCount = ARTOWORKS_IMAGES.filter(img => !allStockVoted.has(img.id)).length;
+
+      if (unvotedReal.length >= 4) {
+        // More real courages available — prepare next set
+        const sorted = [...unvotedReal].sort((a, b) =>
+          (updatedCounts[a.id] || 0) - (updatedCounts[b.id] || 0)
+        );
+        setCurrentSet(sorted.slice(0, 4));
+        setPostVoteModalVisible(true);
+      } else if (unvotedReal.length + availableStockCount >= 4) {
+        // Pad remaining real with stock
+        const stockFiller = ARTOWORKS_IMAGES
+          .filter(img => !allStockVoted.has(img.id))
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 4 - unvotedReal.length);
+        setCurrentSet([...unvotedReal, ...stockFiller]);
         setPostVoteModalVisible(true);
       } else {
         setAllDone(true);
