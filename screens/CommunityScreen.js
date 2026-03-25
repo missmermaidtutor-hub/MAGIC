@@ -31,6 +31,7 @@ import {
   getAllCuratedGalleriesGrouped,
   getUserCurated,
   getUserCourages,
+  uploadMediaToStorage,
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 import { getMemberDayCount as getMemberDayCountUtil, getCuratedLimit, canAccessFeature } from '../utils/premiumUtils';
@@ -557,14 +558,25 @@ export default function CommunityScreen({ navigation, route }) {
         setCuratedArtworks(updatedCurated);
         await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
         trackAction('artwork_curated');
-        // Sync to Firestore curated (include curator's pseudonym for community newsfeed)
+        // Sync to Firestore curated — upload image to Storage so other users can see it
         if (user) {
-          saveCuratedWork(user.uid, {
-            ...curatedArt,
-            pseudonym: userProfile?.pseudonym || '',
-          }).catch(err =>
-            console.log('Firestore save curated error:', err)
-          );
+          (async () => {
+            try {
+              let remoteImageUrl = curatedArt.imageUrl || '';
+              // Upload to Firebase Storage if image is a local/data URI (not already a remote URL)
+              if (remoteImageUrl && !remoteImageUrl.startsWith('https://')) {
+                const storagePath = `curated/${user.uid}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
+                remoteImageUrl = await uploadMediaToStorage(remoteImageUrl, storagePath);
+              }
+              await saveCuratedWork(user.uid, {
+                ...curatedArt,
+                imageUrl: remoteImageUrl,
+                pseudonym: userProfile?.pseudonym || '',
+              });
+            } catch (err) {
+              console.log('Firestore save curated error:', err);
+            }
+          })();
         }
 
         // Update flags in source gallery
