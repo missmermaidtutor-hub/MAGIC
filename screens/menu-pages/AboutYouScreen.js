@@ -352,13 +352,9 @@ export default function AboutYouScreen({ navigation }) {
     setShowGalleryPicker(false);
     setSavingProfileImage(true);
     try {
-      // Upload to Firebase Storage at profiles/{uid}/profile.png
-      const storagePath = `profiles/${user.uid}/profile.png`;
-      const downloadUrl = await uploadMediaToStorage(imageUri, storagePath);
-
-      // Save to Firestore profile
-      await updateUserProfile(user.uid, { profileImageUrl: downloadUrl });
-      setProfileImageUrl(downloadUrl);
+      // Gallery images are already Firebase Storage URLs — just save the URL directly
+      await updateUserProfile(user.uid, { profileImageUrl: imageUri });
+      setProfileImageUrl(imageUri);
       await refreshProfile();
       trackAction('profile_image_set');
     } catch (err) {
