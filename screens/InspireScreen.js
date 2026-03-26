@@ -11,6 +11,7 @@ import {
   ImageBackground,
   ActivityIndicator,
   Platform,
+  AppState,
 } from 'react-native';
 import { openMailto } from '../utils/emailUtils';
 import { trackAction } from '../services/analyticsService';
@@ -128,7 +129,7 @@ export default function InspireScreen({ navigation }) {
   // Load courages and votes when screen gains focus
   useFocusEffect(
     useCallback(() => {
-      loadVotingData();
+      if (user?.uid) loadVotingData();
       return () => {
         // Cleanup audio on unfocus
         if (soundRef.current) {
@@ -140,19 +141,44 @@ export default function InspireScreen({ navigation }) {
     }, [user])
   );
 
+  // Refresh on app return from background (catches midnight rollover)
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && user?.uid) {
+        loadVotingData();
+      }
+    });
+    // Web: listen for tab visibility change (catches midnight rollover in open browser tab)
+    const handleVisibility = () => {
+      if (Platform.OS === 'web' && document.visibilityState === 'visible' && user?.uid) {
+        loadVotingData();
+      }
+    };
+    if (Platform.OS === 'web') {
+      document.addEventListener('visibilitychange', handleVisibility);
+    }
+    return () => {
+      sub.remove();
+      if (Platform.OS === 'web') {
+        document.removeEventListener('visibilitychange', handleVisibility);
+      }
+    };
+  }, [user]);
+
   const loadTodaysCriterion = async () => {
     try {
       const today = getESTDate();
-      const savedDate = await AsyncStorage.getItem('criterion_date');
+      const savedDate = await AsyncStorage.getItem('criterion_date_v2');
       const savedCriterion = await AsyncStorage.getItem('todays_criterion');
       if (savedDate === today && savedCriterion) {
         setTodaysCriterion(savedCriterion);
       } else {
-        const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+        const estDate = new Date(today + 'T12:00:00'); // parse EST date at noon to avoid timezone edge
+        const dayOfYear = Math.floor((estDate - new Date(estDate.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
         const criterionIndex = dayOfYear % rankingCriteria.length;
         const newCriterion = rankingCriteria[criterionIndex];
         setTodaysCriterion(newCriterion);
-        await AsyncStorage.setItem('criterion_date', today);
+        await AsyncStorage.setItem('criterion_date_v2', today);
         await AsyncStorage.setItem('todays_criterion', newCriterion);
       }
     } catch (error) {
@@ -266,12 +292,15 @@ export default function InspireScreen({ navigation }) {
       let courages = [];
       try {
         courages = await getCouragesForDate(votingDate);
+        console.log(`[Inspire] Voting date: ${votingDate}, today: ${today}`);
+        console.log(`[Inspire] Found ${courages.length} courages for ${votingDate}:`, courages.map(c => ({ id: c.id, uid: c.uid, date: c.date, pseudo: c.pseudonym })));
       } catch (e) {
         console.log('Could not fetch courages:', e);
       }
 
       // Filter out user's own courage
       const eligible = courages.filter(c => c.uid !== user.uid);
+      console.log(`[Inspire] After filtering own (${user.uid}): ${eligible.length} eligible`);
 
       // Get user's existing votes (Firestore)
       let alreadyVotedIds = new Set();
@@ -1410,7 +1439,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   postVoteBtnSecondaryText: {
-    color: '#FFD700',
+    color: '#4B0082',
     fontSize: 16,
     fontWeight: '600',
   },

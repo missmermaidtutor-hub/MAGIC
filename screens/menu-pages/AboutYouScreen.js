@@ -8,6 +8,10 @@ import {
   Switch,
   TextInput,
   ImageBackground,
+  Image,
+  Modal,
+  FlatList,
+  Dimensions,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
 import { trackAction } from '../../services/analyticsService';
@@ -20,6 +24,7 @@ import {
   checkPseudonymAvailable,
   claimPseudonym,
   releasePseudonym,
+  uploadMediaToStorage,
 } from '../../services/firestoreService';
 import mediumsData from '../../mediums.json';
 import { scheduleStreakReminder } from '../../utils/notificationUtils';
@@ -112,6 +117,12 @@ export default function AboutYouScreen({ navigation }) {
   const [currentLocation, setCurrentLocation] = useState({ country: '', state: '', city: '' });
   const [heartLocation, setHeartLocation] = useState({ country: '', state: '', city: '' });
 
+  // Profile Image
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+  const [showGalleryPicker, setShowGalleryPicker] = useState(false);
+  const [galleryPickerItems, setGalleryPickerItems] = useState([]);
+  const [savingProfileImage, setSavingProfileImage] = useState(false);
+
   // Medium Favorites
   const [favoriteMediums, setFavoriteMediums] = useState([]);
   const [expandedCategories, setExpandedCategories] = useState({});
@@ -141,6 +152,7 @@ export default function AboutYouScreen({ navigation }) {
       setGender(userProfile.gender || '');
       setPhoneNumber(userProfile.phoneNumber || '');
       setOpenToPods(userProfile.openToPods ?? false);
+      setProfileImageUrl(userProfile.profileImageUrl || '');
     }
   }, [userProfile]);
 
@@ -296,6 +308,79 @@ export default function AboutYouScreen({ navigation }) {
 
   const toggleCategory = (cat) => {
     setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
+  };
+
+  // ─── Profile Image Picker ───
+  const openGalleryPicker = async () => {
+    try {
+      const [personalRaw, inspirationsRaw, curatedRaw] = await Promise.all([
+        AsyncStorage.getItem('personal_artworks'),
+        AsyncStorage.getItem('favorite_artworks'),
+        AsyncStorage.getItem('public_artworks'),
+      ]);
+      const personal = personalRaw ? JSON.parse(personalRaw) : [];
+      const inspirations = inspirationsRaw ? JSON.parse(inspirationsRaw) : [];
+      const curated = curatedRaw ? JSON.parse(curatedRaw) : [];
+
+      // Collect all items that have an image
+      const items = [];
+      const addItems = (arr, source) => {
+        arr.forEach(item => {
+          const uri = item.imageUrl || item.image || item.uri;
+          if (uri && typeof uri === 'string' && uri.startsWith('http')) {
+            items.push({ uri, id: item.id || item.docId || uri, source });
+          }
+        });
+      };
+      addItems(personal, 'Vault');
+      addItems(inspirations, 'Inspirations');
+      addItems(curated, 'Tapestry');
+
+      if (items.length === 0) {
+        showAlert('No Artwork', 'Add some artwork to your galleries first, then come back to pick a profile image.');
+        return;
+      }
+      setGalleryPickerItems(items);
+      setShowGalleryPicker(true);
+    } catch (err) {
+      console.log('Error loading galleries for profile pic:', err);
+      showAlert('Error', 'Could not load your galleries.');
+    }
+  };
+
+  const handlePickProfileImage = async (imageUri) => {
+    setShowGalleryPicker(false);
+    setSavingProfileImage(true);
+    try {
+      // Upload to Firebase Storage at profiles/{uid}.png
+      const storagePath = `profiles/${user.uid}.png`;
+      const downloadUrl = await uploadMediaToStorage(imageUri, storagePath);
+
+      // Save to Firestore profile
+      await updateUserProfile(user.uid, { profileImageUrl: downloadUrl });
+      setProfileImageUrl(downloadUrl);
+      await refreshProfile();
+      trackAction('profile_image_set');
+    } catch (err) {
+      console.log('Error setting profile image:', err);
+      showAlert('Error', 'Could not save profile image. Please try again.');
+    } finally {
+      setSavingProfileImage(false);
+    }
+  };
+
+  const handleRemoveProfileImage = async () => {
+    setSavingProfileImage(true);
+    try {
+      await updateUserProfile(user.uid, { profileImageUrl: '' });
+      setProfileImageUrl('');
+      await refreshProfile();
+      trackAction('profile_image_removed');
+    } catch (err) {
+      console.log('Error removing profile image:', err);
+    } finally {
+      setSavingProfileImage(false);
+    }
   };
 
   const getAccountMethodLabel = () => {
@@ -461,6 +546,39 @@ export default function AboutYouScreen({ navigation }) {
         {/* ===== B. ABOUT YOU ===== */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Your Profile</Text>
+
+          {/* Profile Image */}
+          <View style={styles.profileImageSection}>
+            {profileImageUrl ? (
+              <Image source={{ uri: profileImageUrl }} style={styles.profileImagePreview} />
+            ) : (
+              <View style={styles.profileImagePlaceholder}>
+                <Text style={styles.profileImagePlaceholderText}>
+                  {(userProfile?.pseudonym || 'A').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View style={styles.profileImageButtons}>
+              <TouchableOpacity
+                style={styles.profileImageBtn}
+                onPress={openGalleryPicker}
+                disabled={savingProfileImage}
+              >
+                <Text style={styles.profileImageBtnText}>
+                  {savingProfileImage ? 'Saving...' : profileImageUrl ? 'Change Photo' : 'Choose from Gallery'}
+                </Text>
+              </TouchableOpacity>
+              {profileImageUrl ? (
+                <TouchableOpacity
+                  style={[styles.profileImageBtn, styles.profileImageRemoveBtn]}
+                  onPress={handleRemoveProfileImage}
+                  disabled={savingProfileImage}
+                >
+                  <Text style={[styles.profileImageBtnText, { color: '#FF6B6B' }]}>Remove</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          </View>
 
           <Text style={styles.inputLabel}>Bio</Text>
           <TextInput
@@ -757,6 +875,36 @@ export default function AboutYouScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Gallery Picker Modal */}
+      <Modal visible={showGalleryPicker} animationType="slide" transparent>
+        <View style={styles.galleryPickerOverlay}>
+          <View style={styles.galleryPickerContainer}>
+            <View style={styles.galleryPickerHeader}>
+              <Text style={styles.galleryPickerTitle}>Choose Profile Image</Text>
+              <TouchableOpacity onPress={() => setShowGalleryPicker(false)}>
+                <Text style={styles.galleryPickerClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={galleryPickerItems}
+              numColumns={3}
+              keyExtractor={(item, i) => item.id + '-' + i}
+              contentContainerStyle={styles.galleryPickerGrid}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.galleryPickerThumb}
+                  onPress={() => handlePickProfileImage(item.uri)}
+                  activeOpacity={0.7}
+                >
+                  <Image source={{ uri: item.uri }} style={styles.galleryPickerImage} />
+                  <Text style={styles.galleryPickerSource}>{item.source}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -1109,5 +1257,120 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: '#8E0DD3',
     fontWeight: 'bold',
+  },
+
+  // Profile Image
+  profileImageSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  profileImagePreview: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+  },
+  profileImagePlaceholder: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#B8860B',
+  },
+  profileImagePlaceholderText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#0a0e27',
+  },
+  profileImageButtons: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  profileImageBtn: {
+    backgroundColor: 'rgba(24, 112, 162, 0.6)',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#B8860B',
+    marginBottom: 6,
+  },
+  profileImageRemoveBtn: {
+    borderColor: '#FF6B6B',
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+  },
+  profileImageBtnText: {
+    color: '#FFD700',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // Gallery Picker Modal
+  galleryPickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  galleryPickerContainer: {
+    backgroundColor: '#0a0e27',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    maxHeight: Dimensions.get('window').height * 0.7,
+    overflow: 'hidden',
+  },
+  galleryPickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  galleryPickerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFD700',
+  },
+  galleryPickerClose: {
+    fontSize: 22,
+    color: '#FF6B6B',
+    fontWeight: 'bold',
+  },
+  galleryPickerGrid: {
+    padding: 8,
+  },
+  galleryPickerThumb: {
+    flex: 1,
+    margin: 4,
+    maxWidth: (Dimensions.get('window').width - 80) / 3,
+    aspectRatio: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#444',
+  },
+  galleryPickerImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  galleryPickerSource: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    color: '#FFD700',
+    fontSize: 9,
+    textAlign: 'center',
+    paddingVertical: 2,
   },
 });

@@ -182,7 +182,21 @@ export default function ArtScreen() {
         loadDailyChallenge();
       }
     });
-    return () => sub.remove();
+    // Web: listen for tab visibility change (catches midnight rollover in open browser tab)
+    const handleVisibility = () => {
+      if (Platform.OS === 'web' && document.visibilityState === 'visible') {
+        loadDailyChallenge();
+      }
+    };
+    if (Platform.OS === 'web') {
+      document.addEventListener('visibilitychange', handleVisibility);
+    }
+    return () => {
+      sub.remove();
+      if (Platform.OS === 'web') {
+        document.removeEventListener('visibilitychange', handleVisibility);
+      }
+    };
   }, [isDailyRunning, isWeeklyRunning]);
 
   // Play a single singing bowl chime
@@ -298,7 +312,7 @@ export default function ArtScreen() {
   const loadDailyChallenge = async () => {
     try {
       const today = getESTDate();
-      const savedDate = await AsyncStorage.getItem('prompt_date');
+      const savedDate = await AsyncStorage.getItem('prompt_date_v2');
       const savedChallenge = await AsyncStorage.getItem('todays_challenge');
       const savedPromptData = await AsyncStorage.getItem('todays_prompt_data');
 
@@ -308,10 +322,11 @@ export default function ArtScreen() {
         return;
       }
 
-      // Pick from local prompts-data.json by category rotation
+      // Pick from local prompts-data.json by category rotation (using EST date)
       let chosen = null;
       const categories = [...new Set(promptsData.map(p => p.category))].sort();
-      const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+      const estDate = new Date(today + 'T12:00:00'); // parse EST date at noon to avoid timezone edge
+      const dayOfYear = Math.floor((estDate - new Date(estDate.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
       const todaysCategory = categories[dayOfYear % categories.length];
       const categoryPrompts = promptsData.filter(p => p.category === todaysCategory);
       const pickIndex = Math.floor(dayOfYear / categories.length) % categoryPrompts.length;
@@ -329,7 +344,7 @@ export default function ArtScreen() {
 
       setTodaysChallenge(chosen.prompt);
       setTodaysPromptData(chosen);
-      await AsyncStorage.setItem('prompt_date', today);
+      await AsyncStorage.setItem('prompt_date_v2', today);
       await AsyncStorage.setItem('todays_challenge', chosen.prompt);
       await AsyncStorage.setItem('todays_prompt_data', JSON.stringify(chosen));
     } catch (error) {
@@ -585,22 +600,24 @@ export default function ArtScreen() {
       const label = modeLabels[writeMode] || 'Art';
       const title = writeTitle.trim() || todaysChallenge || `${label} from ${today}`;
 
-      // Save to personal gallery locally first
+      // Save to pending voting (NOT private gallery — releases after ranking)
+      const artworkId = Date.now();
       try {
-        const personalRaw = await AsyncStorage.getItem('personal_artworks');
-        const personal = personalRaw ? JSON.parse(personalRaw) : [];
-        personal.push({
-          id: Date.now(),
+        const pendingRaw = await AsyncStorage.getItem('pending_voting_artworks');
+        const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
+        pending.push({
+          id: artworkId,
           type: writeMode,
           text: writeText.trim(),
           artist: 'You',
           title,
           date: today,
+          votingSubmitDate: today,
           isPublic: false,
           pendingVoting: true,
           textStyle,
         });
-        await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
+        await AsyncStorage.setItem('pending_voting_artworks', JSON.stringify(pending));
 
         // Mark art done for today
         await AsyncStorage.setItem(`art_created_${today}`, 'true');
@@ -632,7 +649,7 @@ export default function ArtScreen() {
         setCourageUploadedToday(true);
         await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
 
-        // Persist to Firestore private gallery so it survives across sessions/devices
+        // Persist to Firestore so it survives across sessions/devices (still pending)
         saveArtwork(user.uid, {
           type: writeMode,
           text: writeText.trim(),
@@ -730,11 +747,11 @@ export default function ArtScreen() {
       const artworkId = Date.now();
       const persistedUri = await persistImageUri(imageUri, user?.uid, String(artworkId));
 
-      // Save locally
+      // Save to pending voting (NOT private gallery — releases after ranking)
       try {
-        const personalRaw = await AsyncStorage.getItem('personal_artworks');
-        const personal = personalRaw ? JSON.parse(personalRaw) : [];
-        personal.push({
+        const pendingRaw = await AsyncStorage.getItem('pending_voting_artworks');
+        const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
+        pending.push({
           id: artworkId,
           type: 'sketch',
           imageUrl: persistedUri,
@@ -742,10 +759,11 @@ export default function ArtScreen() {
           title,
           prompt: todaysChallenge,
           date: today,
+          votingSubmitDate: today,
           isPublic: false,
           pendingVoting: true,
         });
-        await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
+        await AsyncStorage.setItem('pending_voting_artworks', JSON.stringify(pending));
       } catch (localError) {
         console.log('Local sketch save error:', localError);
       }
@@ -775,7 +793,7 @@ export default function ArtScreen() {
         setCourageUploadedToday(true);
         await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
 
-        // Persist to Firestore private gallery so it survives across sessions/devices
+        // Persist to Firestore so it survives across sessions/devices (still pending)
         saveArtwork(user.uid, {
           type: 'sketch',
           imageUrl: persistedUri,
@@ -926,20 +944,22 @@ export default function ArtScreen() {
       const artworkId = Date.now();
       const persistedUri = await persistImageUri(capturedImageUri, user?.uid, String(artworkId));
 
+      // Save to pending voting (NOT private gallery — releases after ranking)
       try {
-        const personalRaw = await AsyncStorage.getItem('personal_artworks');
-        const personal = personalRaw ? JSON.parse(personalRaw) : [];
-        personal.push({
+        const pendingRaw = await AsyncStorage.getItem('pending_voting_artworks');
+        const pending = pendingRaw ? JSON.parse(pendingRaw) : [];
+        pending.push({
           id: artworkId,
           type: 'capture',
           imageUrl: persistedUri,
           artist: 'You',
           title,
           date: today,
+          votingSubmitDate: today,
           isPublic: false,
           pendingVoting: true,
         });
-        await AsyncStorage.setItem('personal_artworks', JSON.stringify(personal));
+        await AsyncStorage.setItem('pending_voting_artworks', JSON.stringify(pending));
       } catch (localError) {
         console.log('Local capture save error:', localError);
       }
@@ -970,7 +990,7 @@ export default function ArtScreen() {
         setCourageUploadedToday(true);
         await AsyncStorage.setItem(`courage_uploaded_${today}`, 'true');
 
-        // Persist to Firestore private gallery so it survives across sessions/devices
+        // Persist to Firestore so it survives across sessions/devices (still pending)
         saveArtwork(user.uid, {
           type: 'capture',
           imageUrl: persistedUri,
