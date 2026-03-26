@@ -199,12 +199,6 @@ export default function AnalyticsScreen({ navigation }) {
 
   return (
     <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
-      <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
-        <Text style={styles.closeBtnText}>✕</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
-        <Text style={styles.menuBtnText}>☰</Text>
-      </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Analytics</Text>
 
@@ -404,6 +398,14 @@ export default function AnalyticsScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      {/* Buttons AFTER ScrollView so they render on top (web z-index fix) */}
+      <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
+        <Text style={styles.menuBtnText}>☰</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
+        <Text style={styles.closeBtnText}>✕</Text>
+      </TouchableOpacity>
 
       <UserProfileModal
         visible={!!selectedProfile}

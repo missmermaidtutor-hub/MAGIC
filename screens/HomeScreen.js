@@ -798,6 +798,7 @@ export default function HomeScreen({ navigation }) {
   }, [userProfile]);
 
   // Reload quote, hearted state, star data, pseudonym, and winners every time this screen gets focus
+  // Empty deps array ensures this fires on EVERY focus event (web tab switches included)
   useFocusEffect(
     useCallback(() => {
       refreshQuote();
@@ -807,9 +808,8 @@ export default function HomeScreen({ navigation }) {
       refreshProfile();
       loadWinners();
       loadTodaysChallenge();
-      // Refresh email verification status so banner hides after user verifies
       if (user && !user.emailVerified) checkEmailVerified();
-    }, [todayQuote, userProfile])
+    }, [])
   );
 
   // Cleanup winner audio on unmount
