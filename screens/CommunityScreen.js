@@ -33,6 +33,7 @@ import {
   getUserCurated,
   getUserCourages,
   uploadMediaToStorage,
+  getUserWinCount,
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 import { getMemberDayCount as getMemberDayCountUtil, getCuratedLimit, canAccessFeature } from '../utils/premiumUtils';
@@ -141,6 +142,8 @@ export default function CommunityScreen({ navigation, route }) {
   // Real newsfeed state
   const [newsfeedUsers, setNewsfeedUsers] = useState([]);
   const [newsfeedLoading, setNewsfeedLoading] = useState(false);
+  const [feedUserWins, setFeedUserWins] = useState({});
+  const [seenTapestries, setSeenTapestries] = useState({});
 
   // My Inspiring Works state
   const [myInspiringWorks, setMyInspiringWorks] = useState([]);
@@ -153,6 +156,7 @@ export default function CommunityScreen({ navigation, route }) {
   // Trash system (24-hour recovery)
   const [trashedArtworks, setTrashedArtworks] = useState([]);
   const [showTrash, setShowTrash] = useState(false);
+  const [pendingVotingArtworks, setPendingVotingArtworks] = useState([]);
   const trashCleanedRef = useRef(false); // only clean trash once per session
 
   // Red X marking system — items marked for bulk deletion
@@ -307,10 +311,29 @@ export default function CommunityScreen({ navigation, route }) {
     if (!user) return;
     setNewsfeedLoading(true);
     try {
+      // Load seen tapestries from AsyncStorage
+      const seenRaw = await AsyncStorage.getItem('seen_tapestries');
+      const seen = seenRaw ? JSON.parse(seenRaw) : {};
+      setSeenTapestries(seen);
+
       const grouped = await getAllCuratedGalleriesGrouped(user.uid);
       console.log('[Community] Newsfeed loaded:', grouped.length, 'users with curations');
       grouped.forEach(u => console.log(`  - ${u.pseudonym}: ${u.artworks.length} works`));
       setNewsfeedUsers(grouped);
+
+      // Batch-fetch win counts for all feed users
+      const winResults = await Promise.all(
+        grouped.map(async (u) => {
+          try {
+            const count = await getUserWinCount(u.uid);
+            return [u.uid, count];
+          } catch { return [u.uid, 0]; }
+        })
+      );
+      const wins = {};
+      winResults.forEach(([uid, count]) => { wins[uid] = count; });
+      setFeedUserWins(wins);
+
       trackAction('newsfeed_loaded');
     } catch (error) {
       console.log('Error loading newsfeed:', error);
@@ -365,7 +388,7 @@ export default function CommunityScreen({ navigation, route }) {
     }
   };
 
-  // Move pending voting artworks to curated gallery after voting day passes
+  // Move pending voting artworks to private gallery after voting day passes
   const promotePendingVotingArtworks = async () => {
     try {
       const pendingData = await AsyncStorage.getItem('pending_voting_artworks');
@@ -378,34 +401,22 @@ export default function CommunityScreen({ navigation, route }) {
       const stillPending = pending.filter(a => a.votingSubmitDate >= today);
 
       if (ready.length > 0) {
-        // Move ready artworks to curated gallery (with dedup)
-        const curatedData = await AsyncStorage.getItem('public_artworks');
-        const curated = curatedData ? JSON.parse(curatedData) : [];
-        const existingIds = new Set(curated.map(a => a.id));
+        // Move ready artworks to private gallery (with dedup)
+        const personalData = await AsyncStorage.getItem('personal_artworks');
+        const personal = personalData ? JSON.parse(personalData) : [];
+        const existingIds = new Set(personal.map(a => String(a.id)));
         const promoted = ready
-          .filter(a => !existingIds.has(a.id)) // skip if already curated
+          .filter(a => !existingIds.has(String(a.id)))
           .map(a => ({
             ...a,
             pendingVoting: false,
-            isPublic: true,
-            madePublic: true,
-            publicDate: new Date().toISOString(),
           }));
-        const updatedCurated = [...curated, ...promoted];
-        await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
-
-        // Update personal artworks to clear pending flag
-        const personalData = await AsyncStorage.getItem('personal_artworks');
-        if (personalData) {
-          const personal = JSON.parse(personalData);
-          const readyIds = new Set(ready.map(a => a.id));
-          const updatedPersonal = personal.map(a =>
-            readyIds.has(a.id) ? { ...a, pendingVoting: false } : a
-          );
-          await AsyncStorage.setItem('personal_artworks', JSON.stringify(updatedPersonal));
-        }
+        const updatedPersonal = [...personal, ...promoted];
+        await AsyncStorage.setItem('personal_artworks', JSON.stringify(updatedPersonal));
+        setPersonalArtworks(updatedPersonal);
 
         await AsyncStorage.setItem('pending_voting_artworks', JSON.stringify(stillPending));
+        setPendingVotingArtworks(stillPending);
       }
     } catch (error) {
       console.log('Error promoting pending artworks:', error);
@@ -496,6 +507,12 @@ export default function CommunityScreen({ navigation, route }) {
     const today = getESTDate();
     AsyncStorage.setItem(`connected_${today}`, 'true');
     setCarouselModal({ feedUser, currentIndex: startIndex });
+    // Mark this user's tapestry as seen (clears "New Inspiration" alert)
+    if (feedUser?.uid) {
+      const updatedSeen = { ...seenTapestries, [feedUser.uid]: feedUser.artworks.length };
+      setSeenTapestries(updatedSeen);
+      AsyncStorage.setItem('seen_tapestries', JSON.stringify(updatedSeen));
+    }
   };
 
   const navigateCarousel = (direction) => {
@@ -604,6 +621,11 @@ export default function CommunityScreen({ navigation, route }) {
       } else {
         setInspirationArtworks([]);
       }
+
+      // Load pending voting artworks (courages awaiting ranking)
+      const pendingData = await AsyncStorage.getItem('pending_voting_artworks');
+      setPendingVotingArtworks(pendingData ? JSON.parse(pendingData) : []);
+
       // Background: migrate any remaining data:/blob: URIs to Firebase Storage
       if (user?.uid) {
         (async () => {
@@ -1231,20 +1253,30 @@ export default function CommunityScreen({ navigation, route }) {
     return newsfeedUsers.map((feedUser) => {
       const isFollowed = followedUsers.includes(feedUser.uid);
       const firstLetter = (feedUser.pseudonym || 'A').charAt(0).toUpperCase();
+      const hasNewInspiration = seenTapestries[feedUser.uid] !== feedUser.artworks.length;
 
       return (
         <View key={feedUser.uid} style={styles.newsfeedCard}>
           {/* Header: avatar + pseudonym + follow */}
           <View style={styles.newsfeedHeader}>
             <View style={styles.newsfeedUserInfo}>
-              <View style={styles.newsfeedAvatarCircle}>
-                <Text style={styles.newsfeedAvatarLetter}>{firstLetter}</Text>
-              </View>
+              {feedUser.profileImageUrl ? (
+                <Image source={{ uri: feedUser.profileImageUrl }} style={styles.newsfeedAvatarImage} />
+              ) : (
+                <View style={styles.newsfeedAvatarCircle}>
+                  <Text style={styles.newsfeedAvatarLetter}>{firstLetter}</Text>
+                </View>
+              )}
               <View>
-                <Text style={styles.newsfeedUsername}>{feedUser.pseudonym}</Text>
+                <Text style={styles.newsfeedUsername}>
+                  {feedUserWins[feedUser.uid] > 0 ? '🏆 ' : ''}{feedUser.pseudonym}
+                </Text>
                 <Text style={styles.newsfeedArtCount}>
                   {feedUser.artworks.length} artwork{feedUser.artworks.length !== 1 ? 's' : ''}
                 </Text>
+                {hasNewInspiration && (
+                  <Text style={styles.newInspirationAlert}>✨ New Inspiration</Text>
+                )}
               </View>
             </View>
             <TouchableOpacity
@@ -1562,9 +1594,16 @@ export default function CommunityScreen({ navigation, route }) {
         );
 
       case 'inspiring': {
+        const toMsI = (val) => {
+          if (!val) return 0;
+          if (typeof val === 'number') return val;
+          if (val.toMillis) return val.toMillis();
+          const parsed = new Date(val).getTime();
+          return isNaN(parsed) ? 0 : parsed;
+        };
         const sortedInspirations = [...inspirationArtworks].sort((a, b) => {
-          const aTime = a.savedAt?.toMillis?.() || a.savedAt || a.date || 0;
-          const bTime = b.savedAt?.toMillis?.() || b.savedAt || b.date || 0;
+          const aTime = toMsI(a.savedAt) || toMsI(a.date) || a.id || 0;
+          const bTime = toMsI(b.savedAt) || toMsI(b.date) || b.id || 0;
           return bTime - aTime;
         });
 
@@ -1735,10 +1774,17 @@ export default function CommunityScreen({ navigation, route }) {
       }
 
       case 'private': {
-        // Sort newest first
+        // Sort newest first — normalize all date formats to ms
+        const toMs = (val) => {
+          if (!val) return 0;
+          if (typeof val === 'number') return val;
+          if (val.toMillis) return val.toMillis();
+          const parsed = new Date(val).getTime();
+          return isNaN(parsed) ? 0 : parsed;
+        };
         const sortedPersonal = [...personalArtworks].sort((a, b) => {
-          const aTime = a.savedAt?.toMillis?.() || a.savedAt || a.date || 0;
-          const bTime = b.savedAt?.toMillis?.() || b.savedAt || b.date || 0;
+          const aTime = toMs(a.savedAt) || toMs(a.date) || a.id || 0;
+          const bTime = toMs(b.savedAt) || toMs(b.date) || b.id || 0;
           return bTime - aTime;
         });
 
@@ -1754,6 +1800,37 @@ export default function CommunityScreen({ navigation, route }) {
                 Art Studio
               </Text>
             </Text>
+
+            {/* Pending voting placeholder cards */}
+            {pendingVotingArtworks.length > 0 && (
+              <View style={styles.galleryGrid}>
+                {pendingVotingArtworks.map(artwork => (
+                  <View key={`pending-${artwork.id}`} style={styles.galleryItemContainer}>
+                    <GoldFrame thickness={3}>
+                      <View style={[styles.galleryImageBg, { backgroundColor: 'rgba(75,0,130,0.08)' }]}>
+                        <Text style={{ fontSize: 28 }}>🗳️</Text>
+                        <Text style={{ color: '#4B0082', fontSize: 10, fontWeight: '600', textAlign: 'center', marginTop: 4 }}>
+                          In Voting
+                        </Text>
+                        <Text style={{ color: '#4B0082', fontSize: 9, fontStyle: 'italic', textAlign: 'center', marginTop: 2 }} numberOfLines={1}>
+                          {artwork.title || 'Untitled'}
+                        </Text>
+                      </View>
+                    </GoldFrame>
+                    <View style={styles.artworkActions}>
+                      <View style={styles.nameplateRow}>
+                        <Text style={styles.nameplateTitle} numberOfLines={1}>
+                          {artwork.title || 'Untitled'}
+                        </Text>
+                        <Text style={styles.nameplateArtist} numberOfLines={1}>
+                          Awaiting ranking
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
 
             {/* My Creations list */}
             {sortedPersonal.length > 0 ? (
@@ -1969,8 +2046,8 @@ export default function CommunityScreen({ navigation, route }) {
             <Text style={[styles.tabLabel, activeGallery === 'private' && styles.tabLabelActive]}>
               The Vault
             </Text>
-            {personalArtworks.length > 0 && (
-              <Text style={styles.tabCount}>{personalArtworks.length}</Text>
+            {(personalArtworks.length + pendingVotingArtworks.length) > 0 && (
+              <Text style={styles.tabCount}>{personalArtworks.length + pendingVotingArtworks.length}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -2265,15 +2342,22 @@ export default function CommunityScreen({ navigation, route }) {
             const currentImage = getArtworkImageSource(currentArt);
             const hasText = currentArt.text && currentArt.text.trim().length > 0;
 
-            // Sort vault items newest first
+            // Sort vault items newest first — normalize date formats to ms
+            const toMsSwap = (val) => {
+              if (!val) return 0;
+              if (typeof val === 'number') return val;
+              if (val.toMillis) return val.toMillis();
+              const parsed = new Date(val).getTime();
+              return isNaN(parsed) ? 0 : parsed;
+            };
             const sortedVaultPersonal = [...personalArtworks].sort((a, b) => {
-              const aTime = a.savedAt?.toMillis?.() || a.savedAt || a.date || 0;
-              const bTime = b.savedAt?.toMillis?.() || b.savedAt || b.date || 0;
+              const aTime = toMsSwap(a.savedAt) || toMsSwap(a.date) || a.id || 0;
+              const bTime = toMsSwap(b.savedAt) || toMsSwap(b.date) || b.id || 0;
               return bTime - aTime;
             });
             const sortedVaultInspirations = [...inspirationArtworks].sort((a, b) => {
-              const aTime = a.savedAt?.toMillis?.() || a.savedAt || a.date || 0;
-              const bTime = b.savedAt?.toMillis?.() || b.savedAt || b.date || 0;
+              const aTime = toMsSwap(a.savedAt) || toMsSwap(a.date) || a.id || 0;
+              const bTime = toMsSwap(b.savedAt) || toMsSwap(b.date) || b.id || 0;
               return bTime - aTime;
             });
 
@@ -2889,6 +2973,19 @@ const styles = StyleSheet.create({
   },
   followBtnTextActive: {
     color: '#0a0e27',
+  },
+  newsfeedAvatarImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 10,
+  },
+  newInspirationAlert: {
+    color: '#4B0082',
+    fontSize: 12,
+    fontWeight: '600',
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   // Curio strip with arrows
   curioStripRow: {

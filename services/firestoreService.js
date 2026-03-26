@@ -165,7 +165,9 @@ export const uploadCourage = async (uid, data) => {
   // Store text content separately for text-type courages
   if (data.text) doc_data.text = data.text;
   if (data.textStyle) doc_data.textStyle = data.textStyle;
+  console.log(`[Courage] Uploading for uid=${uid}, date=${data.date}, title="${data.title}"`);
   const docRef = await addDoc(collection(db, 'dailyCourages'), doc_data);
+  console.log(`[Courage] Saved as doc ${docRef.id}`);
   return docRef.id;
 };
 
@@ -670,15 +672,16 @@ export const getAllCuratedGalleriesGrouped = async (excludeUid) => {
     }
     grouped[work.curatorUid].artworks.push(work);
   }
-  // Resolve missing pseudonyms from user profiles
+  // Resolve missing pseudonyms + profile images from user profiles
   const entries = Object.values(grouped);
   for (const entry of entries) {
-    if (!entry.pseudonym) {
+    if (!entry.pseudonym || !entry.profileImageUrl) {
       try {
         const profile = await getUserProfile(entry.uid);
-        entry.pseudonym = profile?.pseudonym || 'Anonymous';
+        if (!entry.pseudonym) entry.pseudonym = profile?.pseudonym || 'Anonymous';
+        if (profile?.profileImageUrl) entry.profileImageUrl = profile.profileImageUrl;
       } catch {
-        entry.pseudonym = 'Anonymous';
+        if (!entry.pseudonym) entry.pseudonym = 'Anonymous';
       }
     }
   }
