@@ -518,7 +518,7 @@ export default function CommunityScreen({ navigation, route }) {
   const navigateCarousel = (direction) => {
     setCarouselModal(prev => {
       if (!prev) return prev;
-      const maxIndex = prev.feedUser.artworks.length - 1;
+      const maxIndex = prev.feedUser.artworks.length; // +1 for completion screen
       let newIndex = prev.currentIndex + direction;
       if (newIndex < 0) newIndex = 0;
       if (newIndex > maxIndex) newIndex = maxIndex;
@@ -544,6 +544,12 @@ export default function CommunityScreen({ navigation, route }) {
       const publicData = await AsyncStorage.getItem('public_artworks');
       let localCurated = publicData ? JSON.parse(publicData) : [];
       localCurated = dedupeById(localCurated);
+      // Enforce curated limit on load (trims any over-limit items from before limit existed)
+      const curatedCap = getCuratedLimit(userProfile);
+      if (localCurated.length > curatedCap) {
+        localCurated = localCurated.slice(0, curatedCap);
+        await AsyncStorage.setItem('public_artworks', JSON.stringify(localCurated));
+      }
 
       // Sync own curated gallery from Firestore (ensures cross-device visibility)
       if (user?.uid) {
@@ -551,6 +557,7 @@ export default function CommunityScreen({ navigation, route }) {
           const firestoreCurated = await getUserCurated(user.uid);
           if (firestoreCurated && firestoreCurated.length > 0) {
             const localIds = new Set(localCurated.map(a => String(a.id)));
+            const curatedMax = getCuratedLimit(userProfile);
             const newFromServer = firestoreCurated
               .filter(a => !localIds.has(String(a.id)))
               .map(a => ({
@@ -565,7 +572,7 @@ export default function CommunityScreen({ navigation, route }) {
                 ...(a.textStyle && { textStyle: a.textStyle }),
               }));
             if (newFromServer.length > 0) {
-              localCurated = [...localCurated, ...newFromServer];
+              localCurated = [...localCurated, ...newFromServer].slice(0, curatedMax);
               await AsyncStorage.setItem('public_artworks', JSON.stringify(localCurated));
             }
           }
@@ -734,9 +741,11 @@ export default function CommunityScreen({ navigation, route }) {
           await AsyncStorage.setItem('favorite_artworks', JSON.stringify(updated));
         }
       } else {
-        // Check curated limit (10 free, 25 premium)
+        // Check curated limit — read from AsyncStorage to avoid stale state from rapid taps
         const curatedMax = getCuratedLimit(userProfile);
-        if (curatedArtworks.length >= curatedMax) {
+        const freshCuratedData = await AsyncStorage.getItem('public_artworks');
+        const freshCuratedList = freshCuratedData ? JSON.parse(freshCuratedData) : [];
+        if (freshCuratedList.length >= curatedMax) {
           const msg = curatedMax < 25
             ? `Free accounts can curate up to ${curatedMax} works. Upgrade to premium for 25 slots!`
             : 'You can only have 25 works in your tapestry. Remove one first.';
@@ -750,7 +759,7 @@ export default function CommunityScreen({ navigation, route }) {
           isPublic: true,
           publicDate: new Date().toISOString(),
         };
-        const updatedCurated = [...curatedArtworks, curatedArt];
+        const updatedCurated = [...freshCuratedList, curatedArt];
         setCuratedArtworks(updatedCurated);
         await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
         trackAction('artwork_curated');
@@ -2187,12 +2196,86 @@ export default function CommunityScreen({ navigation, route }) {
           </TouchableOpacity>
 
           {carouselModal && (() => {
-            const artwork = carouselModal.feedUser.artworks[carouselModal.currentIndex];
+            const artworks = carouselModal.feedUser.artworks;
+            const isCompletionScreen = carouselModal.currentIndex >= artworks.length;
+            const atStart = carouselModal.currentIndex === 0;
+            const atEnd = isCompletionScreen;
+
+            if (isCompletionScreen) {
+              // Completion grid — mirrors My Tapestry layout (5 per row, gold frames)
+              return (
+                <View style={styles.carouselContent}>
+                  <Text style={styles.carouselPseudonym}>{carouselModal.feedUser.pseudonym}</Text>
+                  <Text style={styles.completionSubtitle}>{artworks.length} {artworks.length === 1 ? 'work' : 'works'}</Text>
+                  <Text style={styles.completionTitle}>Tapestry Complete</Text>
+
+                  <View style={styles.carouselArtRow}>
+                    <TouchableOpacity
+                      style={styles.carouselArrow}
+                      onPress={() => navigateCarousel(-1)}
+                    >
+                      <Text style={styles.carouselArrowText}>‹</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.completionGrid}>
+                      {artworks.map((art, i) => {
+                        const imgSrc = getArtworkImageSource(art);
+                        const hasText = art.text && art.text.trim().length > 0;
+                        return (
+                          <TouchableOpacity
+                            key={art.id || i}
+                            style={styles.completionThumbItem}
+                            onPress={() => setCarouselModal(prev => ({ ...prev, currentIndex: i }))}
+                          >
+                            <GoldFrame thickness={2}>
+                              {imgSrc ? (
+                                <Image source={imgSrc} style={styles.completionThumbImage} resizeMode="cover" />
+                              ) : hasText ? (
+                                <View style={[styles.completionThumbImage, styles.textArtBg]}>
+                                  <Text style={{ color: '#333', fontSize: 8 }} numberOfLines={4}>{art.text}</Text>
+                                </View>
+                              ) : (
+                                <View style={[styles.completionThumbImage, styles.placeholderArt]}>
+                                  <Text style={{ fontSize: 16 }}>🎨</Text>
+                                </View>
+                              )}
+                            </GoldFrame>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    {/* Empty right space to balance layout */}
+                    <View style={styles.carouselArrow}>
+                      <Text style={[styles.carouselArrowText, { color: 'transparent' }]}>›</Text>
+                    </View>
+                  </View>
+
+                  {/* Dot indicators with completion dot */}
+                  <View style={styles.carouselDots}>
+                    {[...Array(artworks.length + 1)].map((_, i) => (
+                      <TouchableOpacity
+                        key={i}
+                        onPress={() => setCarouselModal(prev => ({ ...prev, currentIndex: i }))}
+                      >
+                        <View style={[
+                          styles.dot,
+                          i === carouselModal.currentIndex && styles.dotActive,
+                          { width: 9, height: 9 },
+                          i === artworks.length && styles.dotCompletion,
+                        ]} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              );
+            }
+
+            // Normal single-artwork view
+            const artwork = artworks[carouselModal.currentIndex];
             if (!artwork) return null;
             const imageSource = getArtworkImageSource(artwork);
             const hasText = artwork.text && artwork.text.trim().length > 0;
-            const atStart = carouselModal.currentIndex === 0;
-            const atEnd = carouselModal.currentIndex >= carouselModal.feedUser.artworks.length - 1;
 
             return (
               <View style={styles.carouselContent}>
@@ -2255,7 +2338,7 @@ export default function CommunityScreen({ navigation, route }) {
                 {/* Title + actions */}
                 <Text style={styles.carouselTitle}>{artwork.title || 'Untitled'}</Text>
                 <Text style={styles.carouselCounter}>
-                  {carouselModal.currentIndex + 1} of {carouselModal.feedUser.artworks.length}
+                  {carouselModal.currentIndex + 1} of {artworks.length}
                 </Text>
 
                 <View style={styles.carouselActions}>
@@ -2269,19 +2352,22 @@ export default function CommunityScreen({ navigation, route }) {
                   />
                 </View>
 
-                {/* Dot indicators */}
-                {carouselModal.feedUser.artworks.length > 1 && (
-                  <View style={styles.carouselDots}>
-                    {carouselModal.feedUser.artworks.map((_, i) => (
-                      <TouchableOpacity
-                        key={i}
-                        onPress={() => setCarouselModal(prev => ({ ...prev, currentIndex: i }))}
-                      >
-                        <View style={[styles.dot, i === carouselModal.currentIndex && styles.dotActive, { width: 9, height: 9 }]} />
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
+                {/* Dot indicators with completion dot */}
+                <View style={styles.carouselDots}>
+                  {[...Array(artworks.length + 1)].map((_, i) => (
+                    <TouchableOpacity
+                      key={i}
+                      onPress={() => setCarouselModal(prev => ({ ...prev, currentIndex: i }))}
+                    >
+                      <View style={[
+                        styles.dot,
+                        i === carouselModal.currentIndex && styles.dotActive,
+                        { width: 9, height: 9 },
+                        i === artworks.length && styles.dotCompletion,
+                      ]} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
             );
           })()}
@@ -3167,8 +3253,43 @@ const styles = StyleSheet.create({
   carouselDots: {
     flexDirection: 'row',
     justifyContent: 'center',
+    flexWrap: 'wrap',
     marginTop: 12,
     gap: 8,
+  },
+  // Completion screen — mirrors curatedThumbGrid layout
+  completionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  completionSubtitle: {
+    fontSize: 14,
+    color: '#aaa',
+    marginBottom: 4,
+  },
+  completionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'center',
+    flex: 1,
+    alignContent: 'center',
+  },
+  completionThumbItem: {
+    width: '18%',
+    aspectRatio: 1,
+  },
+  completionThumbImage: {
+    width: '100%',
+    aspectRatio: 1,
+  },
+  dotCompletion: {
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#FFD700',
   },
 
   // Curate button disabled
