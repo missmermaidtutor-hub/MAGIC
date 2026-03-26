@@ -10,6 +10,7 @@ import {
   Dimensions,
   ImageBackground,
   ActivityIndicator,
+  PanResponder,
 } from 'react-native';
 import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
 import { persistImageUri, migrateGalleryImages } from '../utils/imageUtils';
@@ -41,10 +42,10 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 // Gold Frame component (matches HomeScreen)
-const GoldFrame = ({ children, style, containerStyle, onPress, thickness = 4 }) => {
-  const Wrapper = onPress ? TouchableOpacity : View;
+const GoldFrame = ({ children, style, containerStyle, onPress, onLongPress, thickness = 4 }) => {
+  const Wrapper = (onPress || onLongPress) ? TouchableOpacity : View;
   return (
-    <Wrapper onPress={onPress} activeOpacity={0.8} style={[{
+    <Wrapper onPress={onPress} onLongPress={onLongPress} activeOpacity={0.8} style={[{
       borderRadius: 6,
       shadowColor: '#FFD700',
       shadowOffset: { width: 0, height: 2 },
@@ -154,12 +155,50 @@ export default function CommunityScreen({ navigation, route }) {
   const [showTrash, setShowTrash] = useState(false);
   const trashCleanedRef = useRef(false); // only clean trash once per session
 
+  // Red X marking system — items marked for bulk deletion
+  const [markedForDeletion, setMarkedForDeletion] = useState(new Set());
+
+  // Tapestry swap modal — tap a tapestry thumbnail to swap it
+  const [tapestrySwapModal, setTapestrySwapModal] = useState(null);
+
+  // Secret bookshelf — reveals Inspiring Others premium section
+  const [showInspiringOthers, setShowInspiringOthers] = useState(false);
+
+  // Second Thoughts — 24h recovery for removed inspirations
+  const [showSecondThoughts, setShowSecondThoughts] = useState(false);
+
+  // Swipe gesture for carousel modal
+  const carouselSwipeRef = useRef(null);
+  const carouselPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Only capture horizontal swipes (not vertical scroll or taps)
+        return Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -50) {
+          // Swipe left → next
+          navigateCarouselRef.current?.(1);
+        } else if (gestureState.dx > 50) {
+          // Swipe right → previous
+          navigateCarouselRef.current?.(-1);
+        }
+      },
+    })
+  ).current;
+  const navigateCarouselRef = useRef(null);
+
   // Private tab side-by-side scroll refs
   const privateScrollRef = useRef(null);
   const inspirationScrollRef = useRef(null);
   const privateScrollOffset = useRef(0);
   const inspirationScrollOffset = useRef(0);
   const SCROLL_STEP = 200;
+  const curioScrollRefs = useRef({});
+  const curioScrollOffsets = useRef({});
+  const CURIO_THUMB_SIZE = Math.floor((SCREEN_WIDTH - 20 - 16) / 3);
+  const CURIO_SCROLL_STEP = CURIO_THUMB_SIZE * 3 + 16; // scroll 3 thumbs + gaps
 
   const scrollColumn = (ref, offsetRef, direction) => {
     const newOffset = Math.max(0, offsetRef.current + direction * SCROLL_STEP);
@@ -269,6 +308,8 @@ export default function CommunityScreen({ navigation, route }) {
     setNewsfeedLoading(true);
     try {
       const grouped = await getAllCuratedGalleriesGrouped(user.uid);
+      console.log('[Community] Newsfeed loaded:', grouped.length, 'users with curations');
+      grouped.forEach(u => console.log(`  - ${u.pseudonym}: ${u.artworks.length} works`));
       setNewsfeedUsers(grouped);
       trackAction('newsfeed_loaded');
     } catch (error) {
@@ -379,7 +420,17 @@ export default function CommunityScreen({ navigation, route }) {
       const alreadySaved = favorites.some(a => a.id === artId);
 
       if (alreadySaved) {
+        // Move removed inspiration to Second Thoughts (24h recovery)
+        const removedItem = favorites.find(a => a.id === artId);
         favorites = favorites.filter(a => a.id !== artId);
+        if (removedItem) {
+          const trashedItem = { ...removedItem, trashedAt: Date.now(), trashedFrom: 'inspiration' };
+          const freshTrash = await AsyncStorage.getItem('trashed_artworks');
+          const trashArr = freshTrash ? JSON.parse(freshTrash) : [];
+          trashArr.push(trashedItem);
+          await AsyncStorage.setItem('trashed_artworks', JSON.stringify(trashArr));
+          setTrashedArtworks(trashArr);
+        }
         setSavedNewsfeedArt(prev => {
           const next = new Set(prev);
           next.delete(artId);
@@ -448,13 +499,17 @@ export default function CommunityScreen({ navigation, route }) {
   };
 
   const navigateCarousel = (direction) => {
-    if (!carouselModal) return;
-    const maxIndex = carouselModal.feedUser.artworks.length - 1;
-    let newIndex = carouselModal.currentIndex + direction;
-    if (newIndex < 0) newIndex = 0;
-    if (newIndex > maxIndex) newIndex = maxIndex;
-    setCarouselModal(prev => ({ ...prev, currentIndex: newIndex }));
+    setCarouselModal(prev => {
+      if (!prev) return prev;
+      const maxIndex = prev.feedUser.artworks.length - 1;
+      let newIndex = prev.currentIndex + direction;
+      if (newIndex < 0) newIndex = 0;
+      if (newIndex > maxIndex) newIndex = maxIndex;
+      return { ...prev, currentIndex: newIndex };
+    });
   };
+  // Keep ref in sync so PanResponder can call it (avoids stale closure)
+  navigateCarouselRef.current = navigateCarousel;
 
   // Deduplicate an array by id field
   const dedupeById = (arr) => {
@@ -468,25 +523,71 @@ export default function CommunityScreen({ navigation, route }) {
 
   const loadAllGalleries = async () => {
     try {
+      // Load local curated, then sync from Firestore to catch cross-device curations
       const publicData = await AsyncStorage.getItem('public_artworks');
-      if (publicData) {
-        const deduped = dedupeById(JSON.parse(publicData));
-        setCuratedArtworks(deduped);
-        // Fix AsyncStorage if duplicates were found
-        const parsed = JSON.parse(publicData);
-        if (deduped.length !== parsed.length) {
-          await AsyncStorage.setItem('public_artworks', JSON.stringify(deduped));
+      let localCurated = publicData ? JSON.parse(publicData) : [];
+      localCurated = dedupeById(localCurated);
+
+      // Sync own curated gallery from Firestore (ensures cross-device visibility)
+      if (user?.uid) {
+        try {
+          const firestoreCurated = await getUserCurated(user.uid);
+          if (firestoreCurated && firestoreCurated.length > 0) {
+            const localIds = new Set(localCurated.map(a => String(a.id)));
+            const newFromServer = firestoreCurated
+              .filter(a => !localIds.has(String(a.id)))
+              .map(a => ({
+                id: a.id,
+                imageUrl: a.imageUrl || '',
+                text: a.text || '',
+                title: a.title || 'Untitled',
+                date: a.date || a.publicDate || new Date().toISOString(),
+                madePublic: true,
+                isPublic: true,
+                publicDate: a.publicDate || new Date().toISOString(),
+                ...(a.textStyle && { textStyle: a.textStyle }),
+              }));
+            if (newFromServer.length > 0) {
+              localCurated = [...localCurated, ...newFromServer];
+              await AsyncStorage.setItem('public_artworks', JSON.stringify(localCurated));
+            }
+          }
+        } catch (syncErr) {
+          console.log('Firestore curated sync error:', syncErr);
         }
-      } else {
-        setCuratedArtworks([]);
       }
+      setCuratedArtworks(localCurated);
+      // Fix AsyncStorage if duplicates were found
+      if (publicData && localCurated.length !== JSON.parse(publicData).length) {
+        await AsyncStorage.setItem('public_artworks', JSON.stringify(localCurated));
+      }
+
+      // Load trash FIRST so we can filter trashed items from galleries
+      const trashData = await AsyncStorage.getItem('trashed_artworks');
+      let currentTrash = [];
+      if (trashData) {
+        const allTrashed = JSON.parse(trashData);
+        if (!trashCleanedRef.current) {
+          const now = Date.now();
+          currentTrash = allTrashed.filter(a => now - a.trashedAt < 24 * 60 * 60 * 1000);
+          if (currentTrash.length !== allTrashed.length) {
+            await AsyncStorage.setItem('trashed_artworks', JSON.stringify(currentTrash));
+          }
+          trashCleanedRef.current = true;
+        } else {
+          currentTrash = allTrashed;
+        }
+      }
+      setTrashedArtworks(currentTrash);
+      const trashedIds = new Set(currentTrash.map(a => String(a.id)));
 
       const personalData = await AsyncStorage.getItem('personal_artworks');
       if (personalData) {
         const dedupedP = dedupeById(JSON.parse(personalData));
-        setPersonalArtworks(dedupedP);
-        if (dedupedP.length !== JSON.parse(personalData).length) {
-          await AsyncStorage.setItem('personal_artworks', JSON.stringify(dedupedP));
+        const filteredP = dedupedP.filter(a => !trashedIds.has(String(a.id)));
+        setPersonalArtworks(filteredP);
+        if (filteredP.length !== JSON.parse(personalData).length) {
+          await AsyncStorage.setItem('personal_artworks', JSON.stringify(filteredP));
         }
       } else {
         setPersonalArtworks([]);
@@ -495,31 +596,13 @@ export default function CommunityScreen({ navigation, route }) {
       const favData = await AsyncStorage.getItem('favorite_artworks');
       if (favData) {
         const dedupedF = dedupeById(JSON.parse(favData));
-        setInspirationArtworks(dedupedF);
-        if (dedupedF.length !== JSON.parse(favData).length) {
-          await AsyncStorage.setItem('favorite_artworks', JSON.stringify(dedupedF));
+        const filteredF = dedupedF.filter(a => !trashedIds.has(String(a.id)));
+        setInspirationArtworks(filteredF);
+        if (filteredF.length !== JSON.parse(favData).length) {
+          await AsyncStorage.setItem('favorite_artworks', JSON.stringify(filteredF));
         }
       } else {
         setInspirationArtworks([]);
-      }
-
-      // Load trash (clean up expired items only once per session)
-      const trashData = await AsyncStorage.getItem('trashed_artworks');
-      if (trashData) {
-        const allTrashed = JSON.parse(trashData);
-        if (!trashCleanedRef.current) {
-          const now = Date.now();
-          const stillRecoverable = allTrashed.filter(a => now - a.trashedAt < 24 * 60 * 60 * 1000);
-          setTrashedArtworks(stillRecoverable);
-          if (stillRecoverable.length !== allTrashed.length) {
-            await AsyncStorage.setItem('trashed_artworks', JSON.stringify(stillRecoverable));
-          }
-          trashCleanedRef.current = true;
-        } else {
-          setTrashedArtworks(allTrashed);
-        }
-      } else {
-        setTrashedArtworks([]);
       }
       // Background: migrate any remaining data:/blob: URIs to Firebase Storage
       if (user?.uid) {
@@ -588,7 +671,7 @@ export default function CommunityScreen({ navigation, route }) {
         const updated = [...personalArtworks, newArtwork];
         setPersonalArtworks(updated);
         await AsyncStorage.setItem('personal_artworks', JSON.stringify(updated));
-        showAlert('Uploaded!', 'Your artwork has been added to your Private Gallery.');
+        showAlert('Uploaded!', 'Your artwork has been added to The Vault.');
       }
     } catch (error) {
       console.log('Error uploading image:', error);
@@ -634,8 +717,8 @@ export default function CommunityScreen({ navigation, route }) {
         if (curatedArtworks.length >= curatedMax) {
           const msg = curatedMax < 25
             ? `Free accounts can curate up to ${curatedMax} works. Upgrade to premium for 25 slots!`
-            : 'You can only have 25 works in your curated gallery. Remove one first.';
-          showAlert('Curated Limit', msg);
+            : 'You can only have 25 works in your tapestry. Remove one first.';
+          showAlert('Tapestry Full', msg);
           return;
         }
         // Add to curated
@@ -690,6 +773,66 @@ export default function CommunityScreen({ navigation, route }) {
     }
   };
 
+  // ─── Tapestry swap: replace a curated piece with one from Vault ───
+  const handleTapestrySwap = (newArtwork, oldIndex) => {
+    const oldArtwork = curatedArtworks[oldIndex];
+    if (!oldArtwork) return;
+
+    showConfirm(
+      'Swap Artwork',
+      'Replace this tapestry piece with the selected artwork?',
+      async () => {
+        try {
+          // Remove old from curated in Firestore
+          if (user) {
+            removeCuratedWork(user.uid, String(oldArtwork.id)).catch(err =>
+              console.log('Firestore remove curated (swap) error:', err)
+            );
+          }
+
+          // Build the new curated artwork
+          const curatedNew = {
+            ...newArtwork,
+            madePublic: true,
+            isPublic: true,
+            publicDate: new Date().toISOString(),
+          };
+
+          // Replace in local array
+          const updatedCurated = [...curatedArtworks];
+          updatedCurated[oldIndex] = curatedNew;
+          setCuratedArtworks(updatedCurated);
+          await AsyncStorage.setItem('public_artworks', JSON.stringify(updatedCurated));
+
+          // Save new to Firestore curated (with Storage upload if needed)
+          if (user) {
+            (async () => {
+              try {
+                let remoteImageUrl = curatedNew.imageUrl || '';
+                if (remoteImageUrl && !remoteImageUrl.startsWith('https://')) {
+                  const storagePath = `curated/${user.uid}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
+                  remoteImageUrl = await uploadMediaToStorage(remoteImageUrl, storagePath);
+                }
+                await saveCuratedWork(user.uid, {
+                  ...curatedNew,
+                  imageUrl: remoteImageUrl,
+                  pseudonym: userProfile?.pseudonym || '',
+                });
+              } catch (err) {
+                console.log('Firestore save curated (swap) error:', err);
+              }
+            })();
+          }
+
+          trackAction('tapestry_swap');
+          setTapestrySwapModal(null);
+        } catch (error) {
+          console.log('Error swapping tapestry artwork:', error);
+        }
+      }
+    );
+  };
+
   // Restore artwork from trash back to its original gallery (batched write)
   const handleRestoreFromTrash = async (artwork) => {
     try {
@@ -729,7 +872,9 @@ export default function CommunityScreen({ navigation, route }) {
     showDestructiveConfirm(
       'Remove Artwork',
       fromGallery === 'curated'
-        ? 'Remove this from your curated gallery?'
+        ? 'Remove this from your tapestry?'
+        : fromGallery === 'inspiration'
+        ? 'Remove this inspiration? You can recover it from Second Thoughts within 24 hours.'
         : 'This will be moved to trash. You can recover it within 24 hours.',
       async () => {
         try {
@@ -792,26 +937,26 @@ export default function CommunityScreen({ navigation, route }) {
     );
   };
 
-  // Clear all non-candlelit items from private gallery → move to trash
-  const handleClearNonCandlelit = () => {
-    const nonCandlelit = personalArtworks.filter(a => !savedNewsfeedArt.has(a.id));
-    if (nonCandlelit.length === 0) {
-      showAlert('Nothing to Clear', 'All items in your private gallery are candlelit.');
+  // Bulk-trash all red-X-marked items from private gallery
+  const handleTrashMarkedItems = () => {
+    const marked = personalArtworks.filter(a => markedForDeletion.has(a.id));
+    if (marked.length === 0) {
+      showAlert('Nothing Marked', 'Tap the green ✓ on items to mark them with a red ✕ for removal.');
       return;
     }
     showConfirm(
-      'Clear Non-Candlelit Items',
-      `This will move ${nonCandlelit.length} non-candlelit item${nonCandlelit.length > 1 ? 's' : ''} to your trash.\n\nYou will have 24 hours to recover them before they are permanently deleted.\n\nAre you sure?`,
+      'Trash Marked Items',
+      `This will move ${marked.length} red ✕ item${marked.length > 1 ? 's' : ''} to your trash.\n\nYou will have 24 hours to recover them before they are permanently deleted.\n\nAre you sure?`,
       async () => {
         try {
-          // Keep only candlelit items
-          const kept = personalArtworks.filter(a => savedNewsfeedArt.has(a.id));
+          const markedIds = new Set(marked.map(a => a.id));
+          const kept = personalArtworks.filter(a => !markedIds.has(a.id));
 
           // Build trash entries
           const freshTrash = await AsyncStorage.getItem('trashed_artworks');
           const trashArr = freshTrash ? JSON.parse(freshTrash) : [];
           const now = Date.now();
-          nonCandlelit.forEach(a => {
+          marked.forEach(a => {
             trashArr.push({ ...a, trashedAt: now, trashedFrom: 'personal' });
           });
 
@@ -822,13 +967,14 @@ export default function CommunityScreen({ navigation, route }) {
           ]);
           setPersonalArtworks(kept);
           setTrashedArtworks(trashArr);
+          setMarkedForDeletion(new Set()); // Clear all marks
 
-          showAlert('Moved to Trash', `${nonCandlelit.length} item${nonCandlelit.length > 1 ? 's' : ''} moved to trash. You can restore them within 24 hours from the Trash section below.`);
+          showAlert('Moved to Trash', `${marked.length} item${marked.length > 1 ? 's' : ''} moved to trash. You can restore them within 24 hours from the Trash section below.`);
         } catch (e) {
-          console.log('Error clearing non-candlelit:', e);
+          console.log('Error trashing marked items:', e);
         }
       },
-      'Yes, Clear'
+      'Yes, Trash'
     );
   };
 
@@ -929,7 +1075,7 @@ export default function CommunityScreen({ navigation, route }) {
               style={[styles.curateBtn, isCurated && styles.curateBtnActive, !canCurate && styles.curateBtnDisabled]}
               onPress={() => {
                 if (!canCurate) {
-                  showAlert('Gallery Locked', `Curating unlocks on Day 13. You are on Day ${getMemberDayCount()}.`);
+                  showAlert('Gallery Locked', `Your tapestry unlocks on Day 13. You are on Day ${getMemberDayCount()}.`);
                   trackAction('curate_blocked_day_gate');
                   return;
                 }
@@ -937,7 +1083,7 @@ export default function CommunityScreen({ navigation, route }) {
               }}
             >
               <Text style={styles.curateBtnText}>
-                {!canCurate ? '🔒 Day 13' : (isCurated ? '🖼️ Public' : '🖼️ Private')}
+                {!canCurate ? '🔒 Day 13' : (isCurated ? '🧵 Tapestry' : '🖼️ Vault')}
               </Text>
             </TouchableOpacity>
           )}
@@ -1076,7 +1222,7 @@ export default function CommunityScreen({ navigation, route }) {
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🖼️</Text>
           <Text style={styles.emptyText}>
-            No curations to visit yet.{'\n'}Community members' curated galleries will appear here!
+            No tapestries to explore yet.{'\n'}Community members' curios will appear here!
           </Text>
         </View>
       );
@@ -1111,14 +1257,54 @@ export default function CommunityScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
 
-          {/* Horizontal thumbnail strip */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.thumbStrip}
-          >
-            {feedUser.artworks.map((artwork, i) => renderThumbnail(artwork, i, feedUser))}
-          </ScrollView>
+          {/* Horizontal thumbnail strip with arrows */}
+          <View style={styles.curioStripRow}>
+            {feedUser.artworks.length > 3 && (
+              <TouchableOpacity
+                style={styles.curioArrow}
+                onPress={() => {
+                  const uid = feedUser.uid;
+                  const cur = curioScrollOffsets.current[uid] || 0;
+                  const next = Math.max(0, cur - CURIO_SCROLL_STEP);
+                  curioScrollRefs.current[uid]?.scrollTo({ x: next, animated: true });
+                  curioScrollOffsets.current[uid] = next;
+                }}
+              >
+                <Text style={styles.curioArrowText}>‹</Text>
+              </TouchableOpacity>
+            )}
+            <ScrollView
+              ref={ref => { curioScrollRefs.current[feedUser.uid] = ref; }}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.thumbStrip}
+              onScroll={e => { curioScrollOffsets.current[feedUser.uid] = e.nativeEvent.contentOffset.x; }}
+              scrollEventThrottle={16}
+              style={styles.curioStripScroll}
+            >
+              {[...feedUser.artworks]
+                .sort((a, b) => {
+                  const aT = a.publicDate || a.date || '';
+                  const bT = b.publicDate || b.date || '';
+                  return bT > aT ? 1 : bT < aT ? -1 : 0;
+                })
+                .map((artwork, i) => renderThumbnail(artwork, i, feedUser))}
+            </ScrollView>
+            {feedUser.artworks.length > 3 && (
+              <TouchableOpacity
+                style={styles.curioArrow}
+                onPress={() => {
+                  const uid = feedUser.uid;
+                  const cur = curioScrollOffsets.current[uid] || 0;
+                  const next = cur + CURIO_SCROLL_STEP;
+                  curioScrollRefs.current[uid]?.scrollTo({ x: next, animated: true });
+                  curioScrollOffsets.current[uid] = next;
+                }}
+              >
+                <Text style={styles.curioArrowText}>›</Text>
+              </TouchableOpacity>
+            )}
+          </View>
 
           <Text style={styles.thumbHint}>Tap to view full size</Text>
         </View>
@@ -1142,7 +1328,7 @@ export default function CommunityScreen({ navigation, route }) {
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>💫</Text>
           <Text style={styles.emptyText}>
-            None of your curated works have been saved yet.{'\n'}Keep creating and sharing!
+            None of your tapestry works have been saved yet.{'\n'}Keep creating and sharing!
           </Text>
         </View>
       );
@@ -1250,14 +1436,39 @@ export default function CommunityScreen({ navigation, route }) {
           )}
         </GoldFrame>
 
-        {/* Actions row: right-aligned */}
+        {/* Actions row */}
         <View style={styles.artworkActions}>
+          {/* Left: green check / red X toggle (personal gallery only) */}
+          {fromGallery === 'personal' && (
+            <TouchableOpacity
+              style={[
+                styles.markToggleBtn,
+                markedForDeletion.has(artwork.id) && styles.markToggleBtnMarked,
+              ]}
+              onPress={() => {
+                setMarkedForDeletion(prev => {
+                  const next = new Set(prev);
+                  if (next.has(artwork.id)) {
+                    next.delete(artwork.id);
+                  } else {
+                    next.add(artwork.id);
+                  }
+                  return next;
+                });
+              }}
+            >
+              <Text style={markedForDeletion.has(artwork.id) ? styles.markToggleX : styles.markToggleCheck}>
+                {markedForDeletion.has(artwork.id) ? '✕' : '✓'}
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {isPrivateGallery && (
             <TouchableOpacity
               style={[styles.curateBtn, isCurated && styles.curateBtnActive, !canCurate && styles.curateBtnDisabled]}
               onPress={() => {
                 if (!canCurate) {
-                  showAlert('Gallery Locked', `Curating unlocks on Day 13. You are on Day ${getMemberDayCount()}.`);
+                  showAlert('Gallery Locked', `Your tapestry unlocks on Day 13. You are on Day ${getMemberDayCount()}.`);
                   trackAction('curate_blocked_day_gate');
                   return;
                 }
@@ -1265,7 +1476,7 @@ export default function CommunityScreen({ navigation, route }) {
               }}
             >
               <Text style={styles.curateBtnText}>
-                {!canCurate ? '🔒 Day 13' : (isCurated ? '🖼️ Public' : '🖼️ Private')}
+                {!canCurate ? '🔒 Day 13' : (isCurated ? '🧵 Tapestry' : '🖼️ Vault')}
               </Text>
             </TouchableOpacity>
           )}
@@ -1275,15 +1486,6 @@ export default function CommunityScreen({ navigation, route }) {
             onPress={() => handleCandleSave(artwork)}
             size={24}
           />
-
-          {isPrivateGallery && (
-            <TouchableOpacity
-              style={styles.deleteBtn}
-              onPress={() => handleDeleteArtwork(artwork, fromGallery)}
-            >
-              <Text style={styles.deleteBtnText}>✕</Text>
-            </TouchableOpacity>
-          )}
         </View>
 
         {artwork.date && (
@@ -1306,40 +1508,235 @@ export default function CommunityScreen({ navigation, route }) {
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>🔒</Text>
               <Text style={styles.emptyText}>
-                Your curated gallery unlocks on Day 13.{'\n'}You are on Day {dayCount} — keep going!
+                Your tapestry unlocks on Day 13.{'\n'}You are on Day {dayCount} — keep going!
               </Text>
             </View>
           );
         }
         return curatedArtworks.length > 0 ? (
-          <View style={styles.galleryGrid}>
-            {curatedArtworks.map(artwork => renderCuratedItem(artwork))}
+          <View>
+            <View style={styles.curatedThumbGrid}>
+              {curatedArtworks.map((artwork, index) => {
+                const imageSource = getArtworkImageSource(artwork);
+                const hasText = artwork.text && artwork.text.trim().length > 0;
+                return (
+                  <TouchableOpacity
+                    key={artwork.id}
+                    style={styles.curatedThumbItem}
+                    onPress={() => setTapestrySwapModal({ artwork, index })}
+                    onLongPress={() => {
+                      showDestructiveConfirm(
+                        'Remove from Tapestry',
+                        'Remove this from your tapestry?',
+                        () => handleDeleteArtwork(artwork, 'curated'),
+                        'Remove'
+                      );
+                    }}
+                  >
+                    <GoldFrame thickness={2}>
+                      {imageSource ? (
+                        <Image source={imageSource} style={styles.curatedThumbImage} resizeMode="cover" />
+                      ) : hasText ? (
+                        <View style={[styles.curatedThumbImage, styles.textArtBg]}>
+                          <Text style={{ color: '#333', fontSize: 8 }} numberOfLines={4}>{artwork.text}</Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.curatedThumbImage, styles.placeholderArt]}>
+                          <Text style={{ fontSize: 16 }}>🎨</Text>
+                        </View>
+                      )}
+                    </GoldFrame>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <Text style={styles.curatedThumbHint}>Tap to swap  •  Long press to unweave</Text>
           </View>
         ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🖼️</Text>
             <Text style={styles.emptyText}>
-              Your curated gallery is empty.{'\n'}Go to My Private Galleries and tap the curate button to add artworks!
+              Your tapestry is empty.{'\n'}Go to The Vault and tap the curate button to add artworks!
             </Text>
           </View>
         );
 
-      case 'inspiring':
-        if (!canAccessFeature('inspiringOthers', userProfile)) {
-          return (
-            <PremiumPaywall feature="inspiringOthers" />
-          );
-        }
-        return renderInspiringWorks();
-
-      case 'private': {
-        // Sort newest first
-        const sortedPersonal = [...personalArtworks].sort((a, b) => {
+      case 'inspiring': {
+        const sortedInspirations = [...inspirationArtworks].sort((a, b) => {
           const aTime = a.savedAt?.toMillis?.() || a.savedAt || a.date || 0;
           const bTime = b.savedAt?.toMillis?.() || b.savedAt || b.date || 0;
           return bTime - aTime;
         });
-        const sortedInspirations = [...inspirationArtworks].sort((a, b) => {
+
+        // Build grid items: inspirations fill first, bookshelf goes in top-right (position index 2)
+        const inspirationItems = sortedInspirations.map((artwork, i) => ({ type: 'art', artwork, key: artwork.id }));
+        // Insert bookshelf at index 3 (second row, right spot) if enough items, otherwise append
+        const bookshelfItem = { type: 'bookshelf', key: 'bookshelf-secret' };
+        const gridItems = [...inspirationItems];
+        if (gridItems.length >= 3) {
+          gridItems.splice(3, 0, bookshelfItem);
+        } else {
+          gridItems.push(bookshelfItem);
+        }
+
+        return (
+          <>
+            <Text style={styles.columnHeader}>My Inspirations</Text>
+            <View style={styles.galleryGrid}>
+              {/* Bookshelf secret passage — top row right */}
+              {gridItems.map(item => {
+                if (item.type === 'bookshelf') {
+                  return (
+                    <View key={item.key} style={styles.galleryItemContainer}>
+                      <GoldFrame
+                        onPress={() => {
+                          setFullViewImage({
+                            source: require('../assets/bookshelf-secret.png'),
+                            bookshelf: true,
+                          });
+                          trackAction('bookshelf_secret_tapped');
+                        }}
+                        thickness={3}
+                      >
+                        <View style={styles.galleryImageBg}>
+                          <Image
+                            source={require('../assets/bookshelf-secret.png')}
+                            style={styles.galleryImage}
+                            resizeMode="cover"
+                          />
+                        </View>
+                      </GoldFrame>
+                    </View>
+                  );
+                }
+
+                const { artwork } = item;
+                const imageSource = getArtworkImageSource(artwork);
+                const hasText = artwork.text && artwork.text.trim().length > 0;
+                return (
+                  <View key={artwork.id} style={styles.galleryItemContainer}>
+                    <GoldFrame
+                      onPress={() => {
+                        if (imageSource) {
+                          setFullViewImage({ source: imageSource, artwork });
+                        } else if (hasText) {
+                          setFullViewText({ text: artwork.text, title: artwork.title, textStyle: artwork.textStyle });
+                        }
+                      }}
+                      onLongPress={() => handleDeleteArtwork(artwork, 'inspiration')}
+                      thickness={3}
+                    >
+                      {imageSource ? (
+                        <View style={styles.galleryImageBg}>
+                          <Image source={imageSource} style={styles.galleryImage} resizeMode="contain" />
+                        </View>
+                      ) : hasText ? (
+                        <View style={[styles.galleryImageBg, styles.textArtBg]}>
+                          <Text style={styles.textArtContent} numberOfLines={8}>{artwork.text}</Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.galleryImageBg, styles.placeholderArt]}>
+                          <Text style={styles.placeholderEmoji}>🎨</Text>
+                        </View>
+                      )}
+                    </GoldFrame>
+
+                    {/* Actions row: nameplate + candle (no green circle) */}
+                    <View style={styles.artworkActions}>
+                      <View style={styles.nameplateRow}>
+                        <Text style={styles.nameplateTitle} numberOfLines={1}>
+                          {artwork.title || 'Untitled'}
+                        </Text>
+                        <Text style={styles.nameplateArtist} numberOfLines={1}>
+                          {artwork.pseudonym || artwork.artist || ''}
+                        </Text>
+                      </View>
+
+                      <Candle
+                        lit={savedNewsfeedArt.has(artwork.id)}
+                        onPress={() => handleCandleSave(artwork)}
+                        size={24}
+                      />
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+            {sortedInspirations.length === 0 && (
+              <View style={styles.emptyStateSmall}>
+                <Text style={styles.emptyText}>
+                  No saved inspirations yet. Light the candle on artworks you love!
+                </Text>
+              </View>
+            )}
+
+            {/* Second Thoughts — 24h recovery for removed inspirations */}
+            {(() => {
+              const secondThoughts = trashedArtworks.filter(a => a.trashedFrom === 'inspiration');
+              if (secondThoughts.length === 0) return null;
+              return (
+                <View style={styles.trashSection}>
+                  <TouchableOpacity
+                    style={styles.trashToggle}
+                    onPress={() => setShowSecondThoughts(!showSecondThoughts)}
+                  >
+                    <Text style={styles.trashToggleText}>
+                      Second Thoughts ({secondThoughts.length}) — {showSecondThoughts ? 'Hide' : 'Show'}
+                    </Text>
+                    <Text style={styles.trashHint}>Removed inspirations can be restored within 24 hours</Text>
+                  </TouchableOpacity>
+                  {showSecondThoughts && (
+                    <View style={styles.trashGrid}>
+                      {secondThoughts.map(artwork => {
+                        const imageSource = getArtworkImageSource(artwork);
+                        const hoursLeft = Math.max(0, Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - artwork.trashedAt)) / (60 * 60 * 1000)));
+                        return (
+                          <View key={artwork.id} style={styles.trashItem}>
+                            {imageSource ? (
+                              <Image source={imageSource} style={styles.trashImage} resizeMode="cover" />
+                            ) : artwork.text ? (
+                              <View style={[styles.trashImage, styles.textArtBg]}>
+                                <Text style={{ color: '#333', fontSize: 10 }} numberOfLines={3}>{artwork.text}</Text>
+                              </View>
+                            ) : (
+                              <View style={[styles.trashImage, styles.placeholderArt]}>
+                                <Text style={{ fontSize: 16 }}>🎨</Text>
+                              </View>
+                            )}
+                            <Text style={styles.trashTimer}>{hoursLeft}h left</Text>
+                            <TouchableOpacity
+                              style={styles.trashRestoreBtn}
+                              onPress={() => handleRestoreFromTrash(artwork)}
+                            >
+                              <Text style={styles.trashRestoreText}>Restore</Text>
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+                </View>
+              );
+            })()}
+
+            {/* Inspiring Others — revealed by bookshelf secret passage */}
+            {showInspiringOthers && (
+              <View style={{ marginTop: 20, borderTopWidth: 1, borderTopColor: 'rgba(75,0,130,0.3)', paddingTop: 16 }}>
+                <Text style={styles.columnHeader}>Inspiring Others</Text>
+                {!canAccessFeature('inspiringOthers', userProfile) ? (
+                  <PremiumPaywall feature="inspiringOthers" />
+                ) : (
+                  renderInspiringWorks()
+                )}
+              </View>
+            )}
+          </>
+        );
+      }
+
+      case 'private': {
+        // Sort newest first
+        const sortedPersonal = [...personalArtworks].sort((a, b) => {
           const aTime = a.savedAt?.toMillis?.() || a.savedAt || a.date || 0;
           const bTime = b.savedAt?.toMillis?.() || b.savedAt || b.date || 0;
           return bTime - aTime;
@@ -1358,137 +1755,119 @@ export default function CommunityScreen({ navigation, route }) {
               </Text>
             </Text>
 
-            {/* Column headers */}
-            <View style={styles.columnHeaderRow}>
-              <Text style={styles.columnHeader}>My Private Gallery</Text>
-              <Text style={styles.columnHeader}>My Inspirations</Text>
-            </View>
+            {/* My Creations list */}
+            {sortedPersonal.length > 0 ? (
+              <View style={styles.galleryGrid}>
+                {sortedPersonal.map(artwork => {
+                  const imageSource = getArtworkImageSource(artwork);
+                  const hasText = artwork.text && artwork.text.trim().length > 0;
+                  const isCurated = curatedArtworks.some(a => a.id === artwork.id);
+                  const isMarked = markedForDeletion.has(artwork.id);
+                  return (
+                    <View key={artwork.id} style={styles.galleryItemContainer}>
+                      <GoldFrame
+                        onPress={() => {
+                          if (imageSource) {
+                            setFullViewImage({ source: imageSource, artwork });
+                          } else if (hasText) {
+                            setFullViewText({ text: artwork.text, title: artwork.title, textStyle: artwork.textStyle });
+                          }
+                        }}
+                        thickness={3}
+                      >
+                        {imageSource ? (
+                          <View style={styles.galleryImageBg}>
+                            <Image source={imageSource} style={styles.galleryImage} resizeMode="contain" />
+                          </View>
+                        ) : hasText ? (
+                          <View style={[styles.galleryImageBg, styles.textArtBg]}>
+                            <Text style={styles.textArtContent} numberOfLines={8}>{artwork.text}</Text>
+                          </View>
+                        ) : (
+                          <View style={[styles.galleryImageBg, styles.placeholderArt]}>
+                            <Text style={styles.placeholderEmoji}>🎨</Text>
+                          </View>
+                        )}
+                      </GoldFrame>
 
-            {/* Scroll arrows row */}
-            <View style={styles.scrollArrowRow}>
-              {/* Left column arrows */}
-              <View style={styles.scrollArrowGroup}>
-                <TouchableOpacity
-                  style={styles.scrollArrowBtn}
-                  onPress={() => scrollColumn(privateScrollRef, privateScrollOffset, -1)}
-                >
-                  <Text style={styles.scrollArrowText}>▲</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.scrollArrowBtn}
-                  onPress={() => scrollColumn(privateScrollRef, privateScrollOffset, 1)}
-                >
-                  <Text style={styles.scrollArrowText}>▼</Text>
-                </TouchableOpacity>
-              </View>
+                      {/* Actions row: green circle + nameplate + candle */}
+                      <View style={styles.artworkActions}>
+                        <TouchableOpacity
+                          style={[
+                            styles.markToggleBtn,
+                            isMarked && styles.markToggleBtnMarked,
+                          ]}
+                          onPress={() => {
+                            setMarkedForDeletion(prev => {
+                              const next = new Set(prev);
+                              if (next.has(artwork.id)) next.delete(artwork.id);
+                              else next.add(artwork.id);
+                              return next;
+                            });
+                          }}
+                        >
+                          <Text style={isMarked ? styles.markToggleX : styles.markToggleCheck}>
+                            {isMarked ? '✕' : '✓'}
+                          </Text>
+                        </TouchableOpacity>
 
-              {/* Center (both) arrows */}
-              <View style={styles.scrollArrowGroup}>
-                <TouchableOpacity
-                  style={[styles.scrollArrowBtn, styles.scrollArrowBtnCenter]}
-                  onPress={() => scrollBothColumns(-1)}
-                >
-                  <Text style={styles.scrollArrowTextCenter}>▲</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.scrollArrowBtn, styles.scrollArrowBtnCenter]}
-                  onPress={() => scrollBothColumns(1)}
-                >
-                  <Text style={styles.scrollArrowTextCenter}>▼</Text>
-                </TouchableOpacity>
-              </View>
+                        <View style={styles.nameplateRow}>
+                          <Text style={styles.nameplateTitle} numberOfLines={1}>
+                            {artwork.title || 'Untitled'}
+                          </Text>
+                          <Text style={styles.nameplateArtist} numberOfLines={1}>
+                            {artwork.pseudonym || artwork.artist || ''}
+                          </Text>
+                        </View>
 
-              {/* Right column arrows */}
-              <View style={styles.scrollArrowGroup}>
-                <TouchableOpacity
-                  style={styles.scrollArrowBtn}
-                  onPress={() => scrollColumn(inspirationScrollRef, inspirationScrollOffset, -1)}
-                >
-                  <Text style={styles.scrollArrowText}>▲</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.scrollArrowBtn}
-                  onPress={() => scrollColumn(inspirationScrollRef, inspirationScrollOffset, 1)}
-                >
-                  <Text style={styles.scrollArrowText}>▼</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Side-by-side columns */}
-            <View style={styles.sideBySideContainer}>
-              {/* Left column: Private Gallery */}
-              <View style={styles.column}>
-                <ScrollView
-                  ref={privateScrollRef}
-                  nestedScrollEnabled={true}
-                  showsVerticalScrollIndicator={true}
-                  onScroll={(e) => { privateScrollOffset.current = e.nativeEvent.contentOffset.y; }}
-                  scrollEventThrottle={16}
-                  style={styles.columnScroll}
-                >
-                  {sortedPersonal.length > 0 ? (
-                    sortedPersonal.map(artwork => renderColumnItem(artwork, 'personal'))
-                  ) : (
-                    <View style={styles.emptyStateSmall}>
-                      <Text style={styles.emptyText}>
-                        No art yet. Create something in the Art Studio!
-                      </Text>
+                        <Candle
+                          lit={savedNewsfeedArt.has(artwork.id)}
+                          onPress={() => handleCandleSave(artwork)}
+                          size={24}
+                        />
+                      </View>
                     </View>
-                  )}
-                </ScrollView>
+                  );
+                })}
               </View>
-
-              {/* Vertical divider */}
-              <View style={styles.columnDivider} />
-
-              {/* Right column: Inspirations */}
-              <View style={styles.column}>
-                <ScrollView
-                  ref={inspirationScrollRef}
-                  nestedScrollEnabled={true}
-                  showsVerticalScrollIndicator={true}
-                  onScroll={(e) => { inspirationScrollOffset.current = e.nativeEvent.contentOffset.y; }}
-                  scrollEventThrottle={16}
-                  style={styles.columnScroll}
-                >
-                  {sortedInspirations.length > 0 ? (
-                    sortedInspirations.map(artwork => renderColumnItem(artwork, 'inspiration'))
-                  ) : (
-                    <View style={styles.emptyStateSmall}>
-                      <Text style={styles.emptyText}>
-                        No saved inspirations yet. Light the candle on artworks you love!
-                      </Text>
-                    </View>
-                  )}
-                </ScrollView>
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyEmoji}>🔒</Text>
+                <Text style={styles.emptyText}>
+                  Your vault is empty. Create something in the Art Studio!
+                </Text>
               </View>
-            </View>
+            )}
 
-            {/* Clear Non-Candlelit + Trash */}
+            {/* Trash red-X-marked items + Trash */}
             {personalArtworks.length > 0 && (
               <TouchableOpacity
-                style={styles.clearNonCandlelitBtn}
-                onPress={handleClearNonCandlelit}
+                style={[styles.clearNonCandlelitBtn, markedForDeletion.size > 0 && styles.trashMarkedBtnActive]}
+                onPress={handleTrashMarkedItems}
               >
-                <Text style={styles.clearNonCandlelitText}>Clear Non-Candlelit Items</Text>
+                <Text style={styles.clearNonCandlelitText}>
+                  Trash ✕ Items{markedForDeletion.size > 0 ? ` (${markedForDeletion.size})` : ''}
+                </Text>
               </TouchableOpacity>
             )}
 
-            {trashedArtworks.length > 0 && (
+            {(() => {
+              const vaultTrash = trashedArtworks.filter(a => a.trashedFrom !== 'inspiration');
+              if (vaultTrash.length === 0) return null;
+              return (
               <View style={styles.trashSection}>
                 <TouchableOpacity
                   style={styles.trashToggle}
                   onPress={() => setShowTrash(!showTrash)}
                 >
                   <Text style={styles.trashToggleText}>
-                    Trash ({trashedArtworks.length}) — {showTrash ? 'Hide' : 'Show'}
+                    Trash ({vaultTrash.length}) — {showTrash ? 'Hide' : 'Show'}
                   </Text>
                   <Text style={styles.trashHint}>Items are permanently deleted after 24 hours</Text>
                 </TouchableOpacity>
                 {showTrash && (
                   <View style={styles.trashGrid}>
-                    {trashedArtworks.map(artwork => {
+                    {vaultTrash.map(artwork => {
                       const imageSource = getArtworkImageSource(artwork);
                       const hoursLeft = Math.max(0, Math.ceil((24 * 60 * 60 * 1000 - (Date.now() - artwork.trashedAt)) / (60 * 60 * 1000)));
                       return (
@@ -1517,7 +1896,8 @@ export default function CommunityScreen({ navigation, route }) {
                   </View>
                 )}
               </View>
-            )}
+              );
+            })()}
           </>
         );
       }
@@ -1541,7 +1921,7 @@ export default function CommunityScreen({ navigation, route }) {
           >
             <Text style={styles.tabIcon}>🖼️</Text>
             <Text style={[styles.tabLabel, activeGallery === 'newsfeed' && styles.tabLabelActive]}>
-              Community
+              Curios
             </Text>
           </TouchableOpacity>
 
@@ -1549,16 +1929,16 @@ export default function CommunityScreen({ navigation, route }) {
             style={[styles.tab, activeGallery === 'curated' && styles.tabActive]}
             onPress={() => {
               if (!canCurate) {
-                showAlert('Gallery Locked', `Your curated gallery unlocks on Day 13. You are on Day ${getMemberDayCount()}.`);
+                showAlert('Gallery Locked', `Your tapestry unlocks on Day 13. You are on Day ${getMemberDayCount()}.`);
                 trackAction('curate_blocked_day_gate');
                 return;
               }
               setActiveGallery('curated');
             }}
           >
-            <Text style={styles.tabIcon}>{canCurate ? '⭐' : '🔒'}</Text>
+            <Text style={styles.tabIcon}>{canCurate ? '🧶' : '🔒'}</Text>
             <Text style={[styles.tabLabel, activeGallery === 'curated' && styles.tabLabelActive]}>
-              Curated
+              My Tapestry
             </Text>
             {canCurate && curatedArtworks.length > 0 && (
               <Text style={styles.tabCount}>{curatedArtworks.length}</Text>
@@ -1576,6 +1956,9 @@ export default function CommunityScreen({ navigation, route }) {
             <Text style={[styles.tabLabel, activeGallery === 'inspiring' && styles.tabLabelActive]}>
               Inspiring
             </Text>
+            {inspirationArtworks.length > 0 && (
+              <Text style={styles.tabCount}>{inspirationArtworks.length}</Text>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -1584,20 +1967,20 @@ export default function CommunityScreen({ navigation, route }) {
           >
             <Text style={styles.tabIcon}>🔒</Text>
             <Text style={[styles.tabLabel, activeGallery === 'private' && styles.tabLabelActive]}>
-              Private
+              The Vault
             </Text>
-            {(personalArtworks.length + inspirationArtworks.length) > 0 && (
-              <Text style={styles.tabCount}>{personalArtworks.length + inspirationArtworks.length}</Text>
+            {personalArtworks.length > 0 && (
+              <Text style={styles.tabCount}>{personalArtworks.length}</Text>
             )}
           </TouchableOpacity>
         </View>
 
         {/* Gallery Description */}
         <Text style={styles.galleryDescription}>
-          {activeGallery === 'newsfeed' && 'Browse curated galleries from the community'}
-          {activeGallery === 'curated' && 'Artworks you chose to share publicly'}
-          {activeGallery === 'inspiring' && 'Your art that others have saved'}
-          {activeGallery === 'private' && 'Your uploads and inspirations — only you can see these'}
+          {activeGallery === 'newsfeed' && 'Explore tapestries from the community'}
+          {activeGallery === 'curated' && 'Your tapestry — the works you share with the world'}
+          {activeGallery === 'inspiring' && 'Your saved inspirations & art others have saved'}
+          {activeGallery === 'private' && 'Your creations — only you can see these'}
         </Text>
 
         {/* Gallery Content */}
@@ -1624,9 +2007,9 @@ export default function CommunityScreen({ navigation, route }) {
           </TouchableOpacity>
           <ScrollView
             contentContainerStyle={styles.modalImageContainer}
-            maximumZoomScale={5}
+            maximumZoomScale={fullViewImage?.bookshelf ? 1 : 5}
             minimumZoomScale={1}
-            bouncesZoom={true}
+            bouncesZoom={!fullViewImage?.bookshelf}
           >
             {fullViewImage && (
               <Image
@@ -1636,6 +2019,35 @@ export default function CommunityScreen({ navigation, route }) {
               />
             )}
           </ScrollView>
+          {fullViewImage?.bookshelf && (
+            <View style={styles.bookshelfOverlay}>
+              <Text style={styles.bookshelfOverlayText}>
+                This room of inspiration is closed to non-members.
+              </Text>
+              {canAccessFeature('inspiringOthers', userProfile) ? (
+                <TouchableOpacity
+                  style={styles.bookshelfOverlayBtn}
+                  onPress={() => {
+                    setFullViewImage(null);
+                    setShowInspiringOthers(true);
+                    loadMyInspiringWorks();
+                  }}
+                >
+                  <Text style={styles.bookshelfOverlayBtnText}>Enter</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.bookshelfOverlayBtn}
+                  onPress={() => {
+                    setFullViewImage(null);
+                    navigation.navigate('PremiumSignup');
+                  }}
+                >
+                  <Text style={styles.bookshelfOverlayBtnText}>Become a Member</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
           {fullViewImage?.curatorUid && (
             <View style={styles.fullViewCandleRow}>
               <Candle
@@ -1710,8 +2122,8 @@ export default function CommunityScreen({ navigation, route }) {
                 {/* Pseudonym header */}
                 <Text style={styles.carouselPseudonym}>{carouselModal.feedUser.pseudonym}</Text>
 
-                {/* Main artwork display */}
-                <View style={styles.carouselArtRow}>
+                {/* Main artwork display — swipeable */}
+                <View style={styles.carouselArtRow} {...carouselPanResponder.panHandlers}>
                   <TouchableOpacity
                     style={[styles.carouselArrow, atStart && styles.navArrowDisabled]}
                     onPress={() => navigateCarousel(-1)}
@@ -1811,7 +2223,7 @@ export default function CommunityScreen({ navigation, route }) {
             <Text style={styles.day13Emoji}>🎉</Text>
             <Text style={styles.day13Title}>Congratulations!</Text>
             <Text style={styles.day13Text}>
-              You've reached Day 13!{'\n'}Your curated gallery is now unlocked.{'\n'}Share your best work with the community!
+              You've reached Day 13!{'\n'}Your tapestry is now unlocked.{'\n'}Weave your best work into your tapestry for the community to see!
             </Text>
             <TouchableOpacity
               style={styles.day13Button}
@@ -1830,6 +2242,142 @@ export default function CommunityScreen({ navigation, route }) {
               <Text style={styles.day13DismissText}>Maybe Later</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </Modal>
+
+      {/* Tapestry Swap Modal */}
+      <Modal
+        visible={tapestrySwapModal !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setTapestrySwapModal(null)}
+      >
+        <View style={styles.swapOverlay}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setTapestrySwapModal(null)}
+          >
+            <Text style={styles.closeButtonText}>✕</Text>
+          </TouchableOpacity>
+
+          {tapestrySwapModal && (() => {
+            const currentArt = tapestrySwapModal.artwork;
+            const currentImage = getArtworkImageSource(currentArt);
+            const hasText = currentArt.text && currentArt.text.trim().length > 0;
+
+            // Sort vault items newest first
+            const sortedVaultPersonal = [...personalArtworks].sort((a, b) => {
+              const aTime = a.savedAt?.toMillis?.() || a.savedAt || a.date || 0;
+              const bTime = b.savedAt?.toMillis?.() || b.savedAt || b.date || 0;
+              return bTime - aTime;
+            });
+            const sortedVaultInspirations = [...inspirationArtworks].sort((a, b) => {
+              const aTime = a.savedAt?.toMillis?.() || a.savedAt || a.date || 0;
+              const bTime = b.savedAt?.toMillis?.() || b.savedAt || b.date || 0;
+              return bTime - aTime;
+            });
+
+            return (
+              <View style={styles.swapContent}>
+                {/* Current tapestry piece */}
+                <Text style={styles.swapLabel}>Current Tapestry Piece</Text>
+                <GoldFrame thickness={3} containerStyle={styles.swapCurrentFrame}>
+                  {currentImage ? (
+                    <Image source={currentImage} style={styles.swapCurrentImage} resizeMode="contain" />
+                  ) : hasText ? (
+                    <View style={[styles.swapCurrentImage, styles.textArtBg]}>
+                      <Text style={{ color: '#333', fontSize: 14 }} numberOfLines={6}>{currentArt.text}</Text>
+                    </View>
+                  ) : (
+                    <View style={[styles.swapCurrentImage, styles.placeholderArt]}>
+                      <Text style={{ fontSize: 40 }}>🎨</Text>
+                    </View>
+                  )}
+                </GoldFrame>
+                <Text style={styles.swapHint}>Tap a piece below to swap in</Text>
+
+                {/* Two columns of vault items */}
+                <View style={styles.swapColumnsRow}>
+                  <View style={styles.swapColumn}>
+                    <Text style={styles.swapColumnHeader}>My Creations</Text>
+                    <ScrollView style={styles.swapColumnScroll} showsVerticalScrollIndicator={true} nestedScrollEnabled={true}>
+                      <View style={styles.swapThumbGrid}>
+                        {sortedVaultPersonal.map(artwork => {
+                          const imgSrc = getArtworkImageSource(artwork);
+                          const artHasText = artwork.text && artwork.text.trim().length > 0;
+                          // Skip if already the current piece
+                          if (artwork.id === currentArt.id) return null;
+                          return (
+                            <TouchableOpacity
+                              key={artwork.id}
+                              style={styles.swapThumbItem}
+                              onPress={() => handleTapestrySwap(artwork, tapestrySwapModal.index)}
+                            >
+                              <GoldFrame thickness={2}>
+                                {imgSrc ? (
+                                  <Image source={imgSrc} style={styles.swapThumbImage} resizeMode="cover" />
+                                ) : artHasText ? (
+                                  <View style={[styles.swapThumbImage, styles.textArtBg]}>
+                                    <Text style={{ color: '#333', fontSize: 6 }} numberOfLines={2}>{artwork.text}</Text>
+                                  </View>
+                                ) : (
+                                  <View style={[styles.swapThumbImage, styles.placeholderArt]}>
+                                    <Text style={{ fontSize: 10 }}>🎨</Text>
+                                  </View>
+                                )}
+                              </GoldFrame>
+                            </TouchableOpacity>
+                          );
+                        })}
+                        {sortedVaultPersonal.length === 0 && (
+                          <Text style={styles.swapEmptyText}>No creations yet</Text>
+                        )}
+                      </View>
+                    </ScrollView>
+                  </View>
+
+                  <View style={styles.columnDivider} />
+
+                  <View style={styles.swapColumn}>
+                    <Text style={styles.swapColumnHeader}>My Inspirations</Text>
+                    <ScrollView style={styles.swapColumnScroll} showsVerticalScrollIndicator={true} nestedScrollEnabled={true}>
+                      <View style={styles.swapThumbGrid}>
+                        {sortedVaultInspirations.map(artwork => {
+                          const imgSrc = getArtworkImageSource(artwork);
+                          const artHasText = artwork.text && artwork.text.trim().length > 0;
+                          if (artwork.id === currentArt.id) return null;
+                          return (
+                            <TouchableOpacity
+                              key={artwork.id}
+                              style={styles.swapThumbItem}
+                              onPress={() => handleTapestrySwap(artwork, tapestrySwapModal.index)}
+                            >
+                              <GoldFrame thickness={2}>
+                                {imgSrc ? (
+                                  <Image source={imgSrc} style={styles.swapThumbImage} resizeMode="cover" />
+                                ) : artHasText ? (
+                                  <View style={[styles.swapThumbImage, styles.textArtBg]}>
+                                    <Text style={{ color: '#333', fontSize: 6 }} numberOfLines={2}>{artwork.text}</Text>
+                                  </View>
+                                ) : (
+                                  <View style={[styles.swapThumbImage, styles.placeholderArt]}>
+                                    <Text style={{ fontSize: 10 }}>🎨</Text>
+                                  </View>
+                                )}
+                              </GoldFrame>
+                            </TouchableOpacity>
+                          );
+                        })}
+                        {sortedVaultInspirations.length === 0 && (
+                          <Text style={styles.swapEmptyText}>No inspirations yet</Text>
+                        )}
+                      </View>
+                    </ScrollView>
+                  </View>
+                </View>
+              </View>
+            );
+          })()}
         </View>
       </Modal>
     </ImageBackground>
@@ -1867,7 +2415,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#050d61',
+    borderColor: '#4B0082',
   },
   tab: {
     flex: 1,
@@ -1889,17 +2437,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tabLabelActive: {
-    color: '#050d61',
+    color: '#4B0082',
   },
   tabCount: {
     fontSize: 10,
-    color: '#050d61',
+    color: '#4B0082',
     marginTop: 2,
     fontWeight: 'bold',
   },
   galleryDescription: {
     fontSize: 13,
-    color: '#050d61',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 15,
     fontStyle: 'italic',
@@ -1909,7 +2457,7 @@ const styles = StyleSheet.create({
   gallerySection: {
     backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 2,
-    borderColor: '#050d61',
+    borderColor: '#4B0082',
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
@@ -1923,6 +2471,28 @@ const styles = StyleSheet.create({
   galleryItemContainer: {
     width: '48%',
     marginBottom: 15,
+  },
+  // Curated gallery: 5-per-row compact thumbnails
+  curatedThumbGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    justifyContent: 'center',
+  },
+  curatedThumbItem: {
+    width: '18%',
+    aspectRatio: 1,
+  },
+  curatedThumbImage: {
+    width: '100%',
+    aspectRatio: 1,
+  },
+  curatedThumbHint: {
+    color: '#4B0082',
+    fontSize: 11,
+    textAlign: 'center',
+    marginTop: 10,
+    fontStyle: 'italic',
   },
   galleryImageBg: {
     alignSelf: 'stretch',
@@ -1948,7 +2518,7 @@ const styles = StyleSheet.create({
   },
   placeholderLabel: {
     fontSize: 12,
-    color: '#050d61',
+    color: '#4B0082',
   },
 
   // Text artwork in gallery frame
@@ -2019,7 +2589,7 @@ const styles = StyleSheet.create({
   },
   curateBtnText: {
     fontSize: 10,
-    color: '#050d61',
+    color: '#4B0082',
   },
   pendingBadge: {
     paddingHorizontal: 6,
@@ -2031,39 +2601,51 @@ const styles = StyleSheet.create({
   },
   pendingBadgeText: {
     fontSize: 9,
-    color: '#050d61',
+    color: '#4B0082',
     fontWeight: 'bold',
   },
-  deleteBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: '#3a1a1a',
-    borderWidth: 1,
-    borderColor: '#662222',
+  // Green check / Red X toggle for private gallery
+  markToggleBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#1a3a1a',
+    borderWidth: 2,
+    borderColor: '#22AA22',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  deleteBtnText: {
-    fontSize: 12,
-    color: '#FF6B6B',
+  markToggleBtnMarked: {
+    backgroundColor: '#1a1a1a',
+    borderColor: '#CC2222',
+  },
+  markToggleCheck: {
+    fontSize: 14,
+    color: '#22CC22',
+    fontWeight: 'bold',
+  },
+  markToggleX: {
+    fontSize: 14,
+    color: '#FF3333',
     fontWeight: 'bold',
   },
   curatedTitle: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#4B0082',
     textAlign: 'center',
     marginTop: 6,
   },
   curatedArtist: {
     fontSize: 11,
-    color: '#050d61',
+    color: '#4B0082',
     textAlign: 'center',
     fontStyle: 'italic',
     marginBottom: 2,
   },
   artworkDate: {
     fontSize: 10,
-    color: '#050d61',
+    color: '#4B0082',
     marginTop: 3,
   },
 
@@ -2076,7 +2658,7 @@ const styles = StyleSheet.create({
   columnHeader: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#4B0082',
     textAlign: 'center',
     flex: 1,
   },
@@ -2096,7 +2678,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     backgroundColor: 'rgba(5, 13, 97, 0.3)',
     borderWidth: 1,
-    borderColor: '#050d61',
+    borderColor: '#4B0082',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -2106,7 +2688,7 @@ const styles = StyleSheet.create({
   },
   scrollArrowText: {
     fontSize: 14,
-    color: '#050d61',
+    color: '#4B0082',
     fontWeight: 'bold',
   },
   scrollArrowTextCenter: {
@@ -2151,7 +2733,7 @@ const styles = StyleSheet.create({
   // Art Studio link hint
   studioHint: {
     fontSize: 14,
-    color: '#050d61',
+    color: '#4B0082',
     textAlign: 'center',
     marginBottom: 15,
     fontStyle: 'italic',
@@ -2173,7 +2755,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyText: {
-    color: '#050d61',
+    color: '#4B0082',
     fontSize: 14,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -2191,17 +2773,17 @@ const styles = StyleSheet.create({
   articleTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#4B0082',
     marginBottom: 5,
   },
   articleDescription: {
     fontSize: 14,
-    color: '#050d61',
+    color: '#4B0082',
     marginBottom: 8,
   },
   articleLink: {
     fontSize: 14,
-    color: '#050d61',
+    color: '#4B0082',
     fontWeight: '600',
   },
 
@@ -2248,7 +2830,7 @@ const styles = StyleSheet.create({
   newsfeedCard: {
     backgroundColor: 'rgba(184, 200, 232, 0.5)',
     borderWidth: 2,
-    borderColor: '#050d61',
+    borderColor: '#4B0082',
     borderRadius: 14,
     marginBottom: 20,
     overflow: 'hidden',
@@ -2282,11 +2864,11 @@ const styles = StyleSheet.create({
   newsfeedUsername: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#4B0082',
   },
   newsfeedArtCount: {
     fontSize: 11,
-    color: '#050d61',
+    color: '#4B0082',
     marginTop: 2,
   },
   followBtn: {
@@ -2303,21 +2885,46 @@ const styles = StyleSheet.create({
   followBtnText: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#4B0082',
   },
   followBtnTextActive: {
     color: '#0a0e27',
   },
+  // Curio strip with arrows
+  curioStripRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  curioStripScroll: {
+    flex: 1,
+  },
+  curioArrow: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(75,0,130,0.15)',
+    borderWidth: 1,
+    borderColor: '#4B0082',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 2,
+  },
+  curioArrowText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4B0082',
+    marginTop: -2,
+  },
   // Thumbnail strip
   thumbStrip: {
     flexDirection: 'row',
-    paddingHorizontal: 10,
+    paddingHorizontal: 4,
     paddingVertical: 10,
     gap: 8,
   },
   thumbWrapper: {
-    width: 100,
-    height: 100,
+    width: Math.floor((SCREEN_WIDTH - 20 - 16) / 3),
+    height: Math.floor((SCREEN_WIDTH - 20 - 16) / 3),
   },
   thumbFrameInner: {
     alignSelf: 'stretch',
@@ -2495,7 +3102,7 @@ const styles = StyleSheet.create({
   },
   saverName: {
     fontSize: 12,
-    color: '#050d61',
+    color: '#4B0082',
     paddingVertical: 2,
   },
 
@@ -2561,6 +3168,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  trashMarkedBtnActive: {
+    borderColor: '#CC2222',
+    backgroundColor: 'rgba(204, 34, 34, 0.1)',
+  },
 
   // Trash section
   trashSection: {
@@ -2608,17 +3219,251 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   trashRestoreBtn: {
-    backgroundColor: 'rgba(255,215,0,0.15)',
+    backgroundColor: 'rgba(75,0,130,0.1)',
     borderWidth: 1,
-    borderColor: '#FFD700',
+    borderColor: '#4B0082',
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
     marginTop: 4,
   },
   trashRestoreText: {
-    color: '#FFD700',
+    color: '#4B0082',
     fontSize: 11,
     fontWeight: '600',
+  },
+
+  // Vault thumbnail grid (2 per row)
+  vaultThumbGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    padding: 2,
+    justifyContent: 'space-between',
+  },
+  vaultThumbItem: {
+    width: '46%',
+    paddingTop: 12,
+    paddingBottom: 4,
+    position: 'relative',
+    alignItems: 'center',
+  },
+  vaultThumbImage: {
+    width: '100%',
+    aspectRatio: 1,
+  },
+  vaultMarkBadge: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(26, 58, 26, 0.85)',
+    borderWidth: 1.5,
+    borderColor: '#22AA22',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  vaultMarkBadgeMarked: {
+    backgroundColor: 'rgba(26, 26, 26, 0.85)',
+    borderColor: '#CC2222',
+  },
+  vaultCuratedBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(75, 0, 130, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+
+  // Inspiration grid (wider items, more spacing, nameplates)
+  inspirationGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    padding: 2,
+    justifyContent: 'space-between',
+  },
+  inspirationItem: {
+    width: '46%',
+    marginBottom: 8,
+    position: 'relative',
+  },
+  inspirationImage: {
+    width: '100%',
+    aspectRatio: 1,
+    overflow: 'hidden',
+  },
+  inspirationNameplate: {
+    backgroundColor: 'rgba(75, 0, 130, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(184, 134, 11, 0.4)',
+    borderRadius: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    marginTop: 6,
+    alignItems: 'center',
+  },
+  inspirationTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#4B0082',
+    textAlign: 'center',
+  },
+  inspirationArtist: {
+    fontSize: 9,
+    color: '#4B0082',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 1,
+  },
+
+  // Nameplate (title + artist under each frame — matches curate button shape)
+  nameplateRow: {
+    flex: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#555',
+    backgroundColor: 'rgba(184, 200, 232, 0.5)',
+    alignItems: 'center',
+  },
+  nameplateTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#4B0082',
+    textAlign: 'center',
+  },
+  nameplateArtist: {
+    fontSize: 9,
+    color: '#4B0082',
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+
+  // Candle — bottom right (LAW: candles always bottom right)
+  thumbCandleBottomRight: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    zIndex: 2,
+  },
+
+  // Bookshelf full-view overlay
+  bookshelfOverlay: {
+    position: 'absolute',
+    bottom: 80,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(240, 230, 220, 0.95)',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#B8860B',
+    padding: 24,
+    alignItems: 'center',
+  },
+  bookshelfOverlayText: {
+    fontSize: 18,
+    color: '#4B0082',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    lineHeight: 26,
+    marginBottom: 16,
+  },
+  bookshelfOverlayBtn: {
+    backgroundColor: '#B8860B',
+    borderRadius: 8,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+  },
+  bookshelfOverlayBtnText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+
+  // Tapestry Swap Modal
+  swapOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+  },
+  swapContent: {
+    flex: 1,
+    paddingTop: 70,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  swapLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ccc',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  swapCurrentFrame: {
+    width: Math.min(SCREEN_WIDTH * 0.5, 200),
+    alignSelf: 'center',
+  },
+  swapCurrentImage: {
+    width: '100%',
+    aspectRatio: 1,
+    backgroundColor: '#0a0e27',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  swapHint: {
+    fontSize: 13,
+    color: '#ccc',
+    textAlign: 'center',
+    marginVertical: 12,
+    fontStyle: 'italic',
+  },
+  swapColumnsRow: {
+    flex: 1,
+    flexDirection: 'row',
+    width: '100%',
+  },
+  swapColumn: {
+    flex: 1,
+  },
+  swapColumnHeader: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#ccc',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  swapColumnScroll: {
+    flex: 1,
+  },
+  swapThumbGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    padding: 2,
+    justifyContent: 'center',
+  },
+  swapThumbItem: {
+    width: '28%',
+    aspectRatio: 1,
+  },
+  swapThumbImage: {
+    width: '100%',
+    aspectRatio: 1,
+  },
+  swapEmptyText: {
+    color: '#999',
+    fontSize: 12,
+    textAlign: 'center',
+    padding: 16,
+    fontStyle: 'italic',
   },
 });

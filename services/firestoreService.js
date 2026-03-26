@@ -598,15 +598,61 @@ export const removeCuratedWork = async (uid, localId) => {
 
 // Get all users' curated works for "Visit Community Curations"
 export const getAllCuratedGalleries = async () => {
-  const q = query(collectionGroup(db, 'curated'));
-  const snap = await getDocs(q);
-  const works = snap.docs.map(d => {
-    const data = d.data();
-    // Extract uid from the document path: users/{uid}/curated/{id}
-    const pathParts = d.ref.path.split('/');
-    return { ...data, docId: d.id, curatorUid: pathParts[1] };
-  });
-  return works;
+  try {
+    const q = query(collectionGroup(db, 'curated'));
+    const snap = await getDocs(q);
+    console.log(`[Community] collectionGroup('curated') returned ${snap.docs.length} raw docs`);
+    const works = snap.docs.map(d => {
+      const data = d.data();
+      // Extract uid from the document path: users/{uid}/curated/{id}
+      const pathParts = d.ref.path.split('/');
+      return { ...data, docId: d.id, curatorUid: pathParts[1], _ref: d.ref };
+    });
+    // Log each doc's identity fields for debugging
+    works.forEach((w, i) => {
+      console.log(`[Community] doc ${i}: curator=${w.curatorUid?.slice(0,8)}, localId="${w.localId || ''}", id="${w.id || ''}", title="${w.title || ''}", img=${w.imageUrl ? w.imageUrl.slice(0, 60) + '...' : 'none'}`);
+    });
+    // Deduplicate within each curator using multiple identity keys
+    const deduped = [];
+    const seen = new Set();
+    // Sort newest first so we keep the latest version
+    works.sort((a, b) => {
+      const aTime = a.curatedAt?.toMillis?.() || a.curatedAt?.seconds * 1000 || 0;
+      const bTime = b.curatedAt?.toMillis?.() || b.curatedAt?.seconds * 1000 || 0;
+      return bTime - aTime;
+    });
+    const dupeRefs = []; // refs to delete
+    for (const work of works) {
+      let isDupe = false;
+      // Build identity keys for this work (only reliable unique identifiers)
+      const keys = [];
+      if (work.localId) keys.push(`${work.curatorUid}_lid_${work.localId}`);
+      if (work.id) keys.push(`${work.curatorUid}_oid_${work.id}`);
+      if (work.imageUrl) keys.push(`${work.curatorUid}_img_${work.imageUrl}`);
+
+      // If ANY key was already seen, this is a duplicate
+      for (const key of keys) {
+        if (seen.has(key)) { isDupe = true; break; }
+      }
+      if (isDupe) {
+        dupeRefs.push(work._ref);
+      } else {
+        keys.forEach(k => seen.add(k));
+        deduped.push(work);
+      }
+    }
+    // Clean up duplicates from Firestore in background
+    if (dupeRefs.length > 0) {
+      console.log(`[Community] Cleaning ${dupeRefs.length} duplicate curated docs from Firestore`);
+      Promise.all(dupeRefs.map(ref => deleteDoc(ref).catch(() => {}))).catch(() => {});
+    }
+    console.log(`[Community] After dedup: ${deduped.length} unique docs`);
+    // Remove internal _ref before returning
+    return deduped.map(({ _ref, ...rest }) => rest);
+  } catch (err) {
+    console.log('[Community] collectionGroup curated query FAILED:', err);
+    return [];
+  }
 };
 
 // Get all curated galleries grouped by curator, excluding own art
