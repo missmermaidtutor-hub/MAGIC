@@ -18,7 +18,7 @@ import { getInviteTemplate, saveInviteTemplate } from '../../services/firestoreS
 const DEFAULT_SUBJECT = "You're Invited to Make art. Grow. Inspire. Connect.";
 const DEFAULT_BODY = `Hi there!
 
-{inviterName} has invited you to Make art. Grow. Inspire. Connect. for a 13 day trial — a daily creative practice for mental health and artistic growth.
+{inviterName} has invited you to Make art. Grow. Inspire. Connect. — a daily creative practice for mental health and artistic growth.
 
 Join at: 13magicalnights.com
 

@@ -766,13 +766,11 @@ export default function HomeScreen({ navigation }) {
 
     const status = getPremiumStatus(userProfile);
     if (!status.isPremium) return;
-    if (status.reason !== 'streak_trial' && status.reason !== 'new_user') return;
+    if (status.reason !== 'streak_trial') return;
     if (!status.daysLeft || status.daysLeft > 2) return;
 
     // Determine the expiry key for this specific trial
-    const expiryKey = status.reason === 'new_user'
-      ? 'new_user_trial'
-      : (userProfile.premiumTrialExpiry?.seconds || 'trial');
+    const expiryKey = userProfile.premiumTrialExpiry?.seconds || 'trial';
     const storageKey = `trial_ending_popup_shown_${expiryKey}`;
 
     AsyncStorage.getItem(storageKey).then(shown => {
@@ -1929,10 +1927,10 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.insightOverlay}>
           <View style={styles.insightCard}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#FFD700', textAlign: 'center', marginBottom: 8 }}>
-              Your Free Trial is Ending Soon!
+              Share the Magic!
             </Text>
             <Text style={{ fontSize: 14, color: '#ccc', textAlign: 'center', lineHeight: 20, marginBottom: 6 }}>
-              Your free access to all premium features is coming to an end.
+              You've been creating MAGIC for almost a month — that's amazing!
             </Text>
             <Text style={{ fontSize: 14, color: '#ccc', textAlign: 'center', lineHeight: 20, marginBottom: 20 }}>
               Invite friends and earn +7 days of premium per invite — up to 6 friends for 42 extra days free!

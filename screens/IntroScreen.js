@@ -41,7 +41,7 @@ const PAGES = [
     body:
       'MAGIC is your daily creative practice — designed to replace mindless scrolling with mindful creating.\n\n' +
       'Each day, complete 5 simple tasks to earn your MAGIC star. Keep your streak alive and watch your creativity grow.\n\n' +
-      'There is no cost to get started. You\'ll have the opportunity to test premium features after 13 days.',
+      'There is no cost to get started. Reach a 13-day streak to unlock a free premium trial!',
     hasStar: true,
   },
   {

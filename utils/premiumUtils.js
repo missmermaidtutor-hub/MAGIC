@@ -4,10 +4,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * Premium / Freemium gating logic for MAGIC Tracker.
  *
  * Trial rules:
- *   1. First 13 days after account creation → all features free.
- *   2. Reaching a streak that ends in 13 (13, 113, 213, …) grants a
+ *   1. Reaching a streak that ends in 13 (13, 113, 213, …) grants a
  *      13-day premium trial (from the moment it's detected).
- *   3. Paying users have isPremium = true with optional premiumExpiry.
+ *   2. Paying users have isPremium = true with optional premiumExpiry.
+ *
+ * New users start FREE — no automatic premium grace period.
+ * Premium is earned through streaks or paid subscription.
  *
  * This module is the SINGLE source of truth for premium checks.
  * Screens should never duplicate this logic.
@@ -39,8 +41,10 @@ export const isStreakMilestone = (streak) => {
  *
  * Priority order:
  *   1. Paid subscriber (isPremium === true, expiry not yet passed).
- *   2. Within first 13 "Magical Nights" (account age ≤ 13 days).
- *   3. Active premium trial (premiumTrialExpiry in the future).
+ *   2. Active premium trial (premiumTrialExpiry in the future).
+ *
+ * Note: New users do NOT get automatic premium access.
+ * Premium is earned through paid subscription or streak milestones.
  *
  * Returns { isPremium: boolean, reason: string }.
  */
@@ -65,13 +69,7 @@ export const getPremiumStatus = (userProfile) => {
     }
   }
 
-  // 2. First 13 Magical Nights (new-user grace period)
-  const dayCount = getMemberDayCount(userProfile);
-  if (dayCount >= 1 && dayCount <= 13) {
-    return { isPremium: true, reason: 'new_user', daysLeft: 13 - dayCount + 1 };
-  }
-
-  // 3. Active streak-based trial
+  // 2. Active streak-based trial
   if (userProfile.premiumTrialExpiry) {
     const trialExpiry =
       userProfile.premiumTrialExpiry?.toDate?.() ??
@@ -189,8 +187,6 @@ export const getPremiumLabel = (userProfile) => {
   switch (status.reason) {
     case 'paid':
       return 'Premium';
-    case 'new_user':
-      return `Free Trial (${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left)`;
     case 'streak_trial':
       return `Premium Trial (${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left)`;
     default:
@@ -214,8 +210,6 @@ export const formatPremiumExpiry = (userProfile) => {
       }
       return 'Active premium subscription';
     }
-    case 'new_user':
-      return `Free trial \u2014 ${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} remaining`;
     case 'streak_trial': {
       if (userProfile.premiumTrialExpiry) {
         const trialExpiry =

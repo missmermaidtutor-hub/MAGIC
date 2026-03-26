@@ -215,9 +215,10 @@ export default function CommunityScreen({ navigation, route }) {
     scrollColumn(inspirationScrollRef, inspirationScrollOffset, direction);
   };
 
-  // 13-day membership check (premium users get early access)
+  // 13-day membership check — must have been a member for 13+ days
+  // Premium status does NOT bypass this wait (it's a participation gate, not a paywall)
   const memberDays = getMemberDayCountUtil(userProfile);
-  const canCurate = memberDays >= 13 || canAccessFeature('earlyCuratedAccess', userProfile);
+  const canCurate = memberDays >= 13;
 
   // Sync from auth context
   useEffect(() => {
@@ -3279,7 +3280,7 @@ const styles = StyleSheet.create({
     alignContent: 'center',
   },
   completionThumbItem: {
-    width: '18%',
+    width: '30%',
     aspectRatio: 1,
   },
   completionThumbImage: {
