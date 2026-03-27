@@ -7,7 +7,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
-import { calculateAndSetWinner, getRecentWinners, saveProgress, checkPseudonymAvailable, claimPseudonym, releasePseudonym, updateUserProfile, getUserWinCount } from '../services/firestoreService';
+import { calculateAndSetWinner, getRecentWinners, saveProgress, checkPseudonymAvailable, claimPseudonym, releasePseudonym, updateUserProfile, getUserWinCount, awardTrialToken, redeemTrialTokenFirestore } from '../services/firestoreService';
 import { getESTDate, getESTYesterday, getESTDayBeforeYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
 import { getTodayQuote } from '../utils/quoteUtils';
@@ -15,7 +15,7 @@ import { trackAction } from '../services/analyticsService';
 import { scheduleStreakReminder } from '../utils/notificationUtils';
 import { getTasksForDate } from '../utils/taskUtils';
 import { openMailto } from '../utils/emailUtils';
-import { getPremiumStatus, getMemberDayCount } from '../utils/premiumUtils';
+import { getPremiumStatus, getMemberDayCount, checkActiveDayTokenEligibility } from '../utils/premiumUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
 
@@ -766,7 +766,9 @@ export default function HomeScreen({ navigation }) {
 
     const status = getPremiumStatus(userProfile);
     if (!status.isPremium) return;
-    if (status.reason !== 'streak_trial') return;
+    // Show for any trial type
+    const trialReasons = ['streak_trial', 'streak_13_trial', 'active_day_trial'];
+    if (!trialReasons.includes(status.reason)) return;
     if (!status.daysLeft || status.daysLeft > 2) return;
 
     // Determine the expiry key for this specific trial
@@ -1186,14 +1188,49 @@ export default function HomeScreen({ navigation }) {
         }
       }
 
-      // Check if streak qualifies for a premium trial (milestones ending in 13)
+      // Check if streak qualifies for a premium trial (first 13-day streak only)
       // Delay if star unlock modal is showing to prevent alert from clobbering it
       if (checkStreakTrial && streak > 0) {
         const trialGranted = await checkStreakTrial(streak);
         if (trialGranted) {
           setTimeout(() => {
-            showAlert('Premium Trial Unlocked!', `Congratulations on your ${streak}-day streak! You've earned a free 13-day premium trial.`);
+            showAlert('Premium Trial Unlocked!', 'Your first 13-day streak earned a free 13-day premium trial!');
           }, starUnlockModal ? 3000 : 0);
+        }
+      }
+
+      // ── Active Day Counting + Token Earning ──
+      if (user && user.uid !== 'local' && userProfile) {
+        try {
+          const todayForActive = getESTDate();
+          const lastCounted = await AsyncStorage.getItem('last_active_day_counted');
+          if (lastCounted !== todayForActive) {
+            // Check if today has any activity
+            const todayTasksCheck = await getTasksForDate(todayForActive);
+            const anyActivity = todayTasksCheck.manifest || todayTasksCheck.art || todayTasksCheck.goal || todayTasksCheck.inspire || todayTasksCheck.courage;
+            if (anyActivity) {
+              // Increment active day count
+              let currentCount = userProfile.activeDayCount || 0;
+              currentCount += 1;
+              await updateUserProfile(user.uid, { activeDayCount: currentCount });
+              await AsyncStorage.setItem('last_active_day_counted', todayForActive);
+
+              // Check if this count earns a trial token (113, 213, 313...)
+              const tokenEarned = await checkActiveDayTokenEligibility(currentCount, userProfile);
+              if (tokenEarned) {
+                await awardTrialToken(user.uid);
+                await refreshProfile();
+                setTimeout(() => {
+                  showAlert(
+                    'Trial Token Earned!',
+                    'You earned a premium trial token! Use it anytime from Premium Membership in your menu.'
+                  );
+                }, starUnlockModal ? 4000 : 1000);
+              }
+            }
+          }
+        } catch (err) {
+          console.log('Active day tracking error (non-critical):', err);
         }
       }
 
@@ -1326,6 +1363,33 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
+        {/* Trial token banner — show if user has tokens and is NOT premium */}
+        {userProfile && (userProfile.trialTokens || 0) > 0 && !getPremiumStatus(userProfile).isPremium && (
+          <View style={{ backgroundColor: 'rgba(10, 14, 39, 0.9)', borderWidth: 2, borderColor: '#FFD700', borderRadius: 10, padding: 12, marginHorizontal: 10, marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ color: '#FFD700', fontSize: 13, flex: 1, fontWeight: '600' }}>
+              You have {userProfile.trialTokens} trial token{userProfile.trialTokens > 1 ? 's' : ''}!
+            </Text>
+            <TouchableOpacity
+              onPress={async () => {
+                try {
+                  const ok = await redeemTrialTokenFirestore(user.uid);
+                  if (ok) {
+                    await refreshProfile();
+                    showAlert('Trial Started!', 'Your 3-day premium trial is now active. Enjoy!');
+                  } else {
+                    showAlert('Oops', 'Could not redeem token. Try again later.');
+                  }
+                } catch (e) {
+                  showAlert('Error', 'Could not redeem token. Try again later.');
+                }
+              }}
+              style={{ marginLeft: 8, paddingHorizontal: 12, paddingVertical: 5, backgroundColor: '#B8860B', borderRadius: 6 }}
+            >
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Use Now</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ===== STREAK STAR ARROW ===== */}
         <View style={styles.starSection}>
           <View style={styles.arrowContainer}>
@@ -1360,7 +1424,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <Text style={styles.tagline}>
-          Reach for a star everyday, {hasWon ? '🏆 ' : ''}{pseudonym}
+          Reach for a star everyday, {pseudonym}
         </Text>
 
         <View style={styles.divider} />

@@ -24,7 +24,7 @@ export default function AboutUsScreen({ navigation }) {
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.title}>MAGIC Tracker</Text>
+          <Text style={styles.title}><Text style={styles.boldM}>M</Text><Text style={styles.boldA}>A</Text><Text style={styles.boldG}>G</Text><Text style={styles.boldI}>I</Text><Text style={styles.boldC}>C</Text> Tracker</Text>
           <Text style={styles.subtitle}>Daily Creative Practice for Mental Health</Text>
           
           <View style={styles.section}>
@@ -116,13 +116,15 @@ export default function AboutUsScreen({ navigation }) {
             </Text>
             <TouchableOpacity
               style={styles.contactButton}
-              onPress={() => openMailto('MAGIC Tracker Feedback', '')}
+              onPress={() => openMailto('MAGIC Tracker Feedback', '', 'cecelia@13magicalnights.com')}
             >
               <Text style={styles.contactIcon}>📧</Text>
-              <Text style={styles.contactText}>missmermaidtutor@gmail.com</Text>
+              <Text style={styles.contactText}>cecelia@13magicalnights.com</Text>
             </TouchableOpacity>
           </View>
         </View>
+
+        <View style={{ height: 80 }} />
       </ScrollView>
     </View>
   );

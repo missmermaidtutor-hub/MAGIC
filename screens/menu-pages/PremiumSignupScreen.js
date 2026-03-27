@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import { showAlert } from '../../utils/alertUtils';
 import { useAuth } from '../../context/AuthContext';
 import { getPremiumStatus, getPremiumLabel, formatPremiumExpiry } from '../../utils/premiumUtils';
 import { PREMIUM_PRODUCTS, PREMIUM_FEATURE_LIST } from '../../config/premium';
 import { purchasePackage, restorePurchases } from '../../services/purchaseService';
+import { redeemTrialTokenFirestore as redeemToken } from '../../services/firestoreService';
 import { trackAction } from '../../services/analyticsService';
 
 export default function PremiumSignupScreen({ navigation }) {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, refreshProfile } = useAuth();
   const [selectedProduct, setSelectedProduct] = useState(PREMIUM_PRODUCTS[1]?.id || PREMIUM_PRODUCTS[0]?.id);
   const [purchasing, setPurchasing] = useState(false);
+  const [redeeming, setRedeeming] = useState(false);
 
   const status = getPremiumStatus(userProfile);
   const isPaidPremium = status.isPremium && status.reason === 'paid';
+  const tokenCount = userProfile?.trialTokens || 0;
+  const hasActiveTrial = status.isPremium && status.reason !== 'paid';
 
   useEffect(() => {
     trackAction('premium_signup_viewed');
@@ -30,6 +35,24 @@ export default function PremiumSignupScreen({ navigation }) {
     if (!user) return;
     trackAction('premium_restore_tapped');
     await restorePurchases(user.uid);
+  };
+
+  const handleRedeemToken = async () => {
+    if (!user || redeeming) return;
+    setRedeeming(true);
+    try {
+      const ok = await redeemToken(user.uid);
+      if (ok) {
+        trackAction('trial_token_redeemed');
+        await refreshProfile();
+        showAlert('Trial Started!', 'Your 3-day premium trial is now active. Enjoy!');
+      } else {
+        showAlert('Oops', 'Could not redeem token. You may already have an active trial.');
+      }
+    } catch (e) {
+      showAlert('Error', 'Could not redeem token. Try again later.');
+    }
+    setRedeeming(false);
   };
 
   return (
@@ -52,6 +75,33 @@ export default function PremiumSignupScreen({ navigation }) {
             <Text style={styles.statusExpiry}>{formatPremiumExpiry(userProfile)}</Text>
           )}
         </View>
+
+        {/* Trial Token Section */}
+        {tokenCount > 0 && !isPaidPremium && (
+          <View style={styles.tokenCard}>
+            <Text style={styles.tokenTitle}>
+              {tokenCount} Trial Token{tokenCount > 1 ? 's' : ''} Available
+            </Text>
+            <Text style={styles.tokenDesc}>
+              Each token grants 3 days of premium features (excluding the room behind the bookshelf).
+            </Text>
+            {hasActiveTrial ? (
+              <Text style={styles.tokenNote}>
+                You have an active trial — tokens will be here when it expires.
+              </Text>
+            ) : (
+              <TouchableOpacity
+                style={[styles.tokenButton, redeeming && { opacity: 0.6 }]}
+                onPress={handleRedeemToken}
+                disabled={redeeming}
+              >
+                <Text style={styles.tokenButtonText}>
+                  {redeeming ? 'Redeeming...' : 'Use Trial Token'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         {isPaidPremium ? (
           /* Paid premium confirmation */
@@ -211,6 +261,49 @@ const styles = StyleSheet.create({
     color: '#4B0082',
     marginTop: 4,
     fontStyle: 'italic',
+  },
+
+  // Trial token card
+  tokenCard: {
+    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    borderRadius: 14,
+    padding: 18,
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  tokenTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFD700',
+    marginBottom: 8,
+  },
+  tokenDesc: {
+    fontSize: 13,
+    color: '#4B0082',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  tokenNote: {
+    fontSize: 13,
+    color: '#4B0082',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  tokenButton: {
+    backgroundColor: '#FFD700',
+    borderRadius: 12,
+    paddingHorizontal: 28,
+    paddingVertical: 10,
+  },
+  tokenButtonText: {
+    color: '#0a0e27',
+    fontSize: 15,
+    fontWeight: '700',
   },
 
   // Paid premium confirmation

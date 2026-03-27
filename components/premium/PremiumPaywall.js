@@ -19,9 +19,12 @@ export default function PremiumPaywall({ feature, message, compact = false, alig
   const handleUpgrade = onUpgrade || defaultOnUpgrade;
   const label = FEATURE_LABELS[feature] || 'This Feature';
   const description = FEATURE_DESCRIPTIONS[feature];
-  const defaultMessage = description
-    ? `${description}\n\nThis is a premium feature. Upgrade to unlock it, or keep your streak going — reach a 13-day streak to earn a free trial!`
-    : `${label} is a premium feature. Upgrade to unlock it, or keep your streak going — reach a 13-day streak to earn a free trial!`;
+  const isBookcase = feature === 'inspiringOthers';
+  const defaultMessage = isBookcase
+    ? 'The room behind the bookshelf is exclusively for premium members.'
+    : description
+      ? `${description}\n\nThis is a premium feature. Upgrade to unlock it!`
+      : `${label} is a premium feature. Upgrade to unlock it!`;
 
   React.useEffect(() => {
     trackAction('premium_paywall_shown');
@@ -54,7 +57,7 @@ export default function PremiumPaywall({ feature, message, compact = false, alig
         <Text style={styles.message}>{message || defaultMessage}</Text>
         <View style={styles.divider} />
         <Text style={styles.hint}>
-          Reach a 13-day streak to unlock a free trial!
+          Stay active to earn premium trial tokens!
         </Text>
         <TouchableOpacity
           style={styles.upgradeButton}

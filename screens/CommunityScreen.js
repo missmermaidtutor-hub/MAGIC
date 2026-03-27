@@ -34,9 +34,10 @@ import {
   getUserCourages,
   uploadMediaToStorage,
   getUserWinCount,
+  updateArtwork,
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
-import { getMemberDayCount as getMemberDayCountUtil, getCuratedLimit, canAccessFeature } from '../utils/premiumUtils';
+import { getMemberDayCount as getMemberDayCountUtil, getCuratedLimit, canAccessFeature, getPremiumStatus } from '../utils/premiumUtils';
 import PremiumPaywall from '../components/premium/PremiumPaywall';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -389,7 +390,9 @@ export default function CommunityScreen({ navigation, route }) {
     }
   };
 
-  // Move pending voting artworks to private gallery after voting day passes
+  // Move pending voting artworks to private gallery after ranking day passes.
+  // Timeline: Day 1 = courage posted, Day 2 = ranking/voting, Day 3 = promoted to Vault.
+  // So artwork is ready when today >= submitDate + 2 days.
   const promotePendingVotingArtworks = async () => {
     try {
       const pendingData = await AsyncStorage.getItem('pending_voting_artworks');
@@ -398,8 +401,16 @@ export default function CommunityScreen({ navigation, route }) {
       if (pending.length === 0) return;
 
       const today = getESTDate();
-      const ready = pending.filter(a => a.votingSubmitDate < today);
-      const stillPending = pending.filter(a => a.votingSubmitDate >= today);
+      const isReadyForPromotion = (submitDate) => {
+        // Parse the submit date and add 2 days
+        const parts = submitDate.split('-');
+        const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        d.setDate(d.getDate() + 2);
+        const promotionDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        return today >= promotionDate;
+      };
+      const ready = pending.filter(a => isReadyForPromotion(a.votingSubmitDate));
+      const stillPending = pending.filter(a => !isReadyForPromotion(a.votingSubmitDate));
 
       if (ready.length > 0) {
         // Move ready artworks to private gallery (with dedup)
@@ -415,6 +426,13 @@ export default function CommunityScreen({ navigation, route }) {
         const updatedPersonal = [...personal, ...promoted];
         await AsyncStorage.setItem('personal_artworks', JSON.stringify(updatedPersonal));
         setPersonalArtworks(updatedPersonal);
+
+        // Clear pendingVoting flag in Firestore so background sync doesn't re-hide them
+        if (user?.uid) {
+          for (const a of promoted) {
+            updateArtwork(user.uid, String(a.id), { pendingVoting: false }).catch(() => {});
+          }
+        }
 
         await AsyncStorage.setItem('pending_voting_artworks', JSON.stringify(stillPending));
         setPendingVotingArtworks(stillPending);
@@ -609,7 +627,8 @@ export default function CommunityScreen({ navigation, route }) {
       const personalData = await AsyncStorage.getItem('personal_artworks');
       if (personalData) {
         const dedupedP = dedupeById(JSON.parse(personalData));
-        const filteredP = dedupedP.filter(a => !trashedIds.has(String(a.id)));
+        // Filter out trashed AND still-pending artworks (pending ones show as placeholders separately)
+        const filteredP = dedupedP.filter(a => !trashedIds.has(String(a.id)) && !a.pendingVoting);
         setPersonalArtworks(filteredP);
         if (filteredP.length !== JSON.parse(personalData).length) {
           await AsyncStorage.setItem('personal_artworks', JSON.stringify(filteredP));
@@ -1639,11 +1658,19 @@ export default function CommunityScreen({ navigation, route }) {
                     <View key={item.key} style={styles.galleryItemContainer}>
                       <GoldFrame
                         onPress={() => {
-                          setFullViewImage({
-                            source: require('../assets/bookshelf-secret.png'),
-                            bookshelf: true,
-                          });
                           trackAction('bookshelf_secret_tapped');
+                          const premStatus = getPremiumStatus(userProfile);
+                          if (premStatus.isPremium && premStatus.reason === 'paid') {
+                            // Paid premium: auto-reveal Inspiring Others directly
+                            setShowInspiringOthers(true);
+                            loadMyInspiringWorks();
+                          } else {
+                            // Everyone else: show overlay with "Become a Member"
+                            setFullViewImage({
+                              source: require('../assets/bookshelf-secret.png'),
+                              bookshelf: true,
+                            });
+                          }
                         }}
                         thickness={3}
                       >
@@ -2111,28 +2138,15 @@ export default function CommunityScreen({ navigation, route }) {
               <Text style={styles.bookshelfOverlayText}>
                 This room of inspiration is closed to non-members.
               </Text>
-              {canAccessFeature('inspiringOthers', userProfile) ? (
-                <TouchableOpacity
-                  style={styles.bookshelfOverlayBtn}
-                  onPress={() => {
-                    setFullViewImage(null);
-                    setShowInspiringOthers(true);
-                    loadMyInspiringWorks();
-                  }}
-                >
-                  <Text style={styles.bookshelfOverlayBtnText}>Enter</Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  style={styles.bookshelfOverlayBtn}
-                  onPress={() => {
-                    setFullViewImage(null);
-                    navigation.navigate('PremiumSignup');
-                  }}
-                >
-                  <Text style={styles.bookshelfOverlayBtnText}>Become a Member</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={styles.bookshelfOverlayBtn}
+                onPress={() => {
+                  setFullViewImage(null);
+                  navigation.navigate('PremiumSignup');
+                }}
+              >
+                <Text style={styles.bookshelfOverlayBtnText}>Become a Member</Text>
+              </TouchableOpacity>
             </View>
           )}
           {fullViewImage?.curatorUid && (
@@ -2465,7 +2479,24 @@ export default function CommunityScreen({ navigation, route }) {
                     </View>
                   )}
                 </GoldFrame>
-                <Text style={styles.swapHint}>Tap a piece below to swap in</Text>
+                <TouchableOpacity
+                  style={styles.swapRemoveBtn}
+                  onPress={() => {
+                    showDestructiveConfirm(
+                      'Remove from Tapestry',
+                      'Remove this piece and leave the space blank?',
+                      () => {
+                        handleDeleteArtwork(currentArt, 'curated');
+                        setTapestrySwapModal(null);
+                      },
+                      'Remove'
+                    );
+                  }}
+                >
+                  <Text style={styles.swapRemoveBtnText}>Remove (Leave Blank)</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.swapHint}>Or tap a piece below to swap in</Text>
 
                 {/* Two columns of vault items */}
                 <View style={styles.swapColumnsRow}>
@@ -3637,6 +3668,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0e27',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  swapRemoveBtn: {
+    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,100,100,0.5)',
+    backgroundColor: 'rgba(255,100,100,0.12)',
+    alignSelf: 'center',
+  },
+  swapRemoveBtnText: {
+    color: '#ff6b6b',
+    fontSize: 13,
+    fontWeight: '600',
   },
   swapHint: {
     fontSize: 13,

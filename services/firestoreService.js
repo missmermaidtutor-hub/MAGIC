@@ -16,6 +16,7 @@ import {
   runTransaction,
   serverTimestamp,
   onSnapshot,
+  increment,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../config/firebase';
@@ -46,7 +47,11 @@ export const createUserProfile = async (uid, data) => {
     favoritePrompt: data.favoritePrompt || '',
     isPremium: false,
     premiumTrialExpiry: null,
+    premiumTrialType: null,
     premiumExpiry: null,
+    activeDayCount: 0,
+    trialTokens: 0,
+    streak13TrialUsed: false,
     referralCode: 'MAGIC-' + uid.slice(0, 6).toUpperCase(),
     referralCount: 0,
     pseudonymChangeCount: data.pseudonymChangeCount || 0,
@@ -966,6 +971,70 @@ export const grantPremiumTrial = async (uid, expiryDate) => {
     premiumTrialExpiry: expiryDate,
     updatedAt: serverTimestamp(),
   });
+};
+
+// Grant premium trial with type tracking (new Unbreakable Law)
+// Uses max(existing, new) for expiry to never shorten an active trial
+export const grantPremiumTrialWithType = async (uid, expiryDate, trialType) => {
+  const userRef = doc(db, 'users', uid);
+  const snap = await getDoc(userRef);
+  const data = snap.exists() ? snap.data() : {};
+
+  // Never shorten an existing active trial
+  let finalExpiry = expiryDate;
+  if (data.premiumTrialExpiry) {
+    const existingExpiry = data.premiumTrialExpiry?.toDate?.()
+      ?? (data.premiumTrialExpiry?.seconds
+        ? new Date(data.premiumTrialExpiry.seconds * 1000)
+        : new Date(data.premiumTrialExpiry));
+    if (existingExpiry > finalExpiry) {
+      finalExpiry = existingExpiry;
+    }
+  }
+
+  const updates = {
+    premiumTrialExpiry: finalExpiry,
+    premiumTrialType: trialType,
+    updatedAt: serverTimestamp(),
+  };
+
+  // If streak_13, also set the one-time flag
+  if (trialType === 'streak_13') {
+    updates.streak13TrialUsed = true;
+  }
+
+  await updateDoc(userRef, updates);
+};
+
+// Award a trial token (increments trialTokens on user profile)
+export const awardTrialToken = async (uid) => {
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, {
+    trialTokens: increment(1),
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Redeem a trial token: decrement tokens, start 3-day limited trial
+export const redeemTrialTokenFirestore = async (uid) => {
+  const userRef = doc(db, 'users', uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return false;
+
+  const data = snap.data();
+  if ((data.trialTokens || 0) <= 0) return false;
+
+  const expiry = new Date();
+  expiry.setDate(expiry.getDate() + 3);
+
+  await updateDoc(userRef, {
+    trialTokens: increment(-1),
+    premiumTrialExpiry: expiry,
+    premiumTrialType: 'active_day',
+    updatedAt: serverTimestamp(),
+  });
+
+  return true;
 };
 
 // Set paid premium status

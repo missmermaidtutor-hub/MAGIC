@@ -6,6 +6,7 @@ import {
   getUserProfile,
   createUserProfile,
   grantPremiumTrial,
+  grantPremiumTrialWithType,
   getGoalHistory,
   getUserArtworks,
   getUserInspirations,
@@ -131,10 +132,13 @@ export function AuthProvider({ children }) {
       ]);
 
       if (artworks && artworks.length > 0) {
+        // Exclude pendingVoting artworks — they stay in the pending system
+        // until ranking day is over, then get promoted by CommunityScreen
+        const readyArtworks = artworks.filter(a => !a.pendingVoting);
         const localRaw = await AsyncStorage.getItem('personal_artworks');
         const local = localRaw ? JSON.parse(localRaw) : [];
-        if (artworks.length > local.length) {
-          await AsyncStorage.setItem('personal_artworks', JSON.stringify(artworks));
+        if (readyArtworks.length > local.length) {
+          await AsyncStorage.setItem('personal_artworks', JSON.stringify(readyArtworks));
         }
       }
 
@@ -190,12 +194,18 @@ export function AuthProvider({ children }) {
   const checkStreakTrial = async (streak) => {
     if (!user || user.uid === 'local' || !userProfile) return;
     try {
-      const expiry = await checkStreakTrialEligibility(streak, userProfile);
-      if (expiry) {
-        await grantPremiumTrial(user.uid, expiry);
+      const result = await checkStreakTrialEligibility(streak, userProfile);
+      if (result) {
+        const { expiry, trialType } = result;
+        await grantPremiumTrialWithType(user.uid, expiry, trialType);
         trackAction('premium_trial_granted');
         // Update local profile so UI reflects immediately
-        const updatedProfile = { ...userProfile, premiumTrialExpiry: expiry };
+        const updatedProfile = {
+          ...userProfile,
+          premiumTrialExpiry: expiry,
+          premiumTrialType: trialType,
+          streak13TrialUsed: trialType === 'streak_13' ? true : userProfile.streak13TrialUsed,
+        };
         setUserProfile(updatedProfile);
         await AsyncStorage.setItem('cached_user_profile', JSON.stringify(updatedProfile));
         return true; // trial was granted

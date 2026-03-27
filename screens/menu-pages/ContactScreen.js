@@ -4,7 +4,7 @@ import { openMailto } from '../../utils/emailUtils';
 
 export default function ContactScreen({ navigation }) {
   const handleEmail = () => {
-    openMailto('MAGIC Tracker Feedback', '', 'missmermaidtutor@gmail.com');
+    openMailto('MAGIC Tracker Feedback', '', 'cecelia@13magicalnights.com');
   };
 
   return (
@@ -32,7 +32,7 @@ export default function ContactScreen({ navigation }) {
 
           <TouchableOpacity style={styles.contactButton} onPress={handleEmail}>
             <Text style={styles.contactIcon}>📧</Text>
-            <Text style={styles.contactText}>missmermaidtutor@gmail.com</Text>
+            <Text style={styles.contactText}>cecelia@13magicalnights.com</Text>
           </TouchableOpacity>
 
           <Text style={styles.subtitle}>Feedback & Support</Text>

@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
 import { getAnalyticsForDate, getAllUsers, getAllInvitations } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
+import { setAdminPremiumOverride, getAdminPremiumOverride } from '../utils/premiumUtils';
 import UserProfileModal from '../components/admin/UserProfileModal';
 
 const ACTION_LABELS = {
@@ -65,6 +66,7 @@ export default function AnalyticsScreen({ navigation }) {
   const [profileMap, setProfileMap] = useState({});
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [inviteData, setInviteData] = useState({ total: 0, converted: 0, perUser: [] });
+  const [adminOverride, setAdminOverride] = useState(getAdminPremiumOverride());
 
   const today = getESTDate();
 
@@ -199,6 +201,9 @@ export default function AnalyticsScreen({ navigation }) {
 
   return (
     <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+      <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
+        <Text style={styles.menuBtnText}>{'\u2630'}</Text>
+      </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Analytics</Text>
 
@@ -215,6 +220,35 @@ export default function AnalyticsScreen({ navigation }) {
           >
             <Text style={[styles.dateArrowText, selectedDate >= today && styles.dateArrowTextDisabled]}>›</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Admin Premium Preview Toggle */}
+        <View style={styles.adminToggleContainer}>
+          <Text style={styles.adminToggleLabel}>Premium Preview</Text>
+          <View style={styles.adminToggleRow}>
+            {[
+              { key: null, label: 'Normal' },
+              { key: 'full', label: 'Full' },
+              { key: 'limited', label: 'Limited' },
+              { key: 'free', label: 'Free' },
+            ].map(opt => {
+              const isActive = adminOverride === opt.key;
+              return (
+                <TouchableOpacity
+                  key={opt.label}
+                  style={[styles.adminToggleBtn, isActive && styles.adminToggleBtnActive]}
+                  onPress={() => {
+                    setAdminOverride(opt.key);
+                    setAdminPremiumOverride(opt.key);
+                  }}
+                >
+                  <Text style={[styles.adminToggleBtnText, isActive && styles.adminToggleBtnTextActive]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         {loading ? (
@@ -423,6 +457,23 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  menuBtn: {
+    position: 'absolute',
+    top: 44,
+    left: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  menuBtnText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   header: {
     fontSize: 36,
@@ -684,5 +735,47 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#050d61',
     marginLeft: 12,
+  },
+  // Admin premium toggle
+  adminToggleContainer: {
+    backgroundColor: 'rgba(200, 50, 50, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(200, 50, 50, 0.4)',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  adminToggleLabel: {
+    fontSize: 11,
+    color: '#c33',
+    fontWeight: '700',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  adminToggleRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  adminToggleBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(200, 50, 50, 0.3)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  adminToggleBtnActive: {
+    backgroundColor: '#c33',
+    borderColor: '#c33',
+  },
+  adminToggleBtnText: {
+    fontSize: 12,
+    color: '#050d61',
+    fontWeight: '600',
+  },
+  adminToggleBtnTextActive: {
+    color: '#fff',
   },
 });

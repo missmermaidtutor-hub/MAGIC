@@ -3,17 +3,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 /**
  * Premium / Freemium gating logic for MAGIC Tracker.
  *
- * Trial rules:
- *   1. Reaching a streak that ends in 13 (13, 113, 213, …) grants a
- *      13-day premium trial (from the moment it's detected).
- *   2. Paying users have isPremium = true with optional premiumExpiry.
+ * THE UNBREAKABLE PREMIUM LAW:
+ * Premium features are ALWAYS locked, with exactly 3 exceptions:
+ *   1. Paid premium -> FULL access (ALL features including bookcase)
+ *   2. First 13-day streak -> one-time 13-day LIMITED trial (no bookcase)
+ *   3. Active days > 100 ending in 13 (113, 213, 313...) -> earn a 3-day trial TOKEN (redeemable anytime, no bookcase)
  *
- * New users start FREE — no automatic premium grace period.
- * Premium is earned through streaks or paid subscription.
+ * "Limited" = all premium features EXCEPT the room behind the bookshelf (Inspiring Others).
  *
  * This module is the SINGLE source of truth for premium checks.
  * Screens should never duplicate this logic.
  */
+
+// ── Admin Override (in-memory only, resets on app restart) ──
+
+let _adminOverride = null; // null | 'full' | 'limited' | 'free'
+export const setAdminPremiumOverride = (val) => { _adminOverride = val; };
+export const getAdminPremiumOverride = () => _adminOverride;
 
 // ── Helpers ──
 
@@ -28,10 +34,10 @@ export const getMemberDayCount = (userProfile) => {
   return Math.floor((Date.now() - createdDate.getTime()) / 86400000) + 1;
 };
 
-/** True when the streak number ends in 13 (13, 113, 213, 1013 …). */
-export const isStreakMilestone = (streak) => {
-  if (streak < 13) return false;
-  return streak % 100 === 13;
+/** True when the active day count is > 100 and ends in 13 (113, 213, 313, ...). */
+export const isActiveDayMilestone = (activeDayCount) => {
+  if (activeDayCount <= 100) return false;
+  return activeDayCount % 100 === 13;
 };
 
 // ── Core premium check ──
@@ -40,15 +46,25 @@ export const isStreakMilestone = (streak) => {
  * Determine if the user currently has premium access.
  *
  * Priority order:
+ *   0. Admin override (if set — for preview/testing)
  *   1. Paid subscriber (isPremium === true, expiry not yet passed).
  *   2. Active premium trial (premiumTrialExpiry in the future).
  *
- * Note: New users do NOT get automatic premium access.
- * Premium is earned through paid subscription or streak milestones.
- *
- * Returns { isPremium: boolean, reason: string }.
+ * Returns { isPremium: boolean, reason: string, daysLeft?: number }.
  */
 export const getPremiumStatus = (userProfile) => {
+  // 0. Admin override
+  if (_adminOverride) {
+    switch (_adminOverride) {
+      case 'full':
+        return { isPremium: true, reason: 'paid' };
+      case 'limited':
+        return { isPremium: true, reason: 'limited_trial', daysLeft: 99 };
+      case 'free':
+        return { isPremium: false, reason: 'free' };
+    }
+  }
+
   if (!userProfile) return { isPremium: false, reason: 'no_profile' };
 
   // 1. Paid premium
@@ -69,7 +85,7 @@ export const getPremiumStatus = (userProfile) => {
     }
   }
 
-  // 2. Active streak-based trial
+  // 2. Active trial (streak-based or active-day token)
   if (userProfile.premiumTrialExpiry) {
     const trialExpiry =
       userProfile.premiumTrialExpiry?.toDate?.() ??
@@ -78,6 +94,14 @@ export const getPremiumStatus = (userProfile) => {
         : new Date(userProfile.premiumTrialExpiry));
     if (new Date() <= trialExpiry) {
       const daysLeft = Math.ceil((trialExpiry.getTime() - Date.now()) / 86400000);
+      // Determine specific trial type from profile field
+      const trialType = userProfile.premiumTrialType;
+      if (trialType === 'streak_13') {
+        return { isPremium: true, reason: 'streak_13_trial', daysLeft };
+      } else if (trialType === 'active_day') {
+        return { isPremium: true, reason: 'active_day_trial', daysLeft };
+      }
+      // Backward compat for old trials without premiumTrialType
       return { isPremium: true, reason: 'streak_trial', daysLeft };
     }
   }
@@ -102,33 +126,29 @@ export const checkPremium = (userProfile) => getPremiumStatus(userProfile).isPre
  *   - Sharing courage
  *   - Discussion pods (joining)
  *
- * Premium features:
- *   - advancedStats       → detailed per-MAGIC-category stats, goal rate
- *   - inspiringOthers     → "how many times your art inspired others" stat
- *   - pastDiaryEntries    → view past manifest/journal entries
- *   - favoriteQuotes      → favorite quote archive
- *   - unlimitedCurated    → 25-slot curated gallery (free = 10)
- *   - goalHistory         → full goal history + stats
- *   - earlyCuratedAccess  → curated gallery before 13-day mark
- *   - studioFullColors    → hue bar, opacity, custom hex in Art Studio
- *   - studioAdvancedText  → extra fonts, italic, underline, strikethrough
- *   - galleryOrganizing   → folders, custom ordering, tags, sorting
+ * Premium features (all trials + paid):
+ *   - advancedStats, pastDiaryEntries, favoriteQuotes, unlimitedCurated,
+ *     goalHistory, earlyCuratedAccess, studioFullColors, studioAdvancedText,
+ *     pseudonymChange, galleryOrganizing, streakPause, streakSaver
+ *
+ * PAID ONLY (bookcase — never available during trials):
+ *   - inspiringOthers
  */
 
 const FEATURE_RULES = {
-  advancedStats: (isPremium) => isPremium,
-  inspiringOthers: (isPremium) => isPremium,
-  pastDiaryEntries: (isPremium) => isPremium,
-  favoriteQuotes: (isPremium) => isPremium,
-  unlimitedCurated: (isPremium) => isPremium,
-  goalHistory: (isPremium) => isPremium,
-  earlyCuratedAccess: (isPremium) => isPremium,
-  studioFullColors: (isPremium) => isPremium,
-  studioAdvancedText: (isPremium) => isPremium,
-  pseudonymChange: (isPremium) => isPremium,
-  galleryOrganizing: (isPremium) => isPremium,
-  streakPause: (isPremium) => isPremium,
-  streakSaver: (isPremium) => isPremium,
+  advancedStats: ({ isPremium }) => isPremium,
+  inspiringOthers: ({ isPremium, reason }) => isPremium && reason === 'paid',
+  pastDiaryEntries: ({ isPremium }) => isPremium,
+  favoriteQuotes: ({ isPremium }) => isPremium,
+  unlimitedCurated: ({ isPremium }) => isPremium,
+  goalHistory: ({ isPremium }) => isPremium,
+  earlyCuratedAccess: ({ isPremium }) => isPremium,
+  studioFullColors: ({ isPremium }) => isPremium,
+  studioAdvancedText: ({ isPremium }) => isPremium,
+  pseudonymChange: ({ isPremium }) => isPremium,
+  galleryOrganizing: ({ isPremium }) => isPremium,
+  streakPause: ({ isPremium }) => isPremium,
+  streakSaver: ({ isPremium }) => isPremium,
 };
 
 /**
@@ -136,10 +156,10 @@ const FEATURE_RULES = {
  * Returns boolean.
  */
 export const canAccessFeature = (feature, userProfile) => {
-  const { isPremium } = getPremiumStatus(userProfile);
+  const status = getPremiumStatus(userProfile);
   const rule = FEATURE_RULES[feature];
   if (!rule) return true; // unknown feature = allow
-  return rule(isPremium);
+  return rule(status);
 };
 
 /** Max curated gallery slots for current tier. */
@@ -150,32 +170,73 @@ export const getCuratedLimit = (userProfile) => {
 // ── Trial granting ──
 
 /**
- * Check if a streak milestone should grant a trial, and if so
- * return the new expiry date. Does NOT write to Firestore — the
- * caller is responsible for persisting.
+ * Check if the user's first 13-day streak should grant a trial.
+ * Only triggers at streak === 13, and only once ever (streak13TrialUsed flag).
  *
- * Returns Date | null.
+ * Returns { expiry: Date, trialType: 'streak_13' } | null.
  */
 export const checkStreakTrialEligibility = async (streak, userProfile) => {
-  if (!isStreakMilestone(streak)) return null;
+  // Only triggers at exactly 13
+  if (streak !== 13) return null;
 
-  // Don't grant if user is already premium (paid or active trial)
+  // Don't grant if user is already paid premium
   const status = getPremiumStatus(userProfile);
   if (status.isPremium && status.reason === 'paid') return null;
 
-  // Check if we already granted a trial for this exact milestone
-  const grantedKey = `premium_trial_granted_${streak}`;
-  const alreadyGranted = await AsyncStorage.getItem(grantedKey);
+  // One-time only: check Firestore flag
+  if (userProfile?.streak13TrialUsed) return null;
+
+  // Also check AsyncStorage as a local dedup
+  const alreadyGranted = await AsyncStorage.getItem('streak_13_trial_granted');
   if (alreadyGranted) return null;
 
   // Grant 13-day trial
   const expiry = new Date();
   expiry.setDate(expiry.getDate() + 13);
 
-  // Mark as granted so we don't re-grant on next app load
-  await AsyncStorage.setItem(grantedKey, 'true');
+  // Mark locally
+  await AsyncStorage.setItem('streak_13_trial_granted', 'true');
 
-  return expiry;
+  return { expiry, trialType: 'streak_13' };
+};
+
+/**
+ * Check if an active day count milestone should award a trial token.
+ * Triggers when activeDayCount > 100 and activeDayCount % 100 === 13 (113, 213, 313...).
+ * Does NOT start a trial — just awards a banked token.
+ *
+ * Returns true if token should be awarded, false otherwise.
+ */
+export const checkActiveDayTokenEligibility = async (activeDayCount, userProfile) => {
+  if (!isActiveDayMilestone(activeDayCount)) return false;
+
+  // Don't award if user is paid premium
+  const status = getPremiumStatus(userProfile);
+  if (status.isPremium && status.reason === 'paid') return false;
+
+  // Dedup via AsyncStorage
+  const key = `active_day_token_granted_${activeDayCount}`;
+  const alreadyGranted = await AsyncStorage.getItem(key);
+  if (alreadyGranted) return false;
+
+  await AsyncStorage.setItem(key, 'true');
+  return true;
+};
+
+/**
+ * Check if user can redeem a trial token.
+ * Returns { expiry: Date, trialType: 'active_day' } | null.
+ */
+export const redeemTrialToken = (userProfile) => {
+  if (!userProfile || (userProfile.trialTokens || 0) <= 0) return null;
+
+  // Don't redeem if user already has active premium
+  const status = getPremiumStatus(userProfile);
+  if (status.isPremium) return null;
+
+  const expiry = new Date();
+  expiry.setDate(expiry.getDate() + 3);
+  return { expiry, trialType: 'active_day' };
 };
 
 // ── Display helpers ──
@@ -187,8 +248,14 @@ export const getPremiumLabel = (userProfile) => {
   switch (status.reason) {
     case 'paid':
       return 'Premium';
+    case 'streak_13_trial':
+      return `Streak Trial (${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left)`;
+    case 'active_day_trial':
+      return `Token Trial (${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left)`;
     case 'streak_trial':
       return `Premium Trial (${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left)`;
+    case 'limited_trial':
+      return `Limited Trial (${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left)`;
     default:
       return 'Premium';
   }
@@ -210,6 +277,8 @@ export const formatPremiumExpiry = (userProfile) => {
       }
       return 'Active premium subscription';
     }
+    case 'streak_13_trial':
+    case 'active_day_trial':
     case 'streak_trial': {
       if (userProfile.premiumTrialExpiry) {
         const trialExpiry =
@@ -217,7 +286,9 @@ export const formatPremiumExpiry = (userProfile) => {
           (userProfile.premiumTrialExpiry?.seconds
             ? new Date(userProfile.premiumTrialExpiry.seconds * 1000)
             : new Date(userProfile.premiumTrialExpiry));
-        return `Premium trial until ${trialExpiry.toLocaleDateString()}`;
+        const typeLabel = status.reason === 'streak_13_trial' ? 'Streak trial' :
+                         status.reason === 'active_day_trial' ? 'Token trial' : 'Premium trial';
+        return `${typeLabel} until ${trialExpiry.toLocaleDateString()}`;
       }
       return `Premium trial \u2014 ${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} remaining`;
     }

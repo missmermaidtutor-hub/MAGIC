@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, Image, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initSentry, Sentry } from './config/sentry';
@@ -60,27 +60,32 @@ import PremiumSignupScreen from './screens/menu-pages/PremiumSignupScreen';
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
 
-// Flower images for tab icons
-const flowerImages = {
-  Home: require('./Cliparts/flower_purple.jpg'),
-  Manifest: require('./Cliparts/flower_red.jpg'),
-  Art: require('./Cliparts/flower-orange.png'),
-  Grow: require('./Cliparts/flower_yellow.jpg'),
-  Inspire: require('./Cliparts/flower_green.jpg'),
-  Connect: require('./Cliparts/flower_Blue.jpeg'),
+// MAGIC emoji icons for tab bar
+const tabEmojis = {
+  Home: '⭐',
+  Manifest: '📝',
+  Art: '🎨',
+  Grow: '🎯',
+  Inspire: '✨',
+  Connect: '💪',
 };
 
-// Custom Tab Bar Icon Component — round flower button
+const tabColors = {
+  Home: '#B8860B',
+  Manifest: '#78000E',
+  Art: '#9E4502',
+  Grow: '#c1a900',
+  Inspire: '#3c9820',
+  Connect: '#5008a7',
+};
+
+// Custom Tab Bar Icon Component — round emoji button
 function TabIcon({ tabName, focused }) {
   return (
     <View style={styles.tabIconWrapper}>
       {focused && <View style={styles.tabIconGlow} />}
-      <View style={styles.tabIcon}>
-        <Image
-          source={flowerImages[tabName]}
-          style={styles.tabIconImage}
-          resizeMode="cover"
-        />
+      <View style={[styles.tabIcon, { borderColor: tabColors[tabName] || '#B8860B' }]}>
+        <Text style={styles.tabIconEmoji}>{tabEmojis[tabName]}</Text>
       </View>
     </View>
   );
@@ -467,18 +472,20 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    overflow: 'hidden',
     borderWidth: 2,
     borderColor: '#B8860B',
+    backgroundColor: '#fffaec',
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8,
   },
-  tabIconImage: {
-    width: '100%',
-    height: '100%',
+  tabIconEmoji: {
+    fontSize: 22,
+    textAlign: 'center',
   },
   tabIconGlow: {
     position: 'absolute',
