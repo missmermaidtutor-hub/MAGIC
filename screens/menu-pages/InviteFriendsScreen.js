@@ -105,8 +105,8 @@ export default function InviteFriendsScreen({ navigation }) {
 
     setSendingIndex(index);
     try {
-      // Build email from template
-      const inviterName = userProfile?.pseudonym || userProfile?.firstName || 'A friend';
+      // Build email from template — use first name only, NEVER pseudonym (privacy law)
+      const inviterName = userProfile?.firstName || 'A friend';
       const referralCode = userProfile?.referralCode || '';
 
       const subject = template.subject

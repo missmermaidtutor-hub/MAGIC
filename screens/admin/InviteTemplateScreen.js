@@ -112,7 +112,7 @@ export default function InviteTemplateScreen({ navigation }) {
           <>
             <View style={styles.tokenBox}>
               <Text style={styles.tokenTitle}>Available tokens:</Text>
-              <Text style={styles.tokenText}>{'{inviterName}'} — Inviter's pseudonym</Text>
+              <Text style={styles.tokenText}>{'{inviterName}'} — Inviter's first name</Text>
               <Text style={styles.tokenText}>{'{referralCode}'} — Inviter's referral code</Text>
             </View>
 
