@@ -11,7 +11,6 @@ export default function MenuScreen({ navigation }) {
     { name: 'About Us', screen: 'AboutUs' },
     { name: 'About You', screen: 'AboutYou' },
     { name: 'Coming Soon', screen: 'ComingSoon' },
-    { name: 'Home Page', screen: 'Home' },
     { name: 'Invite Friends', screen: 'InviteFriends' },
     { name: 'Legal Policies', screen: 'Legal' },
     { name: 'Premium Membership', screen: 'PremiumSignup' },
@@ -27,6 +26,7 @@ export default function MenuScreen({ navigation }) {
       { name: '_Admin Feature Ideas', screen: 'FeatureIdeas' },
       { name: '_Admin Intro Preview', screen: 'Intro', params: { fromMenu: true } },
       { name: '_Admin Invite Template', screen: 'InviteTemplate' },
+      { name: '_Admin Invite Analytics', screen: 'InviteAnalytics' },
     ] : []),
   ];
 

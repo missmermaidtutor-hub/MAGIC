@@ -360,8 +360,9 @@ export default function SignUpScreen({ navigation, route }) {
       }
 
       // Check if this email was invited by someone — mark invitation as converted
+      // Pass uid so inviter gets premium grant and friend token gifts are applied
       try {
-        await checkAndConvertInvitation(userEmail);
+        await checkAndConvertInvitation(userEmail, uid);
       } catch (convErr) {
         console.log('Invitation conversion check error:', convErr);
       }

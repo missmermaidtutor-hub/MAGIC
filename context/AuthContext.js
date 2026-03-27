@@ -7,6 +7,7 @@ import {
   createUserProfile,
   grantPremiumTrial,
   grantPremiumTrialWithType,
+  awardFriendToken,
   getGoalHistory,
   getUserArtworks,
   getUserInspirations,
@@ -15,7 +16,7 @@ import {
   getProgress,
   getArtTime,
 } from '../services/firestoreService';
-import { getPremiumStatus, checkStreakTrialEligibility } from '../utils/premiumUtils';
+import { getPremiumStatus, checkStreakTrialEligibility, checkFriendTokenEligibility } from '../utils/premiumUtils';
 import { getESTDate } from '../utils/dateUtils';
 import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -208,7 +209,36 @@ export function AuthProvider({ children }) {
         };
         setUserProfile(updatedProfile);
         await AsyncStorage.setItem('cached_user_profile', JSON.stringify(updatedProfile));
+
+        // Also check friend token eligibility at streak 13
+        try {
+          const earnsFriendToken = await checkFriendTokenEligibility(streak, userProfile);
+          if (earnsFriendToken) {
+            await awardFriendToken(user.uid);
+            trackAction('friend_token_earned');
+            const tokenProfile = { ...updatedProfile, friendTokens: (updatedProfile.friendTokens || 0) + 1, friendTokenEarned: true };
+            setUserProfile(tokenProfile);
+            await AsyncStorage.setItem('cached_user_profile', JSON.stringify(tokenProfile));
+          }
+        } catch (ftErr) {
+          console.log('Error checking friend token eligibility:', ftErr);
+        }
+
         return true; // trial was granted
+      }
+
+      // Even if no trial was granted, still check friend token (e.g., streak 13 trial already used but token not yet earned)
+      try {
+        const earnsFriendToken = await checkFriendTokenEligibility(streak, userProfile);
+        if (earnsFriendToken) {
+          await awardFriendToken(user.uid);
+          trackAction('friend_token_earned');
+          const tokenProfile = { ...userProfile, friendTokens: (userProfile.friendTokens || 0) + 1, friendTokenEarned: true };
+          setUserProfile(tokenProfile);
+          await AsyncStorage.setItem('cached_user_profile', JSON.stringify(tokenProfile));
+        }
+      } catch (ftErr) {
+        console.log('Error checking friend token eligibility:', ftErr);
       }
     } catch (error) {
       console.log('Error checking streak trial:', error);

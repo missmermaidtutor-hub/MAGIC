@@ -1390,6 +1390,21 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
 
+        {/* Friend gift token banner — show if user has friend tokens */}
+        {userProfile && (userProfile.friendTokens || 0) > 0 && (
+          <View style={{ backgroundColor: 'rgba(10, 14, 39, 0.9)', borderWidth: 2, borderColor: '#22C55E', borderRadius: 10, padding: 12, marginHorizontal: 10, marginBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ color: '#22C55E', fontSize: 13, flex: 1, fontWeight: '600' }}>
+              🎁 You have a gift token for a friend!
+            </Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('InviteFriends')}
+              style={{ marginLeft: 8, paddingHorizontal: 12, paddingVertical: 5, backgroundColor: '#22C55E', borderRadius: 6 }}
+            >
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Invite</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ===== STREAK STAR ARROW ===== */}
         <View style={styles.starSection}>
           <View style={styles.arrowContainer}>

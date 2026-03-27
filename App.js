@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initSentry, Sentry } from './config/sentry';
@@ -53,6 +53,7 @@ import ComingSoonScreen from './screens/menu-pages/ComingSoonScreen';
 import ShareAppScreen from './screens/menu-pages/ShareAppScreen';
 import InviteFriendsScreen from './screens/menu-pages/InviteFriendsScreen';
 import InviteTemplateScreen from './screens/admin/InviteTemplateScreen';
+import InviteAnalyticsScreen from './screens/admin/InviteAnalyticsScreen';
 import FeatureIdeasScreen from './screens/FeatureIdeasScreen';
 import IntroScreen from './screens/IntroScreen';
 import PremiumSignupScreen from './screens/menu-pages/PremiumSignupScreen';
@@ -60,14 +61,17 @@ import PremiumSignupScreen from './screens/menu-pages/PremiumSignupScreen';
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
 
-// MAGIC emoji icons for tab bar
+// MAGIC tab bar icons — images for Home/Grow, emoji for the rest
+const tabImages = {
+  Home: require('./assets/home.png'),
+  Grow: require('./assets/small-tree-icon-7690.jpg'),
+  Connect: require('./assets/Connect.png'),
+};
+
 const tabEmojis = {
-  Home: '⭐',
   Manifest: '📝',
   Art: '🎨',
-  Grow: '🎯',
   Inspire: '✨',
-  Connect: '💪',
 };
 
 const tabColors = {
@@ -79,13 +83,22 @@ const tabColors = {
   Connect: '#5008a7',
 };
 
-// Custom Tab Bar Icon Component — round emoji button
+// Tabs where the image needs to zoom in (whitespace around the art)
+const zoomedTabs = { Home: true, Connect: true };
+
+// Custom Tab Bar Icon Component — round button (image or emoji)
 function TabIcon({ tabName, focused }) {
+  const isImage = !!tabImages[tabName];
+  const zoomed = zoomedTabs[tabName];
   return (
     <View style={styles.tabIconWrapper}>
       {focused && <View style={styles.tabIconGlow} />}
-      <View style={[styles.tabIcon, { borderColor: tabColors[tabName] || '#B8860B' }]}>
-        <Text style={styles.tabIconEmoji}>{tabEmojis[tabName]}</Text>
+      <View style={[styles.tabIcon, isImage && styles.tabIconImageContainer, { borderColor: tabColors[tabName] || '#B8860B' }]}>
+        {isImage ? (
+          <Image source={tabImages[tabName]} style={zoomed ? styles.tabIconImageZoomed : styles.tabIconImage} resizeMode="cover" />
+        ) : (
+          <Text style={styles.tabIconEmoji}>{tabEmojis[tabName]}</Text>
+        )}
       </View>
     </View>
   );
@@ -322,6 +335,13 @@ function MainTabs({ initialRoute = 'Home' }) {
           tabBarButton: () => null,
         }}
       />
+      <Tab.Screen
+        name="InviteAnalytics"
+        component={InviteAnalyticsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -482,6 +502,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 8,
+  },
+  tabIconImageContainer: {
+    overflow: 'hidden',
+  },
+  tabIconImage: {
+    width: '100%',
+    height: '100%',
+  },
+  tabIconImageZoomed: {
+    width: '140%',
+    height: '140%',
   },
   tabIconEmoji: {
     fontSize: 22,

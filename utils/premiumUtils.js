@@ -239,6 +239,30 @@ export const redeemTrialToken = (userProfile) => {
   return { expiry, trialType: 'active_day' };
 };
 
+// ── Friend gift token eligibility ──
+
+/**
+ * Check if the user's first 13-day streak should earn a friend gift token.
+ * Triggers at streak === 13, once per account (friendTokenEarned flag).
+ *
+ * Returns true if a friend token should be awarded, false otherwise.
+ */
+export const checkFriendTokenEligibility = async (streak, userProfile) => {
+  if (streak !== 13) return false;
+
+  // One-time only: check Firestore flag
+  if (userProfile?.friendTokenEarned) return false;
+
+  // Also check AsyncStorage as a local dedup
+  const alreadyEarned = await AsyncStorage.getItem('friend_token_earned');
+  if (alreadyEarned) return false;
+
+  // Mark locally
+  await AsyncStorage.setItem('friend_token_earned', 'true');
+
+  return true;
+};
+
 // ── Display helpers ──
 
 /** Human-readable premium status label. */

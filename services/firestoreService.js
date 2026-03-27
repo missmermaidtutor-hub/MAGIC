@@ -1037,6 +1037,30 @@ export const redeemTrialTokenFirestore = async (uid) => {
   return true;
 };
 
+// Award a friend gift token (one-time at first 13-day streak)
+export const awardFriendToken = async (uid) => {
+  const userRef = doc(db, 'users', uid);
+  await updateDoc(userRef, {
+    friendTokens: increment(1),
+    friendTokenEarned: true,
+    updatedAt: serverTimestamp(),
+  });
+};
+
+// Consume a friend gift token when attaching to an invite
+export const consumeFriendToken = async (uid) => {
+  const userRef = doc(db, 'users', uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) return false;
+  const data = snap.data();
+  if ((data.friendTokens || 0) <= 0) return false;
+  await updateDoc(userRef, {
+    friendTokens: increment(-1),
+    updatedAt: serverTimestamp(),
+  });
+  return true;
+};
+
 // Set paid premium status
 export const setPremium = async (uid, isPremium, expiryDate = null) => {
   const userRef = doc(db, 'users', uid);
@@ -1228,12 +1252,14 @@ export const checkAndGrantReferralTrial = async (uid) => {
 // ============================================================
 
 // Save an invitation record under the user's subcollection
-export const saveInvitation = async (uid, email) => {
-  const ref = await addDoc(collection(db, 'users', uid, 'invitations'), {
+export const saveInvitation = async (uid, email, hasFriendToken = false) => {
+  const data = {
     email: email.toLowerCase().trim(),
     sentAt: serverTimestamp(),
     converted: false,
-  });
+  };
+  if (hasFriendToken) data.hasFriendToken = true;
+  const ref = await addDoc(collection(db, 'users', uid, 'invitations'), data);
   return ref.id;
 };
 
@@ -1281,7 +1307,9 @@ export const grantInviteWeek = async (uid) => {
 };
 
 // Check if a newly signed-up user's email matches any pending invitation, mark converted
-export const checkAndConvertInvitation = async (newUserEmail) => {
+// When converted, grants the INVITER +7 days premium. If the invite carried a friend token,
+// also awards the NEW USER a trial token.
+export const checkAndConvertInvitation = async (newUserEmail, newUserUid) => {
   if (!newUserEmail) return;
   const normalizedEmail = newUserEmail.toLowerCase().trim();
 
@@ -1295,6 +1323,20 @@ export const checkAndConvertInvitation = async (newUserEmail) => {
 
   for (const d of snap.docs) {
     await updateDoc(d.ref, { converted: true, convertedAt: serverTimestamp() });
+
+    // Extract inviter UID from path: users/{uid}/invitations/{id}
+    const pathParts = d.ref.path.split('/');
+    const inviterUid = pathParts[1];
+    if (inviterUid) {
+      // Grant inviter +7 days premium
+      await grantInviteWeek(inviterUid);
+    }
+
+    // If invite carried a friend token, award the new user a trial token
+    const data = d.data();
+    if (data.hasFriendToken && newUserUid) {
+      await awardTrialToken(newUserUid);
+    }
   }
 };
 

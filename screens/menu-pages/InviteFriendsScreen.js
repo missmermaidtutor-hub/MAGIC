@@ -15,7 +15,7 @@ import { openMailto } from '../../utils/emailUtils';
 import {
   getUserInvitations,
   saveInvitation,
-  grantInviteWeek,
+  consumeFriendToken,
   getInviteTemplate,
 } from '../../services/firestoreService';
 
@@ -39,6 +39,9 @@ export default function InviteFriendsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [sendingIndex, setSendingIndex] = useState(null);
   const [template, setTemplate] = useState({ subject: DEFAULT_SUBJECT, body: DEFAULT_BODY });
+  const [attachToken, setAttachToken] = useState(false);
+
+  const friendTokenCount = userProfile?.friendTokens || 0;
 
   useEffect(() => {
     loadData();
@@ -116,20 +119,21 @@ export default function InviteFriendsScreen({ navigation }) {
       // Open mailto
       openMailto(subject, body, email);
 
-      // Save invitation to Firestore
-      await saveInvitation(user.uid, email);
+      // Save invitation to Firestore (with optional friend token)
+      await saveInvitation(user.uid, email, attachToken);
 
-      // Grant +7 days premium
-      await grantInviteWeek(user.uid);
-
-      // Refresh profile to pick up new premiumTrialExpiry
-      await refreshProfile();
+      // Consume friend token if attached
+      if (attachToken) {
+        await consumeFriendToken(user.uid);
+        setAttachToken(false);
+        await refreshProfile();
+      }
 
       // Reload invitations
       const updated = await getUserInvitations(user.uid);
       setInvitations(updated);
 
-      showAlert('Invitation Sent!', 'You earned a free week of Premium!');
+      showAlert('Invitation Sent!', 'When your friend joins, you\'ll earn a free week of Premium!');
     } catch (error) {
       console.log('Error sending invitation:', error);
       showAlert('Error', 'Could not save invitation. Please try again.');
@@ -143,6 +147,7 @@ export default function InviteFriendsScreen({ navigation }) {
     const slotEmail = sentInvite ? sentInvite.email : emails[index];
     const isSent = !!sentInvite;
     const isConverted = sentInvite?.converted;
+    const hasToken = sentInvite?.hasFriendToken;
     const allSent = sentCount >= MAX_INVITES;
 
     return (
@@ -151,6 +156,7 @@ export default function InviteFriendsScreen({ navigation }) {
         {isSent ? (
           <View style={styles.sentRow}>
             <Text style={styles.sentEmail} numberOfLines={1}>{slotEmail}</Text>
+            {hasToken && <Text style={{ fontSize: 12, marginLeft: 4 }}>🎁</Text>}
             <View style={[styles.badge, isConverted ? styles.badgeConverted : styles.badgeSent]}>
               <Text style={styles.badgeText}>{isConverted ? 'Joined!' : 'Sent'}</Text>
             </View>
@@ -202,12 +208,29 @@ export default function InviteFriendsScreen({ navigation }) {
 
         <View style={styles.introBox}>
           <Text style={styles.introText}>
-            Invite friends to MAGIC! Each invitation earns you a free week of Premium.
+            When an invited friend joins, you earn a free week of Premium!
           </Text>
           <Text style={styles.introText}>
             You can invite up to {MAX_INVITES} friends.
           </Text>
         </View>
+
+        {/* Friend token banner */}
+        {friendTokenCount > 0 && (
+          <View style={styles.tokenBanner}>
+            <Text style={styles.tokenBannerText}>
+              🎁 You have a gift token! Attach it to an invite and your friend gets a free premium trial when they join.
+            </Text>
+            <TouchableOpacity
+              style={[styles.tokenToggle, attachToken && styles.tokenToggleActive]}
+              onPress={() => setAttachToken(!attachToken)}
+            >
+              <Text style={[styles.tokenToggleText, attachToken && styles.tokenToggleTextActive]}>
+                {attachToken ? 'Token Attached' : 'Attach Token'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -218,7 +241,7 @@ export default function InviteFriendsScreen({ navigation }) {
             {/* Summary */}
             <View style={styles.summaryBox}>
               <Text style={styles.summaryText}>
-                {sentCount} invitation{sentCount !== 1 ? 's' : ''} sent — {sentCount} week{sentCount !== 1 ? 's' : ''} earned
+                {sentCount} invitation{sentCount !== 1 ? 's' : ''} sent — {convertedCount} week{convertedCount !== 1 ? 's' : ''} earned
               </Text>
               {convertedCount > 0 && (
                 <Text style={styles.convertedText}>
@@ -301,6 +324,42 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 4,
+  },
+  tokenBanner: {
+    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  tokenBannerText: {
+    fontSize: 13,
+    color: '#4B0082',
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 10,
+  },
+  tokenToggle: {
+    backgroundColor: 'rgba(75, 0, 130, 0.1)',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#4B0082',
+  },
+  tokenToggleActive: {
+    backgroundColor: '#FFD700',
+    borderColor: '#FFD700',
+  },
+  tokenToggleText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4B0082',
+  },
+  tokenToggleTextActive: {
+    color: '#4B0082',
   },
   summaryBox: {
     backgroundColor: 'rgba(255, 215, 0, 0.15)',
