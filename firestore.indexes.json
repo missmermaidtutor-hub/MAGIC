@@ -7,6 +7,14 @@
         { "fieldPath": "voterUid", "order": "ASCENDING" },
         { "fieldPath": "courageDate", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "invitations",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "email", "order": "ASCENDING" },
+        { "fieldPath": "converted", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

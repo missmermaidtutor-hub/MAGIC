@@ -90,10 +90,6 @@ export default function InviteAnalyticsScreen({ navigation }) {
 
   return (
     <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
-      <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
-        <Text style={styles.menuBtnText}>{'\u2630'}</Text>
-      </TouchableOpacity>
-
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Invite Analytics</Text>
 
@@ -196,6 +192,14 @@ export default function InviteAnalyticsScreen({ navigation }) {
         )}
       </ScrollView>
 
+      {/* Buttons AFTER ScrollView so they render on top (web z-index fix) */}
+      <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
+        <Text style={styles.menuBtnText}>{'\u2630'}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
+        <Text style={styles.closeBtnText}>{'\u2715'}</Text>
+      </TouchableOpacity>
+
       {profileModalUser && (
         <UserProfileModal
           visible={!!profileModalUser}
@@ -239,6 +243,23 @@ const styles = StyleSheet.create({
   menuBtnText: {
     color: '#4B0082',
     fontSize: 20,
+    fontWeight: 'bold',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 44,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeBtnText: {
+    color: '#4B0082',
+    fontSize: 18,
     fontWeight: 'bold',
   },
   accessDenied: {

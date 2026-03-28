@@ -260,8 +260,12 @@ export default function AnalyticsScreen({ navigation }) {
             {/* Summary Cards */}
             <View style={styles.summaryRow}>
               <View style={styles.summaryCard}>
+                <Text style={styles.summaryNumber}>{Object.keys(profileMap).length}</Text>
+                <Text style={styles.summaryLabel}>Registered</Text>
+              </View>
+              <View style={styles.summaryCard}>
                 <Text style={styles.summaryNumber}>{dau}</Text>
-                <Text style={styles.summaryLabel}>Active Users</Text>
+                <Text style={styles.summaryLabel}>Active Today</Text>
               </View>
               <View style={styles.summaryCard}>
                 <Text style={styles.summaryNumber}>{formatSeconds(totalSeconds)}</Text>
