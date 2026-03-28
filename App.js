@@ -57,6 +57,7 @@ import InviteAnalyticsScreen from './screens/admin/InviteAnalyticsScreen';
 import FeatureIdeasScreen from './screens/FeatureIdeasScreen';
 import IntroScreen from './screens/IntroScreen';
 import PremiumSignupScreen from './screens/menu-pages/PremiumSignupScreen';
+import FaqScreen from './screens/menu-pages/FaqScreen';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
@@ -335,6 +336,13 @@ function MainTabs({ initialRoute = 'Home' }) {
       <Tab.Screen
         name="PremiumSignup"
         component={PremiumSignupScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="FAQ"
+        component={FaqScreen}
         options={{
           tabBarButton: () => null,
         }}

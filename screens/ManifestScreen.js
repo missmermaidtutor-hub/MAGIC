@@ -24,7 +24,6 @@ import { trackAction } from '../services/analyticsService';
 export default function ManifestScreen() {
   const { user, userProfile } = useAuth();
   const [todayQuote, setTodayQuote] = useState({ quote: '', author: '' });
-  const [growthGoal, setGrowthGoal] = useState('');
   const [callMuse, setCallMuse] = useState('');
   const [dumpStalls, setDumpStalls] = useState('');
   const [manifestVision, setManifestVision] = useState('');
@@ -46,14 +45,12 @@ export default function ManifestScreen() {
   const callMuseRef = useRef('');
   const dumpStallsRef = useRef('');
   const manifestVisionRef = useRef('');
-  const growthGoalRef = useRef('');
   const activeFieldsRef = useRef(new Set());
 
   // Keep refs in sync with state
   useEffect(() => { callMuseRef.current = callMuse; }, [callMuse]);
   useEffect(() => { dumpStallsRef.current = dumpStalls; }, [dumpStalls]);
   useEffect(() => { manifestVisionRef.current = manifestVision; }, [manifestVision]);
-  useEffect(() => { growthGoalRef.current = growthGoal; }, [growthGoal]);
   useEffect(() => { activeFieldsRef.current = activeFields; }, [activeFields]);
 
   const handleFieldFocus = (field) => {
@@ -110,8 +107,10 @@ export default function ManifestScreen() {
   const autoSaveWithNotation = async (dateKey) => {
     try {
       const date = dateKey || getTodayDate();
+      const existing = await AsyncStorage.getItem(`manifest_${date}`);
+      const parsed = existing ? JSON.parse(existing) : {};
       const entry = {
-        growthGoal: growthGoalRef.current,
+        ...parsed,
         callMuse: callMuseRef.current,
         dumpStalls: dumpStallsRef.current,
         manifestVision: manifestVisionRef.current,
@@ -138,7 +137,6 @@ export default function ManifestScreen() {
       const parsed = existing ? JSON.parse(existing) : {};
       const entry = {
         ...parsed,
-        growthGoal: growthGoalRef.current,
         callMuse: callMuseRef.current,
         dumpStalls: dumpStallsRef.current,
         manifestVision: manifestVisionRef.current,
@@ -162,61 +160,6 @@ export default function ManifestScreen() {
     setManifestVision('');
   };
 
-  // Load goal separately — persists until HomeScreen acknowledges or full day without goal
-  const loadGoal = async () => {
-    try {
-      const today = getTodayDate();
-      // Check if HomeScreen has acknowledged the goal (reset signal)
-      const ackDate = await AsyncStorage.getItem('goal_acknowledged_date');
-      const currentGoal = await AsyncStorage.getItem('current_grow_goal');
-      const goalSetDate = await AsyncStorage.getItem('goal_set_date');
-
-      if (ackDate === today) {
-        // Goal was acknowledged today on HomeScreen — check if new goal was set
-        const newGoal = await AsyncStorage.getItem('current_grow_goal');
-        setGrowthGoal(newGoal || '');
-        return;
-      }
-
-      if (currentGoal) {
-        // Check if a full calendar day has passed without a goal being set
-        if (goalSetDate) {
-          const setDate = new Date(goalSetDate);
-          const now = new Date();
-          const daysSince = Math.floor((now - setDate) / (1000 * 60 * 60 * 24));
-          if (daysSince > 1 && !currentGoal.trim()) {
-            // More than a full day with no goal — reset
-            setGrowthGoal('');
-            return;
-          }
-        }
-        setGrowthGoal(currentGoal);
-      } else {
-        // Try loading from today's manifest entry
-        const entry = await AsyncStorage.getItem(`manifest_${today}`);
-        if (entry) {
-          const parsed = JSON.parse(entry);
-          setGrowthGoal(parsed.growthGoal || '');
-        }
-      }
-    } catch (error) {
-      console.log('Error loading goal:', error);
-    }
-  };
-
-  // Save goal to persistent storage when it changes
-  const handleGoalChange = async (text) => {
-    setGrowthGoal(text);
-    try {
-      await AsyncStorage.setItem('current_grow_goal', text);
-      if (text.trim()) {
-        await AsyncStorage.setItem('goal_set_date', getTodayDate());
-      }
-    } catch (error) {
-      console.log('Error saving goal:', error);
-    }
-  };
-
   // Get quote of the day (same quote for the whole day)
   useEffect(() => {
     // Load today's quote (shared with HomeScreen via AsyncStorage cache)
@@ -225,8 +168,6 @@ export default function ManifestScreen() {
     entryDateRef.current = getTodayDate();
     // Load today's text entry (muse, dump, vision)
     loadTodayEntry();
-    // Load goal separately (persistent)
-    loadGoal();
     // Load past entries for viewing
     loadPastEntries();
     // Load hearted quotes
@@ -244,7 +185,6 @@ export default function ManifestScreen() {
   useFocusEffect(
     useCallback(() => {
       loadHeartedQuotes();
-      loadGoal();
       // Check if date changed while screen was unfocused
       const currentDate = getTodayDate();
       if (entryDateRef.current && entryDateRef.current !== currentDate) {
@@ -349,8 +289,11 @@ export default function ManifestScreen() {
   const saveEntry = async () => {
     try {
       const today = getTodayDate();
+      // Preserve any existing fields (e.g. growthGoal set by GoalScreen)
+      const existingRaw = await AsyncStorage.getItem(`manifest_${today}`);
+      const existing = existingRaw ? JSON.parse(existingRaw) : {};
       const entry = {
-        growthGoal,
+        ...existing,
         callMuse,
         dumpStalls,
         manifestVision,
@@ -358,11 +301,6 @@ export default function ManifestScreen() {
       };
 
       await AsyncStorage.setItem(`manifest_${today}`, JSON.stringify(entry));
-      // Also persist goal separately
-      await AsyncStorage.setItem('current_grow_goal', growthGoal);
-      if (growthGoal.trim()) {
-        await AsyncStorage.setItem('goal_set_date', today);
-      }
 
       // Sync to Firestore
       if (user) {
@@ -527,16 +465,18 @@ export default function ManifestScreen() {
         
         {/* Quote of the Day */}
         <View style={styles.quoteCard}>
-          <Text style={styles.quoteText}>"{todayQuote.quote}"</Text>
-          <Text style={styles.quoteAuthor}>~{todayQuote.author}</Text>
-          <TouchableOpacity
-            style={styles.heartButton}
-            onPress={() => toggleHeartQuote(todayQuote)}
-          >
-            <Text style={todayQuoteHearted ? styles.heartIconFilled : styles.heartIcon}>
-              {todayQuoteHearted ? '♥' : '♡'}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.goldInnerBorder}>
+            <Text style={styles.quoteText}>"{todayQuote.quote}"</Text>
+            <Text style={styles.quoteAuthor}>~{todayQuote.author}</Text>
+            <TouchableOpacity
+              style={styles.heartButton}
+              onPress={() => toggleHeartQuote(todayQuote)}
+            >
+              <Text style={todayQuoteHearted ? styles.heartIconFilled : styles.heartIcon}>
+                {todayQuoteHearted ? '♥' : '♡'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {canAccessFeature('favoriteQuotes', userProfile) ? (
@@ -563,28 +503,15 @@ export default function ManifestScreen() {
 
         {/* Journaling Prompts */}
         <View style={styles.journalCard}>
+          <View style={styles.goldInnerBorder}>
           <Text style={styles.journalTitle}>Manifest</Text>
+          <Text style={styles.privacyNote}>
+            This page is your private diary. It will not be shared with any other users, companies, organizations, persons, non-persons, etc. It is stored in archives for the purpose of your own reflection.
+          </Text>
 
-          {/* 1. Growth Goal - Short */}
+          {/* 1. Call the Muse - Long */}
           <View style={styles.promptContainer}>
             <Text style={styles.promptNumber}>1.</Text>
-            <View style={styles.promptContent}>
-              <Text style={styles.promptLabel}>Today's Growth Goal:</Text>
-              <TextInput
-                style={styles.shortInput}
-                placeholder="What will you achieve today?"
-                placeholderTextColor="#aaa"
-                value={growthGoal}
-                onChangeText={handleGoalChange}
-                onFocus={() => handleFieldFocus('goal')}
-                onBlur={() => handleFieldBlur('goal')}
-              />
-            </View>
-          </View>
-
-          {/* 2. Call the Muse - Long */}
-          <View style={styles.promptContainer}>
-            <Text style={styles.promptNumber}>2.</Text>
             <View style={styles.promptContent}>
               <Text style={styles.promptLabel}>Call the Muse:</Text>
               <TextInput
@@ -601,9 +528,9 @@ export default function ManifestScreen() {
             </View>
           </View>
 
-          {/* 3. Dump What Stalls - Long */}
+          {/* 2. Dump What Stalls - Long */}
           <View style={styles.promptContainer}>
-            <Text style={styles.promptNumber}>3.</Text>
+            <Text style={styles.promptNumber}>2.</Text>
             <View style={styles.promptContent}>
               <Text style={styles.promptLabel}>Dump what stalls you:</Text>
               <TextInput
@@ -620,9 +547,9 @@ export default function ManifestScreen() {
             </View>
           </View>
 
-          {/* 4. Manifest Vision - Long */}
+          {/* 3. Manifest Vision - Long */}
           <View style={styles.promptContainer}>
-            <Text style={styles.promptNumber}>4.</Text>
+            <Text style={styles.promptNumber}>3.</Text>
             <View style={styles.promptContent}>
               <Text style={styles.promptLabel}>Manifest Vision:</Text>
               <TextInput
@@ -650,6 +577,7 @@ export default function ManifestScreen() {
               <Text style={styles.saveToastText}>Entry saved!</Text>
             </View>
           )}
+          </View>
         </View>
 
         {/* View Past Entries Button (premium) */}
@@ -695,9 +623,8 @@ const styles = StyleSheet.create({
   quoteCard: {
     backgroundColor: 'transparent',
     borderRadius: 12,
-    padding: 20,
     marginBottom: 16,
-    borderWidth: 5,
+    borderWidth: 1,
     borderColor: '#78000E',
     position: 'relative',
   },
@@ -730,7 +657,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
-    borderWidth: 5,
+    borderWidth: 1,
     borderColor: '#78000E',
     position: 'relative',
   },
@@ -748,8 +675,7 @@ const styles = StyleSheet.create({
   journalCard: {
     backgroundColor: 'transparent',
     borderRadius: 12,
-    padding: 20,
-    borderWidth: 5,
+    borderWidth: 1,
     borderColor: '#78000E',
     marginBottom: 20,
   },
@@ -758,7 +684,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#78000E',
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  privacyNote: {
+    fontSize: 11,
+    color: '#78000E',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    opacity: 0.7,
     marginBottom: 20,
+    lineHeight: 16,
+  },
+  goldInnerBorder: {
+    borderWidth: 1,
+    borderColor: '#DAA520',
+    borderRadius: 8,
+    margin: 3,
+    padding: 16,
   },
   promptContainer: {
     flexDirection: 'row',
@@ -780,22 +722,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     fontWeight: '600',
   },
-  shortInput: {
-    backgroundColor: 'transparent',
-    borderRadius: 8,
-    padding: 12,
-    color: '#78000E',
-    fontSize: 16,
-    borderWidth: 5,
-    borderColor: '#78000E',
-  },
   longInput: {
     backgroundColor: 'transparent',
     borderRadius: 8,
     padding: 12,
     color: '#78000E',
     fontSize: 16,
-    borderWidth: 5,
+    borderWidth: 1,
     borderColor: '#78000E',
     minHeight: 100,
     textAlignVertical: 'top',
@@ -817,7 +750,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
-    borderWidth: 5,
+    borderWidth: 1,
     borderColor: '#78000E',
   },
   viewEntriesButtonText: {
@@ -834,7 +767,7 @@ const styles = StyleSheet.create({
     padding: 12,
     color: '#78000E',
     fontSize: 16,
-    borderWidth: 5,
+    borderWidth: 1,
     borderColor: '#78000E',
   },
   backButton: {
@@ -842,7 +775,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 20,
-    borderWidth: 5,
+    borderWidth: 1,
     borderColor: '#78000E',
   },
   backButtonText: {
@@ -865,7 +798,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
-    borderWidth: 5,
+    borderWidth: 1,
     borderColor: '#78000E',
   },
   entryDate: {
@@ -900,7 +833,7 @@ const styles = StyleSheet.create({
   // Midnight warning banner
   midnightBanner: {
     backgroundColor: 'transparent',
-    borderWidth: 5,
+    borderWidth: 1,
     borderColor: '#78000E',
     borderRadius: 10,
     padding: 16,
@@ -919,7 +852,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 12,
     alignItems: 'center',
-    borderWidth: 5,
+    borderWidth: 1,
     borderColor: '#78000E',
   },
   saveToastText: {

@@ -118,6 +118,7 @@ export default function InspireScreen({ navigation }) {
   const [voteCountMap, setVoteCountMap] = useState({}); // courageId → number of votes received
   const [hasRankedToday, setHasRankedToday] = useState(false);
   const [continueVoting, setContinueVoting] = useState(false);
+  const [criteriaModalVisible, setCriteriaModalVisible] = useState(false);
   const soundRef = useRef(null);
 
   // Load criterion + saved inspirations
@@ -125,6 +126,22 @@ export default function InspireScreen({ navigation }) {
     loadTodaysCriterion();
     loadSavedInspirations();
   }, []);
+
+  // Show criteria overlay on first daily visit
+  const criteriaChecked = useRef(false);
+  useEffect(() => {
+    if (criteriaChecked.current || !todaysCriterion) return;
+    criteriaChecked.current = true;
+    const checkFirstVisit = async () => {
+      const today = getESTDate();
+      const seen = await AsyncStorage.getItem(`inspire_criteria_seen_${today}`);
+      if (!seen) {
+        setCriteriaModalVisible(true);
+        await AsyncStorage.setItem(`inspire_criteria_seen_${today}`, 'true');
+      }
+    };
+    checkFirstVisit();
+  }, [todaysCriterion]);
 
   // Load courages and votes when screen gains focus
   useFocusEffect(
@@ -717,6 +734,30 @@ export default function InspireScreen({ navigation }) {
 
   return (
     <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+      {/* First-visit criteria overlay */}
+      <Modal
+        visible={criteriaModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setCriteriaModalVisible(false)}
+      >
+        <View style={styles.criteriaOverlay}>
+          <View style={styles.criteriaCard}>
+            <Text style={styles.criteriaModalTitle}>Today's Ranking Criterion</Text>
+            <Text style={styles.criteriaModalCriterion}>{todaysCriterion}</Text>
+            <Text style={styles.criteriaModalBody}>
+              Rank each artwork from 1 (most aligned) to 4 (least aligned) based on how well it embodies today's criterion. Use each number only once.
+            </Text>
+            <TouchableOpacity
+              style={styles.criteriaModalBtn}
+              onPress={() => setCriteriaModalVisible(false)}
+            >
+              <Text style={styles.criteriaModalBtnText}>Start Voting</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Full-page image viewer modal — swipeable through current set */}
       <Modal
         visible={fullViewArtwork !== null}
@@ -1449,5 +1490,55 @@ const styles = StyleSheet.create({
   postVoteCloseBtnText: {
     color: '#999',
     fontSize: 14,
+  },
+  // Criteria overlay
+  criteriaOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  criteriaCard: {
+    backgroundColor: 'rgba(207, 232, 199, 0.95)',
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: '#004225',
+    padding: 30,
+    width: '100%',
+    maxWidth: 380,
+    alignItems: 'center',
+  },
+  criteriaModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#004225',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  criteriaModalCriterion: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#3c9820',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  criteriaModalBody: {
+    fontSize: 15,
+    color: '#004225',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  criteriaModalBtn: {
+    backgroundColor: '#004225',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+  },
+  criteriaModalBtnText: {
+    color: '#cfe8c7',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

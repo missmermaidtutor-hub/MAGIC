@@ -662,8 +662,8 @@ export default function ArtScreen() {
         }).catch(err => console.log('Firestore artwork backup error:', err));
 
         const successMsg = isAnonymous
-          ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
-          : 'Your Courage has been registered for Voting tomorrow. When voting is over, your Courage will also show your pseudonym in Winner Circle, and galleries.';
+          ? 'Your Courage has been registered for Ranking tomorrow. It will remain anonymous even after ranking is complete.'
+          : 'Your Courage has been registered for Ranking tomorrow. When ranking is over, your Courage will also show your pseudonym in Winner Circle, and galleries.';
         showAlert('Congratulations on your COURAGE!', successMsg);
       } catch (e) {
         console.log('Courage text upload error:', e);
@@ -806,8 +806,8 @@ export default function ArtScreen() {
         }).catch(err => console.log('Firestore artwork backup error:', err));
 
         const successMsg = isAnonymous
-          ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
-          : 'Your Courage has been registered for Voting tomorrow. When voting is over, your Courage will also show your pseudonym in Winner Circle, and galleries.';
+          ? 'Your Courage has been registered for Ranking tomorrow. It will remain anonymous even after ranking is complete.'
+          : 'Your Courage has been registered for Ranking tomorrow. When ranking is over, your Courage will also show your pseudonym in Winner Circle, and galleries.';
         showAlert('Congratulations on your COURAGE!', successMsg);
       } catch (e) {
         console.log('Courage sketch upload error:', e);
@@ -1002,8 +1002,8 @@ export default function ArtScreen() {
         }).catch(err => console.log('Firestore artwork backup error:', err));
 
         const successMsg = isAnonymous
-          ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
-          : 'Your Courage has been registered for Voting tomorrow. When voting is over, your Courage will also show your pseudonym in Winner Circle, and galleries.';
+          ? 'Your Courage has been registered for Ranking tomorrow. It will remain anonymous even after ranking is complete.'
+          : 'Your Courage has been registered for Ranking tomorrow. When ranking is over, your Courage will also show your pseudonym in Winner Circle, and galleries.';
         showAlert('Congratulations on your COURAGE!', successMsg);
       } catch (e) {
         console.log('Courage capture upload error:', e);
@@ -1019,19 +1019,6 @@ export default function ArtScreen() {
     setCourageConfirmVisible(true);
   };
 
-  // Handle uploads (opens capture modal with image from library)
-  const handlePrivateUpload = async () => {
-    captureFromLibrary();
-  };
-
-  const handleCourageUpload = async () => {
-    if (courageUploadedToday) {
-      showAlert('Already Submitted', 'You can only upload one Courage per day. Come back tomorrow!');
-      return;
-    }
-    // Opens capture modal — user can title + save from there
-    captureFromLibrary();
-  };
 
   // Courage confirmation modal handlers
   const handleCourageConfirm = () => {
@@ -1195,28 +1182,12 @@ export default function ArtScreen() {
             </View>
             <Text style={styles.toolLabel}>Capture</Text>
           </TouchableOpacity>
-        </View>
 
-        {/* Upload Buttons */}
-        <View style={styles.uploadContainer}>
-          <TouchableOpacity
-            style={styles.privateUploadButton}
-            onPress={handlePrivateUpload}
-          >
-            <Text style={styles.uploadButtonText}>Upload to</Text>
-            <Text style={styles.uploadButtonText}>private</Text>
-            <Text style={styles.uploadButtonText}>gallery</Text>
-            <Text style={styles.uploadButtonText}>ONLY</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.privateUploadButton}
-            onPress={handleCourageUpload}
-          >
-            <Text style={styles.uploadButtonText}>SHARE WITH</Text>
-            <Text style={styles.uploadButtonText}>COURAGE</Text>
-            <Text style={styles.uploadButtonText}>(voting)</Text>
-            <Text style={styles.uploadButtonText}>once per day</Text>
+          <TouchableOpacity style={styles.toolButton} onPress={captureFromLibrary}>
+            <View style={styles.toolIconContainer}>
+              <Text style={styles.toolIcon}>📤</Text>
+            </View>
+            <Text style={styles.toolLabel}>Upload</Text>
           </TouchableOpacity>
         </View>
 
@@ -1233,7 +1204,7 @@ export default function ArtScreen() {
             <TouchableOpacity style={styles.modalXButton} onPress={() => setWriteModalVisible(false)}>
               <Text style={styles.modalXText}>✕</Text>
             </TouchableOpacity>
-            <Text style={styles.writeModalTitle}>{modeLabels[writeMode] || 'Write'}</Text>
+            <Text style={styles.writeModalTitle}>Today's suggested prompt:</Text>
             <Text style={styles.writeModalPrompt}>{todaysChallenge}</Text>
             <TextInput
               style={styles.titleInput}
@@ -1461,8 +1432,8 @@ export default function ArtScreen() {
 
             <Text style={styles.courageConfirmMessage}>
               {courageOverrideAnonymous
-                ? 'Your Courage has been registered for Voting tomorrow. It will remain anonymous even after votes are cast.'
-                : 'Your Courage has been registered for Voting tomorrow. When voting is over, your Courage will also show your pseudonym in Winner Circle, and galleries.'}
+                ? 'Your Courage has been registered for Ranking tomorrow. It will remain anonymous even after ranking is complete.'
+                : 'Your Courage has been registered for Ranking tomorrow. When ranking is over, your Courage will also show your pseudonym in Winner Circle, and galleries.'}
             </Text>
 
             <View style={styles.courageConfirmButtons}>
@@ -1787,8 +1758,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   toolIconContainer: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
     backgroundColor: 'rgba(243, 203, 130, 0.5)',
     borderRadius: 8,
     justifyContent: 'center',
@@ -1808,53 +1779,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#332100',
     fontWeight: '600',
-  },
-  uploadContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    gap: 15,
-  },
-  privateUploadButton: {
-    flex: 1,
-    backgroundColor: 'rgba(243, 203, 130, 0.5)',
-    borderWidth: 3,
-    borderColor: '#f2990a',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-  },
-  courageUploadButton: {
-    flex: 1,
-    backgroundColor: 'rgba(243, 203, 130, 0.5)',
-    borderWidth: 3,
-    borderColor: '#f2990a',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  courageUploadButtonDone: {
-    backgroundColor: 'rgba(200, 200, 200, 0.3)',
-    borderColor: '#999',
-    opacity: 0.7,
-  },
-  uploadButtonText: {
-    color: '#332100',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  courageUploadText: {
-    color: '#332100',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  courageSubtext: {
-    color: '#332100',
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 2,
   },
   writeModalOverlay: {
     flex: 1,
@@ -1889,14 +1813,15 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   writeModalTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
     color: '#332100',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   writeModalPrompt: {
-    fontSize: 16,
+    fontSize: 24,
+    fontWeight: 'bold',
     color: '#332100',
     textAlign: 'center',
     fontStyle: 'italic',

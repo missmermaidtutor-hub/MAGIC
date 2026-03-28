@@ -1415,3 +1415,14 @@ export const getQuoteLikeCounts = async () => {
   });
   return counts;
 };
+
+// FAQ — stored in appConfig/faq document
+export const getFaqItems = async () => {
+  const snap = await getDoc(doc(db, 'appConfig', 'faq'));
+  if (snap.exists()) return snap.data().items || [];
+  return [];
+};
+
+export const saveFaqItems = async (items) => {
+  await setDoc(doc(db, 'appConfig', 'faq'), { items, updatedAt: serverTimestamp() });
+};
