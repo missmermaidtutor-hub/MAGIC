@@ -7,9 +7,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
-import { calculateAndSetWinner, getRecentWinners, saveProgress, checkPseudonymAvailable, claimPseudonym, releasePseudonym, updateUserProfile, getUserWinCount, awardTrialToken, redeemTrialTokenFirestore } from '../services/firestoreService';
+import { calculateAndSetWinner, getRecentWinners, saveProgress, checkPseudonymAvailable, claimPseudonym, releasePseudonym, updateUserProfile, getUserWinCount, awardTrialToken, redeemTrialTokenFirestore, getDailyPrompt } from '../services/firestoreService';
 import { getESTDate, getESTYesterday, getESTDayBeforeYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
+import promptsData from '../prompts-data.json';
 import { getTodayQuote } from '../utils/quoteUtils';
 import { trackAction } from '../services/analyticsService';
 import { scheduleStreakReminder } from '../utils/notificationUtils';
@@ -797,18 +798,25 @@ export default function HomeScreen({ navigation }) {
     });
   }, [userProfile]);
 
-  // Reload quote, hearted state, star data, pseudonym, and winners every time this screen gets focus
-  // Empty deps array ensures this fires on EVERY focus event (web tab switches included)
+  // Reload data every time this screen gets focus (tab switch, app reopen)
+  // Small delay lets AsyncStorage writes from other tabs settle before reading
+  const focusRefreshRef = useRef(null);
+  focusRefreshRef.current = () => {
+    refreshQuote();
+    loadQuoteHeartedState();
+    loadStreakData();
+    loadPseudonym();
+    refreshProfile();
+    loadWinners();
+    loadTodaysChallenge();
+  };
+
   useFocusEffect(
     useCallback(() => {
-      refreshQuote();
-      loadQuoteHeartedState();
-      loadStreakData();
-      loadPseudonym();
-      refreshProfile();
-      loadWinners();
-      loadTodaysChallenge();
-      if (user && !user.emailVerified) checkEmailVerified();
+      const timer = setTimeout(() => {
+        if (focusRefreshRef.current) focusRefreshRef.current();
+      }, 150);
+      return () => clearTimeout(timer);
     }, [])
   );
 
@@ -858,11 +866,44 @@ export default function HomeScreen({ navigation }) {
 
   const loadTodaysChallenge = async () => {
     try {
-      // Read from local cache (set by ArtScreen or this screen)
-      const challenge = await AsyncStorage.getItem('todays_challenge');
-      if (challenge) setTodaysChallenge(challenge);
+      const today = getESTDate();
+      const savedDate = await AsyncStorage.getItem('prompt_date_v2');
+      const savedChallenge = await AsyncStorage.getItem('todays_challenge');
+
+      // Use cache if it's from today
+      if (savedDate === today && savedChallenge) {
+        setTodaysChallenge(savedChallenge);
+        return;
+      }
+
+      // Generate today's prompt (same logic as ArtScreen)
+      let chosen = null;
+      const categories = [...new Set(promptsData.map(p => p.category))].sort();
+      const estDate = new Date(today + 'T12:00:00');
+      const dayOfYear = Math.floor((estDate - new Date(estDate.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+      const todaysCategory = categories[dayOfYear % categories.length];
+      const categoryPrompts = promptsData.filter(p => p.category === todaysCategory);
+      const pickIndex = Math.floor(dayOfYear / categories.length) % categoryPrompts.length;
+      chosen = categoryPrompts[pickIndex];
+
+      // Override with Firestore if available
+      try {
+        const firestorePrompt = await getDailyPrompt(today);
+        if (firestorePrompt && firestorePrompt.prompt) {
+          chosen = firestorePrompt;
+        }
+      } catch (e) {
+        console.log('Firestore prompt fetch skipped:', e);
+      }
+
+      setTodaysChallenge(chosen.prompt);
+      await AsyncStorage.setItem('prompt_date_v2', today);
+      await AsyncStorage.setItem('todays_challenge', chosen.prompt);
+      await AsyncStorage.setItem('todays_prompt_data', JSON.stringify(chosen));
     } catch (error) {
       console.log('Error loading challenge:', error);
+      const fallback = promptsData[0];
+      setTodaysChallenge(fallback?.prompt || 'Create something beautiful');
     }
   };
 

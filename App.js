@@ -97,7 +97,11 @@ function TabIcon({ tabName, focused }) {
         {isImage ? (
           <Image source={tabImages[tabName]} style={zoomed ? styles.tabIconImageZoomed : styles.tabIconImage} resizeMode="cover" />
         ) : (
-          <Text style={styles.tabIconEmoji}>{tabEmojis[tabName]}</Text>
+          <Text style={[
+              styles.tabIconEmoji,
+              tabName === 'Art' && { fontSize: 38 },
+              tabName === 'Inspire' && { fontSize: 30 },
+            ]}>{tabEmojis[tabName]}</Text>
         )}
       </View>
     </View>
@@ -515,7 +519,7 @@ const styles = StyleSheet.create({
     height: '140%',
   },
   tabIconEmoji: {
-    fontSize: 22,
+    fontSize: 28,
     textAlign: 'center',
   },
   tabIconGlow: {

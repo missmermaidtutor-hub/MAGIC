@@ -416,11 +416,21 @@ export default function StreakScreen({ navigation }) {
     }
   };
 
-  // Check on every focus (covers app reopen, tab switch after midnight)
+  // Refresh stars, calendar, and goals on every focus (tab switch, app reopen)
+  const focusRefreshRef = useRef(null);
+  focusRefreshRef.current = () => {
+    checkGoalDateReset();
+    loadGoals();
+    loadStreakStats();
+    loadBothMonths();
+  };
+
   useFocusEffect(
     useCallback(() => {
-      checkGoalDateReset();
-      loadGoals(); // refresh goals when tab is focused
+      const timer = setTimeout(() => {
+        if (focusRefreshRef.current) focusRefreshRef.current();
+      }, 150);
+      return () => clearTimeout(timer);
     }, [])
   );
 
