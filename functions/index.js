@@ -1,4 +1,5 @@
 const functions = require('firebase-functions');
+const v1 = require('firebase-functions/v1');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -94,7 +95,7 @@ async function deleteSubcollection(docRef, subcollectionName) {
  *  5. Analytics subcollection entries
  *  6. Discussion pod messages authored by the user
  */
-exports.clearData = functions
+exports.clearData = v1
   .region('us-east1')
   .auth.user()
   .onDelete(async (user) => {
