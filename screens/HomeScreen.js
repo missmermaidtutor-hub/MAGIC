@@ -1092,8 +1092,8 @@ export default function HomeScreen({ navigation }) {
       await AsyncStorage.setItem(`manifest_${todayStr}`, JSON.stringify(todayManifest));
       setTodayGoal(yesterdayGoal);
     } else if (!keepIt) {
-      // Navigate to Manifest to set a new goal
-      navigation.navigate('Manifest');
+      // Navigate to Grow to set a new goal
+      navigation.navigate('Grow');
     }
   };
 
@@ -1547,7 +1547,7 @@ export default function HomeScreen({ navigation }) {
                   {todayGoal ? (
                     <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
                   ) : (
-                    <TouchableOpacity onPress={() => navigation.navigate('Manifest')}>
+                    <TouchableOpacity onPress={() => navigation.navigate('Grow')}>
                       <Text style={[styles.goalDisplaySmall, styles.underline]}>
                         Tap to set today's goal
                       </Text>
@@ -1584,7 +1584,7 @@ export default function HomeScreen({ navigation }) {
                       {todayGoal ? (
                         <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
                       ) : (
-                        <TouchableOpacity onPress={() => navigation.navigate('Manifest')}>
+                        <TouchableOpacity onPress={() => navigation.navigate('Grow')}>
                           <Text style={[styles.goalDisplaySmall, styles.underline]}>
                             Tap to set today's goal
                           </Text>

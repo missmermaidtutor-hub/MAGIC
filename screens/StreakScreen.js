@@ -7,14 +7,17 @@ import {
   TouchableOpacity,
   Dimensions,
   Modal,
-  ImageBackground
+  ImageBackground,
+  TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
 import { getESTDate } from '../utils/dateUtils';
 import { getTasksForDate } from '../utils/taskUtils';
 import { useAuth } from '../context/AuthContext';
-import { getMyArtSaves, getUserWinCount } from '../services/firestoreService';
+import { getMyArtSaves, getUserWinCount, saveGoal } from '../services/firestoreService';
+import { trackAction } from '../services/analyticsService';
 import { showAlert, showDestructiveConfirm } from '../utils/alertUtils';
 import { useFocusEffect } from '@react-navigation/native';
 import PremiumGate from '../components/premium/PremiumGate';
@@ -52,7 +55,7 @@ const MAGIC_LABELS = ['Manifest', 'Art', 'Grow', 'Inspire', 'Connect'];
 const MAGIC_GUIDANCE = [
   'Write in your Muse, Dump, or Vision journal',
   'Use the art timer, create, or upload artwork',
-  'Set a growth goal in your Manifest',
+  'Set a growth goal on the Grow page',
   'Vote on today\'s artwork rankings',
   'Browse curations, send inspiration, or save art',
 ];
@@ -276,6 +279,44 @@ const MiniMonth = ({ year, month, data, cellSize, todayInfo, onDayPress }) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════
+const GoalInput = ({ value, onChange, onSave, saving }) => (
+  <View style={{ marginTop: 6 }}>
+    <TextInput
+      style={{
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        color: '#fff',
+        borderRadius: 8,
+        padding: 8,
+        fontSize: 14,
+        minHeight: 56,
+        textAlignVertical: 'top',
+      }}
+      value={value}
+      onChangeText={onChange}
+      placeholder="What do you want to grow today?"
+      placeholderTextColor="#aaa"
+      multiline
+    />
+    <TouchableOpacity
+      onPress={onSave}
+      disabled={saving}
+      style={{
+        marginTop: 6,
+        alignSelf: 'flex-end',
+        backgroundColor: '#FFD700',
+        borderRadius: 8,
+        paddingVertical: 6,
+        paddingHorizontal: 16,
+      }}
+    >
+      {saving
+        ? <ActivityIndicator size="small" color="#000" />
+        : <Text style={{ color: '#000', fontWeight: 'bold', fontSize: 13 }}>Save Goal</Text>
+      }
+    </TouchableOpacity>
+  </View>
+);
+
 export default function StreakScreen({ navigation }) {
   const { user } = useAuth();
   const today = new Date();
@@ -300,6 +341,8 @@ export default function StreakScreen({ navigation }) {
   const [showKeepGoalPrompt, setShowKeepGoalPrompt] = useState(false);
   const [yesterdayGoal, setYesterdayGoal] = useState('');
   const [todayGoal, setTodayGoal] = useState('');
+  const [goalInputText, setGoalInputText] = useState('');
+  const [savingGoal, setSavingGoal] = useState(false);
   const goalLockTimerRef = useRef(null);
   const goalDateRef = useRef(getESTDate());
 
@@ -396,6 +439,7 @@ export default function StreakScreen({ navigation }) {
           const parsed = JSON.parse(todayManifest);
           if (parsed.growthGoal && parsed.growthGoal.trim()) {
             setTodayGoal(parsed.growthGoal.trim());
+            setGoalInputText(parsed.growthGoal.trim());
           }
         } catch (e) {}
       }
@@ -491,8 +535,34 @@ export default function StreakScreen({ navigation }) {
       await AsyncStorage.setItem(`manifest_${todayStr}`, JSON.stringify(todayManifest));
       setTodayGoal(yesterdayGoal);
     } else if (!keepIt) {
-      navigation.navigate('Manifest');
+      setGoalInputText('');
     }
+  };
+
+  const handleSaveGoal = async () => {
+    const text = goalInputText.trim();
+    if (!text) {
+      showAlert('Empty Goal', 'Please enter a goal.');
+      return;
+    }
+    setSavingGoal(true);
+    try {
+      const todayStr = getESTDate();
+      if (user) {
+        await saveGoal(user.uid, todayStr, { goal: text, completed: false, completedAt: null, carriedForward: false });
+      }
+      const manifestRaw = await AsyncStorage.getItem(`manifest_${todayStr}`);
+      const manifest = manifestRaw ? JSON.parse(manifestRaw) : {};
+      manifest.growthGoal = text;
+      await AsyncStorage.setItem(`manifest_${todayStr}`, JSON.stringify(manifest));
+      setTodayGoal(text);
+      trackAction('goal_set');
+      showAlert('Saved', 'Goal saved!');
+    } catch (error) {
+      showAlert('Error', 'Could not save goal.');
+      console.log('Save goal error:', error);
+    }
+    setSavingGoal(false);
   };
 
   const handleClearData = () => {
@@ -751,11 +821,12 @@ export default function StreakScreen({ navigation }) {
                 {todayGoal ? (
                   <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
                 ) : (
-                  <TouchableOpacity onPress={() => navigation.navigate('Manifest')}>
-                    <Text style={[styles.goalDisplaySmall, styles.underline]}>
-                      Tap to set today's goal
-                    </Text>
-                  </TouchableOpacity>
+                  <GoalInput
+                    value={goalInputText}
+                    onChange={setGoalInputText}
+                    onSave={handleSaveGoal}
+                    saving={savingGoal}
+                  />
                 )}
               </View>
             ) : (
@@ -787,11 +858,12 @@ export default function StreakScreen({ navigation }) {
                     {todayGoal ? (
                       <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
                     ) : (
-                      <TouchableOpacity onPress={() => navigation.navigate('Manifest')}>
-                        <Text style={[styles.goalDisplaySmall, styles.underline]}>
-                          Tap to set today's goal
-                        </Text>
-                      </TouchableOpacity>
+                      <GoalInput
+                        value={goalInputText}
+                        onChange={setGoalInputText}
+                        onSave={handleSaveGoal}
+                        saving={savingGoal}
+                      />
                     )}
                   </View>
                 )}

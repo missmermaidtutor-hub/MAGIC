@@ -630,7 +630,6 @@ export default function ArtScreen() {
       }
 
       trackAction('courage_uploaded_write');
-      setWriteModalVisible(false);
       setWriteTitle('');
 
       // Attempt Firestore upload
@@ -676,6 +675,7 @@ export default function ArtScreen() {
     };
     setCourageOverrideAnonymous(userProfile?.anonymous ?? true);
     pendingCourageUploadRef.current = doUpload;
+    setWriteModalVisible(false);
     setCourageConfirmVisible(true);
   };
 
@@ -1032,6 +1032,10 @@ export default function ArtScreen() {
   const handleCourageCancel = () => {
     setCourageConfirmVisible(false);
     pendingCourageUploadRef.current = null;
+    // Re-open write modal if the user had text in progress
+    if (writeText.trim()) {
+      setWriteModalVisible(true);
+    }
   };
 
   // Check if weekly goal met (120 minutes)

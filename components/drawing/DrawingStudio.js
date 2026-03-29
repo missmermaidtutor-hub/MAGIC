@@ -424,10 +424,40 @@ export default function DrawingStudio({
         showAlert('Error', 'Canvas not ready. Try again.');
         return null;
       }
+      if (Platform.OS === 'web') {
+        // html2canvas can't reliably capture SVG on mobile web — serialize SVG directly
+        const svgEl = canvasRef.current.querySelector('svg');
+        if (!svgEl) {
+          showAlert('Export Error', 'Could not export drawing.');
+          return null;
+        }
+        const { width, height } = svgEl.getBoundingClientRect();
+        const serializer = new XMLSerializer();
+        const svgStr = serializer.serializeToString(svgEl);
+        const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+        return new Promise((resolve) => {
+          const img = new window.Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = width || 400;
+            canvas.height = height || 400;
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            resolve(canvas.toDataURL('image/png', 0.9));
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            showAlert('Export Error', 'Could not export drawing.');
+            resolve(null);
+          };
+          img.src = url;
+        });
+      }
       const uri = await captureRef(canvasRef, {
         format: 'png',
         quality: 0.9,
-        result: Platform.OS === 'web' ? 'data-uri' : 'tmpfile',
+        result: 'tmpfile',
       });
       return uri;
     } catch (error) {
