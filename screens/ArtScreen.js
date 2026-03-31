@@ -1187,13 +1187,11 @@ export default function ArtScreen() {
             <Text style={styles.toolLabel}>Capture</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.toolButton} onPress={captureFromLibrary}>
-            <View style={styles.toolIconContainer}>
-              <Text style={styles.toolIcon}>📤</Text>
-            </View>
-            <Text style={styles.toolLabel}>Upload</Text>
-          </TouchableOpacity>
         </View>
+
+        <Text style={styles.toolsHintText}>
+          The most important thing is that you create — even 5 minutes counts! Share your Courage for tomorrow's Inspiration Ranking (once per day), or save it privately to your Vault. Capture lets you photograph your work or upload a file from your library.
+        </Text>
 
         <View style={{ height: 40 }} />
       </ScrollView>
@@ -1756,7 +1754,7 @@ const styles = StyleSheet.create({
   toolsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 30,
+    marginBottom: 16,
   },
   toolButton: {
     alignItems: 'center',
@@ -1783,6 +1781,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#332100',
     fontWeight: '600',
+  },
+  toolsHintText: {
+    fontSize: 13,
+    color: '#6B4200',
+    lineHeight: 20,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    marginTop: -10,
+    marginBottom: 20,
+    fontStyle: 'italic',
   },
   writeModalOverlay: {
     flex: 1,
