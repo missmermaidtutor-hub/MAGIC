@@ -944,6 +944,10 @@ export default function CommunityScreen({ navigation, route }) {
             ]);
             setPersonalArtworks(updated);
             setTrashedArtworks(trashArr);
+            // Delete from Firestore immediately so backgroundSync can't restore it
+            if (user?.uid) {
+              deleteArtwork(user.uid, String(artwork.id)).catch(() => {});
+            }
             // NOTE: Does NOT touch curated or inspiration — galleries are independent
           } else if (fromGallery === 'inspiration') {
             const freshData = await AsyncStorage.getItem('favorite_artworks');
@@ -1019,6 +1023,13 @@ export default function CommunityScreen({ navigation, route }) {
           setPersonalArtworks(kept);
           setTrashedArtworks(trashArr);
           setMarkedForDeletion(new Set()); // Clear all marks
+
+          // Delete from Firestore immediately so backgroundSync can't restore them
+          if (user?.uid) {
+            marked.forEach(a => {
+              deleteArtwork(user.uid, String(a.id)).catch(() => {});
+            });
+          }
 
           showAlert('Moved to Trash', `${marked.length} item${marked.length > 1 ? 's' : ''} moved to trash. You can restore them within 24 hours from the Trash section below.`);
         } catch (e) {

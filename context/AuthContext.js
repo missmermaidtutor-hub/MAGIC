@@ -132,10 +132,16 @@ export function AuthProvider({ children }) {
         getUserCurated(uid).catch(() => null),
       ]);
 
+      // Build a set of trashed IDs so we never restore deleted items from Firestore
+      const trashRaw = await AsyncStorage.getItem('trashed_artworks');
+      const trashArr = trashRaw ? JSON.parse(trashRaw) : [];
+      const trashedIds = new Set(trashArr.map(a => String(a.id)));
+
       if (artworks && artworks.length > 0) {
         // Exclude pendingVoting artworks — they stay in the pending system
-        // until ranking day is over, then get promoted by CommunityScreen
-        const readyArtworks = artworks.filter(a => !a.pendingVoting);
+        // until ranking day is over, then get promoted by CommunityScreen.
+        // Also exclude anything the user has trashed locally.
+        const readyArtworks = artworks.filter(a => !a.pendingVoting && !trashedIds.has(String(a.id)));
         const localRaw = await AsyncStorage.getItem('personal_artworks');
         const local = localRaw ? JSON.parse(localRaw) : [];
         if (readyArtworks.length > local.length) {
@@ -144,10 +150,11 @@ export function AuthProvider({ children }) {
       }
 
       if (inspirations && inspirations.length > 0) {
+        const readyInspirations = inspirations.filter(a => !trashedIds.has(String(a.id)));
         const localRaw = await AsyncStorage.getItem('favorite_artworks');
         const local = localRaw ? JSON.parse(localRaw) : [];
-        if (inspirations.length > local.length) {
-          await AsyncStorage.setItem('favorite_artworks', JSON.stringify(inspirations));
+        if (readyInspirations.length > local.length) {
+          await AsyncStorage.setItem('favorite_artworks', JSON.stringify(readyInspirations));
         }
       }
 
@@ -263,7 +270,10 @@ export function AuthProvider({ children }) {
       return false;
     }
     try {
-      await sendEmailVerification(auth.currentUser);
+      await sendEmailVerification(auth.currentUser, {
+        url: 'https://magicnestlings.web.app',
+        handleCodeInApp: false,
+      });
       return true;
     } catch (error) {
       console.log('Resend verification error:', error.code, error.message);
