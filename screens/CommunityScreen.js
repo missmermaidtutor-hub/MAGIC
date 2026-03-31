@@ -613,8 +613,15 @@ export default function CommunityScreen({ navigation, route }) {
         if (!trashCleanedRef.current) {
           const now = Date.now();
           currentTrash = allTrashed.filter(a => now - a.trashedAt < 24 * 60 * 60 * 1000);
-          if (currentTrash.length !== allTrashed.length) {
+          const expired = allTrashed.filter(a => now - a.trashedAt >= 24 * 60 * 60 * 1000);
+          if (expired.length > 0) {
             await AsyncStorage.setItem('trashed_artworks', JSON.stringify(currentTrash));
+            // Permanently delete expired items from Firestore now that 24h has passed
+            if (user?.uid) {
+              expired
+                .filter(a => a.trashedFrom === 'personal')
+                .forEach(a => deleteArtwork(user.uid, String(a.id)).catch(() => {}));
+            }
           }
           trashCleanedRef.current = true;
         } else {
@@ -944,10 +951,8 @@ export default function CommunityScreen({ navigation, route }) {
             ]);
             setPersonalArtworks(updated);
             setTrashedArtworks(trashArr);
-            // Delete from Firestore immediately so backgroundSync can't restore it
-            if (user?.uid) {
-              deleteArtwork(user.uid, String(artwork.id)).catch(() => {});
-            }
+            // NOTE: Firestore delete happens after 24h when trash expires, not here —
+            // so the user can restore from trash within 24h on any device.
             // NOTE: Does NOT touch curated or inspiration — galleries are independent
           } else if (fromGallery === 'inspiration') {
             const freshData = await AsyncStorage.getItem('favorite_artworks');
@@ -1023,13 +1028,7 @@ export default function CommunityScreen({ navigation, route }) {
           setPersonalArtworks(kept);
           setTrashedArtworks(trashArr);
           setMarkedForDeletion(new Set()); // Clear all marks
-
-          // Delete from Firestore immediately so backgroundSync can't restore them
-          if (user?.uid) {
-            marked.forEach(a => {
-              deleteArtwork(user.uid, String(a.id)).catch(() => {});
-            });
-          }
+          // NOTE: Firestore delete happens after 24h when trash expires, not here.
 
           showAlert('Moved to Trash', `${marked.length} item${marked.length > 1 ? 's' : ''} moved to trash. You can restore them within 24 hours from the Trash section below.`);
         } catch (e) {
