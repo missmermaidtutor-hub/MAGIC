@@ -80,8 +80,8 @@ const PAGES = [
     letter: 'I',
     title: 'Inspire',
     body:
-      'Vote on today\'s community artwork based on today\'s ranking criteria, not what\'s the "best" — maybe which is the most blue or the messiest, or which shows Conviction.\n\n' +
-      'Rank submissions so each image is ranked 1-4. Discover new artists, and light the candle next to the ones that inspire you. Your vote helps choose the daily winner, which is revealed the next day.',
+      'Rank today\'s community artwork based on today\'s ranking criteria, not what\'s the "best" — maybe which is the most blue or the messiest, or which shows Conviction.\n\n' +
+      'Rank submissions so each image is ranked 1-4. Discover new artists, and light the candle next to the ones that inspire you. Your ranking helps choose the daily winner, which is revealed the next day.',
     image: 'inspire',
   },
   {

@@ -28,7 +28,7 @@ const MAGIC_GUIDANCE = [
   'Write in your Muse, Dump, or Vision journal',
   'Use the art timer, create, or upload artwork',
   'Set a growth goal in your Manifest',
-  "Vote on today's artwork rankings",
+  "Rank today's community artwork",
   'Browse curations, send inspiration, or save art',
 ];
 
@@ -1624,7 +1624,7 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.rankBox}>
               <Text style={styles.rankTitle}>
                 Be INSPIRED by COURAGE{'\n'}
-                <Text style={styles.underline}>Cast Your Vote Here</Text>
+                <Text style={styles.underline}>Rank Today's Courage Here</Text>
               </Text>
             </View>
             </View>

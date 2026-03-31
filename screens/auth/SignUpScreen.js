@@ -370,10 +370,12 @@ export default function SignUpScreen({ navigation, route }) {
       // Send email verification (skip for Apple/Google sign-in — already verified)
       if (!skipCredentials) {
         try {
-          await sendEmailVerification(auth.currentUser);
+          await sendEmailVerification(auth.currentUser, {
+            url: 'https://magicnestlings.web.app',
+            handleCodeInApp: false,
+          });
         } catch (verifyErr) {
           console.log('Email verification send error:', verifyErr.code, verifyErr.message);
-          // Don't block signup, but let user know
           showAlert('Verification Email', 'Account created! We could not send a verification email right now — you can resend from the home screen.');
         }
       }
