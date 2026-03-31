@@ -82,7 +82,7 @@ export default function ArtScreen() {
   const [writeTitle, setWriteTitle] = useState('');
   const [writeMode, setWriteMode] = useState('write');
   const [textStyle, setTextStyle] = useState({
-    fontFamily: undefined,
+    fontFamily: null,
     fontSize: 16,
     color: '#332100',
     fontWeight: 'normal',

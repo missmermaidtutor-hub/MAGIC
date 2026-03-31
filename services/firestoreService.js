@@ -169,7 +169,12 @@ export const uploadCourage = async (uid, data) => {
   };
   // Store text content separately for text-type courages
   if (data.text) doc_data.text = data.text;
-  if (data.textStyle) doc_data.textStyle = data.textStyle;
+  if (data.textStyle) {
+    // Strip undefined values — Firestore rejects them
+    doc_data.textStyle = Object.fromEntries(
+      Object.entries(data.textStyle).filter(([, v]) => v !== undefined)
+    );
+  }
   console.log(`[Courage] Uploading for uid=${uid}, date=${data.date}, title="${data.title}"`);
   const docRef = await addDoc(collection(db, 'dailyCourages'), doc_data);
   console.log(`[Courage] Saved as doc ${docRef.id}`);
