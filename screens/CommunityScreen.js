@@ -1848,34 +1848,13 @@ export default function CommunityScreen({ navigation, route }) {
               </Text>
             </Text>
 
-            {/* Pending voting placeholder cards */}
+            {/* Pending ranking notice — no titles/content shown until ranking is complete */}
             {pendingVotingArtworks.length > 0 && (
-              <View style={styles.galleryGrid}>
-                {pendingVotingArtworks.map(artwork => (
-                  <View key={`pending-${artwork.id}`} style={styles.galleryItemContainer}>
-                    <GoldFrame thickness={3}>
-                      <View style={[styles.galleryImageBg, { backgroundColor: 'rgba(75,0,130,0.08)' }]}>
-                        <Text style={{ fontSize: 28 }}>🗳️</Text>
-                        <Text style={{ color: '#4B0082', fontSize: 10, fontWeight: '600', textAlign: 'center', marginTop: 4 }}>
-                          In Ranking
-                        </Text>
-                        <Text style={{ color: '#4B0082', fontSize: 9, fontStyle: 'italic', textAlign: 'center', marginTop: 2 }} numberOfLines={1}>
-                          {artwork.title || 'Untitled'}
-                        </Text>
-                      </View>
-                    </GoldFrame>
-                    <View style={styles.artworkActions}>
-                      <View style={styles.nameplateRow}>
-                        <Text style={styles.nameplateTitle} numberOfLines={1}>
-                          {artwork.title || 'Untitled'}
-                        </Text>
-                        <Text style={styles.nameplateArtist} numberOfLines={1}>
-                          Awaiting ranking
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                ))}
+              <View style={styles.rankingPendingNotice}>
+                <Text style={styles.rankingPendingIcon}>🗳️</Text>
+                <Text style={styles.rankingPendingText}>
+                  Your Courage is in ranking — it will appear here once ranking is complete.
+                </Text>
               </View>
             )}
 
@@ -2093,8 +2072,8 @@ export default function CommunityScreen({ navigation, route }) {
             <Text style={[styles.tabLabel, activeGallery === 'private' && styles.tabLabelActive]}>
               The Vault
             </Text>
-            {(personalArtworks.length + pendingVotingArtworks.length) > 0 && (
-              <Text style={styles.tabCount}>{personalArtworks.length + pendingVotingArtworks.length}</Text>
+            {personalArtworks.length > 0 && (
+              <Text style={styles.tabCount}>{personalArtworks.length}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -2955,6 +2934,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textDecorationLine: 'underline',
     fontStyle: 'normal',
+  },
+
+  rankingPendingNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(75,0,130,0.07)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(75,0,130,0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  rankingPendingIcon: {
+    fontSize: 22,
+    marginRight: 10,
+  },
+  rankingPendingText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#4B0082',
+    fontStyle: 'italic',
   },
 
   // Empty State
