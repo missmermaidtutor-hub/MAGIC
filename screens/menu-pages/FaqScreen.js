@@ -18,7 +18,7 @@ const DEFAULT_FAQS = [
   { question: 'What is MAGIC?', answer: 'MAGIC stands for Manifest, Art, Goals, Inspire, and Courage \u2014 the five daily creative practices that make up your streak. Each day, completing all five lights up your star!' },
   { question: 'How do streaks work?', answer: 'Complete all five MAGIC tasks in a single day to earn a streak day. Your streak calendar on the Grow page tracks consecutive and total days. Keep the momentum going!' },
   { question: 'What is a daily courage?', answer: 'Your daily courage is a creative work you share anonymously with the community. It takes courage to put your art out there \u2014 that\'s why we celebrate it!' },
-  { question: 'How does voting work?', answer: 'Each day, yesterday\'s courages appear on the Inspire page for community voting. The most-voted courage is crowned the daily winner the following day.' },
+  { question: 'How does ranking work?', answer: 'Each day, yesterday\'s courages appear on the Inspire page for community ranking. The highest-ranked courage is crowned the daily winner the following day.' },
   { question: 'What is the Tapestry?', answer: 'Your Tapestry is your curated public gallery \u2014 up to 25 of your best works that other artists can browse and save. Think of it as your personal exhibition.' },
   { question: 'What is the Vault?', answer: 'The Vault is your private collection of all the art you\'ve created in the app. Only you can see it. Use it as your creative archive.' },
   { question: 'What are Inspirations?', answer: 'Inspirations are works by other artists that you\'ve saved (candlelit) from their Tapestries. They live in your Inspiring tab as a personal mood board.' },

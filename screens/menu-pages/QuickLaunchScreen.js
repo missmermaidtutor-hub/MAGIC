@@ -125,7 +125,7 @@ export default function QuickLaunchScreen({ navigation }) {
               <Text style={styles.inspireNumber}>4</Text>
             </View>
             <Text style={styles.inspireText}>
-              Vote on today's artwork submissions. Rank them by the daily criterion and help choose the community winner. Your vote matters!
+              Rank today's artwork submissions by the daily criterion and help choose the community winner. Your ranking matters!
             </Text>
             <View style={styles.inspireActions}>
               <TouchableOpacity onPress={() => {
@@ -154,7 +154,7 @@ export default function QuickLaunchScreen({ navigation }) {
               <Text style={styles.courageNumber}>5</Text>
             </View>
             <Text style={styles.courageText}>
-              Share your creation with the community! Upload your artwork to the public gallery for voting. Being brave enough to share is what earns your Courage star.
+              Share your creation with the community! Upload your artwork to the public gallery for ranking. Being brave enough to share is what earns your Courage star.
             </Text>
           </LinearGradient>
         </View>

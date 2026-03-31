@@ -27,7 +27,7 @@ const ACTION_LABELS = {
   goal_completed: 'Goal Completed',
   goal_carried_forward: 'Goal Carried Forward',
   manifest_saved: 'Manifest Saved',
-  vote_submitted: 'Vote Submitted',
+  vote_submitted: 'Rank Submitted',
   artwork_curated: 'Artwork Curated',
   artwork_uncurated: 'Artwork Uncurated',
   pod_message_sent: 'Pod Message Sent',

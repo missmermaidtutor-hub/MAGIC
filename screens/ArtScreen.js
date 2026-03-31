@@ -669,7 +669,7 @@ export default function ArtScreen() {
         captureError(e, { context: 'courageTextUpload' });
         showAlert(
           'Saved Locally',
-          'Your work was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
+          'Your work was saved to your gallery but could not be uploaded for ranking. Check your connection and try again later.'
         );
       }
     };
@@ -814,7 +814,7 @@ export default function ArtScreen() {
         captureError(e, { context: 'courageSketchUpload' });
         showAlert(
           'Saved Locally',
-          'Your sketch was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
+          'Your sketch was saved to your gallery but could not be uploaded for ranking. Check your connection and try again later.'
         );
       }
     };
@@ -1010,7 +1010,7 @@ export default function ArtScreen() {
         captureError(e, { context: 'courageCaptureUpload' });
         showAlert(
           'Saved Locally',
-          'Your capture was saved to your gallery but could not be uploaded for voting. Check your connection and try again later.'
+          'Your capture was saved to your gallery but could not be uploaded for ranking. Check your connection and try again later.'
         );
       }
     };

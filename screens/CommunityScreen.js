@@ -1141,7 +1141,7 @@ export default function CommunityScreen({ navigation, route }) {
 
           {artwork.pendingVoting && (
             <View style={styles.pendingBadge}>
-              <Text style={styles.pendingBadgeText}>Voting</Text>
+              <Text style={styles.pendingBadgeText}>Ranking</Text>
             </View>
           )}
 
@@ -1847,7 +1847,7 @@ export default function CommunityScreen({ navigation, route }) {
                       <View style={[styles.galleryImageBg, { backgroundColor: 'rgba(75,0,130,0.08)' }]}>
                         <Text style={{ fontSize: 28 }}>🗳️</Text>
                         <Text style={{ color: '#4B0082', fontSize: 10, fontWeight: '600', textAlign: 'center', marginTop: 4 }}>
-                          In Voting
+                          In Ranking
                         </Text>
                         <Text style={{ color: '#4B0082', fontSize: 9, fontStyle: 'italic', textAlign: 'center', marginTop: 2 }} numberOfLines={1}>
                           {artwork.title || 'Untitled'}
