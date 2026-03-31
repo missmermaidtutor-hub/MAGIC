@@ -40,15 +40,15 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 const ARTOWORKS_IMAGES = [
   { id: 'artowork_1', source: require('../Cliparts/ARTOWORKS/10-18.jpg'), title: 'Sunset Reflections', isFiller: true },
   { id: 'artowork_2', source: require('../Cliparts/ARTOWORKS/540119055_10162967375152264_4178779566219057526_n.jpg'), title: 'Morning Light', isFiller: true },
-  { id: 'artowork_3', source: require('../Cliparts/ARTOWORKS/555501898_10163095270207264_8889387783471590897_n.jpg'), title: 'Color Study', isFiller: true },
-  { id: 'artowork_4', source: require('../Cliparts/ARTOWORKS/555085754_10237876767528314_2990466336443851643_n.jpg'), title: 'Abstract Dreams', isFiller: true },
-  { id: 'artowork_5', source: require('../Cliparts/ARTOWORKS/513903252_10162679994762264_6498884796748588977_n.jpg'), title: 'Quiet Moments', isFiller: true },
-  { id: 'artowork_6', source: require('../Cliparts/ARTOWORKS/524578717_10171872892030024_3575163892748854717_n.jpg'), title: 'Deep Perspective', isFiller: true },
-  { id: 'artowork_7', source: require('../Cliparts/ARTOWORKS/555617493_10237876767448312_7739267849925085879_n.jpg'), title: 'Inner Landscape', isFiller: true },
-  { id: 'artowork_8', source: require('../Cliparts/ARTOWORKS/555447442_10237876768088328_2178101301320484529_n.jpg'), title: 'Free Expression', isFiller: true },
-  { id: 'artowork_9', source: require('../Cliparts/ARTOWORKS/524793848_10162839591502264_8318629657123426505_n.jpg'), title: 'Bold Strokes', isFiller: true },
+  { id: 'artowork_3', source: require('../Cliparts/ARTOWORKS/524144317_10162839591567264_3907841676702630020_n.jpg'), title: 'Color Study', isFiller: true },
+  { id: 'artowork_4', source: require('../Cliparts/ARTOWORKS/IMG_8599.jpeg'), title: 'Abstract Dreams', isFiller: true },
+  { id: 'artowork_5', source: require('../Cliparts/ARTOWORKS/IMG_8610.jpeg'), title: 'Quiet Moments', isFiller: true },
+  { id: 'artowork_6', source: require('../Cliparts/ARTOWORKS/IMG_8618.jpeg'), title: 'Deep Perspective', isFiller: true },
+  { id: 'artowork_7', source: require('../Cliparts/ARTOWORKS/IMG_8619.jpeg'), title: 'Inner Landscape', isFiller: true },
+  { id: 'artowork_8', source: require('../Cliparts/ARTOWORKS/IMG_8629.jpeg'), title: 'Free Expression', isFiller: true },
+  { id: 'artowork_9', source: require('../Cliparts/ARTOWORKS/IMG_8646.jpeg'), title: 'Bold Strokes', isFiller: true },
   { id: 'artowork_10', source: require('../Cliparts/ARTOWORKS/555583717_10163109406592264_4681170089551922231_n.jpg'), title: 'Creative Vision', isFiller: true },
-  { id: 'artowork_11', source: require('../Cliparts/ARTOWORKS/555573460_10237876768008326_7582047112777369094_n.jpg'), title: 'Peaceful Flow', isFiller: true },
+  { id: 'artowork_11', source: require('../Cliparts/ARTOWORKS/IMG_8647.jpeg'), title: 'Peaceful Flow', isFiller: true },
   { id: 'artowork_12', source: require('../Cliparts/ARTOWORKS/Moon.jpg'), title: 'Nature\'s Pattern', isFiller: true },
 ];
 
@@ -521,7 +521,7 @@ export default function InspireScreen({ navigation }) {
       } else {
         setAllDone(true);
         setCurrentSet([]);
-        showAlert('Thank You for Voting!', 'You have voted on all available courages!');
+        showAlert('Thank You for Ranking!', 'You have ranked all available courages!');
       }
     } catch (error) {
       console.log('Error submitting votes:', error);
@@ -716,7 +716,7 @@ export default function InspireScreen({ navigation }) {
   const renderThankYouCard = () => (
     <View style={styles.artworkCard}>
       <View style={[styles.imageFrame, styles.thankYouFrame]}>
-        <Text style={styles.thankYouText}>Thank you{'\n'}for voting!</Text>
+        <Text style={styles.thankYouText}>Thank you{'\n'}for ranking!</Text>
       </View>
     </View>
   );
@@ -752,7 +752,7 @@ export default function InspireScreen({ navigation }) {
               style={styles.criteriaModalBtn}
               onPress={() => setCriteriaModalVisible(false)}
             >
-              <Text style={styles.criteriaModalBtnText}>Start Voting</Text>
+              <Text style={styles.criteriaModalBtnText}>Start Ranking</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -843,9 +843,9 @@ export default function InspireScreen({ navigation }) {
       >
         <View style={styles.postVoteOverlay}>
           <View style={styles.postVoteCard}>
-            <Text style={styles.postVoteTitle}>Thank You for Voting!</Text>
+            <Text style={styles.postVoteTitle}>Thank You for Ranking!</Text>
             <Text style={styles.postVoteMessage}>
-              Would you like to keep voting to see more Courage from yesterday, or would you like to scroll through them without voting? Close this window if you are ready to move on.
+              Would you like to keep ranking to see more Courage from yesterday, or would you like to scroll through them without ranking? Close this window if you are ready to move on.
             </Text>
             <TouchableOpacity
               style={styles.postVoteBtn}
@@ -854,7 +854,7 @@ export default function InspireScreen({ navigation }) {
                 setBrowseMode(false);
               }}
             >
-              <Text style={styles.postVoteBtnText}>Keep Voting</Text>
+              <Text style={styles.postVoteBtnText}>Keep Ranking</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.postVoteBtnSecondary}
@@ -864,7 +864,7 @@ export default function InspireScreen({ navigation }) {
                 setCurrentSet([]);
               }}
             >
-              <Text style={styles.postVoteBtnSecondaryText}>Browse Without Voting</Text>
+              <Text style={styles.postVoteBtnSecondaryText}>Browse Without Ranking</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.postVoteCloseBtn}
@@ -882,7 +882,7 @@ export default function InspireScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Inspire</Text>
-        <Text style={styles.subtitle}>Vote on Community Courage</Text>
+        <Text style={styles.subtitle}>Rank Community Courage</Text>
 
         {/* Today's Ranking Criterion */}
         <View style={styles.criterionCard}>
@@ -902,10 +902,10 @@ export default function InspireScreen({ navigation }) {
             <View style={styles.completeCard}>
               <Text style={styles.completeText}>
                 {availableCourages.length === 0
-                  ? 'No courages available for voting yet!'
+                  ? 'No courages available for ranking yet!'
                   : hasRankedToday
-                    ? 'You already voted today!'
-                    : 'You have voted on all available courages!'}
+                    ? 'You already ranked today!'
+                    : 'You have ranked all available courages!'}
               </Text>
               <Text style={styles.completeSubtext}>
                 {availableCourages.length === 0
@@ -983,7 +983,7 @@ export default function InspireScreen({ navigation }) {
         {/* Return Visit — already voted today, but more courages available */}
         {!allDone && !browseMode && hasRankedToday && !continueVoting && currentSet.length === 4 && (
           <View style={styles.completeCard}>
-            <Text style={styles.completeText}>You already voted today!</Text>
+            <Text style={styles.completeText}>You already ranked today!</Text>
             <Text style={styles.completeSubtext}>
               There are new courages from yesterday you haven't seen yet.
             </Text>
@@ -998,7 +998,7 @@ export default function InspireScreen({ navigation }) {
                 style={styles.postVoteBtnSecondary}
                 onPress={() => { setBrowseMode(true); setCurrentSet([]); }}
               >
-                <Text style={styles.postVoteBtnSecondaryText}>Browse Without Voting</Text>
+                <Text style={styles.postVoteBtnSecondaryText}>Browse Without Ranking</Text>
               </TouchableOpacity>
             </View>
           </View>
