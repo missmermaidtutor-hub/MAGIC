@@ -85,7 +85,13 @@ export const getPremiumStatus = (userProfile) => {
     }
   }
 
-  // 2. Active trial (streak-based or active-day token)
+  // 2. New-user grace period: first 13 member days = limited trial (no bookcase)
+  const memberDays = getMemberDayCount(userProfile);
+  if (memberDays <= 13) {
+    return { isPremium: true, reason: 'new_user_trial', daysLeft: 14 - memberDays };
+  }
+
+  // 3. Active trial (streak-based or active-day token)
   if (userProfile.premiumTrialExpiry) {
     const trialExpiry =
       userProfile.premiumTrialExpiry?.toDate?.() ??
@@ -272,6 +278,8 @@ export const getPremiumLabel = (userProfile) => {
   switch (status.reason) {
     case 'paid':
       return 'Premium';
+    case 'new_user_trial':
+      return `Welcome Trial (${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left)`;
     case 'streak_13_trial':
       return `Streak Trial (${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left)`;
     case 'active_day_trial':
@@ -301,6 +309,8 @@ export const formatPremiumExpiry = (userProfile) => {
       }
       return 'Active premium subscription';
     }
+    case 'new_user_trial':
+      return `Welcome trial — ${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} remaining`;
     case 'streak_13_trial':
     case 'active_day_trial':
     case 'streak_trial': {
