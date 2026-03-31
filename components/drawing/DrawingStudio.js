@@ -553,11 +553,13 @@ export default function DrawingStudio({
           showColorPicker={showColorPicker}
           onToggleColorPicker={() => {
             setShowColorPicker(!showColorPicker);
+            setColorBgMode(false); // always open in brush mode, not bg mode
             setShowBrushSettings(false);
             setShowShapes(false);
           }}
           brushColor={brushColor}
           backgroundColor={backgroundColor}
+          colorBgMode={colorBgMode}
           onToggleBgColor={() => {
             setColorBgMode(true);
             setShowColorPicker(true);

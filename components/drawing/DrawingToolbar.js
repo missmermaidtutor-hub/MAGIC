@@ -39,6 +39,7 @@ export default function DrawingToolbar({
   onToggleColorPicker,
   brushColor,
   backgroundColor,
+  colorBgMode,
   onToggleBgColor,
 }) {
   const handleAction = (key) => {
@@ -91,7 +92,7 @@ export default function DrawingToolbar({
         {/* BG color button */}
         {onToggleBgColor && (
           <TouchableOpacity
-            style={styles.toolBtn}
+            style={[styles.toolBtn, colorBgMode && showColorPicker && styles.toolBtnActive]}
             onPress={onToggleBgColor}
           >
             <View style={[styles.bgColorPreview, { backgroundColor: backgroundColor || '#FFFFFF' }]} />
