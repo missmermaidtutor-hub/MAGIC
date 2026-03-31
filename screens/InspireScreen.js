@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Platform,
   AppState,
+  PanResponder,
 } from 'react-native';
 import { openMailto } from '../utils/emailUtils';
 import { trackAction } from '../services/analyticsService';
@@ -120,6 +121,24 @@ export default function InspireScreen({ navigation }) {
   const [continueVoting, setContinueVoting] = useState(false);
   const [criteriaModalVisible, setCriteriaModalVisible] = useState(false);
   const soundRef = useRef(null);
+  // Holds the current full-view navigation context so the stable PanResponder can read it
+  const fullViewNavRef = useRef({ viewableSet: [], currentIndex: -1 });
+
+  // Stable swipe PanResponder for the full-view modal
+  const swipeResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gs) =>
+        Math.abs(gs.dx) > 10 && Math.abs(gs.dx) > Math.abs(gs.dy),
+      onPanResponderRelease: (_, gs) => {
+        const { viewableSet, currentIndex } = fullViewNavRef.current;
+        if (gs.dx < -50 && currentIndex < viewableSet.length - 1) {
+          setFullViewArtwork(viewableSet[currentIndex + 1]);
+        } else if (gs.dx > 50 && currentIndex > 0) {
+          setFullViewArtwork(viewableSet[currentIndex - 1]);
+        }
+      },
+    })
+  ).current;
 
   // Load criterion + saved inspirations
   useEffect(() => {
@@ -777,8 +796,10 @@ export default function InspireScreen({ navigation }) {
             const currentIndex = viewableSet.findIndex(c => c.id === fullViewArtwork.id);
             const hasPrev = currentIndex > 0;
             const hasNext = currentIndex < viewableSet.length - 1;
+            // Keep ref in sync so the stable PanResponder reads latest values
+            fullViewNavRef.current = { viewableSet, currentIndex };
             return (
-              <View style={styles.modalContent}>
+              <View style={styles.modalContent} {...swipeResponder.panHandlers}>
                 {fullViewArtwork.mediaUrl || fullViewArtwork.source ? (
                   <ScrollView
                     maximumZoomScale={5}
