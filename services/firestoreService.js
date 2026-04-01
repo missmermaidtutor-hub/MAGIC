@@ -501,10 +501,25 @@ export const getGoalStats = async (uid) => {
 // ARTWORKS (Private Gallery)
 // ============================================================
 
+// Strip undefined values one level deep (Firestore rejects undefined fields)
+const sanitizeForFirestore = (obj) => {
+  const result = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === undefined) continue;
+    // Recurse one level for nested objects (e.g. textStyle)
+    if (v !== null && typeof v === 'object' && !v.toDate && !v._methodName) {
+      result[k] = sanitizeForFirestore(v);
+    } else {
+      result[k] = v;
+    }
+  }
+  return result;
+};
+
 // Save artwork to user's private gallery
 export const saveArtwork = async (uid, artwork) => {
   const artRef = await addDoc(collection(db, 'users', uid, 'artworks'), {
-    ...artwork,
+    ...sanitizeForFirestore(artwork),
     createdAt: serverTimestamp(),
   });
   return artRef.id;

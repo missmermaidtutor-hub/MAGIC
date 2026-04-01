@@ -40,7 +40,7 @@ const MIN_TIMER_MINUTES = 1;
 const MAX_TIMER_MINUTES = 180;
 
 const FONT_FAMILIES = [
-  { label: 'Default', value: undefined },
+  { label: 'Default', value: null },
   { label: 'Serif', value: 'serif' },
   { label: 'Sans', value: 'sans-serif' },
   { label: 'Mono', value: 'monospace' },
@@ -523,7 +523,7 @@ export default function ArtScreen() {
     setWriteMode(mode);
     setWriteText('');
     setTextStyle({
-      fontFamily: undefined, fontSize: 16, color: '#332100',
+      fontFamily: null, fontSize: 16, color: '#332100',
       fontWeight: 'normal', fontStyle: 'normal',
       textDecorationLine: 'none', textAlign: 'left',
     });
