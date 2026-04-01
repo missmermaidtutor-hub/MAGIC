@@ -8,7 +8,11 @@ import {
   ImageBackground,
   Image,
   ActivityIndicator,
+  Modal,
+  Dimensions,
 } from 'react-native';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { getUserWins, getMyArtSaves, getUserCourages, getUserCurated } from '../../services/firestoreService';
@@ -91,6 +95,7 @@ export default function BookcaseScreen({ navigation }) {
   const [courageCount, setCourageCount] = useState(0);
   const [curatedCount, setCuratedCount] = useState(0);
   const [inspiringWorks, setInspiringWorks] = useState([]);
+  const [selectedWork, setSelectedWork] = useState(null);
 
   useEffect(() => {
     if (user?.uid) loadData();
@@ -254,7 +259,7 @@ export default function BookcaseScreen({ navigation }) {
                     const art = item.artwork;
                     const isText = art?.mediaType === 'text' || (!art?.mediaUrl && !art?.imageUrl);
                     return (
-                      <View key={i} style={styles.inspiringCard}>
+                      <TouchableOpacity key={i} style={styles.inspiringCard} onPress={() => setSelectedWork(item)} activeOpacity={0.8}>
                         <View style={styles.inspiringImageWrap}>
                           {art && !isText ? (
                             <Image
@@ -274,7 +279,7 @@ export default function BookcaseScreen({ navigation }) {
                             {art?.title || 'Untitled'}
                           </Text>
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     );
                   })}
                 </ScrollView>
@@ -290,6 +295,43 @@ export default function BookcaseScreen({ navigation }) {
           </>
         )}
       </ScrollView>
+
+      {/* Full-screen artwork modal */}
+      <Modal visible={!!selectedWork} transparent animationType="fade" onRequestClose={() => setSelectedWork(null)}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={styles.modalDismiss} activeOpacity={1} onPress={() => setSelectedWork(null)} />
+          <View style={styles.modalCard}>
+            <TouchableOpacity style={styles.modalClose} onPress={() => setSelectedWork(null)}>
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+            {(() => {
+              const art = selectedWork?.artwork;
+              const isText = art?.mediaType === 'text' || (!art?.mediaUrl && !art?.imageUrl);
+              return (
+                <>
+                  {art && !isText ? (
+                    <Image
+                      source={{ uri: art.mediaUrl || art.imageUrl }}
+                      style={styles.modalImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <View style={styles.modalTextWrap}>
+                      <Text style={styles.modalTextContent}>{art?.text || '✍️'}</Text>
+                    </View>
+                  )}
+                  <View style={styles.modalMeta}>
+                    <Text style={styles.modalTitle}>{art?.title || 'Untitled'}</Text>
+                    <Text style={styles.modalCandles}>
+                      🕯️ {selectedWork?.savers?.length ?? 0} artist{selectedWork?.savers?.length !== 1 ? 's' : ''} saved this
+                    </Text>
+                  </View>
+                </>
+              );
+            })()}
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -557,5 +599,78 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 8,
     textAlign: 'center',
+  },
+
+  // Artwork modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalDismiss: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+  },
+  modalCard: {
+    width: SCREEN_WIDTH * 0.88,
+    maxHeight: SCREEN_HEIGHT * 0.8,
+    backgroundColor: '#FFF8E7',
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#B8860B',
+  },
+  modalClose: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  modalImage: {
+    width: '100%',
+    height: SCREEN_HEIGHT * 0.5,
+    backgroundColor: '#f0e8ff',
+  },
+  modalTextWrap: {
+    width: '100%',
+    minHeight: 180,
+    padding: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9f3ff',
+  },
+  modalTextContent: {
+    fontSize: 18,
+    color: '#332100',
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+  modalMeta: {
+    padding: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(184,134,11,0.2)',
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#4B0082',
+    marginBottom: 4,
+  },
+  modalCandles: {
+    fontSize: 13,
+    color: '#B8860B',
+    fontStyle: 'italic',
   },
 });
