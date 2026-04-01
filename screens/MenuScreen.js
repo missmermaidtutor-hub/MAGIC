@@ -10,7 +10,6 @@ export default function MenuScreen({ navigation }) {
   const menuItems = [
     { name: 'About Us', screen: 'AboutUs' },
     { name: 'About You', screen: 'AboutYou' },
-    { name: 'My Bookcase', screen: 'Bookcase' },
     { name: 'Coming Soon', screen: 'ComingSoon' },
     { name: 'FAQ', screen: 'FAQ' },
     { name: 'Intro Slide Deck', screen: 'Intro', params: { fromMenu: true } },

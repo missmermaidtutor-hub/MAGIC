@@ -38,6 +38,7 @@ import {
 } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 import { getMemberDayCount as getMemberDayCountUtil, getCuratedLimit, canAccessFeature, getPremiumStatus } from '../utils/premiumUtils';
+import { isAdmin } from '../config/admin';
 import PremiumPaywall from '../components/premium/PremiumPaywall';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -1670,12 +1671,11 @@ export default function CommunityScreen({ navigation, route }) {
                         onPress={() => {
                           trackAction('bookshelf_secret_tapped');
                           const premStatus = getPremiumStatus(userProfile);
-                          if (premStatus.isPremium && premStatus.reason === 'paid') {
-                            // Paid premium: auto-reveal Inspiring Others directly
-                            setShowInspiringOthers(true);
-                            loadMyInspiringWorks();
+                          const hasAccess = (premStatus.isPremium && premStatus.reason === 'paid') || isAdmin(user?.uid);
+                          if (hasAccess) {
+                            navigation.navigate('Bookcase');
                           } else {
-                            // Everyone else: show overlay with "Become a Member"
+                            // Not paid: show overlay with "Become a Member"
                             setFullViewImage({
                               source: require('../assets/bookshelf-secret.png'),
                               bookshelf: true,
