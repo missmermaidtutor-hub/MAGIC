@@ -191,6 +191,18 @@ export const getUserWinCount = async (uid) => {
   return snap.size;
 };
 
+// Get all wins for a user (for Bookcase trophy wall)
+export const getUserWins = async (uid) => {
+  const q = query(
+    collection(db, 'dailyWinners'),
+    where('uid', '==', uid),
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map(d => d.data())
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+};
+
 // Get all courages by a specific user (for "My Inspiring Works")
 export const getUserCourages = async (uid) => {
   const q = query(

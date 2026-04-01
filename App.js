@@ -58,6 +58,7 @@ import FeatureIdeasScreen from './screens/FeatureIdeasScreen';
 import IntroScreen from './screens/IntroScreen';
 import PremiumSignupScreen from './screens/menu-pages/PremiumSignupScreen';
 import FaqScreen from './screens/menu-pages/FaqScreen';
+import BookcaseScreen from './screens/menu-pages/BookcaseScreen';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator();
@@ -350,6 +351,13 @@ function MainTabs({ initialRoute = 'Home' }) {
       <Tab.Screen
         name="InviteAnalytics"
         component={InviteAnalyticsScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="Bookcase"
+        component={BookcaseScreen}
         options={{
           tabBarButton: () => null,
         }}
