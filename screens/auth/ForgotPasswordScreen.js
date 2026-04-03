@@ -25,7 +25,10 @@ export default function ForgotPasswordScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email.trim());
+      await sendPasswordResetEmail(auth, email.trim(), {
+        url: 'https://magicnestlings.web.app',
+        handleCodeInApp: false,
+      });
       setSent(true);
     } catch (error) {
       let message = 'Could not send reset email. Please try again.';
