@@ -703,9 +703,10 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     if (pseudonymModalChecked.current || !userProfile) return;
     pseudonymModalChecked.current = true;
+    // Primary guard: Firestore pseudonymChangeCount persists across sign-out/sign-in
+    if ((userProfile?.pseudonymChangeCount || 0) > 0) return;
     AsyncStorage.getItem('first_login_pseudonym_shown').then(shown => {
       if (shown === 'true') return;
-      // Show the modal for first login
       setShowPseudonymModal(true);
     });
   }, [userProfile]);
@@ -756,6 +757,7 @@ export default function HomeScreen({ navigation }) {
 
   const dismissPseudonymModal = async () => {
     await AsyncStorage.setItem('first_login_pseudonym_shown', 'true');
+    if (user?.uid) await updateUserProfile(user.uid, { pseudonymChangeCount: 1 });
     setShowPseudonymModal(false);
   };
 
