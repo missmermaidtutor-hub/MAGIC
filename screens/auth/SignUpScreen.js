@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
 import { createUserWithEmailAndPassword, sendEmailVerification, signInWithCredential, OAuthProvider, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -53,6 +54,9 @@ export default function SignUpScreen({ navigation, route }) {
 
   const [step, setStep] = useState(skipCredentials ? 2 : 1);
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   // Step 1: Credentials
   const [email, setEmail] = useState(route.params?.email || '');
@@ -277,6 +281,10 @@ export default function SignUpScreen({ navigation, route }) {
   };
 
   const handleFinish = async () => {
+    if (!agreedToTerms) {
+      showAlert('Agreement Required', 'Please read and agree to the Terms of Service and Privacy Policy before creating your account.');
+      return;
+    }
     setLoading(true);
     try {
       let uid = socialUid;
@@ -649,12 +657,28 @@ export default function SignUpScreen({ navigation, route }) {
         </Text>
       </View>
 
+      <TouchableOpacity style={styles.agreementRow} onPress={() => setAgreedToTerms(!agreedToTerms)} activeOpacity={0.7}>
+        <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
+          {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
+        </View>
+        <Text style={styles.agreementText}>
+          I have read and agree to the{' '}
+          <Text style={styles.agreementLink} onPress={(e) => { e.stopPropagation?.(); setShowTermsModal(true); }}>
+            Terms of Service
+          </Text>
+          {' '}and{' '}
+          <Text style={styles.agreementLink} onPress={(e) => { e.stopPropagation?.(); setShowPrivacyModal(true); }}>
+            Privacy Policy
+          </Text>
+        </Text>
+      </TouchableOpacity>
+
       <View style={styles.buttonRow}>
         <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(2)}>
           <Text style={styles.secondaryButtonText}>Back</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.primaryButton}
+          style={[styles.primaryButton, !agreedToTerms && styles.primaryButtonDisabled]}
           onPress={handleFinish}
           disabled={loading}
         >
@@ -691,6 +715,63 @@ export default function SignUpScreen({ navigation, route }) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* Terms of Service Modal */}
+      <Modal visible={showTermsModal} transparent animationType="slide" onRequestClose={() => setShowTermsModal(false)}>
+        <View style={styles.legalOverlay}>
+          <View style={styles.legalCard}>
+            <Text style={styles.legalTitle}>Terms of Service</Text>
+            <ScrollView style={styles.legalScroll} contentContainerStyle={styles.legalContent}>
+              <Text style={styles.legalText}>
+                {"Last updated: 2026-04-04\n\n"}
+                {"Welcome to MAGIC — 13 Magical Nights of Art.\n\n"}
+                {"By creating an account you agree to the following terms:\n\n"}
+                {"1. ELIGIBILITY\nYou must be at least 13 years of age to use this app. By registering you confirm that you meet this requirement.\n\n"}
+                {"2. YOUR ACCOUNT\nYou are responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account.\n\n"}
+                {"3. CONTENT YOU SUBMIT\nYou retain ownership of artwork and writing you submit. By submitting, you grant MAGIC a non-exclusive license to display your work within the app to other participants.\n\n"}
+                {"4. COMMUNITY CONDUCT\nYou agree to treat other artists with respect. Harassment, hate speech, or uploading content that violates the rights of others is grounds for account termination.\n\n"}
+                {"5. PREMIUM FEATURES\nCertain features require premium status, earned by completing a 13-day streak. No payment is required. Premium access is time-limited as described in the app.\n\n"}
+                {"6. ANONYMITY\nYour real username and pseudonym are kept separate. You agree not to attempt to link or expose other users' identities.\n\n"}
+                {"7. TERMINATION\nWe reserve the right to terminate accounts that violate these terms.\n\n"}
+                {"8. CHANGES\nWe may update these terms. Continued use of the app after changes constitutes acceptance.\n\n"}
+                {"9. CONTACT\nFor questions, contact us through the app or at 13magicalnights.com.\n\n"}
+                {"By creating an account you confirm you have read, understood, and agree to these Terms of Service."}
+              </Text>
+            </ScrollView>
+            <TouchableOpacity style={styles.legalCloseBtn} onPress={() => setShowTermsModal(false)}>
+              <Text style={styles.legalCloseBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Privacy Policy Modal */}
+      <Modal visible={showPrivacyModal} transparent animationType="slide" onRequestClose={() => setShowPrivacyModal(false)}>
+        <View style={styles.legalOverlay}>
+          <View style={styles.legalCard}>
+            <Text style={styles.legalTitle}>Privacy Policy</Text>
+            <ScrollView style={styles.legalScroll} contentContainerStyle={styles.legalContent}>
+              <Text style={styles.legalText}>
+                {"Last updated: 2026-04-04\n\n"}
+                {"MAGIC — 13 Magical Nights of Art is committed to protecting your privacy.\n\n"}
+                {"1. INFORMATION WE COLLECT\nWe collect the information you provide at signup: email address, first and last name, username, birthdate, gender, phone number, and timezone. We also collect artwork and writing you choose to submit.\n\n"}
+                {"2. HOW WE USE YOUR INFORMATION\nYour real name and email are used only for account management and, where applicable, email communications. Your pseudonym — not your real name — is displayed to other users.\n\n"}
+                {"3. ANONYMITY PROTECTION\nWe maintain a strict separation between your username and your pseudonym. We will never display both to other users simultaneously, and we will never sell or share data that links them.\n\n"}
+                {"4. DATA STORAGE\nYour data is stored securely using Google Firebase (Firestore and Firebase Auth). Artwork images are stored in Firebase Storage.\n\n"}
+                {"5. DATA SHARING\nWe do not sell your personal data to third parties. Aggregate, anonymized usage data may be used to improve the app.\n\n"}
+                {"6. ARTWORK VISIBILITY\nArtwork you submit for community ranking is visible to other logged-in participants during the ranking period. Tapestry items are visible to other participants as curated by you, attributed to your pseudonym.\n\n"}
+                {"7. YOUR RIGHTS\nYou may request deletion of your account and associated data at any time by contacting us through the app.\n\n"}
+                {"8. CHILDREN'S PRIVACY\nWe do not knowingly collect data from children under 13. If you believe a child under 13 has registered, please contact us immediately.\n\n"}
+                {"9. CONTACT\nPrivacy questions: 13magicalnights.com\n\n"}
+                {"By creating an account you confirm you have read and understood this Privacy Policy."}
+              </Text>
+            </ScrollView>
+            <TouchableOpacity style={styles.legalCloseBtn} onPress={() => setShowPrivacyModal(false)}>
+              <Text style={styles.legalCloseBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -915,5 +996,90 @@ const styles = StyleSheet.create({
     color: '#4B0082',
     fontSize: 14,
     fontWeight: '600',
+  },
+  agreementRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    marginTop: 4,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#4B0082',
+    marginRight: 10,
+    marginTop: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    flexShrink: 0,
+  },
+  checkboxChecked: {
+    backgroundColor: '#4B0082',
+  },
+  checkmark: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    lineHeight: 16,
+  },
+  agreementText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#4B0082',
+    lineHeight: 20,
+  },
+  agreementLink: {
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+  primaryButtonDisabled: {
+    opacity: 0.5,
+  },
+  legalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  legalCard: {
+    backgroundColor: '#FFF8E7',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderTopWidth: 3,
+    borderColor: '#4B0082',
+    maxHeight: '85%',
+    padding: 20,
+  },
+  legalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4B0082',
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  legalScroll: {
+    flex: 1,
+  },
+  legalContent: {
+    paddingBottom: 10,
+  },
+  legalText: {
+    fontSize: 13,
+    color: '#332100',
+    lineHeight: 21,
+  },
+  legalCloseBtn: {
+    backgroundColor: '#FFD700',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  legalCloseBtnText: {
+    color: '#4B0082',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
