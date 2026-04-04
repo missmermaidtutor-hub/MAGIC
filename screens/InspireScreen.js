@@ -664,7 +664,7 @@ export default function InspireScreen({ navigation }) {
                 <Image
                   source={courage.source}
                   style={styles.artworkImage}
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
               ) : isAudio ? (
                 <View style={styles.audioFrame}>
@@ -675,7 +675,7 @@ export default function InspireScreen({ navigation }) {
                 <Image
                   source={{ uri: courage.mediaUrl }}
                   style={styles.artworkImage}
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
               )}
               {currentRank && (
@@ -978,9 +978,9 @@ export default function InspireScreen({ navigation }) {
                           onPress={() => setFullViewArtwork(courage)}
                         >
                           {courage.source ? (
-                            <Image source={courage.source} style={styles.artworkImage} resizeMode="cover" />
+                            <Image source={courage.source} style={styles.artworkImage} resizeMode="contain" />
                           ) : (
-                            <Image source={{ uri: courage.mediaUrl }} style={styles.artworkImage} resizeMode="cover" />
+                            <Image source={{ uri: courage.mediaUrl }} style={styles.artworkImage} resizeMode="contain" />
                           )}
                         </TouchableOpacity>
                       )}
@@ -1181,6 +1181,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#004225',
     position: 'relative',
+    backgroundColor: '#0a1a0a',
   },
   textOnlyFrame: {
     flex: 1,
