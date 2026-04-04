@@ -145,11 +145,11 @@ export default function BookcaseScreen({ navigation }) {
       for (const key of Object.keys(grouped)) {
         if (grouped[key].artwork) continue;
 
-        // Try all three sources: dailyCourages, curated gallery, personal artworks
+        // Try two sources: dailyCourages (by Firestore doc id) and curated (by docId)
+        // ownArtworks ids are local timestamp numbers — they won't match artSave artworkIds
         const match =
           courages.find(c => c.id === key) ||
-          curated.find(c => c.id === key) ||
-          ownArtworks.find(a => a.id === key);
+          curated.find(c => c.docId === key);
 
         if (match) {
           // Normalise: artworks use imageUrl, courages use mediaUrl
@@ -186,8 +186,8 @@ export default function BookcaseScreen({ navigation }) {
         worksWithArtwork: works.filter(w => w.artwork).length,
         saveIds: saves.map(s => ({ artworkId: s.artworkId?.slice(0,8), hasSnapshot: !!(s.mediaUrl || s.imageUrl) })),
         courageIds: courages.map(c => c.id?.slice(0,8)),
-        curatedIds: curated.map(c => c.id?.slice(0,8)),
-        artworkIds: ownArtworks.map(a => a.id?.slice(0,8)),
+        curatedIds: curated.map(c => c.docId?.slice(0,8)),
+        artworkIds: ownArtworks.map(a => String(a.id || '').slice(0,8)),
       });
     } catch (err) {
       console.log('Bookcase load error:', err);

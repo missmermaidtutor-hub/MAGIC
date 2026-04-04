@@ -613,13 +613,15 @@ export const saveCuratedWork = async (uid, work) => {
 };
 
 // Get user's curated gallery
+// docId = Firestore document ID (used for artSave matching)
+// id    = local artwork id stored in the document data (may be a number)
 export const getUserCurated = async (uid) => {
   const q = query(
     collection(db, 'users', uid, 'curated'),
     orderBy('curatedAt', 'desc'),
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs.map(d => ({ id: d.id, docId: d.id, ...d.data() }));
 };
 
 // Remove from curated — finds by localId field, not Firestore doc ID
