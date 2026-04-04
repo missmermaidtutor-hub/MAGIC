@@ -15,7 +15,7 @@ import {
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
-import { getUserWins, getMyArtSaves, getUserCourages, getUserCurated, patchArtSave } from '../../services/firestoreService';
+import { getUserWins, getMyArtSaves, getUserCourages, getUserCurated, getUserArtworks, patchArtSave } from '../../services/firestoreService';
 import { getMemberDayCount } from '../../utils/premiumUtils';
 
 const BADGE_DEFS = [
@@ -104,11 +104,12 @@ export default function BookcaseScreen({ navigation }) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [userWins, saves, courages, curated] = await Promise.all([
+      const [userWins, saves, courages, curated, ownArtworks] = await Promise.all([
         getUserWins(user.uid).catch(() => []),
         getMyArtSaves(user.uid).catch(() => []),
         getUserCourages(user.uid).catch(() => []),
         getUserCurated(user.uid).catch(() => []),
+        getUserArtworks(user.uid).catch(() => []),
       ]);
 
       setWins(userWins);
@@ -141,6 +142,12 @@ export default function BookcaseScreen({ navigation }) {
         if (grouped[key].artwork) continue;
         const match = courages.find(c => c.id === key) || curated.find(c => c.id === key);
         if (match) {
+          // If the matched doc has an empty mediaUrl (storage upload failed at submission),
+          // bridge to the user's artworks collection via date to find a usable image URL
+          if (!match.mediaUrl && match.date) {
+            const dateArtwork = ownArtworks.find(a => a.date === match.date && a.imageUrl?.startsWith('https://'));
+            if (dateArtwork) match.imageUrl = dateArtwork.imageUrl;
+          }
           grouped[key].artwork = match;
           const snapshot = {
             mediaUrl:  match.mediaUrl  || '',

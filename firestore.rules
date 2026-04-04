@@ -188,7 +188,9 @@ service cloud.firestore {
                     && request.resource.data.ownerUid != request.auth.uid;
       allow delete: if request.auth != null
                     && resource.data.saverUid == request.auth.uid;
-      allow update: if false;
+      // Owner may update to backfill artwork snapshot fields (read-repair)
+      allow update: if request.auth != null
+                    && resource.data.ownerUid == request.auth.uid;
     }
 
     // ===== DAILY PROMPTS COLLECTION =====
