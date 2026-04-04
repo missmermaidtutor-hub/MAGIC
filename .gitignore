@@ -8,3 +8,22 @@ npm-debug.*
 
 # Private session diary (contains credentials)
 diary.md
+
+# Build outputs
+web-build/
+
+# Firebase cache
+.firebase/
+
+# Source/design assets not part of the app build
+Claude chat/
+Cliparts/
+Screenshots/
+MAGIC HANDBOOK.docx
+MAGIC HANDBOOK.xlsx
+
+# Scratch files
+claude-web/
+generate-gradients.js
+gradient-option-a.png
+gradient-option-b.png
