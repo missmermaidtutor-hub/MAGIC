@@ -769,6 +769,18 @@ export const removeArtSave = async (artworkId, saverUid) => {
   if (!snap.empty) await batch.commit();
 };
 
+// Backfill snapshot fields onto an old artSave doc (read-repair)
+export const patchArtSave = async (saveDocId, snapshot) => {
+  const fields = {};
+  if (snapshot.mediaUrl)  fields.mediaUrl  = snapshot.mediaUrl;
+  if (snapshot.imageUrl)  fields.imageUrl  = snapshot.imageUrl;
+  if (snapshot.title)     fields.title     = snapshot.title;
+  if (snapshot.mediaType) fields.mediaType = snapshot.mediaType;
+  if (snapshot.text)      fields.text      = snapshot.text;
+  if (Object.keys(fields).length === 0) return;
+  await updateDoc(doc(db, 'artSaves', saveDocId), fields);
+};
+
 // Get all saves of my art (for "My Inspiring Works" tab)
 export const getMyArtSaves = async (ownerUid) => {
   const q = query(

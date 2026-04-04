@@ -15,7 +15,7 @@ import {
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
-import { getUserWins, getMyArtSaves, getUserCourages, getUserCurated } from '../../services/firestoreService';
+import { getUserWins, getMyArtSaves, getUserCourages, getUserCurated, patchArtSave } from '../../services/firestoreService';
 import { getMemberDayCount } from '../../utils/premiumUtils';
 
 const BADGE_DEFS = [
@@ -120,7 +120,7 @@ export default function BookcaseScreen({ navigation }) {
       const grouped = {};
       for (const save of saves) {
         const key = save.artworkId;
-        if (!grouped[key]) grouped[key] = { artworkId: key, savers: [], artwork: null };
+        if (!grouped[key]) grouped[key] = { artworkId: key, savers: [], artwork: null, saveDocId: save.id };
         grouped[key].savers.push(save.saverPseudonym || 'Anonymous');
         // Use embedded snapshot if present (new saves); avoids secondary lookup
         if (!grouped[key].artwork && (save.mediaUrl || save.imageUrl)) {
@@ -136,13 +136,20 @@ export default function BookcaseScreen({ navigation }) {
       }
 
       // Fallback lookup for old saves that pre-date the snapshot fields
+      // On match, backfill the snapshot so this lookup never runs again (read-repair)
       for (const key of Object.keys(grouped)) {
         if (grouped[key].artwork) continue;
-        const match = courages.find(c => c.id === key);
-        if (match) grouped[key].artwork = match;
-        if (!grouped[key].artwork) {
-          const curatedMatch = curated.find(c => c.id === key);
-          if (curatedMatch) grouped[key].artwork = curatedMatch;
+        const match = courages.find(c => c.id === key) || curated.find(c => c.id === key);
+        if (match) {
+          grouped[key].artwork = match;
+          const snapshot = {
+            mediaUrl:  match.mediaUrl  || '',
+            imageUrl:  match.imageUrl  || '',
+            title:     match.title     || '',
+            mediaType: match.mediaType || 'image',
+            text:      match.text      || '',
+          };
+          patchArtSave(grouped[key].saveDocId, snapshot).catch(() => {});
         }
       }
 
