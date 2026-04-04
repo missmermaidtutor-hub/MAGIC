@@ -96,6 +96,7 @@ export default function BookcaseScreen({ navigation }) {
   const [curatedCount, setCuratedCount] = useState(0);
   const [inspiringWorks, setInspiringWorks] = useState([]);
   const [selectedWork, setSelectedWork] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     if (user?.uid) loadData();
@@ -162,6 +163,17 @@ export default function BookcaseScreen({ navigation }) {
 
       const works = Object.values(grouped).sort((a, b) => b.savers.length - a.savers.length);
       setInspiringWorks(works);
+
+      // DEBUG — remove once Inspired Others is confirmed working
+      setDebugInfo({
+        savesCount: saves.length,
+        couragesCount: courages.length,
+        curatedCount: curated.length,
+        artworksCount: ownArtworks.length,
+        worksBuilt: works.length,
+        saveIds: saves.map(s => ({ artworkId: s.artworkId?.slice(0,8), hasSnapshot: !!(s.mediaUrl || s.imageUrl) })),
+        courageIds: courages.map(c => c.id?.slice(0,8)),
+      });
     } catch (err) {
       console.log('Bookcase load error:', err);
     }
@@ -268,6 +280,17 @@ export default function BookcaseScreen({ navigation }) {
                 })}
               </View>
             </View>
+
+            {/* ── DEBUG PANEL (temporary) ── */}
+            {debugInfo && (
+              <View style={{ backgroundColor: '#000', padding: 10, borderRadius: 8, marginBottom: 12 }}>
+                <Text style={{ color: '#0f0', fontSize: 10, fontFamily: 'monospace' }}>
+                  {`saves:${debugInfo.savesCount} courages:${debugInfo.couragesCount} curated:${debugInfo.curatedCount} artworks:${debugInfo.artworksCount} works:${debugInfo.worksBuilt}\n`}
+                  {`saveIds: ${JSON.stringify(debugInfo.saveIds)}\n`}
+                  {`courageIds: [${debugInfo.courageIds.join(', ')}]`}
+                </Text>
+              </View>
+            )}
 
             {/* ── INSPIRATION WALL ── */}
             <View style={styles.section}>
