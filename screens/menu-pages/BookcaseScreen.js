@@ -96,8 +96,6 @@ export default function BookcaseScreen({ navigation }) {
   const [curatedCount, setCuratedCount] = useState(0);
   const [inspiringWorks, setInspiringWorks] = useState([]);
   const [selectedWork, setSelectedWork] = useState(null);
-  const [debugInfo, setDebugInfo] = useState(null);
-  const [debugError, setDebugError] = useState(null);
 
   useEffect(() => {
     if (user?.uid) loadData();
@@ -105,7 +103,6 @@ export default function BookcaseScreen({ navigation }) {
 
   const loadData = async () => {
     setLoading(true);
-    setDebugError(null);
     try {
       // Fetch each source independently so one failure can't kill the rest
       const [userWins, saves, courages, curated] = await Promise.all([
@@ -175,23 +172,8 @@ export default function BookcaseScreen({ navigation }) {
 
       const works = Object.values(grouped).sort((a, b) => b.savers.length - a.savers.length);
       setInspiringWorks(works);
-
-      // DEBUG — remove once Inspired Others is confirmed working
-      setDebugInfo({
-        savesCount: saves.length,
-        couragesCount: courages.length,
-        curatedCount: curated.length,
-        artworksCount: ownArtworks.length,
-        worksBuilt: works.length,
-        worksWithArtwork: works.filter(w => w.artwork).length,
-        saveIds: saves.map(s => ({ artworkId: s.artworkId?.slice(0,8), hasSnapshot: !!(s.mediaUrl || s.imageUrl) })),
-        courageIds: courages.map(c => c.id?.slice(0,8)),
-        curatedIds: curated.map(c => c.docId?.slice(0,8)),
-        artworkIds: ownArtworks.map(a => String(a.id || '').slice(0,8)),
-      });
     } catch (err) {
       console.log('Bookcase load error:', err);
-      setDebugError(String(err?.message || err));
     }
     setLoading(false);
   };
@@ -225,17 +207,6 @@ export default function BookcaseScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>My Bookcase</Text>
         <Text style={styles.subheader}>{earnedCount} of {BADGE_DEFS.length} badges earned</Text>
-
-        {/* Always-visible debug status */}
-        <View style={{ backgroundColor: '#111', padding: 8, borderRadius: 6, marginBottom: 10 }}>
-          <Text style={{ color: '#0f0', fontSize: 9, fontFamily: 'monospace' }}>
-            {debugError
-              ? `ERR: ${debugError}`
-              : debugInfo
-                ? `ok saves:${debugInfo.savesCount} works:${debugInfo.worksBuilt} matched:${debugInfo.worksWithArtwork} courages:${debugInfo.couragesCount} curated:${debugInfo.curatedCount} artworks:${debugInfo.artworksCount}`
-                : `loading:${loading ? 'yes' : 'no'} uid:${user?.uid?.slice(0,8) || 'none'}`}
-          </Text>
-        </View>
 
         {loading ? (
           <ActivityIndicator size="large" color="#FFD700" style={{ marginTop: 40 }} />
@@ -307,19 +278,6 @@ export default function BookcaseScreen({ navigation }) {
                 })}
               </View>
             </View>
-
-            {/* ── DEBUG PANEL (temporary) ── */}
-            {debugInfo && (
-              <View style={{ backgroundColor: '#000', padding: 10, borderRadius: 8, marginBottom: 12 }}>
-                <Text style={{ color: '#0f0', fontSize: 10, fontFamily: 'monospace' }}>
-                  {`saves:${debugInfo.savesCount} courages:${debugInfo.couragesCount} curated:${debugInfo.curatedCount} artworks:${debugInfo.artworksCount} works:${debugInfo.worksBuilt} matched:${debugInfo.worksWithArtwork}\n`}
-                  {`saveIds: ${JSON.stringify(debugInfo.saveIds)}\n`}
-                  {`courageIds: [${debugInfo.courageIds.join(', ')}]\n`}
-                  {`curatedIds: [${debugInfo.curatedIds.join(', ')}]\n`}
-                  {`artworkIds: [${debugInfo.artworkIds.join(', ')}]`}
-                </Text>
-              </View>
-            )}
 
             {/* ── INSPIRATION WALL ── */}
             <View style={styles.section}>
