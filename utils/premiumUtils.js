@@ -272,8 +272,6 @@ export const getPremiumLabel = (userProfile) => {
   switch (status.reason) {
     case 'paid':
       return 'Premium';
-    case 'new_user_trial':
-      return `Welcome Trial (${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left)`;
     case 'streak_13_trial':
       return `Streak Trial (${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} left)`;
     case 'active_day_trial':
@@ -303,8 +301,6 @@ export const formatPremiumExpiry = (userProfile) => {
       }
       return 'Active premium subscription';
     }
-    case 'new_user_trial':
-      return `Welcome trial — ${status.daysLeft} day${status.daysLeft === 1 ? '' : 's'} remaining`;
     case 'streak_13_trial':
     case 'active_day_trial':
     case 'streak_trial': {
