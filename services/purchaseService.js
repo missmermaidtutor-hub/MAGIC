@@ -1,10 +1,10 @@
 /**
- * Purchase service — RevenueCat implementation.
+ * Purchase service — RevenueCat (react-native-purchases + react-native-purchases-ui).
  *
- * Entitlement identifier in RevenueCat dashboard must be: "premium"
- * Product identifiers must match: magic_premium_monthly, magic_premium_annual
+ * Entitlement: "MAGIC Pro"
+ * Products:    monthly, yearly, lifetime
  *
- * On web: purchases are not available through RevenueCat (native SDK only).
+ * On web: purchases are not available (RevenueCat is native-only).
  * Web users see a message directing them to the iOS/Android app.
  */
 
@@ -14,15 +14,20 @@ import { db } from '../config/firebase';
 import { REVENUECAT_API_KEY, ENTITLEMENT_ID } from '../config/premium';
 import { showAlert } from '../utils/alertUtils';
 
-let Purchases = null;
+// Lazy-load native SDKs — crash on web if imported at module level
+let _Purchases = null;
+let _RevenueCatUI = null;
 
-// Lazy-load the native SDK — it crashes on web if imported at module level
 const getPurchases = () => {
   if (Platform.OS === 'web') return null;
-  if (!Purchases) {
-    Purchases = require('react-native-purchases').default;
-  }
-  return Purchases;
+  if (!_Purchases) _Purchases = require('react-native-purchases').default;
+  return _Purchases;
+};
+
+const getRevenueCatUI = () => {
+  if (Platform.OS === 'web') return null;
+  if (!_RevenueCatUI) _RevenueCatUI = require('react-native-purchases-ui').default;
+  return _RevenueCatUI;
 };
 
 /**
@@ -184,5 +189,61 @@ export const checkSubscriptionStatus = async (uid) => {
   } catch (e) {
     console.log('[PurchaseService] checkSubscriptionStatus error:', e);
     return { isPremium: false };
+  }
+};
+
+/**
+ * Present the RevenueCat native Paywall (configured in RevenueCat dashboard).
+ * Returns { purchased: bool } — true if user completed a purchase.
+ * @param {string} uid — Firebase UID (to sync Firestore after purchase)
+ */
+export const presentPaywall = async (uid) => {
+  if (Platform.OS === 'web') {
+    showAlert(
+      'Download the App',
+      'Subscriptions are available in the MAGIC iOS and Android apps.'
+    );
+    return { purchased: false };
+  }
+  const ui = getRevenueCatUI();
+  if (!ui) return { purchased: false };
+  try {
+    const result = await ui.presentPaywallIfNeeded({
+      requiredEntitlementIdentifier: ENTITLEMENT_ID,
+    });
+    // result.userCancelled is true if dismissed without purchase
+    if (!result.userCancelled) {
+      const customerInfo = await getPurchases().getCustomerInfo();
+      if (customerInfo.entitlements.active[ENTITLEMENT_ID]) {
+        await syncPremiumToFirestore(uid, customerInfo);
+        return { purchased: true };
+      }
+    }
+    return { purchased: false };
+  } catch (e) {
+    console.log('[PurchaseService] presentPaywall error:', e);
+    return { purchased: false };
+  }
+};
+
+/**
+ * Present the RevenueCat Customer Center (subscription management sheet).
+ * Allows users to: view subscription, cancel, request refund, restore.
+ * Call from a "Manage Subscription" button for paid members.
+ */
+export const presentCustomerCenter = async () => {
+  if (Platform.OS === 'web') {
+    showAlert(
+      'App Only',
+      'Subscription management is available in the iOS and Android apps.'
+    );
+    return;
+  }
+  const ui = getRevenueCatUI();
+  if (!ui) return;
+  try {
+    await ui.presentCustomerCenter();
+  } catch (e) {
+    console.log('[PurchaseService] presentCustomerCenter error:', e);
   }
 };

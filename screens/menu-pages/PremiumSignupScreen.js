@@ -4,7 +4,7 @@ import { showAlert } from '../../utils/alertUtils';
 import { useAuth } from '../../context/AuthContext';
 import { getPremiumStatus, getPremiumLabel, formatPremiumExpiry } from '../../utils/premiumUtils';
 import { PREMIUM_PRODUCTS, PREMIUM_FEATURE_LIST } from '../../config/premium';
-import { purchasePackage, restorePurchases, getOfferings } from '../../services/purchaseService';
+import { purchasePackage, restorePurchases, getOfferings, presentPaywall, presentCustomerCenter } from '../../services/purchaseService';
 import { redeemTrialTokenFirestore as redeemToken } from '../../services/firestoreService';
 import { trackAction } from '../../services/analyticsService';
 
@@ -44,10 +44,9 @@ export default function PremiumSignupScreen({ navigation }) {
     if (!user || purchasing) return;
     setPurchasing(true);
     trackAction('premium_subscribe_tapped');
-    // On native: pass the RevenueCat Package object; on web: passes undefined (handled in service)
-    const pkg = packages[selectedIndex] ?? null;
-    const success = await purchasePackage(pkg, user.uid);
-    if (success) await refreshProfile();
+    // Present the RevenueCat native paywall (configured in RevenueCat dashboard)
+    const { purchased } = await presentPaywall(user.uid);
+    if (purchased) await refreshProfile();
     setPurchasing(false);
   };
 
@@ -56,6 +55,13 @@ export default function PremiumSignupScreen({ navigation }) {
     trackAction('premium_restore_tapped');
     const success = await restorePurchases(user.uid);
     if (success) await refreshProfile();
+  };
+
+  const handleManageSubscription = async () => {
+    trackAction('customer_center_opened');
+    await presentCustomerCenter();
+    // Refresh after returning — user may have cancelled or changed plan
+    await refreshProfile();
   };
 
   const handleRedeemToken = async () => {
@@ -125,13 +131,18 @@ export default function PremiumSignupScreen({ navigation }) {
         )}
 
         {isPaidPremium ? (
-          /* Paid premium confirmation */
+          /* Paid premium confirmation + Customer Center */
           <View style={styles.premiumConfirmCard}>
             <Text style={styles.premiumConfirmStar}>{'\u2B50'}</Text>
             <Text style={styles.premiumConfirmTitle}>You're a Premium Member!</Text>
             <Text style={styles.premiumConfirmBody}>
               Thank you for supporting MAGIC. You have full access to all premium features.
             </Text>
+            {Platform.OS !== 'web' && (
+              <TouchableOpacity style={styles.manageBtn} onPress={handleManageSubscription}>
+                <Text style={styles.manageBtnText}>Manage Subscription</Text>
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           /* Pricing cards */
@@ -357,6 +368,19 @@ const styles = StyleSheet.create({
     color: '#4B0082',
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 16,
+  },
+  manageBtn: {
+    borderWidth: 1,
+    borderColor: '#4B0082',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  manageBtnText: {
+    color: '#4B0082',
+    fontSize: 14,
+    fontWeight: '600',
   },
 
   // Plans
