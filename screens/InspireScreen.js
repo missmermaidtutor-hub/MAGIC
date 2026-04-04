@@ -285,9 +285,12 @@ export default function InspireScreen({ navigation }) {
           // Record art save (courage owner tracking)
           if (courage.uid && courage.uid !== user.uid) {
             const pseudonym = userProfile?.pseudonym || 'Anonymous';
-            recordArtSave(courage.uid, courage.id, user.uid, pseudonym).catch(err =>
-              console.log('recordArtSave error:', err)
-            );
+            recordArtSave(courage.uid, courage.id, user.uid, pseudonym, {
+              mediaUrl:  courage.mediaUrl  || '',
+              title:     courage.title     || '',
+              mediaType: courage.mediaType || 'image',
+              text:      courage.text      || '',
+            }).catch(err => console.log('recordArtSave error:', err));
             trackAction('art_save_recorded');
           }
         }

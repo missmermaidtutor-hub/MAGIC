@@ -490,9 +490,12 @@ export default function CommunityScreen({ navigation, route }) {
         await AsyncStorage.setItem(`inspiration_saved_${today}`, 'true');
         // Record Firestore art save
         if (user && curatorUid) {
-          recordArtSave(curatorUid, artId, user.uid, userPseudonym || 'Anonymous').catch(err =>
-            console.log('recordArtSave error:', err)
-          );
+          recordArtSave(curatorUid, artId, user.uid, userPseudonym || 'Anonymous', {
+            imageUrl:  artwork.imageUrl  || '',
+            title:     artwork.title     || '',
+            mediaType: artwork.mediaType || 'image',
+            text:      artwork.text      || '',
+          }).catch(err => console.log('recordArtSave error:', err));
           trackAction('art_save_recorded');
         }
       }

@@ -122,13 +122,24 @@ export default function BookcaseScreen({ navigation }) {
         const key = save.artworkId;
         if (!grouped[key]) grouped[key] = { artworkId: key, savers: [], artwork: null };
         grouped[key].savers.push(save.saverPseudonym || 'Anonymous');
+        // Use embedded snapshot if present (new saves); avoids secondary lookup
+        if (!grouped[key].artwork && (save.mediaUrl || save.imageUrl)) {
+          grouped[key].artwork = {
+            id:        key,
+            mediaUrl:  save.mediaUrl  || '',
+            imageUrl:  save.imageUrl  || '',
+            title:     save.title     || 'Untitled',
+            mediaType: save.mediaType || 'image',
+            text:      save.text      || '',
+          };
+        }
       }
 
-      // Match artworkId to courage (has mediaUrl/text)
+      // Fallback lookup for old saves that pre-date the snapshot fields
       for (const key of Object.keys(grouped)) {
+        if (grouped[key].artwork) continue;
         const match = courages.find(c => c.id === key);
         if (match) grouped[key].artwork = match;
-        // Also check curated
         if (!grouped[key].artwork) {
           const curatedMatch = curated.find(c => c.id === key);
           if (curatedMatch) grouped[key].artwork = curatedMatch;

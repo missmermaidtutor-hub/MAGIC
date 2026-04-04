@@ -730,7 +730,8 @@ export const getAllCuratedGalleriesGrouped = async (excludeUid) => {
 // ============================================================
 
 // Record an art save (with duplicate check, skips self-saves)
-export const recordArtSave = async (ownerUid, artworkId, saverUid, saverPseudonym) => {
+// artworkSnapshot: optional { mediaUrl, imageUrl, title, mediaType, text } embedded so Bookcase never needs a secondary lookup
+export const recordArtSave = async (ownerUid, artworkId, saverUid, saverPseudonym, artworkSnapshot = {}) => {
   if (ownerUid === saverUid) return; // skip self-saves
   // Duplicate check
   const q = query(
@@ -746,6 +747,12 @@ export const recordArtSave = async (ownerUid, artworkId, saverUid, saverPseudony
     saverUid,
     saverPseudonym: saverPseudonym || 'Anonymous',
     savedAt: serverTimestamp(),
+    // Snapshot fields — present on new saves; absent on old saves (Bookcase falls back to lookup)
+    ...(artworkSnapshot.mediaUrl   && { mediaUrl:   artworkSnapshot.mediaUrl }),
+    ...(artworkSnapshot.imageUrl   && { imageUrl:   artworkSnapshot.imageUrl }),
+    ...(artworkSnapshot.title      && { title:      artworkSnapshot.title }),
+    ...(artworkSnapshot.mediaType  && { mediaType:  artworkSnapshot.mediaType }),
+    ...(artworkSnapshot.text       && { text:       artworkSnapshot.text }),
   });
 };
 
