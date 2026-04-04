@@ -25,12 +25,10 @@ export default function ForgotPasswordScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email.trim(), {
-        url: 'https://magicnestlings.web.app',
-        handleCodeInApp: false,
-      });
+      await sendPasswordResetEmail(auth, email.trim());
       setSent(true);
     } catch (error) {
+      console.error('Password reset error:', error.code, error.message, error);
       let message = 'Could not send reset email. Please try again.';
       if (error.code === 'auth/user-not-found') message = 'No account found with this email.';
       else if (error.code === 'auth/invalid-email') message = 'Invalid email address.';

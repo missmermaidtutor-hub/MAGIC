@@ -5,3 +5,6 @@ dist/
 *.log
 npm-debug.*
 ~$*
+
+# Private session diary (contains credentials)
+diary.md
