@@ -283,8 +283,8 @@ const GoalInput = ({ value, onChange, onSave, saving }) => (
   <View style={{ marginTop: 6 }}>
     <TextInput
       style={{
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        color: '#fff',
+        backgroundColor: 'rgba(255,255,255,0.85)',
+        color: '#4B0082',
         borderRadius: 8,
         padding: 8,
         fontSize: 14,
@@ -294,7 +294,7 @@ const GoalInput = ({ value, onChange, onSave, saving }) => (
       value={value}
       onChangeText={onChange}
       placeholder="What do you want to grow today?"
-      placeholderTextColor="#aaa"
+      placeholderTextColor="#9b7bb8"
       multiline
     />
     <TouchableOpacity
