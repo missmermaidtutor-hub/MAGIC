@@ -2,8 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, Image, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Image, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts, Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold, Montserrat_400Regular_Italic, Montserrat_700Bold_Italic } from '@expo-google-fonts/montserrat';
+
+// Apply Montserrat globally to all Text and TextInput components
+Text.defaultProps = Text.defaultProps || {};
+Text.defaultProps.style = [{ fontFamily: 'Montserrat_400Regular' }, Text.defaultProps.style];
+TextInput.defaultProps = TextInput.defaultProps || {};
+TextInput.defaultProps.style = [{ fontFamily: 'Montserrat_400Regular' }, TextInput.defaultProps.style];
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initSentry, Sentry } from './config/sentry';
 import {
@@ -460,6 +467,23 @@ function AppContent() {
 }
 
 function App() {
+  const [fontsLoaded] = useFonts({
+    Montserrat_400Regular,
+    Montserrat_500Medium,
+    Montserrat_600SemiBold,
+    Montserrat_700Bold,
+    Montserrat_400Regular_Italic,
+    Montserrat_700Bold_Italic,
+  });
+
+  if (!fontsLoaded) {
+    return (
+      <ImageBackground source={require('./assets/background.png')} style={styles.loadingContainer} resizeMode="cover">
+        <ActivityIndicator size="large" color="#FFD700" />
+      </ImageBackground>
+    );
+  }
+
   return (
     <>
       <StatusBar style="light" />
@@ -485,7 +509,7 @@ const styles = StyleSheet.create({
   },
   loadingLetter: {
     fontSize: 36,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat_700Bold',
     letterSpacing: 2,
   },
   tabBar: {
@@ -498,7 +522,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 10,
-    fontWeight: '600',
+    fontFamily: 'Montserrat_600SemiBold',
     marginTop: 2,
     color: '#333',
   },
