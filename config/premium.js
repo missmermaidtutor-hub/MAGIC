@@ -5,27 +5,41 @@
  * and RevenueCat API keys.
  */
 
-// TODO: Replace with real RevenueCat API keys before app store submission
+// RevenueCat API keys
+// iOS test key active — replace with production key before App Store submission
 export const REVENUECAT_API_KEY = {
-  ios: 'appl_REPLACE_WITH_REAL_KEY',     // TODO: Apple API key from RevenueCat dashboard
-  android: 'goog_REPLACE_WITH_REAL_KEY',  // TODO: Google API key from RevenueCat dashboard
+  ios: 'test_CVMtuxcVnVvUYXCCjLSitPvTece',
+  android: 'goog_REPLACE_WITH_REAL_KEY',  // TODO: add Android key from RevenueCat dashboard
 };
 
+// RevenueCat entitlement identifier — must match exactly in RevenueCat dashboard
+export const ENTITLEMENT_ID = 'MAGIC Pro';
+
+// Product identifiers — must match exactly in App Store Connect / Google Play Console
+// and in the RevenueCat dashboard products list
 export const PREMIUM_PRODUCTS = [
   {
-    id: 'magic_premium_monthly',
+    id: 'monthly',
     title: 'Monthly',
     price: '$2.99',
     period: '/month',
     description: 'Billed monthly',
   },
   {
-    id: 'magic_premium_annual',
-    title: 'Annual',
+    id: 'yearly',
+    title: 'Yearly',
     price: '$29.99',
     period: '/year',
-    description: 'Save $5.89!',
+    description: 'Save over 15%!',
     badge: 'Best Value',
+  },
+  {
+    id: 'lifetime',
+    title: 'Lifetime',
+    price: '$79.99',
+    period: 'one-time',
+    description: 'Pay once, keep forever',
+    badge: 'Best Deal',
   },
 ];
 

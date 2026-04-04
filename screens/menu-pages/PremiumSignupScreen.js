@@ -21,10 +21,10 @@ export default function PremiumSignupScreen({ navigation }) {
       getOfferings().then(offering => {
         if (offering?.availablePackages?.length) {
           // Sort to match PREMIUM_PRODUCTS order (monthly first, annual second)
-          const sorted = [...offering.availablePackages].sort((a, b) => {
-            const order = { magic_premium_monthly: 0, magic_premium_annual: 1 };
-            return (order[a.product.identifier] ?? 99) - (order[b.product.identifier] ?? 99);
-          });
+          const order = { monthly: 0, yearly: 1, lifetime: 2 };
+          const sorted = [...offering.availablePackages].sort((a, b) =>
+            (order[a.product.identifier] ?? 99) - (order[b.product.identifier] ?? 99)
+          );
           setPackages(sorted);
         }
       });

@@ -11,10 +11,8 @@
 import { Platform } from 'react-native';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { REVENUECAT_API_KEY } from '../config/premium';
+import { REVENUECAT_API_KEY, ENTITLEMENT_ID } from '../config/premium';
 import { showAlert } from '../utils/alertUtils';
-
-const ENTITLEMENT_ID = 'premium';
 
 let Purchases = null;
 
@@ -71,14 +69,17 @@ const syncPremiumToFirestore = async (uid, customerInfo) => {
     const entitlement = customerInfo.entitlements.active[ENTITLEMENT_ID];
     if (!entitlement) return;
 
-    const expiry = entitlement.expirationDate
-      ? new Date(entitlement.expirationDate)
-      : null;
+    const productId = entitlement.productIdentifier;
+    const isLifetime = productId === 'lifetime' || !entitlement.expirationDate;
+
+    // Lifetime purchases have no expiry date — set premiumExpiry to null (permanent)
+    const expiry = isLifetime ? null : new Date(entitlement.expirationDate);
 
     await updateDoc(doc(db, 'users', uid), {
       isPremium: true,
       premiumExpiry: expiry,
-      premiumPlan: entitlement.productIdentifier,
+      premiumPlan: productId,
+      premiumIsLifetime: isLifetime,
       revenueCatCustomerId: customerInfo.originalAppUserId,
       updatedAt: serverTimestamp(),
     });

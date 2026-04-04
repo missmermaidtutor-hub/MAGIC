@@ -291,13 +291,15 @@ export const formatPremiumExpiry = (userProfile) => {
   if (!status.isPremium) return 'No active premium access';
   switch (status.reason) {
     case 'paid': {
+      if (userProfile.premiumIsLifetime) return 'Lifetime Member ✦';
       if (userProfile.premiumExpiry) {
         const expiry =
           userProfile.premiumExpiry?.toDate?.() ??
           (userProfile.premiumExpiry?.seconds
             ? new Date(userProfile.premiumExpiry.seconds * 1000)
             : new Date(userProfile.premiumExpiry));
-        return `Premium until ${expiry.toLocaleDateString()}`;
+        const plan = userProfile.premiumPlan === 'monthly' ? 'Monthly' : 'Yearly';
+        return `${plan} — renews ${expiry.toLocaleDateString()}`;
       }
       return 'Active premium subscription';
     }
