@@ -97,6 +97,7 @@ export default function BookcaseScreen({ navigation }) {
   const [inspiringWorks, setInspiringWorks] = useState([]);
   const [selectedWork, setSelectedWork] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
+  const [debugError, setDebugError] = useState(null);
 
   useEffect(() => {
     if (user?.uid) loadData();
@@ -104,14 +105,16 @@ export default function BookcaseScreen({ navigation }) {
 
   const loadData = async () => {
     setLoading(true);
+    setDebugError(null);
     try {
-      const [userWins, saves, courages, curated, ownArtworks] = await Promise.all([
-        getUserWins(user.uid).catch(() => []),
-        getMyArtSaves(user.uid).catch(() => []),
-        getUserCourages(user.uid).catch(() => []),
-        getUserCurated(user.uid).catch(() => []),
-        getUserArtworks(user.uid).catch(() => []),
+      // Fetch each source independently so one failure can't kill the rest
+      const [userWins, saves, courages, curated] = await Promise.all([
+        getUserWins(user.uid).catch(e => { console.log('getUserWins err', e); return []; }),
+        getMyArtSaves(user.uid).catch(e => { console.log('getMyArtSaves err', e); return []; }),
+        getUserCourages(user.uid).catch(e => { console.log('getUserCourages err', e); return []; }),
+        getUserCurated(user.uid).catch(e => { console.log('getUserCurated err', e); return []; }),
       ]);
+      const ownArtworks = await getUserArtworks(user.uid).catch(e => { console.log('getUserArtworks err', e); return []; });
 
       setWins(userWins);
       setArtSaves(saves);
@@ -188,6 +191,7 @@ export default function BookcaseScreen({ navigation }) {
       });
     } catch (err) {
       console.log('Bookcase load error:', err);
+      setDebugError(String(err?.message || err));
     }
     setLoading(false);
   };
@@ -221,6 +225,17 @@ export default function BookcaseScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>My Bookcase</Text>
         <Text style={styles.subheader}>{earnedCount} of {BADGE_DEFS.length} badges earned</Text>
+
+        {/* Always-visible debug status */}
+        <View style={{ backgroundColor: '#111', padding: 8, borderRadius: 6, marginBottom: 10 }}>
+          <Text style={{ color: '#0f0', fontSize: 9, fontFamily: 'monospace' }}>
+            {debugError
+              ? `ERR: ${debugError}`
+              : debugInfo
+                ? `ok saves:${debugInfo.savesCount} works:${debugInfo.worksBuilt} matched:${debugInfo.worksWithArtwork} courages:${debugInfo.couragesCount} curated:${debugInfo.curatedCount} artworks:${debugInfo.artworksCount}`
+                : `loading:${loading ? 'yes' : 'no'} uid:${user?.uid?.slice(0,8) || 'none'}`}
+          </Text>
+        </View>
 
         {loading ? (
           <ActivityIndicator size="large" color="#FFD700" style={{ marginTop: 40 }} />
