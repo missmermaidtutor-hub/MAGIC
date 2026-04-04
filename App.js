@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, TextInput, Image, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold, Montserrat_400Regular_Italic, Montserrat_700Bold_Italic } from '@expo-google-fonts/montserrat';
+import { initPurchases, checkSubscriptionStatus } from './services/purchaseService';
 
 // Apply Montserrat globally to all Text and TextInput components
 Text.defaultProps = Text.defaultProps || {};
@@ -409,6 +410,14 @@ function AppContent() {
     }
     return () => stopAnalytics();
   }, [user]);
+
+  // Initialize RevenueCat and sync subscription status on login
+  useEffect(() => {
+    if (user && user.uid && user.uid !== 'local') {
+      initPurchases(user.uid);
+      checkSubscriptionStatus(user.uid).catch(() => {});
+    }
+  }, [user?.uid]);
 
   // Set up streak reminder notifications when user profile is available
   useEffect(() => {

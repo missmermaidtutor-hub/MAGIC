@@ -1,18 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground, Platform } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
 import { useAuth } from '../../context/AuthContext';
 import { getPremiumStatus, getPremiumLabel, formatPremiumExpiry } from '../../utils/premiumUtils';
 import { PREMIUM_PRODUCTS, PREMIUM_FEATURE_LIST } from '../../config/premium';
-import { purchasePackage, restorePurchases } from '../../services/purchaseService';
+import { purchasePackage, restorePurchases, getOfferings } from '../../services/purchaseService';
 import { redeemTrialTokenFirestore as redeemToken } from '../../services/firestoreService';
 import { trackAction } from '../../services/analyticsService';
 
 export default function PremiumSignupScreen({ navigation }) {
   const { user, userProfile, refreshProfile } = useAuth();
-  const [selectedProduct, setSelectedProduct] = useState(PREMIUM_PRODUCTS[1]?.id || PREMIUM_PRODUCTS[0]?.id);
+  // selectedProduct is an index into PREMIUM_PRODUCTS (for display) and packages (for purchasing)
+  const [selectedIndex, setSelectedIndex] = useState(1); // default to annual
+  const [packages, setPackages] = useState([]); // RevenueCat Package objects
   const [purchasing, setPurchasing] = useState(false);
   const [redeeming, setRedeeming] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web') {
+      getOfferings().then(offering => {
+        if (offering?.availablePackages?.length) {
+          // Sort to match PREMIUM_PRODUCTS order (monthly first, annual second)
+          const sorted = [...offering.availablePackages].sort((a, b) => {
+            const order = { magic_premium_monthly: 0, magic_premium_annual: 1 };
+            return (order[a.product.identifier] ?? 99) - (order[b.product.identifier] ?? 99);
+          });
+          setPackages(sorted);
+        }
+      });
+    }
+  }, []);
 
   const status = getPremiumStatus(userProfile);
   const isPaidPremium = status.isPremium && status.reason === 'paid';
@@ -27,14 +44,18 @@ export default function PremiumSignupScreen({ navigation }) {
     if (!user || purchasing) return;
     setPurchasing(true);
     trackAction('premium_subscribe_tapped');
-    await purchasePackage(selectedProduct, user.uid);
+    // On native: pass the RevenueCat Package object; on web: passes undefined (handled in service)
+    const pkg = packages[selectedIndex] ?? null;
+    const success = await purchasePackage(pkg, user.uid);
+    if (success) await refreshProfile();
     setPurchasing(false);
   };
 
   const handleRestore = async () => {
     if (!user) return;
     trackAction('premium_restore_tapped');
-    await restorePurchases(user.uid);
+    const success = await restorePurchases(user.uid);
+    if (success) await refreshProfile();
   };
 
   const handleRedeemToken = async () => {
@@ -117,13 +138,15 @@ export default function PremiumSignupScreen({ navigation }) {
           <>
             <Text style={styles.sectionTitle}>Choose Your Plan</Text>
             <View style={styles.plansRow}>
-              {PREMIUM_PRODUCTS.map((product) => {
-                const isSelected = selectedProduct === product.id;
+              {PREMIUM_PRODUCTS.map((product, index) => {
+                const isSelected = selectedIndex === index;
+                // Use live price from RevenueCat if available, fall back to config
+                const livePrice = packages[index]?.product?.priceString ?? product.price;
                 return (
                   <TouchableOpacity
                     key={product.id}
                     style={[styles.planCard, isSelected && styles.planCardSelected]}
-                    onPress={() => setSelectedProduct(product.id)}
+                    onPress={() => setSelectedIndex(index)}
                     activeOpacity={0.7}
                   >
                     {product.badge && (
@@ -135,7 +158,7 @@ export default function PremiumSignupScreen({ navigation }) {
                       {product.title}
                     </Text>
                     <Text style={[styles.planPrice, isSelected && styles.planPriceSelected]}>
-                      {product.price}
+                      {livePrice}
                     </Text>
                     <Text style={[styles.planPeriod, isSelected && styles.planPeriodSelected]}>
                       {product.period}
