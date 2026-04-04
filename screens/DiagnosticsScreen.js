@@ -238,13 +238,15 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+    paddingTop: 70,
+    paddingBottom: 50,
   },
   header: {
     fontSize: 36,
     fontWeight: 'bold',
     color: '#4B0082',
     textAlign: 'center',
-    marginTop: 40,
+    marginTop: 0,
     marginBottom: 4,
   },
   subtitle: {
@@ -337,7 +339,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   closeBtnText: {
-    color: '#fff',
+    color: '#4B0082',
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -354,7 +356,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   menuBtnText: {
-    color: '#fff',
+    color: '#4B0082',
     fontSize: 20,
     fontWeight: 'bold',
   },
