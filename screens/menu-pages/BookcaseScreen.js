@@ -141,23 +141,32 @@ export default function BookcaseScreen({ navigation }) {
       // On match, backfill the snapshot so this lookup never runs again (read-repair)
       for (const key of Object.keys(grouped)) {
         if (grouped[key].artwork) continue;
-        const match = courages.find(c => c.id === key) || curated.find(c => c.id === key);
+
+        // Try all three sources: dailyCourages, curated gallery, personal artworks
+        const match =
+          courages.find(c => c.id === key) ||
+          curated.find(c => c.id === key) ||
+          ownArtworks.find(a => a.id === key);
+
         if (match) {
-          // If the matched doc has an empty mediaUrl (storage upload failed at submission),
-          // bridge to the user's artworks collection via date to find a usable image URL
-          if (!match.mediaUrl && match.date) {
+          // Normalise: artworks use imageUrl, courages use mediaUrl
+          const mediaUrl = match.mediaUrl || '';
+          let imageUrl   = match.imageUrl  || '';
+
+          // Bridge: if mediaUrl empty, find an https:// imageUrl from same date
+          if (!mediaUrl && !imageUrl && match.date) {
             const dateArtwork = ownArtworks.find(a => a.date === match.date && a.imageUrl?.startsWith('https://'));
-            if (dateArtwork) match.imageUrl = dateArtwork.imageUrl;
+            if (dateArtwork) imageUrl = dateArtwork.imageUrl;
           }
-          grouped[key].artwork = match;
-          const snapshot = {
-            mediaUrl:  match.mediaUrl  || '',
-            imageUrl:  match.imageUrl  || '',
+
+          grouped[key].artwork = { ...match, mediaUrl, imageUrl };
+          patchArtSave(grouped[key].saveDocId, {
+            mediaUrl,
+            imageUrl,
             title:     match.title     || '',
             mediaType: match.mediaType || 'image',
             text:      match.text      || '',
-          };
-          patchArtSave(grouped[key].saveDocId, snapshot).catch(() => {});
+          }).catch(() => {});
         }
       }
 
@@ -171,8 +180,11 @@ export default function BookcaseScreen({ navigation }) {
         curatedCount: curated.length,
         artworksCount: ownArtworks.length,
         worksBuilt: works.length,
+        worksWithArtwork: works.filter(w => w.artwork).length,
         saveIds: saves.map(s => ({ artworkId: s.artworkId?.slice(0,8), hasSnapshot: !!(s.mediaUrl || s.imageUrl) })),
         courageIds: courages.map(c => c.id?.slice(0,8)),
+        curatedIds: curated.map(c => c.id?.slice(0,8)),
+        artworkIds: ownArtworks.map(a => a.id?.slice(0,8)),
       });
     } catch (err) {
       console.log('Bookcase load error:', err);
@@ -285,9 +297,11 @@ export default function BookcaseScreen({ navigation }) {
             {debugInfo && (
               <View style={{ backgroundColor: '#000', padding: 10, borderRadius: 8, marginBottom: 12 }}>
                 <Text style={{ color: '#0f0', fontSize: 10, fontFamily: 'monospace' }}>
-                  {`saves:${debugInfo.savesCount} courages:${debugInfo.couragesCount} curated:${debugInfo.curatedCount} artworks:${debugInfo.artworksCount} works:${debugInfo.worksBuilt}\n`}
+                  {`saves:${debugInfo.savesCount} courages:${debugInfo.couragesCount} curated:${debugInfo.curatedCount} artworks:${debugInfo.artworksCount} works:${debugInfo.worksBuilt} matched:${debugInfo.worksWithArtwork}\n`}
                   {`saveIds: ${JSON.stringify(debugInfo.saveIds)}\n`}
-                  {`courageIds: [${debugInfo.courageIds.join(', ')}]`}
+                  {`courageIds: [${debugInfo.courageIds.join(', ')}]\n`}
+                  {`curatedIds: [${debugInfo.curatedIds.join(', ')}]\n`}
+                  {`artworkIds: [${debugInfo.artworkIds.join(', ')}]`}
                 </Text>
               </View>
             )}
