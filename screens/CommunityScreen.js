@@ -252,9 +252,11 @@ export default function CommunityScreen({ navigation, route }) {
   // Reload galleries when screen comes into focus & mark as browsed for Connect star
   useFocusEffect(
     useCallback(() => {
-      loadAllGalleries();
+      // loadAllGalleries must complete first — it filters trashed items from AsyncStorage.
+      // promotePendingVotingArtworks reads personal_artworks directly, so if it runs before
+      // the trash filter is written back it can reinstate deleted items (race condition).
+      loadAllGalleries().then(() => promotePendingVotingArtworks());
       loadSavedArt();
-      promotePendingVotingArtworks();
       loadNewsfeed();
       // Mark browsed for today's Connect (C) star point
       const today = getESTDate();
@@ -417,14 +419,20 @@ export default function CommunityScreen({ navigation, route }) {
         // Move ready artworks to private gallery (with dedup)
         const personalData = await AsyncStorage.getItem('personal_artworks');
         const personal = personalData ? JSON.parse(personalData) : [];
+        // Always re-read current trash so we never promote a trashed item
+        const trashData = await AsyncStorage.getItem('trashed_artworks');
+        const trashedIds = new Set(
+          trashData ? JSON.parse(trashData).map(a => String(a.id)) : []
+        );
         const existingIds = new Set(personal.map(a => String(a.id)));
         const promoted = ready
-          .filter(a => !existingIds.has(String(a.id)))
+          .filter(a => !existingIds.has(String(a.id)) && !trashedIds.has(String(a.id)))
           .map(a => ({
             ...a,
             pendingVoting: false,
           }));
-        const updatedPersonal = [...personal, ...promoted];
+        const updatedPersonal = personal.filter(a => !trashedIds.has(String(a.id)));
+        updatedPersonal.push(...promoted);
         await AsyncStorage.setItem('personal_artworks', JSON.stringify(updatedPersonal));
         setPersonalArtworks(updatedPersonal);
 
