@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, Text, TextInput, Image, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useFonts, Montserrat_400Regular, Montserrat_500Medium, Montserrat_600SemiBold, Montserrat_700Bold, Montserrat_400Regular_Italic, Montserrat_700Bold_Italic } from '@expo-google-fonts/montserrat';
+import useAppFonts from './utils/useAppFonts';
 import { initPurchases, checkSubscriptionStatus } from './services/purchaseService';
 
 // Apply Montserrat globally to all Text and TextInput components
@@ -476,14 +476,7 @@ function AppContent() {
 }
 
 function App() {
-  const [fontsLoaded] = useFonts({
-    Montserrat_400Regular,
-    Montserrat_500Medium,
-    Montserrat_600SemiBold,
-    Montserrat_700Bold,
-    Montserrat_400Regular_Italic,
-    Montserrat_700Bold_Italic,
-  });
+  const fontsLoaded = useAppFonts();
 
   if (!fontsLoaded) {
     return (
