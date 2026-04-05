@@ -106,7 +106,7 @@ export default function AboutYouScreen({ navigation }) {
   // Preferences
   const [notificationPreference, setNotificationPreference] = useState('daily');
   const [showNotificationList, setShowNotificationList] = useState(false);
-  const [anonymous, setAnonymous] = useState(true);
+  const [anonymous, setAnonymous] = useState(false);
   const [allowWorkBoutique, setAllowWorkBoutique] = useState(false);
 
   // Timezone
@@ -148,7 +148,7 @@ export default function AboutYouScreen({ navigation }) {
       setFavoriteMediums(userProfile.favoriteMediums || []);
       setNotificationPreference(userProfile.notificationPreference || 'daily');
       setAllowWorkBoutique(userProfile.allowWorkBoutique ?? false);
-      setAnonymous(userProfile.anonymous ?? true);
+      setAnonymous(userProfile.anonymous ?? false);
       setGender(userProfile.gender || '');
       setPhoneNumber(userProfile.phoneNumber || '');
       setOpenToPods(userProfile.openToPods ?? false);
@@ -166,7 +166,7 @@ export default function AboutYouScreen({ navigation }) {
             data.dailyReminder === false ? 'none' :
             data.notifications === false ? 'none' : 'daily'
           );
-          setAnonymous(data.anonymous ?? true);
+          setAnonymous(data.anonymous ?? false);
           setAccountMethod(data.accountMethod ?? '');
           setEmail(data.email ?? '');
           setUsername(data.username ?? '');

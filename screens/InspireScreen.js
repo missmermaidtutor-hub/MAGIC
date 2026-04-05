@@ -990,6 +990,9 @@ export default function InspireScreen({ navigation }) {
                     </View>
                     <View style={styles.artistInfo}>
                       <Text style={styles.artworkTitle} numberOfLines={2}>{courage.title || 'Untitled'}</Text>
+                      {courage.pseudonym ? (
+                        <Text style={styles.artworkPseudonym}>{courage.pseudonym}</Text>
+                      ) : null}
                     </View>
                   </View>
                 );
@@ -1274,6 +1277,13 @@ const styles = StyleSheet.create({
     color: '#004225',
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  artworkPseudonym: {
+    fontSize: 11,
+    color: '#4B0082',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 2,
   },
   rankingContainer: {
     alignItems: 'center',

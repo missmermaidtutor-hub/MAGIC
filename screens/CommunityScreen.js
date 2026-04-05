@@ -1275,6 +1275,7 @@ export default function CommunityScreen({ navigation, route }) {
             </View>
           )}
         </GoldFrame>
+        <Text style={styles.thumbNameplate} numberOfLines={1}>{feedUser.pseudonym}</Text>
       </TouchableOpacity>
     );
   };
@@ -1629,6 +1630,9 @@ export default function CommunityScreen({ navigation, route }) {
                         </View>
                       )}
                     </GoldFrame>
+                    <Text style={styles.thumbNameplate} numberOfLines={1}>
+                      {isAnonymous ? 'Anonymous' : (userPseudonym || 'Anonymous')}
+                    </Text>
                   </TouchableOpacity>
                 );
               })}
@@ -3161,7 +3165,15 @@ const styles = StyleSheet.create({
   },
   thumbWrapper: {
     width: Math.floor((SCREEN_WIDTH - 20 - 16) / 3),
-    height: Math.floor((SCREEN_WIDTH - 20 - 16) / 3),
+    alignItems: 'center',
+  },
+  thumbNameplate: {
+    fontSize: 10,
+    color: '#4B0082',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 3,
+    maxWidth: Math.floor((SCREEN_WIDTH - 20 - 16) / 3),
   },
   thumbFrameInner: {
     alignSelf: 'stretch',
