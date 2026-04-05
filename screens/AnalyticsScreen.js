@@ -766,15 +766,22 @@ const styles = StyleSheet.create({
   },
   inviteStat: {
     alignItems: 'center',
+    flex: 1,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    marginHorizontal: 4,
   },
   inviteStatNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#050d61',
+    color: '#fff',
   },
   inviteStatLabel: {
     fontSize: 11,
-    color: '#050d61',
+    color: 'rgba(255,255,255,0.8)',
     marginTop: 2,
   },
   inviteUserRow: {
@@ -782,17 +789,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(5, 13, 97, 0.15)',
+    borderBottomColor: 'rgba(255,255,255,0.15)',
   },
   inviteUserName: {
     flex: 1,
     fontSize: 13,
-    color: '#050d61',
+    color: '#fff',
     fontWeight: '600',
   },
   inviteUserStat: {
     fontSize: 12,
-    color: '#050d61',
+    color: 'rgba(255,255,255,0.8)',
     marginLeft: 12,
   },
   // Admin premium toggle

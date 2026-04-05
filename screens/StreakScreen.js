@@ -780,6 +780,8 @@ export default function StreakScreen({ navigation }) {
     ? Math.round((streakData.goalsMet / streakData.goalsSet) * 100)
     : 0;
 
+  const hideTodayGoal = showKeepGoalPrompt && !!yesterdayGoal && !goalMetYes && goalAcknowledged;
+
   return (
     <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
       <ScrollView contentContainerStyle={styles.content}>
@@ -804,62 +806,65 @@ export default function StreakScreen({ navigation }) {
         {/* Goal Assessment Box */}
         <View style={styles.goalBox}>
           <View style={styles.goalInner}>
-            {/* Yesterday acknowledgment row — always visible if not yet acknowledged */}
-            {!goalAcknowledged ? (
-              <View>
-                <Text style={styles.goalTitleSmall}>Did you meet this goal yesterday?</Text>
-                <Text style={styles.goalDisplaySmall}>
-                  {yesterdayGoal || 'No goal set'}
-                </Text>
-                <Text style={styles.goalSubtextSmall}>
-                  heart = yes, twice = no
-                </Text>
-              </View>
-            ) : goalMetYes ? (
-              <Text style={styles.goalAckText}>Great work!</Text>
-            ) : (
-              <View>
-                <Text style={styles.goalAckText}>Keep pushing!</Text>
-                {showKeepGoalPrompt && yesterdayGoal && (
-                  <View>
-                    <Text style={styles.goalSubtextSmall}>
-                      Would you like this to be your goal again today?
-                    </Text>
-                    <View style={styles.keepGoalButtons}>
-                      <TouchableOpacity
-                        style={styles.keepGoalYes}
-                        onPress={() => handleKeepGoal(true)}
-                      >
-                        <Text style={styles.keepGoalYesText}>Yes</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.keepGoalNo}
-                        onPress={() => handleKeepGoal(false)}
-                      >
-                        <Text style={styles.keepGoalNoText}>No</Text>
-                      </TouchableOpacity>
+            {/* Left column — wraps all content so heart stays in right column */}
+            <View style={{ flex: 1 }}>
+              {/* Yesterday acknowledgment */}
+              {!goalAcknowledged ? (
+                <View>
+                  <Text style={styles.goalTitleSmall}>Did you meet this goal yesterday?</Text>
+                  <Text style={styles.goalDisplaySmall}>
+                    {yesterdayGoal || 'No goal set'}
+                  </Text>
+                  <Text style={styles.goalSubtextSmall}>
+                    heart = yes, twice = no
+                  </Text>
+                </View>
+              ) : goalMetYes ? (
+                <Text style={styles.goalAckText}>Great work!</Text>
+              ) : (
+                <View>
+                  <Text style={styles.goalAckText}>Keep pushing!</Text>
+                  {showKeepGoalPrompt && yesterdayGoal && (
+                    <View>
+                      <Text style={styles.goalSubtextSmall}>
+                        Would you like this to be your goal again today?
+                      </Text>
+                      <View style={styles.keepGoalButtons}>
+                        <TouchableOpacity
+                          style={styles.keepGoalYes}
+                          onPress={() => handleKeepGoal(true)}
+                        >
+                          <Text style={styles.keepGoalYesText}>Yes</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.keepGoalNo}
+                          onPress={() => handleKeepGoal(false)}
+                        >
+                          <Text style={styles.keepGoalNoText}>No</Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
-                  </View>
-                )}
-              </View>
-            )}
+                  )}
+                </View>
+              )}
 
-            {/* Today's goal — always available, no heart required */}
-            {!(showKeepGoalPrompt && yesterdayGoal && !goalMetYes && goalAcknowledged) && (
-              <View>
-                <Text style={styles.goalLabel}>Today's Goal:</Text>
-                {todayGoal ? (
-                  <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
-                ) : (
-                  <GoalInput
-                    value={goalInputText}
-                    onChange={setGoalInputText}
-                    onSave={handleSaveGoal}
-                    saving={savingGoal}
-                  />
-                )}
-              </View>
-            )}
+              {/* Today's goal — always available, no heart required */}
+              {!hideTodayGoal && (
+                <View>
+                  <Text style={styles.goalLabel}>Today's Goal:</Text>
+                  {todayGoal ? (
+                    <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
+                  ) : (
+                    <GoalInput
+                      value={goalInputText}
+                      onChange={setGoalInputText}
+                      onSave={handleSaveGoal}
+                      saving={savingGoal}
+                    />
+                  )}
+                </View>
+              )}
+            </View>
 
             <View style={styles.heartRight}>
               <Heart
