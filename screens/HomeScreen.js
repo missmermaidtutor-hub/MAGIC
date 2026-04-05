@@ -504,6 +504,13 @@ const Heart = ({ size = 24, filled = false, onPress }) => (
   </TouchableOpacity>
 );
 
+// Goal Arm Component — 💪 filled when goal met, greyed when not
+const GoalArm = ({ size = 28, filled = false, onPress }) => (
+  <TouchableOpacity onPress={onPress} style={{ alignItems: 'center' }}>
+    <Text style={{ fontSize: size, opacity: filled ? 1 : 0.3 }}>💪</Text>
+  </TouchableOpacity>
+);
+
 // Gold arrow image
 const goldArrowImage = require('../Cliparts/Gold arrow.jpg');
 
@@ -968,7 +975,7 @@ export default function HomeScreen({ navigation }) {
       const ack = await AsyncStorage.getItem(`goal_acknowledged_${todayStr}`);
       if (ack) {
         setGoalAcknowledged(true);
-        setGoalLocked(true); // already answered today — lock it
+        // Do NOT lock on load — lock only comes from the 30-second tap timer
         if (ack === 'yes') {
           setGoalMetYes(true);
         } else if (ack === 'no') {
@@ -1487,257 +1494,217 @@ export default function HomeScreen({ navigation }) {
 
         <View style={styles.divider} />
 
-        {/* Quote, Goal, Be Creative — stacked and centered */}
+        {/* M, A, G, I boxes — stacked and centered */}
         <View style={styles.stackedCards}>
-          {/* Quote Box - Clickable to Manifest */}
+
+          {/* M · Manifest */}
           <TouchableOpacity
             style={[styles.stackedCard, styles.openFrame, { borderColor: '#78000E' }]}
             onPress={() => navigation.navigate('Manifest')}
           >
             <View style={styles.goldInnerBorder}>
-            <View style={[styles.cardInner, styles.cardInnerIndented]}>
-              <Text style={styles.quoteTextSmall}>"{todayQuote.quote}"</Text>
-              <Text style={styles.authorText}>~{todayQuote.author}</Text>
-              <Text style={styles.manifestTextSmall}>
-                <Text style={styles.manifestHighlight}>Manifest?</Text> tap here
-              </Text>
-              <View style={styles.heartRightSmall}>
-                <Heart
-                  size={24}
-                  filled={quoteHearted}
-                  onPress={() => toggleQuoteHeart()}
-                />
+              <View style={styles.cardInner}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.boxLetterLabel, { color: '#78000E' }]}>M · Manifest</Text>
+                    <Text style={[styles.cardContentText, { color: '#78000E' }]}>"{todayQuote.quote}"</Text>
+                    <Text style={[styles.cardSubtext, { color: '#78000E', fontStyle: 'italic' }]}>~{todayQuote.author}</Text>
+                    <Text style={[styles.boxPageLink, { color: '#78000E' }]}>Go to Manifest ›</Text>
+                  </View>
+                  <Heart size={22} filled={quoteHearted} onPress={() => toggleQuoteHeart()} />
+                </View>
               </View>
-            </View>
             </View>
           </TouchableOpacity>
 
-          {/* Art Challenge Box */}
+          {/* A · Art */}
           <TouchableOpacity
             style={[styles.stackedCard, styles.openFrame, { borderColor: '#9E4502' }]}
             onPress={() => navigation.navigate('Art')}
           >
             <View style={styles.goldInnerBorder}>
-            <View style={styles.cardInner}>
-              <Text style={styles.artLabel}>Be Creative:</Text>
-              <Text style={styles.artChallenge}>{todaysChallenge || 'Loading...'}</Text>
-              <Text style={styles.artStudioLink}>Straight to Art Studio</Text>
-            </View>
+              <View style={styles.cardInner}>
+                <Text style={[styles.boxLetterLabel, { color: '#9E4502' }]}>A · Art</Text>
+                <Text style={[styles.cardSubtext, { color: '#9E4502', fontWeight: '600' }]}>Creative Art Prompt:</Text>
+                <Text style={[styles.cardContentText, { color: '#9E4502' }]}>{todaysChallenge || 'Loading...'}</Text>
+                <Text style={[styles.boxPageLink, { color: '#9E4502' }]}>Go to Art Studio ›</Text>
+              </View>
             </View>
           </TouchableOpacity>
 
-          {/* Goal Box */}
+          {/* G · Grow */}
           <View style={[styles.stackedCard, styles.openFrame, { borderColor: '#c1a900' }]}>
             <View style={styles.goldInnerBorder}>
-            <View style={[styles.cardInner, styles.cardInnerIndented]}>
-              {!goalAcknowledged ? (
-                /* Phase 1: Show yesterday's goal, ask if met */
-                <View>
-                  <Text style={styles.goalTitleSmall}>Did you meet this goal yesterday?</Text>
-                  <Text style={styles.goalDisplaySmall}>
-                    {yesterdayGoal || 'No goal set'}
-                  </Text>
-                  <Text style={styles.goalSubtextSmall}>
-                    heart = yes, twice = no
-                  </Text>
-                </View>
-              ) : goalMetYes ? (
-                /* Phase 2a: Yes — Great work! Show today's goal */
-                <View>
-                  <Text style={styles.goalAckText}>Great work!</Text>
-                  <Text style={styles.goalLabel}>Today's Goal:</Text>
-                  {todayGoal ? (
-                    <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
-                  ) : (
-                    <TouchableOpacity onPress={() => navigation.navigate('Grow')}>
-                      <Text style={[styles.goalDisplaySmall, styles.underline]}>
-                        Tap to set today's goal
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ) : (
-                /* Phase 2b: No — Keep pushing, offer to reuse goal */
-                <View>
-                  <Text style={styles.goalAckText}>Keep pushing!</Text>
-                  {showKeepGoalPrompt && yesterdayGoal ? (
-                    <View>
-                      <Text style={styles.goalSubtextSmall}>
-                        Would you like this to be your goal again today?
-                      </Text>
-                      <View style={styles.keepGoalButtons}>
-                        <TouchableOpacity
-                          style={styles.keepGoalYes}
-                          onPress={() => handleKeepGoal(true)}
-                        >
-                          <Text style={styles.keepGoalYesText}>Yes</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.keepGoalNo}
-                          onPress={() => handleKeepGoal(false)}
-                        >
-                          <Text style={styles.keepGoalNoText}>No</Text>
-                        </TouchableOpacity>
+              <View style={styles.cardInner}>
+                <Text style={[styles.boxLetterLabel, { color: '#c1a900' }]}>G · Grow</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                  <View style={{ flex: 1 }}>
+                    {!goalAcknowledged ? (
+                      <View>
+                        <Text style={[styles.cardContentText, { color: '#c1a900' }]}>Did you meet this goal?</Text>
+                        <Text style={[styles.cardSubtext, { color: '#c1a900' }]}>{yesterdayGoal || 'No goal set'}</Text>
+                        <Text style={[styles.cardSubtext, { color: '#c1a900' }]}>tap arm to mark complete</Text>
                       </View>
-                    </View>
-                  ) : (
-                    <View>
-                      <Text style={styles.goalLabel}>Today's Goal:</Text>
-                      {todayGoal ? (
-                        <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
-                      ) : (
-                        <TouchableOpacity onPress={() => navigation.navigate('Grow')}>
-                          <Text style={[styles.goalDisplaySmall, styles.underline]}>
-                            Tap to set today's goal
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  )}
+                    ) : goalMetYes ? (
+                      <View>
+                        <Text style={[styles.cardContentText, { color: '#c1a900' }]}>Great work!</Text>
+                        <Text style={[styles.cardSubtext, { color: '#c1a900' }]}>Today: {todayGoal || 'No goal yet'}</Text>
+                      </View>
+                    ) : (
+                      <View>
+                        <Text style={[styles.cardContentText, { color: '#c1a900' }]}>Keep pushing!</Text>
+                        {showKeepGoalPrompt && yesterdayGoal ? (
+                          <View>
+                            <Text style={[styles.cardSubtext, { color: '#c1a900' }]}>Keep this goal today?</Text>
+                            <View style={styles.keepGoalButtons}>
+                              <TouchableOpacity style={styles.keepGoalYes} onPress={() => handleKeepGoal(true)}>
+                                <Text style={styles.keepGoalYesText}>Yes</Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity style={styles.keepGoalNo} onPress={() => handleKeepGoal(false)}>
+                                <Text style={styles.keepGoalNoText}>No</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        ) : (
+                          <Text style={[styles.cardSubtext, { color: '#c1a900' }]}>Today: {todayGoal || 'No goal yet'}</Text>
+                        )}
+                      </View>
+                    )}
+                    <TouchableOpacity onPress={() => navigation.navigate('Grow')}>
+                      <Text style={[styles.boxPageLink, { color: '#c1a900' }]}>Go to Grow ›</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={{ alignItems: 'center', marginLeft: 10 }}>
+                    <GoalArm
+                      size={28}
+                      filled={goalMetYes && goalAcknowledged}
+                      onPress={handleGoalHeart}
+                    />
+                    {goalLocked && <Text style={styles.lockIcon}>🔒</Text>}
+                  </View>
                 </View>
-              )}
-
-              <View style={styles.heartRightSmall}>
-                <Heart
-                  size={24}
-                  filled={goalMetYes && goalAcknowledged}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleGoalHeart();
-                  }}
-                />
-                {goalLocked && (
-                  <Text style={styles.lockIcon}>🔒</Text>
-                )}
               </View>
             </View>
-            </View>
           </View>
+
+          {/* I · Inspire */}
+          <TouchableOpacity
+            style={[styles.stackedCard, styles.openFrame, { borderColor: '#3c9820' }]}
+            onPress={() => navigation.navigate('Inspire')}
+          >
+            <View style={styles.goldInnerBorder}>
+              <View style={styles.cardInner}>
+                <Text style={[styles.boxLetterLabel, { color: '#3c9820' }]}>I · Inspire</Text>
+                <Text style={[styles.cardContentText, { color: '#3c9820' }]}>Be Inspired by Courage</Text>
+                <Text style={[styles.cardSubtext, { color: '#3c9820' }]}>Rank today's community artwork</Text>
+                <Text style={[styles.boxPageLink, { color: '#3c9820' }]}>Go to Inspire ›</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
         </View>
 
         <View style={styles.divider} />
 
-        {/* Ranking Section - Clickable to Inspire */}
-          <TouchableOpacity
-            style={[styles.stackedCard, styles.openFrame, { borderColor: '#3c9820', marginBottom: 15, alignSelf: 'center' }]}
-            onPress={() => navigation.navigate('Inspire')}
-          >
-            <View style={styles.goldInnerBorder}>
-            <View style={styles.rankBox}>
-              <Text style={styles.rankTitle}>
-                Be INSPIRED by COURAGE{'\n'}
-                <Text style={styles.underline}>Rank Today's Courage Here</Text>
-              </Text>
-            </View>
-            </View>
-          </TouchableOpacity>
-
-        {/* Gallery buttons aligned to art box edges, above artwork */}
-        <View style={styles.galleryButtonRow}>
-          <View style={styles.galleryButtonLeft}>
-            <GoldFrame onPress={() => switchWinner(0)}>
-              <View style={styles.galleryButtonInner}>
-                <Text style={styles.galleryButtonText}>Show Current{'\n'}Winner</Text>
-              </View>
-            </GoldFrame>
-          </View>
-          <View style={styles.galleryButtonRight}>
-            <GoldFrame onPress={() => navigation.navigate('Connect', { gallery: 'private' })}>
-              <View style={styles.galleryButtonInner}>
-                <Text style={styles.galleryButtonText}>show gallery</Text>
-              </View>
-            </GoldFrame>
-          </View>
-        </View>
-
-        {/* Date Winner label centered below buttons */}
-        <View style={styles.winnerDateRow}>
-          <GoldFrame>
-            <View style={styles.winnerDateInner}>
-              <Text style={styles.winnerDateText}>
-                {winners.length > 0
-                  ? `${formatDisplayDate(winners[currentWinnerIndex]?.date)} winner`
-                  : 'No winners yet'}
-              </Text>
-            </View>
-          </GoldFrame>
-        </View>
-
-        {/* Winner artwork display */}
-        <View style={styles.imageContainer}>
-          <TouchableOpacity
-            onPress={() => winners.length > 1 && switchWinner(Math.min(winners.length - 1, currentWinnerIndex + 1))}
-            style={styles.arrowButton}
-          >
-            <Text style={styles.arrowText}>‹</Text>
-          </TouchableOpacity>
-
-          <GoldFrame thickness={50}>
-            <View style={styles.imageFrameInner}>
-              {winners.length === 0 ? (
-                <View style={styles.noWinnerPlaceholder}>
-                  <Text style={styles.noWinnerText}>Winners will{'\n'}appear here</Text>
-                </View>
-              ) : winners[currentWinnerIndex]?.mediaType === 'audio' ? (
-                <TouchableOpacity
-                  style={styles.audioWinnerFrame}
-                  onPress={() => playWinnerAudio(winners[currentWinnerIndex]?.mediaUrl)}
-                >
-                  <Text style={styles.audioPlayIcon}>{isPlayingWinner ? '⏸' : '▶'}</Text>
-                  <Text style={styles.audioWinnerTitle}>{winners[currentWinnerIndex]?.title || 'Audio Courage'}</Text>
+        {/* C · Connect box — wraps winner gallery */}
+        <View style={[styles.stackedCard, styles.openFrame, { borderColor: '#8B5CF6', width: '90%', alignSelf: 'center', marginBottom: 20 }]}>
+          <View style={styles.goldInnerBorder}>
+            <View style={{ padding: 12 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <Text style={[styles.boxLetterLabel, { color: '#8B5CF6' }]}>C · Connect</Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Connect')}>
+                  <Text style={[styles.boxPageLink, { color: '#8B5CF6', marginTop: 0 }]}>Go to Connect ›</Text>
                 </TouchableOpacity>
-              ) : (
-                <Image
-                  source={{ uri: winners[currentWinnerIndex]?.mediaUrl }}
-                  style={styles.artworkImage}
-                  resizeMode="cover"
+              </View>
+
+              {/* Winner date — tap to reset to current */}
+              <TouchableOpacity style={styles.winnerDateRow} onPress={() => switchWinner(0)}>
+                <GoldFrame>
+                  <View style={styles.winnerDateInner}>
+                    <Text style={styles.winnerDateText}>
+                      {winners.length > 0
+                        ? `${formatDisplayDate(winners[currentWinnerIndex]?.date)} winner`
+                        : 'No winners yet'}
+                    </Text>
+                  </View>
+                </GoldFrame>
+              </TouchableOpacity>
+
+              {/* Winner artwork */}
+              <View style={styles.imageContainer}>
+                <TouchableOpacity
+                  onPress={() => winners.length > 1 && switchWinner(Math.min(winners.length - 1, currentWinnerIndex + 1))}
+                  style={styles.arrowButton}
+                >
+                  <Text style={styles.arrowText}>‹</Text>
+                </TouchableOpacity>
+
+                <GoldFrame thickness={50}>
+                  <View style={styles.imageFrameInner}>
+                    {winners.length === 0 ? (
+                      <View style={styles.noWinnerPlaceholder}>
+                        <Text style={styles.noWinnerText}>Winners will{'\n'}appear here</Text>
+                      </View>
+                    ) : winners[currentWinnerIndex]?.mediaType === 'audio' ? (
+                      <TouchableOpacity
+                        style={styles.audioWinnerFrame}
+                        onPress={() => playWinnerAudio(winners[currentWinnerIndex]?.mediaUrl)}
+                      >
+                        <Text style={styles.audioPlayIcon}>{isPlayingWinner ? '⏸' : '▶'}</Text>
+                        <Text style={styles.audioWinnerTitle}>{winners[currentWinnerIndex]?.title || 'Audio Courage'}</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <Image
+                        source={{ uri: winners[currentWinnerIndex]?.mediaUrl }}
+                        style={styles.artworkImage}
+                        resizeMode="cover"
+                      />
+                    )}
+                  </View>
+                </GoldFrame>
+
+                <TouchableOpacity
+                  onPress={() => winners.length > 1 && switchWinner(Math.max(0, currentWinnerIndex - 1))}
+                  style={styles.arrowButton}
+                >
+                  <Text style={styles.arrowText}>›</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Winner pseudonym */}
+              <View style={styles.winnerNameRow}>
+                <GoldFrame>
+                  <View style={styles.winnerNameInner}>
+                    <Text style={styles.winnerNameText}>
+                      {winners.length > 0
+                        ? (winners[currentWinnerIndex]?.anonymous ? 'Anonymous' : (winners[currentWinnerIndex]?.pseudonym || 'Anonymous'))
+                        : '---'}
+                    </Text>
+                  </View>
+                </GoldFrame>
+              </View>
+
+              {/* Inspired section */}
+              <View style={styles.inspiredContainer}>
+                <TouchableOpacity onPress={async () => {
+                  openMailto('Something that inspired me', 'This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
+                  await AsyncStorage.setItem(`email_sent_${getESTDate()}`, 'true');
+                }}>
+                  <Text style={styles.iconEmoji}>✉️</Text>
+                </TouchableOpacity>
+                <View style={styles.inspiredTextBlock}>
+                  <Text style={styles.inspiredText}>Inspired?</Text>
+                  <Text style={styles.inspiredSubtext}>Save to Your Inspiration Gallery ›</Text>
+                  <Text style={styles.inspiredSubtext}>‹ Send Inspiration</Text>
+                </View>
+                <Candle
+                  lit={winners.length > 0 && savedArtworks.has(winners[currentWinnerIndex]?.courageId)}
+                  onPress={() => handleFavoriteArtwork()}
+                  size={44}
                 />
-              )}
+              </View>
             </View>
-          </GoldFrame>
-
-          <TouchableOpacity
-            onPress={() => winners.length > 1 && switchWinner(Math.max(0, currentWinnerIndex - 1))}
-            style={styles.arrowButton}
-          >
-            <Text style={styles.arrowText}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Winner pseudonym */}
-        <View style={styles.winnerNameRow}>
-          <GoldFrame>
-            <View style={styles.winnerNameInner}>
-              <Text style={styles.winnerNameText}>
-                {winners.length > 0
-                  ? (winners[currentWinnerIndex]?.anonymous ? 'Anonymous' : (winners[currentWinnerIndex]?.pseudonym || 'Anonymous'))
-                  : '---'}
-              </Text>
-            </View>
-          </GoldFrame>
-        </View>
-
-        {/* Inspired Section */}
-        <View style={styles.inspiredContainer}>
-          <TouchableOpacity onPress={async () => {
-            openMailto('Something that inspired me', 'This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
-            // Mark email sent for Connect star
-            await AsyncStorage.setItem(`email_sent_${getESTDate()}`, 'true');
-          }}>
-            <Text style={styles.iconEmoji}>✉️</Text>
-          </TouchableOpacity>
-
-          <View style={styles.inspiredTextBlock}>
-            <Text style={styles.inspiredText}>Inspired?</Text>
-            <Text style={styles.inspiredSubtext}>Save to Your Inspiration Gallery ›</Text>
-            <Text style={styles.inspiredSubtext}>‹ Send Inspiration</Text>
           </View>
-
-          <Candle
-            lit={winners.length > 0 && savedArtworks.has(winners[currentWinnerIndex]?.courageId)}
-            onPress={() => handleFavoriteArtwork()}
-            size={44}
-          />
         </View>
 
         <View style={{ height: 20 }} />
@@ -2362,25 +2329,49 @@ const styles = StyleSheet.create({
   bold: {
     fontWeight: 'bold',
   },
+  boxLetterLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  boxPageLink: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    textDecorationLine: 'underline',
+    marginTop: 8,
+  },
+  cardContentText: {
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  cardSubtext: {
+    fontSize: 13,
+    marginBottom: 4,
+    lineHeight: 18,
+  },
   artLabel: {
-    fontSize: 20,
+    fontSize: 11,
     color: '#9E4502',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 6,
   },
   artChallenge: {
-    fontSize: 26,
+    fontSize: 15,
     color: '#9E4502',
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: '600',
+    lineHeight: 20,
   },
   artStudioLink: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#9E4502',
     fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 10,
+    marginTop: 8,
     textDecorationLine: 'underline',
   },
   rankBorder: {
