@@ -767,9 +767,9 @@ const styles = StyleSheet.create({
   inviteStat: {
     alignItems: 'center',
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(255,255,255,0.45)',
     borderWidth: 1,
-    borderColor: 'rgba(5,13,97,0.3)',
+    borderColor: 'rgba(255,255,255,0.8)',
     borderRadius: 10,
     paddingVertical: 10,
     marginHorizontal: 4,
