@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, ImageBackground, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Dimensions, Image, ImageBackground, Modal, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { showAlert, showConfirm } from '../utils/alertUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
@@ -20,6 +20,8 @@ import { openMailto } from '../utils/emailUtils';
 import { getPremiumStatus, getMemberDayCount, checkActiveDayTokenEligibility } from '../utils/premiumUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
+const FONT = Platform.OS === 'web' ? 'Montserrat' : 'Montserrat_400Regular';
+const FONT_BOLD = Platform.OS === 'web' ? 'Montserrat' : 'Montserrat_600SemiBold';
 
 // MAGIC task constants (shared with insight modal)
 const MAGIC_KEYS = ['manifest', 'art', 'goal', 'inspire', 'courage'];
@@ -512,6 +514,20 @@ const GoalArm = ({ size = 28, filled = false, onPress }) => (
   </TouchableOpacity>
 );
 
+// Art Palette — 🎨 filled when prompt liked
+const ArtPalette = ({ size = 24, filled = false, onPress }) => (
+  <TouchableOpacity onPress={onPress} style={{ alignItems: 'center' }}>
+    <Text style={{ fontSize: size, opacity: filled ? 1 : 0.3 }}>🎨</Text>
+  </TouchableOpacity>
+);
+
+// Rank Check — ✅ filled when ranking marked as done/fun
+const RankCheck = ({ size = 24, filled = false, onPress }) => (
+  <TouchableOpacity onPress={onPress} style={{ alignItems: 'center' }}>
+    <Text style={{ fontSize: size, opacity: filled ? 1 : 0.3 }}>✅</Text>
+  </TouchableOpacity>
+);
+
 // Gold arrow image
 const goldArrowImage = require('../Cliparts/Gold arrow.jpg');
 
@@ -644,6 +660,8 @@ export default function HomeScreen({ navigation }) {
   const [yesterdayGoal, setYesterdayGoal] = useState('');
   const [todayGoal, setTodayGoal] = useState('');
   const [quoteHearted, setQuoteHearted] = useState(false); // synced with hearted_quotes in AsyncStorage
+  const [promptLiked, setPromptLiked] = useState(false);
+  const [rankingFun, setRankingFun] = useState(false);
   const goalLockTimerRef = useRef(null);
   const [savedArtworks, setSavedArtworks] = useState(new Set());
   const [winners, setWinners] = useState([]);
@@ -693,6 +711,8 @@ export default function HomeScreen({ navigation }) {
     loadGoals();
     loadSavedArtworks();
     loadQuoteHeartedState();
+    loadPromptLiked();
+    loadRankingFun();
     loadWinners();
   }, []);
 
@@ -814,6 +834,8 @@ export default function HomeScreen({ navigation }) {
   focusRefreshRef.current = () => {
     refreshQuote();
     loadQuoteHeartedState();
+    loadPromptLiked();
+    loadRankingFun();
     loadStreakData();
     loadPseudonym();
     refreshProfile();
@@ -872,6 +894,42 @@ export default function HomeScreen({ navigation }) {
     } catch (error) {
       console.log('Error toggling quote heart:', error);
     }
+  };
+
+  const loadPromptLiked = async () => {
+    try {
+      const todayStr = getESTDate();
+      const val = await AsyncStorage.getItem(`prompt_liked_${todayStr}`);
+      setPromptLiked(val === 'yes');
+    } catch (e) {}
+  };
+
+  const handlePromptLike = async () => {
+    try {
+      const todayStr = getESTDate();
+      const newVal = !promptLiked;
+      setPromptLiked(newVal);
+      await AsyncStorage.setItem(`prompt_liked_${todayStr}`, newVal ? 'yes' : 'no');
+      trackAction(newVal ? 'prompt_liked' : 'prompt_unliked');
+    } catch (e) {}
+  };
+
+  const loadRankingFun = async () => {
+    try {
+      const todayStr = getESTDate();
+      const val = await AsyncStorage.getItem(`ranking_fun_${todayStr}`);
+      setRankingFun(val === 'yes');
+    } catch (e) {}
+  };
+
+  const handleRankingFun = async () => {
+    try {
+      const todayStr = getESTDate();
+      const newVal = !rankingFun;
+      setRankingFun(newVal);
+      await AsyncStorage.setItem(`ranking_fun_${todayStr}`, newVal ? 'yes' : 'no');
+      trackAction(newVal ? 'ranking_fun' : 'ranking_unfun');
+    } catch (e) {}
   };
 
   const loadTodaysChallenge = async () => {
@@ -1505,12 +1563,17 @@ export default function HomeScreen({ navigation }) {
           >
             <View style={styles.goldInnerBorder}>
               <View style={styles.cardInner}>
-                <Text style={[styles.cardContentText, { color: '#78000E', textAlign: 'center' }]}>"{todayQuote.quote}"</Text>
-                <Text style={[styles.cardSubtext, { color: '#78000E', fontStyle: 'italic', textAlign: 'center' }]}>~{todayQuote.author}</Text>
-                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 4 }}>
-                  <Heart size={22} filled={quoteHearted} onPress={() => toggleQuoteHeart()} />
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.cardContentText, { color: '#78000E', textAlign: 'center' }]}>"{todayQuote.quote}"</Text>
+                    <Text style={[styles.cardSubtext, { color: '#78000E', fontStyle: 'italic', textAlign: 'center' }]}>~{todayQuote.author}</Text>
+                  </View>
+                  <View style={styles.iconColumn}>
+                    <Heart size={22} filled={quoteHearted} onPress={() => toggleQuoteHeart()} />
+                    <Text style={[styles.iconLabel, { color: '#78000E' }]}>Love this?</Text>
+                  </View>
                 </View>
-                <Text style={[styles.boxPageLink, { color: '#78000E' }]}>Go to M ›</Text>
+                <Text style={[styles.boxPageLink, { color: '#78000E' }]}>Go to Manifest ›</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -1523,8 +1586,14 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.goldInnerBorder}>
               <View style={styles.cardInner}>
                 <Text style={[styles.boxSectionLabel, { color: '#9E4502' }]}>Creative Art Prompt:</Text>
-                <Text style={[styles.cardContentText, { color: '#9E4502', textAlign: 'center', fontSize: 20 }]}>{todaysChallenge || 'Loading...'}</Text>
-                <Text style={[styles.boxPageLink, { color: '#9E4502' }]}>Go to A ›</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                  <Text style={[styles.cardContentText, { color: '#9E4502', textAlign: 'center', fontSize: 20, flex: 1 }]}>{todaysChallenge || 'Loading...'}</Text>
+                  <View style={styles.iconColumn}>
+                    <ArtPalette size={24} filled={promptLiked} onPress={handlePromptLike} />
+                    <Text style={[styles.iconLabel, { color: '#9E4502' }]}>Liked prompt?</Text>
+                  </View>
+                </View>
+                <Text style={[styles.boxPageLink, { color: '#9E4502' }]}>Go to Art Studio ›</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -1534,39 +1603,40 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.goldInnerBorder}>
               <View style={styles.cardInner}>
                 <Text style={[styles.boxSectionLabel, { color: '#c1a900' }]}>Today's Goal:</Text>
-                <Text style={[styles.cardContentText, { color: '#c1a900', textAlign: 'center', fontSize: 20 }]}>
-                  {todayGoal || yesterdayGoal || 'No goal set'}
-                </Text>
-                <View style={{ alignItems: 'center' }}>
-                  {!goalAcknowledged && yesterdayGoal ? (
-                    <View style={{ alignItems: 'center' }}>
-                      <Text style={[styles.cardSubtext, { color: '#c1a900', textAlign: 'center' }]}>Did you meet this goal?</Text>
-                      <Text style={[styles.cardSubtext, { color: '#c1a900', textAlign: 'center' }]}>tap arm to mark complete</Text>
-                    </View>
-                  ) : goalMetYes ? (
-                    <Text style={[styles.cardSubtext, { color: '#c1a900', textAlign: 'center' }]}>Great work!</Text>
-                  ) : goalAcknowledged && showKeepGoalPrompt && yesterdayGoal ? (
-                    <View style={{ alignItems: 'center' }}>
-                      <Text style={[styles.cardSubtext, { color: '#c1a900', textAlign: 'center' }]}>Keep this goal today?</Text>
-                      <View style={styles.keepGoalButtons}>
-                        <TouchableOpacity style={styles.keepGoalYes} onPress={() => handleKeepGoal(true)}>
-                          <Text style={styles.keepGoalYesText}>Yes</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.keepGoalNo} onPress={() => handleKeepGoal(false)}>
-                          <Text style={styles.keepGoalNoText}>No</Text>
-                        </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.cardContentText, { color: '#c1a900', textAlign: 'center', fontSize: 20 }]}>
+                      {todayGoal || yesterdayGoal || 'No goal set'}
+                    </Text>
+                    {!goalAcknowledged && yesterdayGoal ? (
+                      <View style={{ alignItems: 'center' }}>
+                        <Text style={[styles.cardSubtext, { color: '#c1a900', textAlign: 'center' }]}>Did you meet this goal?</Text>
+                        <Text style={[styles.cardSubtext, { color: '#c1a900', textAlign: 'center' }]}>tap arm to mark complete</Text>
                       </View>
-                    </View>
-                  ) : null}
-                  <GoalArm
-                    size={28}
-                    filled={goalMetYes && goalAcknowledged}
-                    onPress={handleGoalHeart}
-                  />
-                  {goalLocked && <Text style={styles.lockIcon}>🔒</Text>}
+                    ) : goalMetYes ? (
+                      <Text style={[styles.cardSubtext, { color: '#c1a900', textAlign: 'center' }]}>Great work!</Text>
+                    ) : goalAcknowledged && showKeepGoalPrompt && yesterdayGoal ? (
+                      <View style={{ alignItems: 'center' }}>
+                        <Text style={[styles.cardSubtext, { color: '#c1a900', textAlign: 'center' }]}>Keep this goal today?</Text>
+                        <View style={styles.keepGoalButtons}>
+                          <TouchableOpacity style={styles.keepGoalYes} onPress={() => handleKeepGoal(true)}>
+                            <Text style={styles.keepGoalYesText}>Yes</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.keepGoalNo} onPress={() => handleKeepGoal(false)}>
+                            <Text style={styles.keepGoalNoText}>No</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : null}
+                  </View>
+                  <View style={styles.iconColumn}>
+                    <GoalArm size={28} filled={goalMetYes && goalAcknowledged} onPress={handleGoalHeart} />
+                    <Text style={[styles.iconLabel, { color: '#c1a900' }]}>Reached goal?</Text>
+                    {goalLocked && <Text style={styles.lockIcon}>🔒</Text>}
+                  </View>
                 </View>
                 <TouchableOpacity onPress={() => navigation.navigate('Grow')}>
-                  <Text style={[styles.boxPageLink, { color: '#c1a900' }]}>Go to G ›</Text>
+                  <Text style={[styles.boxPageLink, { color: '#c1a900' }]}>Go to Grow ›</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1580,10 +1650,16 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.goldInnerBorder}>
               <View style={styles.cardInner}>
                 <Text style={[styles.boxSectionLabel, { color: '#3c9820' }]}>Be Inspired by Courage</Text>
-                <Text style={[styles.cardContentText, { color: '#3c9820', textAlign: 'center', fontSize: 20 }]}>
-                  {`Rank by: ${todaysCriterion || (() => { const d = new Date(); const doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000); return rankingCriteria[doy % rankingCriteria.length]; })()}`}
-                </Text>
-                <Text style={[styles.boxPageLink, { color: '#3c9820' }]}>Go to I ›</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                  <Text style={[styles.cardContentText, { color: '#3c9820', textAlign: 'center', fontSize: 20, flex: 1 }]}>
+                    {`Rank by: ${todaysCriterion || (() => { const d = new Date(); const doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000); return rankingCriteria[doy % rankingCriteria.length]; })()}`}
+                  </Text>
+                  <View style={styles.iconColumn}>
+                    <RankCheck size={24} filled={rankingFun} onPress={handleRankingFun} />
+                    <Text style={[styles.iconLabel, { color: '#3c9820' }]}>fun ranking?</Text>
+                  </View>
+                </View>
+                <Text style={[styles.boxPageLink, { color: '#3c9820' }]}>Go to Inspire ›</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -2322,25 +2398,42 @@ const styles = StyleSheet.create({
   boxSectionLabel: {
     fontSize: 14,
     fontWeight: '400',
+    fontFamily: FONT,
     textAlign: 'left',
     marginBottom: 6,
   },
   boxPageLink: {
     fontSize: 13,
     fontStyle: 'italic',
+    fontFamily: FONT,
     textDecorationLine: 'underline',
     marginTop: 8,
   },
   cardContentText: {
     fontSize: 15,
     fontWeight: '600',
+    fontFamily: FONT_BOLD,
     marginBottom: 4,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   cardSubtext: {
     fontSize: 13,
+    fontFamily: FONT,
     marginBottom: 4,
     lineHeight: 18,
+  },
+  iconColumn: {
+    alignItems: 'center',
+    marginLeft: 10,
+    paddingTop: 4,
+    minWidth: 58,
+  },
+  iconLabel: {
+    fontSize: 11,
+    fontFamily: FONT,
+    fontWeight: '400',
+    textAlign: 'center',
+    marginTop: 3,
   },
   artLabel: {
     fontSize: 11,
