@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
-import { getAnalyticsForDate, getAllUsers, getAllInvitations } from '../services/firestoreService';
+import { getAnalyticsForDate, getAllUsers, getAllInvitations, setPremium } from '../services/firestoreService';
 import { getESTDate } from '../utils/dateUtils';
 import { setAdminPremiumOverride, getAdminPremiumOverride } from '../utils/premiumUtils';
 import UserProfileModal from '../components/admin/UserProfileModal';
@@ -67,6 +67,7 @@ export default function AnalyticsScreen({ navigation }) {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [inviteData, setInviteData] = useState({ total: 0, converted: 0, perUser: [] });
   const [adminOverride, setAdminOverride] = useState(getAdminPremiumOverride());
+  const [togglingPremium, setTogglingPremium] = useState(null); // uid being toggled
 
   const today = getESTDate();
 
@@ -177,6 +178,23 @@ export default function AnalyticsScreen({ navigation }) {
       sortedScreens,
       sortedActions,
     };
+  };
+
+  const handleTogglePremium = async (uid, currentlyPremium) => {
+    setTogglingPremium(uid);
+    try {
+      if (currentlyPremium) {
+        await setPremium(uid, false);
+      } else {
+        // Grant lifetime premium (no expiry)
+        await setPremium(uid, true, null);
+      }
+      // Refresh profileMap
+      await loadProfiles();
+    } catch (e) {
+      console.log('Toggle premium error:', e);
+    }
+    setTogglingPremium(null);
   };
 
   const { dau, totalSeconds, totalActionCount, sortedScreens, sortedActions } = aggregate();
@@ -427,6 +445,43 @@ export default function AnalyticsScreen({ navigation }) {
                 </View>
               );
             })
+          )}
+        </View>
+
+        {/* Members — premium toggle */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Members</Text>
+          {Object.values(profileMap).length === 0 ? (
+            <Text style={styles.emptyText}>No users loaded</Text>
+          ) : (
+            Object.values(profileMap)
+              .sort((a, b) => (a.pseudonym || a.username || '').localeCompare(b.pseudonym || b.username || ''))
+              .map((profile) => {
+                const isPrem = !!profile.isPremium;
+                const isToggling = togglingPremium === profile.uid;
+                const name = profile.pseudonym || profile.username || profile.uid.slice(0, 10) + '…';
+                return (
+                  <View key={profile.uid} style={styles.memberRow}>
+                    <View style={styles.memberInfo}>
+                      <Text style={styles.memberName}>{name}</Text>
+                      <View style={[styles.memberBadge, isPrem ? styles.memberBadgePremium : styles.memberBadgeFree]}>
+                        <Text style={[styles.memberBadgeText, isPrem ? styles.memberBadgeTextPremium : styles.memberBadgeTextFree]}>
+                          {isPrem ? '★ Premium' : 'Free'}
+                        </Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.premiumToggleBtn, isPrem ? styles.premiumRevoke : styles.premiumGrant, isToggling && { opacity: 0.5 }]}
+                      onPress={() => handleTogglePremium(profile.uid, isPrem)}
+                      disabled={isToggling}
+                    >
+                      <Text style={styles.premiumToggleBtnText}>
+                        {isToggling ? '…' : isPrem ? 'Revoke' : 'Grant'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })
           )}
         </View>
 
@@ -781,5 +836,70 @@ const styles = StyleSheet.create({
   },
   adminToggleBtnTextActive: {
     color: '#fff',
+  },
+
+  // Members section
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(75,0,130,0.1)',
+  },
+  memberInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  memberName: {
+    fontSize: 14,
+    color: '#050d61',
+    fontWeight: '600',
+    maxWidth: 140,
+  },
+  memberBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  memberBadgePremium: {
+    backgroundColor: 'rgba(255,215,0,0.2)',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  memberBadgeFree: {
+    backgroundColor: 'rgba(75,0,130,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(75,0,130,0.2)',
+  },
+  memberBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  memberBadgeTextPremium: {
+    color: '#B8860B',
+  },
+  memberBadgeTextFree: {
+    color: '#4B0082',
+  },
+  premiumToggleBtn: {
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  premiumGrant: {
+    backgroundColor: '#FFD700',
+  },
+  premiumRevoke: {
+    backgroundColor: 'rgba(180,0,0,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(180,0,0,0.4)',
+  },
+  premiumToggleBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0a0e27',
   },
 });
