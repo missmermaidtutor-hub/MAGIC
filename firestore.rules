@@ -13,13 +13,16 @@ service cloud.firestore {
                     && request.auth.uid == userId
                     && request.resource.data.uid == userId;
 
-      // Users can update their own profile
-      // Cannot change uid, email, or accountMethod after creation
-      allow update: if request.auth != null
-                    && request.auth.uid == userId
-                    && request.resource.data.uid == resource.data.uid
-                    && request.resource.data.email == resource.data.email
-                    && request.resource.data.accountMethod == resource.data.accountMethod;
+      // Users can update their own profile (cannot change uid, email, accountMethod)
+      // Admin can update any user profile (e.g. grant/revoke premium)
+      allow update: if request.auth != null && (
+                      request.auth.uid == 'VYnCl7waz4VyxRhryIAOTA9NBMg2'
+                      ||
+                      (request.auth.uid == userId
+                       && request.resource.data.uid == resource.data.uid
+                       && request.resource.data.email == resource.data.email
+                       && request.resource.data.accountMethod == resource.data.accountMethod)
+                    );
 
       // No deletes allowed
       allow delete: if false;
