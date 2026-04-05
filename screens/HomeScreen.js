@@ -1673,7 +1673,7 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.goldInnerBorder}>
             <View style={{ padding: 12 }}>
               <TouchableOpacity onPress={() => navigation.navigate('Connect')} style={{ marginBottom: 10 }}>
-                <Text style={[styles.boxPageLink, { color: '#8B5CF6', marginTop: 0 }]}>Go to C ›</Text>
+                <Text style={[styles.boxPageLink, { color: '#8B5CF6', marginTop: 0 }]}>Go to Connect ›</Text>
               </TouchableOpacity>
 
               {/* Winner date — tap to reset to current */}
