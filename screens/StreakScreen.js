@@ -804,6 +804,7 @@ export default function StreakScreen({ navigation }) {
         {/* Goal Assessment Box */}
         <View style={styles.goalBox}>
           <View style={styles.goalInner}>
+            {/* Yesterday acknowledgment row — always visible if not yet acknowledged */}
             {!goalAcknowledged ? (
               <View>
                 <Text style={styles.goalTitleSmall}>Did you meet this goal yesterday?</Text>
@@ -815,24 +816,11 @@ export default function StreakScreen({ navigation }) {
                 </Text>
               </View>
             ) : goalMetYes ? (
-              <View>
-                <Text style={styles.goalAckText}>Great work!</Text>
-                <Text style={styles.goalLabel}>Today's Goal:</Text>
-                {todayGoal ? (
-                  <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
-                ) : (
-                  <GoalInput
-                    value={goalInputText}
-                    onChange={setGoalInputText}
-                    onSave={handleSaveGoal}
-                    saving={savingGoal}
-                  />
-                )}
-              </View>
+              <Text style={styles.goalAckText}>Great work!</Text>
             ) : (
               <View>
                 <Text style={styles.goalAckText}>Keep pushing!</Text>
-                {showKeepGoalPrompt && yesterdayGoal ? (
+                {showKeepGoalPrompt && yesterdayGoal && (
                   <View>
                     <Text style={styles.goalSubtextSmall}>
                       Would you like this to be your goal again today?
@@ -852,20 +840,23 @@ export default function StreakScreen({ navigation }) {
                       </TouchableOpacity>
                     </View>
                   </View>
+                )}
+              </View>
+            )}
+
+            {/* Today's goal — always available, no heart required */}
+            {!(showKeepGoalPrompt && yesterdayGoal && !goalMetYes && goalAcknowledged) && (
+              <View>
+                <Text style={styles.goalLabel}>Today's Goal:</Text>
+                {todayGoal ? (
+                  <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
                 ) : (
-                  <View>
-                    <Text style={styles.goalLabel}>Today's Goal:</Text>
-                    {todayGoal ? (
-                      <Text style={styles.goalDisplaySmall}>{todayGoal}</Text>
-                    ) : (
-                      <GoalInput
-                        value={goalInputText}
-                        onChange={setGoalInputText}
-                        onSave={handleSaveGoal}
-                        saving={savingGoal}
-                      />
-                    )}
-                  </View>
+                  <GoalInput
+                    value={goalInputText}
+                    onChange={setGoalInputText}
+                    onSave={handleSaveGoal}
+                    saving={savingGoal}
+                  />
                 )}
               </View>
             )}
