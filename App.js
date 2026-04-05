@@ -2,16 +2,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, TextInput, Image, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, Image, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import useAppFonts from './utils/useAppFonts';
 import { initPurchases, checkSubscriptionStatus } from './services/purchaseService';
 
 // Apply Montserrat globally to all Text and TextInput components
+// Native uses the expo-google-fonts variant name; web uses the CSS family name
+const FONT_REGULAR = Platform.OS === 'web' ? 'Montserrat' : 'Montserrat_400Regular';
 Text.defaultProps = Text.defaultProps || {};
-Text.defaultProps.style = [{ fontFamily: 'Montserrat_400Regular' }, Text.defaultProps.style];
+Text.defaultProps.style = [{ fontFamily: FONT_REGULAR }, Text.defaultProps.style];
 TextInput.defaultProps = TextInput.defaultProps || {};
-TextInput.defaultProps.style = [{ fontFamily: 'Montserrat_400Regular' }, TextInput.defaultProps.style];
+TextInput.defaultProps.style = [{ fontFamily: FONT_REGULAR }, Text.defaultProps.style];
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initSentry, Sentry } from './config/sentry';
 import {
@@ -61,7 +63,6 @@ import ComingSoonScreen from './screens/menu-pages/ComingSoonScreen';
 import ShareAppScreen from './screens/menu-pages/ShareAppScreen';
 import InviteFriendsScreen from './screens/menu-pages/InviteFriendsScreen';
 import InviteTemplateScreen from './screens/admin/InviteTemplateScreen';
-import InviteAnalyticsScreen from './screens/admin/InviteAnalyticsScreen';
 import FeatureIdeasScreen from './screens/FeatureIdeasScreen';
 import IntroScreen from './screens/IntroScreen';
 import PremiumSignupScreen from './screens/menu-pages/PremiumSignupScreen';
@@ -357,13 +358,6 @@ function MainTabs({ initialRoute = 'Home' }) {
         }}
       />
       <Tab.Screen
-        name="InviteAnalytics"
-        component={InviteAnalyticsScreen}
-        options={{
-          tabBarButton: () => null,
-        }}
-      />
-      <Tab.Screen
         name="Bookcase"
         component={BookcaseScreen}
         options={{
@@ -511,7 +505,8 @@ const styles = StyleSheet.create({
   },
   loadingLetter: {
     fontSize: 36,
-    fontFamily: 'Montserrat_700Bold',
+    fontFamily: Platform.OS === 'web' ? 'Montserrat' : 'Montserrat_700Bold',
+    fontWeight: '700',
     letterSpacing: 2,
   },
   tabBar: {
@@ -524,7 +519,8 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 10,
-    fontFamily: 'Montserrat_600SemiBold',
+    fontFamily: Platform.OS === 'web' ? 'Montserrat' : 'Montserrat_600SemiBold',
+    fontWeight: '600',
     marginTop: 2,
     color: '#333',
   },

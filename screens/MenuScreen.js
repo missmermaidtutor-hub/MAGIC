@@ -27,7 +27,6 @@ export default function MenuScreen({ navigation }) {
       { name: '_Admin Bug Check', screen: 'Diagnostics' },
       { name: '_Admin Feature Ideas', screen: 'FeatureIdeas' },
       { name: '_Admin Invite Template', screen: 'InviteTemplate' },
-      { name: '_Admin Invite Analytics', screen: 'InviteAnalytics' },
     ] : []),
   ];
 

@@ -37,6 +37,12 @@ const ACTION_LABELS = {
   quote_unhearted: 'Quote Unhearted',
 };
 
+const formatTimestamp = (ts) => {
+  if (!ts) return '—';
+  const date = ts.toDate ? ts.toDate() : (ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts));
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 const formatSeconds = (s) => {
   if (!s || s < 1) return '0s';
   const hrs = Math.floor(s / 3600);
@@ -66,8 +72,11 @@ export default function AnalyticsScreen({ navigation }) {
   const [profileMap, setProfileMap] = useState({});
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [inviteData, setInviteData] = useState({ total: 0, converted: 0, perUser: [] });
+  const [invitations, setInvitations] = useState([]);
+  const [inviteFilter, setInviteFilter] = useState('All');
+  const [expandedInviter, setExpandedInviter] = useState(null);
   const [adminOverride, setAdminOverride] = useState(getAdminPremiumOverride());
-  const [togglingPremium, setTogglingPremium] = useState(null); // uid being toggled
+  const [togglingPremium, setTogglingPremium] = useState(null);
 
   const today = getESTDate();
 
@@ -125,6 +134,7 @@ export default function AnalyticsScreen({ navigation }) {
         .sort((a, b) => b.sent - a.sent);
 
       setInviteData({ total, converted, perUser });
+      setInvitations(allInvites);
     } catch (error) {
       console.log('Error loading invite data:', error);
     }
@@ -425,27 +435,88 @@ export default function AnalyticsScreen({ navigation }) {
               <Text style={styles.inviteStatLabel}>Converted</Text>
             </View>
             <View style={styles.inviteStat}>
-              <Text style={styles.inviteStatNumber}>
+              <Text style={[styles.inviteStatNumber, { color: '#B8860B' }]}>
                 {inviteData.total > 0 ? Math.round((inviteData.converted / inviteData.total) * 100) : 0}%
               </Text>
               <Text style={styles.inviteStatLabel}>Rate</Text>
             </View>
           </View>
+
+          {/* Filter tabs */}
+          <View style={styles.inviteFilterRow}>
+            {['All', 'Converted', 'Pending'].map(f => (
+              <TouchableOpacity
+                key={f}
+                style={[styles.inviteFilterTab, inviteFilter === f && styles.inviteFilterTabActive]}
+                onPress={() => setInviteFilter(f)}
+              >
+                <Text style={[styles.inviteFilterTabText, inviteFilter === f && styles.inviteFilterTabTextActive]}>{f}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           {inviteData.perUser.length === 0 ? (
             <Text style={styles.emptyText}>No invitations sent yet</Text>
           ) : (
             inviteData.perUser.map((u) => {
               const profile = profileMap[u.uid];
               const name = profile?.pseudonym || profile?.username || u.uid.slice(0, 12) + '...';
+              const userInvites = invitations.filter(inv => {
+                if (inv.inviterUid !== u.uid) return false;
+                if (inviteFilter === 'Converted') return !!inv.converted;
+                if (inviteFilter === 'Pending') return !inv.converted;
+                return true;
+              });
+              if (inviteFilter !== 'All' && userInvites.length === 0) return null;
+              const isExpanded = expandedInviter === u.uid;
               return (
-                <View key={u.uid} style={styles.inviteUserRow}>
-                  <Text style={styles.inviteUserName} numberOfLines={1}>{name}</Text>
-                  <Text style={styles.inviteUserStat}>{u.sent} sent</Text>
-                  <Text style={styles.inviteUserStat}>{u.converted} joined</Text>
+                <View key={u.uid} style={styles.inviterCard}>
+                  <TouchableOpacity
+                    style={styles.inviterHeader}
+                    onPress={() => setExpandedInviter(isExpanded ? null : u.uid)}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.inviterName}>{name}</Text>
+                    </View>
+                    <View style={styles.inviterStats}>
+                      <Text style={styles.inviterStat}>{u.sent} sent</Text>
+                      <Text style={[styles.inviterStat, { color: '#22C55E' }]}>{u.converted} joined</Text>
+                    </View>
+                    {profile && (
+                      <TouchableOpacity
+                        style={styles.viewProfileBtn}
+                        onPress={() => setSelectedProfile(profile)}
+                      >
+                        <Text style={styles.viewProfileBtnText}>View</Text>
+                      </TouchableOpacity>
+                    )}
+                    <Text style={styles.expandArrow}>{isExpanded ? '▼' : '▶'}</Text>
+                  </TouchableOpacity>
+                  {isExpanded && (
+                    <View style={styles.inviteList}>
+                      {userInvites.map((inv, idx) => (
+                        <View key={inv.docId || idx} style={styles.inviteRow}>
+                          <Text style={styles.inviteEmail} numberOfLines={1}>{inv.email}</Text>
+                          {inv.hasFriendToken && <Text style={{ fontSize: 11, marginLeft: 4 }}>🎁</Text>}
+                          <View style={[styles.statusBadge, inv.converted ? styles.statusConverted : styles.statusPending]}>
+                            <Text style={styles.statusText}>{inv.converted ? 'Joined' : 'Pending'}</Text>
+                          </View>
+                          <Text style={styles.inviteDate}>{formatTimestamp(inv.sentAt)}</Text>
+                          {inv.converted && inv.convertedAt && (
+                            <Text style={[styles.inviteDate, { color: '#22C55E' }]}>{formatTimestamp(inv.convertedAt)}</Text>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  )}
                 </View>
               );
-            })
+            }).filter(Boolean)
           )}
+
+          <TouchableOpacity style={styles.inviteRefreshBtn} onPress={loadInviteData}>
+            <Text style={styles.inviteRefreshBtnText}>Refresh</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Members — premium toggle */}
@@ -784,23 +855,108 @@ const styles = StyleSheet.create({
     color: '#050d61',
     marginTop: 2,
   },
-  inviteUserRow: {
+  inviteFilterRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 12,
+    marginTop: 4,
+  },
+  inviteFilterTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginHorizontal: 4,
+    backgroundColor: 'rgba(5,13,97,0.08)',
+  },
+  inviteFilterTabActive: {
+    backgroundColor: '#FFD700',
+  },
+  inviteFilterTabText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#050d61',
+  },
+  inviteFilterTabTextActive: {
+    color: '#050d61',
+  },
+  inviterCard: {
+    backgroundColor: 'rgba(255,255,255,0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 10,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  inviterHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(5, 13, 97, 0.15)',
+    padding: 10,
   },
-  inviteUserName: {
-    flex: 1,
-    fontSize: 13,
+  inviterName: {
+    fontSize: 14,
+    fontWeight: 'bold',
     color: '#050d61',
-    fontWeight: '600',
   },
-  inviteUserStat: {
+  inviterStats: {
+    alignItems: 'flex-end',
+    marginRight: 8,
+  },
+  inviterStat: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#050d61',
+  },
+  inviteList: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(5,13,97,0.1)',
+    padding: 8,
+  },
+  inviteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(5,13,97,0.06)',
+  },
+  inviteEmail: {
+    flex: 1,
     fontSize: 12,
     color: '#050d61',
-    marginLeft: 12,
+  },
+  statusBadge: {
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    marginLeft: 6,
+  },
+  statusConverted: {
+    backgroundColor: 'rgba(34,197,94,0.2)',
+  },
+  statusPending: {
+    backgroundColor: 'rgba(5,13,97,0.1)',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#050d61',
+  },
+  inviteDate: {
+    fontSize: 11,
+    color: '#050d61',
+    opacity: 0.6,
+    marginLeft: 6,
+  },
+  inviteRefreshBtn: {
+    backgroundColor: '#FFD700',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  inviteRefreshBtnText: {
+    color: '#050d61',
+    fontWeight: 'bold',
+    fontSize: 13,
   },
   // Admin premium toggle
   adminToggleContainer: {
