@@ -26,8 +26,10 @@ import {
 initSentry();
 configureNotificationHandler();
 
-// Auth
+// Auth & Theme
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import ThemePickerScreen from './screens/ThemePickerScreen';
 
 // Auth screens
 import LoginScreen from './screens/auth/LoginScreen';
@@ -130,6 +132,7 @@ function AuthNavigator() {
 }
 
 function MainTabs({ initialRoute = 'Home' }) {
+  const { theme } = useTheme();
   return (
     <Tab.Navigator
       initialRouteName={initialRoute}
@@ -146,12 +149,12 @@ function MainTabs({ initialRoute = 'Home' }) {
               onPress={() => navigation.navigate('Menu')}
               style={styles.hamburgerButton}
             >
-              <Text style={styles.hamburgerText}>☰</Text>
+              <Text style={[styles.hamburgerText, { color: theme.header.iconColor }]}>☰</Text>
             </TouchableOpacity>
           ) : undefined,
-          tabBarStyle: styles.tabBar,
-          tabBarActiveTintColor: '#B8860B',
-          tabBarInactiveTintColor: '#888',
+          tabBarStyle: [styles.tabBar, { backgroundColor: theme.tabBar.background, borderTopColor: theme.tabBar.borderTop }],
+          tabBarActiveTintColor: theme.tabBar.activeTint,
+          tabBarInactiveTintColor: theme.tabBar.inactiveTint,
           tabBarLabelStyle: styles.tabLabel,
         };
       }}
@@ -364,6 +367,13 @@ function MainTabs({ initialRoute = 'Home' }) {
           tabBarButton: () => null,
         }}
       />
+      <Tab.Screen
+        name="ThemePicker"
+        component={ThemePickerScreen}
+        options={{
+          tabBarButton: () => null,
+        }}
+      />
     </Tab.Navigator>
   );
 }
@@ -483,9 +493,11 @@ function App() {
   return (
     <>
       <StatusBar style="light" />
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ThemeProvider>
     </>
   );
 }

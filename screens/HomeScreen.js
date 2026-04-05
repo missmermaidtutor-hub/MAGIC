@@ -7,6 +7,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import ThemedBackground from '../components/ThemedBackground';
 import { calculateAndSetWinner, getRecentWinners, saveProgress, checkPseudonymAvailable, claimPseudonym, releasePseudonym, updateUserProfile, getUserWinCount, awardTrialToken, redeemTrialTokenFirestore, getDailyPrompt } from '../services/firestoreService';
 import { getESTDate, getESTYesterday, getESTDayBeforeYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
@@ -651,6 +653,7 @@ const getStreakStars = (streak) => {
 
 export default function HomeScreen({ navigation }) {
   const { user, userProfile, refreshProfile, resendVerification, checkEmailVerified, checkStreakTrial } = useAuth();
+  const { theme } = useTheme();
   const [verifyBannerDismissed, setVerifyBannerDismissed] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
   const [goalAcknowledged, setGoalAcknowledged] = useState(false);
@@ -1440,7 +1443,7 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
 
         {/* Header spacer */}
@@ -1538,7 +1541,7 @@ export default function HomeScreen({ navigation }) {
             ))}
           </View>
 
-          <Text style={styles.streakCount}>
+          <Text style={[styles.streakCount, { color: theme.text.streak }]}>
             {streakData.total > 0
               ? `${streakData.total} day streak`
               : 'Start your streak today!'
@@ -1547,7 +1550,7 @@ export default function HomeScreen({ navigation }) {
 
         </View>
 
-        <Text style={styles.tagline}>
+        <Text style={[styles.tagline, { color: theme.text.tagline }]}>
           Reach for a star everyday, {pseudonym}
         </Text>
 
@@ -1558,10 +1561,10 @@ export default function HomeScreen({ navigation }) {
 
           {/* M · Manifest */}
           <TouchableOpacity
-            style={[styles.stackedCard, styles.openFrame, { borderColor: '#78000E' }]}
+            style={[styles.stackedCard, styles.openFrame, { borderColor: '#78000E', shadowColor: theme.frame.outerShadow }]}
             onPress={() => navigation.navigate('Manifest')}
           >
-            <View style={styles.goldInnerBorder}>
+            <View style={[styles.goldInnerBorder, { borderColor: theme.frame.innerBorder }]}>
               <View style={styles.cardInner}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                   <View style={{ flex: 1 }}>
@@ -1580,10 +1583,10 @@ export default function HomeScreen({ navigation }) {
 
           {/* A · Art */}
           <TouchableOpacity
-            style={[styles.stackedCard, styles.openFrame, { borderColor: '#9E4502' }]}
+            style={[styles.stackedCard, styles.openFrame, { borderColor: '#9E4502', shadowColor: theme.frame.outerShadow }]}
             onPress={() => navigation.navigate('Art')}
           >
-            <View style={styles.goldInnerBorder}>
+            <View style={[styles.goldInnerBorder, { borderColor: theme.frame.innerBorder }]}>
               <View style={styles.cardInner}>
                 <Text style={[styles.boxSectionLabel, { color: '#9E4502' }]}>Creative Art Prompt:</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
@@ -1599,8 +1602,8 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
 
           {/* G · Grow */}
-          <View style={[styles.stackedCard, styles.openFrame, { borderColor: '#c1a900' }]}>
-            <View style={styles.goldInnerBorder}>
+          <View style={[styles.stackedCard, styles.openFrame, { borderColor: '#c1a900', shadowColor: theme.frame.outerShadow }]}>
+            <View style={[styles.goldInnerBorder, { borderColor: theme.frame.innerBorder }]}>
               <View style={styles.cardInner}>
                 <Text style={[styles.boxSectionLabel, { color: '#c1a900' }]}>Today's Goal:</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
@@ -1644,10 +1647,10 @@ export default function HomeScreen({ navigation }) {
 
           {/* I · Inspire */}
           <TouchableOpacity
-            style={[styles.stackedCard, styles.openFrame, { borderColor: '#3c9820' }]}
+            style={[styles.stackedCard, styles.openFrame, { borderColor: '#3c9820', shadowColor: theme.frame.outerShadow }]}
             onPress={() => navigation.navigate('Inspire')}
           >
-            <View style={styles.goldInnerBorder}>
+            <View style={[styles.goldInnerBorder, { borderColor: theme.frame.innerBorder }]}>
               <View style={styles.cardInner}>
                 <Text style={[styles.boxSectionLabel, { color: '#3c9820' }]}>Be Inspired by Courage</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
@@ -1669,7 +1672,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.divider} />
 
         {/* C · Connect box — wraps winner gallery */}
-        <View style={[styles.stackedCard, styles.openFrame, { borderColor: '#8B5CF6', width: '90%', alignSelf: 'center', marginBottom: 20 }]}>
+        <View style={[styles.stackedCard, styles.openFrame, { borderColor: '#8B5CF6', shadowColor: theme.frame.outerShadow, width: '90%', alignSelf: 'center', marginBottom: 20 }]}>
           <View style={styles.goldInnerBorder}>
             <View style={{ padding: 12 }}>
               <TouchableOpacity onPress={() => navigation.navigate('Connect')} style={{ marginBottom: 10 }}>
@@ -2107,7 +2110,7 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 
