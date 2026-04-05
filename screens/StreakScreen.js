@@ -407,7 +407,8 @@ export default function StreakScreen({ navigation }) {
       const ack = await AsyncStorage.getItem(`goal_acknowledged_${todayStr}`);
       if (ack) {
         setGoalAcknowledged(true);
-        setGoalLocked(true);
+        // Do NOT lock on load — lock only comes from the 30-second tap timer.
+        // This lets users correct an accidental tap after a page reload.
         if (ack === 'yes') {
           setGoalMetYes(true);
         } else if (ack === 'no') {
