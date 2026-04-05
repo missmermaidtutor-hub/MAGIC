@@ -110,7 +110,7 @@ export default function InviteAnalyticsScreen({ navigation }) {
                 <Text style={styles.summaryLabel}>Converted</Text>
               </View>
               <View style={styles.summaryCard}>
-                <Text style={[styles.summaryNumber, { color: '#FFD700' }]}>{conversionRate}%</Text>
+                <Text style={[styles.summaryNumber, { color: '#B8860B' }]}>{conversionRate}%</Text>
                 <Text style={styles.summaryLabel}>Rate</Text>
               </View>
             </View>
@@ -279,9 +279,9 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    backgroundColor: 'rgba(10, 14, 39, 0.85)',
+    backgroundColor: 'rgba(255,255,255,0.45)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    borderColor: 'rgba(255,255,255,0.8)',
     borderRadius: 10,
     padding: 14,
     marginHorizontal: 4,
@@ -328,9 +328,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   inviterCard: {
-    backgroundColor: 'rgba(10, 14, 39, 0.85)',
+    backgroundColor: 'rgba(255,255,255,0.45)',
     borderWidth: 1,
-    borderColor: 'rgba(75, 0, 130, 0.3)',
+    borderColor: 'rgba(255,255,255,0.8)',
     borderRadius: 10,
     marginBottom: 10,
     overflow: 'hidden',
