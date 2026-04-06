@@ -1050,6 +1050,9 @@ export default function InspireScreen({ navigation }) {
             <Text style={[styles.instructionText, theme.isDark && { color: '#ffffff' }]}>
               Rank 1=most  4=least meets the criteria of "{todaysCriterion}". Each rank used once.
             </Text>
+            <Text style={[styles.instructionText, theme.isDark && { color: '#ffffff' }]}>
+              Light candles to the right of image to save to your inspiration gallery on connect screen.
+            </Text>
 
             {/* Artworks Grid */}
             <View style={styles.artworksGrid}>
