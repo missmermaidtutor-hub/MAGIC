@@ -356,7 +356,7 @@ export default function ManifestScreen() {
             style={styles.backButton}
             onPress={() => setShowFavoriteQuotes(false)}
           >
-            <Text style={styles.backButtonText}>← Back to Today</Text>
+            <Text style={[styles.backButtonText, theme.isDark && { color: '#ffffff' }]}>← Back to Today</Text>
           </TouchableOpacity>
 
           {heartedQuotes.length === 0 ? (
@@ -406,7 +406,7 @@ export default function ManifestScreen() {
             style={styles.backButton}
             onPress={() => setShowPastEntries(false)}
           >
-            <Text style={styles.backButtonText}>← Back to Today</Text>
+            <Text style={[styles.backButtonText, theme.isDark && { color: '#ffffff' }]}>← Back to Today</Text>
           </TouchableOpacity>
 
           {/* Entries List */}
@@ -487,7 +487,7 @@ export default function ManifestScreen() {
             style={styles.viewPastButton}
             onPress={() => setShowFavoriteQuotes(true)}
           >
-            <Text style={styles.viewPastButtonText}>
+            <Text style={[styles.viewPastButtonText, theme.isDark && { color: '#ffffff' }]}>
               💜 Review favorite quotes ({heartedQuotes.length})
             </Text>
           </TouchableOpacity>
@@ -589,7 +589,7 @@ export default function ManifestScreen() {
             style={styles.viewEntriesButton}
             onPress={() => setShowPastEntries(true)}
           >
-            <Text style={styles.viewEntriesButtonText}>
+            <Text style={[styles.viewEntriesButtonText, theme.isDark && { color: '#ffffff' }]}>
               View Past Entries ({pastEntries.length})
             </Text>
           </TouchableOpacity>
