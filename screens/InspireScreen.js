@@ -1047,7 +1047,7 @@ export default function InspireScreen({ navigation }) {
               </View>
             </View>
 
-            <Text style={styles.instructionText}>
+            <Text style={[styles.instructionText, theme.isDark && { color: '#ffffff' }]}>
               Rank 1=most  4=least meets the criteria of "{todaysCriterion}". Each rank used once.
             </Text>
 
