@@ -2,8 +2,10 @@ import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import { openMailto } from '../../utils/emailUtils';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function ContactScreen({ navigation }) {
+  const { theme } = useTheme();
   const handleEmail = () => {
     openMailto('MAGIC Tracker Feedback', '', 'cecelia@13magicalnights.com');
   };
@@ -18,7 +20,7 @@ export default function ContactScreen({ navigation }) {
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.header}>Contact</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>Contact</Text>
           <TouchableOpacity
             style={styles.hamburgerButton}
             onPress={() => navigation.navigate('Menu')}
@@ -36,7 +38,7 @@ export default function ContactScreen({ navigation }) {
             <Text style={styles.contactText}>cecelia@13magicalnights.com</Text>
           </TouchableOpacity>
 
-          <Text style={styles.subtitle}>Feedback & Support</Text>
+          <Text style={[styles.subtitle, { color: theme.text.body }]}>Feedback & Support</Text>
           <Text style={styles.text}>
             Have questions, suggestions, or need help? Send us an email and we'll get back to you as soon as possible.
           </Text>
@@ -47,7 +49,7 @@ export default function ContactScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0e27' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 20 },
   headerContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 40, marginBottom: 20 },
   backButton: { width: 44, height: 44, backgroundColor: 'rgba(24, 112, 162, 0.5)', borderRadius: 22, borderWidth: 2, borderColor: '#8E0DD3', justifyContent: 'center', alignItems: 'center' },

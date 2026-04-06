@@ -21,6 +21,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Audio } from 'expo-av';
 import rankingCriteria from '../ranking-criteria.json';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   getCouragesForDate,
   getUserVotesForDate,
@@ -104,6 +105,7 @@ const Candle = ({ lit = false, onPress, size = 36 }) => (
 
 export default function InspireScreen({ navigation }) {
   const { user, userProfile } = useAuth();
+  const { theme } = useTheme();
   const [todaysCriterion, setTodaysCriterion] = useState('');
   const [rankings, setRankings] = useState({}); // { courageId: score }
   const [loading, setLoading] = useState(true);
@@ -749,7 +751,7 @@ export default function InspireScreen({ navigation }) {
       <ThemedBackground style={styles.container}>
         <View style={[styles.content, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
           <ActivityIndicator size="large" color="#004225" />
-          <Text style={[styles.subtitle, { marginTop: 15 }]}>Loading courages...</Text>
+          <Text style={[styles.subtitle, { marginTop: 15, color: theme.text.body }]}>Loading courages...</Text>
         </View>
       </ThemedBackground>
     );
@@ -906,8 +908,8 @@ export default function InspireScreen({ navigation }) {
       </Modal>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Inspire</Text>
-        <Text style={styles.subtitle}>Rank Community Courage</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Inspire</Text>
+        <Text style={[styles.subtitle, { color: theme.text.body }]}>Rank Community Courage</Text>
 
         {/* Today's Ranking Criterion */}
         <View style={styles.criterionCard}>
@@ -1083,7 +1085,7 @@ export default function InspireScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,
@@ -1470,7 +1472,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   postVoteCard: {
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     borderWidth: 2,
     borderColor: '#FFD700',

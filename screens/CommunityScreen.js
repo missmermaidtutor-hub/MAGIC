@@ -21,6 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   saveCuratedWork,
   removeCuratedWork,
@@ -129,6 +130,7 @@ const Candle = ({ lit = false, onPress, size = 40 }) => (
 
 export default function CommunityScreen({ navigation, route }) {
   const { user, userProfile } = useAuth();
+  const { theme } = useTheme();
   const [curatedArtworks, setCuratedArtworks] = useState([]);
   const [personalArtworks, setPersonalArtworks] = useState([]);
   const [inspirationArtworks, setInspirationArtworks] = useState([]);
@@ -2029,8 +2031,8 @@ export default function CommunityScreen({ navigation, route }) {
   return (
     <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Connect</Text>
-        <Text style={styles.subtitle}>Galleries & Community</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Connect</Text>
+        <Text style={[styles.subtitle, { color: theme.text.body }]}>Galleries & Community</Text>
 
         {/* 4-Tab Selector */}
         <View style={styles.tabRow}>
@@ -2594,7 +2596,7 @@ export default function CommunityScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,
@@ -2704,7 +2706,7 @@ const styles = StyleSheet.create({
   galleryImageBg: {
     alignSelf: 'stretch',
     aspectRatio: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -2927,7 +2929,7 @@ const styles = StyleSheet.create({
   columnImageBg: {
     alignSelf: 'stretch',
     aspectRatio: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -3182,7 +3184,7 @@ const styles = StyleSheet.create({
   thumbImageBg: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -3700,7 +3702,7 @@ const styles = StyleSheet.create({
   swapCurrentImage: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },

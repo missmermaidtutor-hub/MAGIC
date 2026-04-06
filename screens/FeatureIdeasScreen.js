@@ -4,9 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
 import { getAllFeatureIdeas } from '../services/firestoreService';
 import ThemedBackground from '../components/ThemedBackground';
+import { useTheme } from '../context/ThemeContext';
 
 export default function FeatureIdeasScreen({ navigation }) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [ideas, setIdeas] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,8 +50,8 @@ export default function FeatureIdeasScreen({ navigation }) {
         <Text style={styles.menuBtnText}>☰</Text>
       </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Feature Ideas</Text>
-        <Text style={styles.subtitle}>{ideas.length} idea{ideas.length !== 1 ? 's' : ''} submitted</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Feature Ideas</Text>
+        <Text style={[styles.subtitle, { color: theme.text.body }]}>{ideas.length} idea{ideas.length !== 1 ? 's' : ''} submitted</Text>
 
         {loading ? (
           <ActivityIndicator color="#FFD700" size="large" style={{ marginTop: 40 }} />
@@ -76,7 +78,7 @@ export default function FeatureIdeasScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

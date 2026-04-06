@@ -15,6 +15,7 @@ import { getESTDate } from '../utils/dateUtils';
 import { setAdminPremiumOverride, getAdminPremiumOverride } from '../utils/premiumUtils';
 import UserProfileModal from '../components/admin/UserProfileModal';
 import ThemedBackground from '../components/ThemedBackground';
+import { useTheme } from '../context/ThemeContext';
 
 const ACTION_LABELS = {
   courage_uploaded_write: 'Courage (Write)',
@@ -66,6 +67,7 @@ const shiftDate = (dateStr, days) => {
 
 export default function AnalyticsScreen({ navigation }) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [selectedDate, setSelectedDate] = useState(getESTDate());
   const [userData, setUserData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -234,7 +236,7 @@ export default function AnalyticsScreen({ navigation }) {
         <Text style={styles.menuBtnText}>{'\u2630'}</Text>
       </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Analytics</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Analytics</Text>
 
         {/* Date Picker */}
         <View style={styles.datePicker}>
@@ -584,7 +586,7 @@ export default function AnalyticsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

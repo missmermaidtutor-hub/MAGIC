@@ -23,6 +23,7 @@ import {
 } from '../../services/firestoreService';
 import mediumsData from '../../mediums.json';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 
 const TIMEZONES = [
   'America/New_York',
@@ -72,6 +73,7 @@ const MEDIUM_CATEGORIES = Object.keys(mediumsData);
 
 export default function SettingsScreen({ navigation }) {
   const { user, userProfile, refreshProfile } = useAuth();
+  const { theme } = useTheme();
 
   // Preferences
   const [notificationPreference, setNotificationPreference] = useState('daily');
@@ -300,7 +302,7 @@ export default function SettingsScreen({ navigation }) {
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.header}>Settings</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>Settings</Text>
           <TouchableOpacity
             style={styles.hamburgerButton}
             onPress={() => navigation.navigate('Menu')}
@@ -650,7 +652,7 @@ export default function SettingsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

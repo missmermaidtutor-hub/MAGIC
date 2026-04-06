@@ -13,6 +13,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getESTDate, msUntilESTMidnight } from '../utils/dateUtils';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { saveManifest, likeQuote, unlikeQuote } from '../services/firestoreService';
 import { canAccessFeature } from '../utils/premiumUtils';
 import { showAlert } from '../utils/alertUtils';
@@ -24,6 +25,7 @@ import ThemedBackground from '../components/ThemedBackground';
 
 export default function ManifestScreen() {
   const { user, userProfile } = useAuth();
+  const { theme } = useTheme();
   const [todayQuote, setTodayQuote] = useState({ quote: '', author: '' });
   const [callMuse, setCallMuse] = useState('');
   const [dumpStalls, setDumpStalls] = useState('');
@@ -348,7 +350,7 @@ export default function ManifestScreen() {
     return (
       <ThemedBackground style={styles.container}>
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.header}>Favorite Quotes</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>Favorite Quotes</Text>
 
           <TouchableOpacity
             style={styles.backButton}
@@ -386,7 +388,7 @@ export default function ManifestScreen() {
     return (
       <ThemedBackground style={styles.container}>
         <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.header}>Past Entries</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>Past Entries</Text>
           
           {/* Search Box */}
           <View style={styles.searchContainer}>
@@ -462,7 +464,7 @@ export default function ManifestScreen() {
     <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={{ marginTop: 40 }} />
-        <Text style={styles.subtitle}>Today</Text>
+        <Text style={[styles.subtitle, { color: theme.text.body }]}>Today</Text>
         
         {/* Quote of the Day */}
         <View style={styles.quoteCard}>
@@ -602,7 +604,7 @@ export default function ManifestScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

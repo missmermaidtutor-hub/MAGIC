@@ -22,6 +22,7 @@ import {
 } from '../services/firestoreService';
 import UserProfileModal from '../components/admin/UserProfileModal';
 import ThemedBackground from '../components/ThemedBackground';
+import { useTheme } from '../context/ThemeContext';
 
 const TIMEZONE_SHORT = {
   'America/New_York': 'EST',
@@ -44,6 +45,7 @@ const TIMEZONE_SHORT = {
 
 export default function ManagePodsScreen({ navigation }) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [pods, setPods] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -626,8 +628,8 @@ export default function ManagePodsScreen({ navigation }) {
   return (
     <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Manage Pods</Text>
-        <Text style={styles.subtitle}>Create and edit discussion pods</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Manage Pods</Text>
+        <Text style={[styles.subtitle, { color: theme.text.body }]}>Create and edit discussion pods</Text>
 
         {/* Create Pod Button / Form */}
         {!showCreate && !editingPod && (
@@ -761,7 +763,7 @@ export default function ManagePodsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

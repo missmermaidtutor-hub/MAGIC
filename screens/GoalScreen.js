@@ -14,6 +14,7 @@ import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { saveGoal, getGoal, getGoalHistory, getGoalStats } from '../services/firestoreService';
 import { canAccessFeature } from '../utils/premiumUtils';
 import PremiumGate from '../components/premium/PremiumGate';
@@ -36,6 +37,7 @@ const formatDateLabel = (dateStr) => {
 
 export default function GoalScreen({ navigation }) {
   const { user, userProfile } = useAuth();
+  const { theme } = useTheme();
   const [goalText, setGoalText] = useState('');
   const [todayGoal, setTodayGoal] = useState(null); // { goal, completed, carriedForward }
   const [yesterdayGoal, setYesterdayGoal] = useState(null);
@@ -204,10 +206,10 @@ export default function GoalScreen({ navigation }) {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.header}>Goals</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>Goals</Text>
           <View style={{ width: 44 }} />
         </View>
-        <Text style={styles.subtitle}>Set & Track Your Growth</Text>
+        <Text style={[styles.subtitle, { color: theme.text.body }]}>Set & Track Your Growth</Text>
 
         {/* Carry forward prompt */}
         {!todayGoal && yesterdayGoal && !yesterdayGoal.completed && (
@@ -341,7 +343,7 @@ export default function GoalScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   loadingContainer: {
     flex: 1,

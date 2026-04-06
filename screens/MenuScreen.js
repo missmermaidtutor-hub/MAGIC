@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { isAdmin } from '../config/admin';
 import { showDestructiveConfirm } from '../utils/alertUtils';
 import { canShareApp } from '../utils/premiumUtils';
@@ -8,6 +9,7 @@ import ThemedBackground from '../components/ThemedBackground';
 
 export default function MenuScreen({ navigation }) {
   const { user, userProfile, signOut } = useAuth();
+  const { theme } = useTheme();
   const menuItems = [
     { name: 'About Us', screen: 'AboutUs' },
     { name: 'About You', screen: 'AboutYou' },
@@ -50,17 +52,17 @@ export default function MenuScreen({ navigation }) {
   return (
     <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Menu</Text>
-        
+        <Text style={[styles.header, { color: theme.text.heading }]}>Menu</Text>
+
         <View style={styles.menuContainer}>
           {menuItems.map((item, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.menuItem}
+            <TouchableOpacity
+              key={index}
+              style={[styles.menuItem, { borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.1)' : '#333' }]}
               onPress={() => handleItemPress(item)}
             >
-              <Text style={styles.menuItemText}>{item.name}</Text>
-              <Text style={styles.arrow}>›</Text>
+              <Text style={[styles.menuItemText, { color: theme.text.body }]}>{item.name}</Text>
+              <Text style={[styles.arrow, { color: theme.text.muted }]}>›</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -72,7 +74,7 @@ export default function MenuScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

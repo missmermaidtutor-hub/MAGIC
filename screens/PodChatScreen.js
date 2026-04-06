@@ -14,10 +14,12 @@ import { useAuth } from '../context/AuthContext';
 import { subscribeToPodMessages, sendPodMessage } from '../services/firestoreService';
 import { trackAction } from '../services/analyticsService';
 import ThemedBackground from '../components/ThemedBackground';
+import { useTheme } from '../context/ThemeContext';
 
 export default function PodChatScreen({ route, navigation }) {
   const { podId, podName, members, memberUsernames } = route.params;
   const { user, userProfile } = useAuth();
+  const { theme } = useTheme();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -116,7 +118,7 @@ export default function PodChatScreen({ route, navigation }) {
         keyboardVerticalOffset={0}
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { color: theme.text.heading }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backBtnText}>Back</Text>
           </TouchableOpacity>
@@ -175,7 +177,7 @@ export default function PodChatScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   keyboardView: {
     flex: 1,

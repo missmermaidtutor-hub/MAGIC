@@ -15,6 +15,7 @@ import { showAlert, showConfirm } from '../../utils/alertUtils';
 import { openMailto } from '../../utils/emailUtils';
 import { getInviteTemplate, saveInviteTemplate } from '../../services/firestoreService';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 
 const DEFAULT_SUBJECT = "You're Invited to Make art. Grow. Inspire. Connect.";
 const DEFAULT_BODY = `Hi there!
@@ -29,6 +30,7 @@ See you on the creative side!`;
 
 export default function InviteTemplateScreen({ navigation }) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [body, setBody] = useState(DEFAULT_BODY);
   const [loading, setLoading] = useState(true);
@@ -103,7 +105,7 @@ export default function InviteTemplateScreen({ navigation }) {
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Invite Email Template</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Invite Email Template</Text>
 
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -168,7 +170,7 @@ export default function InviteTemplateScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

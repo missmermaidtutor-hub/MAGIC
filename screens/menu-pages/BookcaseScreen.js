@@ -18,6 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getUserWins, getMyArtSaves, getUserCourages, getUserCurated, getUserArtworks, patchArtSave } from '../../services/firestoreService';
 import { getMemberDayCount } from '../../utils/premiumUtils';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 
 const BADGE_DEFS = [
   {
@@ -90,6 +91,7 @@ const formatDate = (dateStr) => {
 
 export default function BookcaseScreen({ navigation }) {
   const { user, userProfile } = useAuth();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [wins, setWins] = useState([]);
   const [artSaves, setArtSaves] = useState([]);
@@ -206,7 +208,7 @@ export default function BookcaseScreen({ navigation }) {
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>My Bookcase</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>My Bookcase</Text>
         <Text style={styles.subheader}>{earnedCount} of {BADGE_DEFS.length} badges earned</Text>
 
         {loading ? (
@@ -375,7 +377,7 @@ export default function BookcaseScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

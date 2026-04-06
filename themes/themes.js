@@ -16,16 +16,28 @@
 //   Because these colors are dark, card interiors must always be light.
 //
 // WHAT YOU CUSTOMIZE PER SKIN:
+//   isDark      — true if background is dark; drives automatic text color logic
 //   background  — gradient colors OR image source (the app shell)
 //   card        — background color of the card interior (KEEP LIGHT — MAGIC text is dark)
 //   frame       — outerShadow (card glow), innerBorder (inner border line)
 //   tabBar      — background, activeTint, inactiveTint, borderTop
 //   header      — hamburger icon color
-//   text        — streak count, tagline, winner display colors
+//   text        — ALL text colors used outside of MAGIC-colored boxes:
+//                   body      → main prose / section content (white on dark skins)
+//                   muted     → secondary / caption text
+//                   heading   → screen and section titles
+//                   onCard    → text sitting on top of card.background
+//                   streak    → streak count line
+//                   tagline   → tagline line
+//                   winnerDate / winnerName → winner display
 //   modal       — overlay background, border, title/body text
 //   button      — primary action buttons (not MAGIC-colored)
 //   input       — text input fields
 //   loading     — loading screen
+//
+// ADA RULE FOR isDark SKINS:
+//   text.body / text.heading / text.muted must be light (≥4.5:1 on dark bg).
+//   Safe defaults: body='#ffffff', muted='rgba(255,255,255,0.7)', heading='#ffffff'
 //
 // ADA / WCAG AA RULE:
 //   card.background must give ≥4.5:1 contrast with all MAGIC colors.
@@ -49,6 +61,7 @@ export const THEMES = {
     name: 'Celestial',
     question: 'I want to feel inspired',
     emoji: '✨',
+    isDark: false,
 
     background: {
       type: 'image',
@@ -56,7 +69,6 @@ export const THEMES = {
       fallbackColor: '#d8eef8',
     },
 
-    // Light frosted glass on the sky-blue background
     card: {
       background: 'rgba(255, 255, 255, 0.45)',
     },
@@ -79,8 +91,12 @@ export const THEMES = {
     },
 
     text: {
-      streak: '#143fb8',
-      tagline: '#143fb8',
+      heading:    '#1a1a2e',
+      body:       '#1a1a2e',
+      muted:      '#4a4a6a',
+      onCard:     '#1a1a2e',
+      streak:     '#143fb8',
+      tagline:    '#143fb8',
       winnerDate: '#8B4513',
       winnerName: '#8B4513',
     },
@@ -124,6 +140,7 @@ export const THEMES = {
     name: 'Atelier',
     question: 'I want to feel like an artist',
     emoji: '🎨',
+    isDark: false,
 
     background: {
       type: 'gradient',
@@ -134,7 +151,6 @@ export const THEMES = {
       fallbackColor: '#fdf6ec',
     },
 
-    // Warm cream — MAGIC colors read clearly on this
     card: {
       background: 'rgba(255, 252, 240, 0.88)',
     },
@@ -159,9 +175,13 @@ export const THEMES = {
     },
 
     text: {
-      // TODO: deep warm tones for readability on light canvas
-      streak: '#5c3010',
-      tagline: '#5c3010',
+      // TODO: deep warm tones — all dark, readable on light linen
+      heading:    '#3b1f08',
+      body:       '#5a3a1a',
+      muted:      '#8a6040',
+      onCard:     '#3b1f08',
+      streak:     '#5c3010',
+      tagline:    '#5c3010',
       winnerDate: '#7a3b0e',
       winnerName: '#7a3b0e',
     },
@@ -208,6 +228,7 @@ export const THEMES = {
     name: "Writer's Sanctuary",
     question: 'I want to think and write',
     emoji: '✍️',
+    isDark: true,
 
     background: {
       type: 'gradient',
@@ -218,8 +239,7 @@ export const THEMES = {
       fallbackColor: '#0f1923',
     },
 
-    // Near-opaque warm parchment — MAGIC colors fully legible
-    // WCAG AA: all MAGIC dark colors exceed 4.5:1 on #fff8ec
+    // Near-opaque warm parchment — MAGIC colors fully legible inside cards
     card: {
       background: 'rgba(255, 248, 220, 0.95)',
     },
@@ -243,11 +263,13 @@ export const THEMES = {
     },
 
     text: {
-      // These appear OUTSIDE cards, against the dark background —
-      // must be light enough for WCAG AA on #0f1923
-      // #d4b483 on #0f1923 ≈ 8:1 contrast ✓
-      streak: '#d4b483',
-      tagline: '#d4b483',
+      // isDark=true — all outside-card text must be light (WCAG AA ✓)
+      heading:    '#ffffff',
+      body:       '#f0e0b0',          // warm parchment white
+      muted:      'rgba(240,224,176,0.7)',
+      onCard:     '#3b2000',          // dark text on the parchment card
+      streak:     '#d4b483',          // #d4b483 on #0f1923 ≈ 8:1 ✓
+      tagline:    '#d4b483',
       winnerDate: '#e8d0a0',
       winnerName: '#e8d0a0',
     },
@@ -294,6 +316,7 @@ export const THEMES = {
     name: 'Digital Creator',
     question: 'I want energy and expression',
     emoji: '⚡',
+    isDark: true,
 
     background: {
       type: 'gradient',
@@ -304,8 +327,7 @@ export const THEMES = {
       fallbackColor: '#050510',
     },
 
-    // Near-opaque cool white — MAGIC colors fully legible
-    // WCAG AA: all MAGIC dark colors exceed 4.5:1 on #f0faff
+    // Near-opaque cool white — MAGIC colors fully legible inside cards
     card: {
       background: 'rgba(240, 250, 255, 0.95)',
     },
@@ -329,10 +351,13 @@ export const THEMES = {
     },
 
     text: {
-      // Outside cards, on very dark background —
-      // #80deea on #050510 ≈ 9:1 contrast ✓
-      streak: '#80deea',
-      tagline: '#80deea',
+      // isDark=true — all outside-card text must be light (WCAG AA ✓)
+      heading:    '#ffffff',
+      body:       '#e0f7fa',          // electric cool white
+      muted:      'rgba(224,247,250,0.65)',
+      onCard:     '#001a20',          // dark text on the cool-white card
+      streak:     '#80deea',          // #80deea on #050510 ≈ 9:1 ✓
+      tagline:    '#80deea',
       winnerDate: '#b2ebf2',
       winnerName: '#b2ebf2',
     },
@@ -376,6 +401,7 @@ export const THEMES = {
     name: 'Mindful Creator',
     question: 'I need calm to create',
     emoji: '🌿',
+    isDark: false,
 
     background: {
       type: 'gradient',
@@ -386,7 +412,6 @@ export const THEMES = {
       fallbackColor: '#f0f5f0',
     },
 
-    // Soft warm white — MAGIC colors legible, feels gentle
     card: {
       background: 'rgba(255, 255, 252, 0.82)',
     },
@@ -410,8 +435,12 @@ export const THEMES = {
     },
 
     text: {
-      streak: '#2e5040',
-      tagline: '#2e5040',
+      heading:    '#1a3528',
+      body:       '#2e5040',
+      muted:      '#6a8878',
+      onCard:     '#1a3528',
+      streak:     '#2e5040',
+      tagline:    '#2e5040',
       winnerDate: '#3a6050',
       winnerName: '#3a6050',
     },
@@ -455,6 +484,7 @@ export const THEMES = {
     name: 'Minimalist Lab',
     question: 'I need to focus',
     emoji: '🧠',
+    isDark: false,
 
     background: {
       type: 'gradient',
@@ -465,7 +495,6 @@ export const THEMES = {
       fallbackColor: '#f5f5f7',
     },
 
-    // Pure white — maximum clarity, Bauhaus feel
     card: {
       background: 'rgba(255, 255, 255, 0.92)',
     },
@@ -489,8 +518,12 @@ export const THEMES = {
     },
 
     text: {
-      streak: '#1c1c1e',
-      tagline: '#3a3a3c',
+      heading:    '#1c1c1e',
+      body:       '#3a3a3c',
+      muted:      '#6e6e73',
+      onCard:     '#1c1c1e',
+      streak:     '#1c1c1e',
+      tagline:    '#3a3a3c',
       winnerDate: '#2c2c2e',
       winnerName: '#2c2c2e',
     },

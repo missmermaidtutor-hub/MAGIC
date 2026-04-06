@@ -21,6 +21,7 @@ import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import promptsData from '../prompts-data.json';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   getUserCourageForDate,
   uploadCourage,
@@ -61,6 +62,7 @@ const TEXT_COLORS = [
 
 export default function ArtScreen() {
   const { user, userProfile } = useAuth();
+  const { theme } = useTheme();
   const [courageUploadedToday, setCourageUploadedToday] = useState(false);
 
   // Daily timer (adjustable, default 20 minutes)
@@ -1046,7 +1048,7 @@ export default function ArtScreen() {
   return (
     <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Art Studio</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Art Studio</Text>
         
         {/* Today's Challenge */}
         <View style={styles.challengeCard}>
@@ -1493,7 +1495,7 @@ export default function ArtScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,
@@ -1992,7 +1994,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   courageConfirmCard: {
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     borderWidth: 2,
     borderColor: '#FFD700',

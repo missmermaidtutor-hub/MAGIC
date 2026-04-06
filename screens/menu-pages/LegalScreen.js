@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function LegalScreen({ navigation }) {
   return (
@@ -13,7 +14,7 @@ export default function LegalScreen({ navigation }) {
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.header}>Legal</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>Legal</Text>
           <TouchableOpacity
             style={styles.hamburgerButton}
             onPress={() => navigation.navigate('Menu')}
@@ -116,7 +117,7 @@ export default function LegalScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0e27' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 20 },
   headerContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 40, marginBottom: 20 },
   backButton: { width: 44, height: 44, backgroundColor: 'rgba(24, 112, 162, 0.5)', borderRadius: 22, borderWidth: 2, borderColor: '#8E0DD3', justifyContent: 'center', alignItems: 'center' },

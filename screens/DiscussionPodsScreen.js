@@ -12,9 +12,11 @@ import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
 import { subscribeToUserPods } from '../services/firestoreService';
 import ThemedBackground from '../components/ThemedBackground';
+import { useTheme } from '../context/ThemeContext';
 
 export default function DiscussionPodsScreen({ navigation }) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [pods, setPods] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,8 +58,8 @@ export default function DiscussionPodsScreen({ navigation }) {
   return (
     <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Discussion Pods</Text>
-        <Text style={styles.subtitle}>Group Conversations</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Discussion Pods</Text>
+        <Text style={[styles.subtitle, { color: theme.text.body }]}>Group Conversations</Text>
 
         {user && isAdmin(user.uid) && (
           <TouchableOpacity
@@ -126,7 +128,7 @@ export default function DiscussionPodsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

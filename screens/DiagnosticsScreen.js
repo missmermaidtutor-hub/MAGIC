@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
 import ThemedBackground from '../components/ThemedBackground';
+import { useTheme } from '../context/ThemeContext';
 import {
   getAllUsersOrdered,
   getAllPseudonymClaims,
@@ -20,6 +21,7 @@ import {
 
 export default function DiagnosticsScreen({ navigation }) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [checks, setChecks] = useState([]);
   const [expanded, setExpanded] = useState({});
@@ -171,8 +173,8 @@ export default function DiagnosticsScreen({ navigation }) {
         <Text style={styles.menuBtnText}>☰</Text>
       </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Bug Check</Text>
-        <Text style={styles.subtitle}>Firestore Diagnostics</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Bug Check</Text>
+        <Text style={[styles.subtitle, { color: theme.text.body }]}>Firestore Diagnostics</Text>
 
         {loading ? (
           <View style={styles.loadingContainer}>
@@ -231,7 +233,7 @@ export default function DiagnosticsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

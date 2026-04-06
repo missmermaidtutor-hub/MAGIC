@@ -403,7 +403,7 @@ export default function AboutYouScreen({ navigation }) {
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.header}>About You</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>About You</Text>
           <TouchableOpacity
             style={styles.hamburgerButton}
             onPress={() => navigation.navigate('Menu')}
@@ -940,7 +940,7 @@ export default function AboutYouScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,
@@ -1347,7 +1347,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   galleryPickerContainer: {
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     borderWidth: 2,
     borderColor: '#FFD700',

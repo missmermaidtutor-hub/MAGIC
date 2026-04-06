@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, ImageBackground, TouchableOpacity, 
 import { useAuth } from '../../context/AuthContext';
 import { showAlert } from '../../utils/alertUtils';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 import {
   voteForFeature,
   removeFeatureVote,
@@ -85,6 +86,7 @@ const COMING_SOON_FEATURES = [
 
 export default function ComingSoonScreen({ route, navigation }) {
   const { user, userProfile } = useAuth();
+  const { theme } = useTheme();
   const [voteCounts, setVoteCounts] = useState({});
   const [userVotes, setUserVotes] = useState(new Set());
   const [ideaText, setIdeaText] = useState('');
@@ -190,7 +192,7 @@ export default function ComingSoonScreen({ route, navigation }) {
         <Text style={styles.menuBtnText}>{'\u2630'}</Text>
       </TouchableOpacity>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Coming Soon</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Coming Soon</Text>
 
         {/* Most Excited About */}
         <Text style={styles.sectionTitle}>Most Excited About</Text>
@@ -319,7 +321,7 @@ export default function ComingSoonScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

@@ -14,6 +14,7 @@ import { isAdmin } from '../../config/admin';
 import { getFaqItems, saveFaqItems } from '../../services/firestoreService';
 import { showAlert, showConfirm } from '../../utils/alertUtils';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 
 const DEFAULT_FAQS = [
   { question: 'What is MAGIC?', answer: 'MAGIC stands for Manifest, Art, Goals, Inspire, and Courage \u2014 the five daily creative practices that make up your streak. Each day, completing all five lights up your star!' },
@@ -32,6 +33,7 @@ const DEFAULT_FAQS = [
 
 export default function FaqScreen({ navigation }) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const admin = user && isAdmin(user.uid);
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -130,7 +132,7 @@ export default function FaqScreen({ navigation }) {
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>FAQ</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>FAQ</Text>
 
         {admin && !editing && (
           <TouchableOpacity style={styles.editButton} onPress={startEditing}>
@@ -222,7 +224,7 @@ export default function FaqScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

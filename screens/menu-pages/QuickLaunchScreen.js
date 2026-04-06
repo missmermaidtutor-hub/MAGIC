@@ -4,6 +4,7 @@ import { openMailto } from '../../utils/emailUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 
 // GoldFrame — gradient metallic gold border with gleam (copied from HomeScreen)
 const GoldFrame = ({ children, style, containerStyle, thickness = 4 }) => (
@@ -36,6 +37,7 @@ const GoldFrame = ({ children, style, containerStyle, thickness = 4 }) => (
 );
 
 export default function QuickLaunchScreen({ navigation }) {
+  const { theme } = useTheme();
   const canGoBack = navigation.canGoBack();
 
   const handleDismiss = async () => {
@@ -63,7 +65,7 @@ export default function QuickLaunchScreen({ navigation }) {
           ) : (
             <View style={styles.backButton} />
           )}
-          <Text style={styles.header}>Quick Launch Info</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>Quick Launch Info</Text>
           <TouchableOpacity
             style={styles.hamburgerButton}
             onPress={() => navigation.navigate('Menu')}
@@ -235,7 +237,7 @@ export default function QuickLaunchScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,
@@ -289,7 +291,7 @@ const styles = StyleSheet.create({
 
   // Gold header text box
   goldHeaderBox: {
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
     borderWidth: 2,
     borderColor: '#FFD700',
     borderRadius: 10,

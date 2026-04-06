@@ -14,9 +14,11 @@ import { showAlert } from '../../utils/alertUtils';
 import { checkAndGrantReferralTrial } from '../../services/firestoreService';
 import { trackAction } from '../../services/analyticsService';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function ShareAppScreen({ navigation }) {
   const { user, userProfile, refreshProfile } = useAuth();
+  const { theme } = useTheme();
   const [copied, setCopied] = useState(false);
 
   const referralCode = userProfile?.referralCode || '';
@@ -89,7 +91,7 @@ export default function ShareAppScreen({ navigation }) {
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.header}>Share the App</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>Share the App</Text>
           <TouchableOpacity style={styles.hamburgerButton} onPress={() => navigation.navigate('Menu')}>
             <Text style={styles.hamburgerText}>☰</Text>
           </TouchableOpacity>
@@ -150,7 +152,7 @@ export default function ShareAppScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

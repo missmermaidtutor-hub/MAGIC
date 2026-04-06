@@ -16,6 +16,7 @@ import Svg, { Path } from 'react-native-svg';
 import { getESTDate } from '../utils/dateUtils';
 import { getTasksForDate } from '../utils/taskUtils';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { getMyArtSaves, getUserWinCount, saveGoal } from '../services/firestoreService';
 import { trackAction } from '../services/analyticsService';
 import { showAlert, showDestructiveConfirm } from '../utils/alertUtils';
@@ -320,6 +321,7 @@ const GoalInput = ({ value, onChange, onSave, saving }) => (
 
 export default function StreakScreen({ navigation }) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const today = new Date();
 
   const [viewMonth, setViewMonth] = useState(
@@ -787,7 +789,7 @@ export default function StreakScreen({ navigation }) {
   return (
     <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Grow</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Grow</Text>
 
         {/* Legend */}
         <View style={styles.legendCard}>
@@ -1187,7 +1189,7 @@ export default function StreakScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

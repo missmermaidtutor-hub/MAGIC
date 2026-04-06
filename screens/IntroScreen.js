@@ -11,6 +11,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { openMailto } from '../utils/emailUtils';
 import Svg, { Path } from 'react-native-svg';
+import { useTheme } from '../context/ThemeContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -135,6 +136,7 @@ const IntroStar = ({ size = 48 }) => {
 };
 
 export default function IntroScreen({ navigation, route }) {
+  const { theme } = useTheme();
   const fromMenu = route.params?.fromMenu || false;
   const [page, setPage] = useState(0);
   const current = PAGES[page];

@@ -14,11 +14,13 @@ import { canAccessFeature } from '../../utils/premiumUtils';
 import PremiumPaywall from '../../components/premium/PremiumPaywall';
 import { getQuoteLikeCounts } from '../../services/firestoreService';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 
 const quoteKeyFromText = (text) => text.slice(0, 80).replace(/[^a-zA-Z0-9]/g, '_');
 
 export default function QuotesScreen({ navigation }) {
   const { userProfile } = useAuth();
+  const { theme } = useTheme();
   const [favoriteQuotes, setFavoriteQuotes] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [likeCounts, setLikeCounts] = useState({});
@@ -65,7 +67,7 @@ export default function QuotesScreen({ navigation }) {
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.header}>Quotes</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>Quotes</Text>
           <TouchableOpacity
             style={styles.hamburgerButton}
             onPress={() => navigation.navigate('Menu')}
@@ -74,7 +76,7 @@ export default function QuotesScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.subtitle}>Your Favorite Quotes</Text>
+        <Text style={[styles.subtitle, { color: theme.text.body }]}>Your Favorite Quotes</Text>
 
         {/* Premium gate check */}
         {!isPremium ? (
@@ -144,7 +146,7 @@ export default function QuotesScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

@@ -8,9 +8,11 @@ import { purchasePackage, restorePurchases, getOfferings, presentPaywall, presen
 import { redeemTrialTokenFirestore as redeemToken } from '../../services/firestoreService';
 import { trackAction } from '../../services/analyticsService';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function PremiumSignupScreen({ navigation }) {
   const { user, userProfile, refreshProfile } = useAuth();
+  const { theme } = useTheme();
   // selectedProduct is an index into PREMIUM_PRODUCTS (for display) and packages (for purchasing)
   const [selectedIndex, setSelectedIndex] = useState(1); // default to annual
   const [packages, setPackages] = useState([]); // RevenueCat Package objects
@@ -93,7 +95,7 @@ export default function PremiumSignupScreen({ navigation }) {
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Premium Membership</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Premium Membership</Text>
 
         {/* Current Status */}
         <View style={styles.statusCard}>
@@ -220,7 +222,7 @@ export default function PremiumSignupScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

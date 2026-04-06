@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { openMailto } from '../../utils/emailUtils';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function AboutUsScreen({ navigation }) {
   return (
@@ -14,7 +15,7 @@ export default function AboutUsScreen({ navigation }) {
           >
             <Text style={styles.backButtonText}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.header}>About Us</Text>
+          <Text style={[styles.header, { color: theme.text.heading }]}>About Us</Text>
           <TouchableOpacity
             style={styles.hamburgerButton}
             onPress={() => navigation.navigate('Menu')}
@@ -25,7 +26,7 @@ export default function AboutUsScreen({ navigation }) {
 
         <View style={styles.card}>
           <Text style={styles.title}><Text style={styles.boldM}>M</Text><Text style={styles.boldA}>A</Text><Text style={styles.boldG}>G</Text><Text style={styles.boldI}>I</Text><Text style={styles.boldC}>C</Text> Tracker</Text>
-          <Text style={styles.subtitle}>Daily Creative Practice for Mental Health</Text>
+          <Text style={[styles.subtitle, { color: theme.text.body }]}>Daily Creative Practice for Mental Health</Text>
           
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Our Mission</Text>

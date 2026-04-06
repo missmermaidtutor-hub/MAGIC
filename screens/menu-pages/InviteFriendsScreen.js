@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { showAlert } from '../../utils/alertUtils';
 import { openMailto } from '../../utils/emailUtils';
 import ThemedBackground from '../../components/ThemedBackground';
+import { useTheme } from '../../context/ThemeContext';
 import {
   getUserInvitations,
   saveInvitation,
@@ -35,6 +36,7 @@ See you on the creative side!`;
 
 export default function InviteFriendsScreen({ navigation }) {
   const { user, userProfile, refreshProfile } = useAuth();
+  const { theme } = useTheme();
   const [invitations, setInvitations] = useState([]);
   const [emails, setEmails] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(true);
@@ -205,7 +207,7 @@ export default function InviteFriendsScreen({ navigation }) {
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.header}>Invite Friends</Text>
+        <Text style={[styles.header, { color: theme.text.heading }]}>Invite Friends</Text>
 
         <View style={styles.introBox}>
           <Text style={styles.introText}>
@@ -265,7 +267,7 @@ export default function InviteFriendsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0e27',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,
