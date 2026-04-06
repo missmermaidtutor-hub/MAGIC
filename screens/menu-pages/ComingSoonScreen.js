@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, ImageBackground, TouchableOpacity, TextInput, ActivityIndicator, Modal } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { showAlert } from '../../utils/alertUtils';
+import ThemedBackground from '../../components/ThemedBackground';
 import {
   voteForFeature,
   removeFeatureVote,
@@ -181,7 +182,7 @@ export default function ComingSoonScreen({ route, navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
         <Text style={styles.closeBtnText}>{'\u2715'}</Text>
       </TouchableOpacity>
@@ -311,7 +312,7 @@ export default function ComingSoonScreen({ route, navigation }) {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

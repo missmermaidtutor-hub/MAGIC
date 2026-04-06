@@ -13,6 +13,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { subscribeToPodMessages, sendPodMessage } from '../services/firestoreService';
 import { trackAction } from '../services/analyticsService';
+import ThemedBackground from '../components/ThemedBackground';
 
 export default function PodChatScreen({ route, navigation }) {
   const { podId, podName, members, memberUsernames } = route.params;
@@ -108,7 +109,7 @@ export default function PodChatScreen({ route, navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -167,7 +168,7 @@ export default function PodChatScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

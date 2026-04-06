@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { getUserWins, getMyArtSaves, getUserCourages, getUserCurated, getUserArtworks, patchArtSave } from '../../services/firestoreService';
 import { getMemberDayCount } from '../../utils/premiumUtils';
+import ThemedBackground from '../../components/ThemedBackground';
 
 const BADGE_DEFS = [
   {
@@ -196,7 +197,7 @@ export default function BookcaseScreen({ navigation }) {
   const earnedCount = earnedSet.size;
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
         <Text style={styles.closeBtnText}>✕</Text>
       </TouchableOpacity>
@@ -367,7 +368,7 @@ export default function BookcaseScreen({ navigation }) {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

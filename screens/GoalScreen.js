@@ -18,6 +18,7 @@ import { saveGoal, getGoal, getGoalHistory, getGoalStats } from '../services/fir
 import { canAccessFeature } from '../utils/premiumUtils';
 import PremiumGate from '../components/premium/PremiumGate';
 import { getESTDate } from '../utils/dateUtils';
+import ThemedBackground from '../components/ThemedBackground';
 
 const getDateString = (date) => getESTDate(date);
 
@@ -187,16 +188,16 @@ export default function GoalScreen({ navigation }) {
 
   if (loading) {
     return (
-      <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+      <ThemedBackground style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FFD700" />
         </View>
-      </ImageBackground>
+      </ThemedBackground>
     );
   }
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.headerRow}>
@@ -333,7 +334,7 @@ export default function GoalScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

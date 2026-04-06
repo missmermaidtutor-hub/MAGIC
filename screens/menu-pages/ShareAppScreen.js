@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { showAlert } from '../../utils/alertUtils';
 import { checkAndGrantReferralTrial } from '../../services/firestoreService';
 import { trackAction } from '../../services/analyticsService';
+import ThemedBackground from '../../components/ThemedBackground';
 
 export default function ShareAppScreen({ navigation }) {
   const { user, userProfile, refreshProfile } = useAuth();
@@ -81,7 +82,7 @@ export default function ShareAppScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.headerContainer}>
@@ -142,7 +143,7 @@ export default function ShareAppScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

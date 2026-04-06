@@ -14,6 +14,7 @@ import { isAdmin } from '../../config/admin';
 import { showAlert, showConfirm } from '../../utils/alertUtils';
 import { openMailto } from '../../utils/emailUtils';
 import { getInviteTemplate, saveInviteTemplate } from '../../services/firestoreService';
+import ThemedBackground from '../../components/ThemedBackground';
 
 const DEFAULT_SUBJECT = "You're Invited to Make art. Grow. Inspire. Connect.";
 const DEFAULT_BODY = `Hi there!
@@ -93,7 +94,7 @@ export default function InviteTemplateScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
         <Text style={styles.backBtnText}>{'<'}</Text>
       </TouchableOpacity>
@@ -160,7 +161,7 @@ export default function InviteTemplateScreen({ navigation }) {
           </>
         )}
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

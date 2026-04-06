@@ -7,6 +7,7 @@ import { PREMIUM_PRODUCTS, PREMIUM_FEATURE_LIST } from '../../config/premium';
 import { purchasePackage, restorePurchases, getOfferings, presentPaywall, presentCustomerCenter } from '../../services/purchaseService';
 import { redeemTrialTokenFirestore as redeemToken } from '../../services/firestoreService';
 import { trackAction } from '../../services/analyticsService';
+import ThemedBackground from '../../components/ThemedBackground';
 
 export default function PremiumSignupScreen({ navigation }) {
   const { user, userProfile, refreshProfile } = useAuth();
@@ -83,7 +84,7 @@ export default function PremiumSignupScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
         <Text style={styles.menuBtnText}>{'\u2630'}</Text>
       </TouchableOpacity>
@@ -212,7 +213,7 @@ export default function PremiumSignupScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

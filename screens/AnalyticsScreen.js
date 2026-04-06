@@ -14,6 +14,7 @@ import { getAnalyticsForDate, getAllUsers, getAllInvitations, setPremium } from 
 import { getESTDate } from '../utils/dateUtils';
 import { setAdminPremiumOverride, getAdminPremiumOverride } from '../utils/premiumUtils';
 import UserProfileModal from '../components/admin/UserProfileModal';
+import ThemedBackground from '../components/ThemedBackground';
 
 const ACTION_LABELS = {
   courage_uploaded_write: 'Courage (Write)',
@@ -228,7 +229,7 @@ export default function AnalyticsScreen({ navigation }) {
   });
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
         <Text style={styles.menuBtnText}>{'\u2630'}</Text>
       </TouchableOpacity>
@@ -576,7 +577,7 @@ export default function AnalyticsScreen({ navigation }) {
         profile={selectedProfile}
         onClose={() => setSelectedProfile(null)}
       />
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

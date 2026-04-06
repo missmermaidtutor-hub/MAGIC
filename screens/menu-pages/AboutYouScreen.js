@@ -32,6 +32,7 @@ import mediumsData from '../../mediums.json';
 import { scheduleStreakReminder } from '../../utils/notificationUtils';
 import { canChangePseudonym } from '../../utils/premiumUtils';
 import PremiumPaywall from '../../components/premium/PremiumPaywall';
+import ThemedBackground from '../../components/ThemedBackground';
 
 const TIMEZONES = [
   'America/New_York',
@@ -392,7 +393,7 @@ export default function AboutYouScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header with Back Button */}
         <View style={styles.headerContainer}>
@@ -932,7 +933,7 @@ export default function AboutYouScreen({ navigation }) {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

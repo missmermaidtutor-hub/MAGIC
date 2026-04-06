@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground }
 import { openMailto } from '../../utils/emailUtils';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ThemedBackground from '../../components/ThemedBackground';
 
 // GoldFrame — gradient metallic gold border with gleam (copied from HomeScreen)
 const GoldFrame = ({ children, style, containerStyle, thickness = 4 }) => (
@@ -47,7 +48,7 @@ export default function QuickLaunchScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
 
         {/* Header row */}
@@ -227,7 +228,7 @@ export default function QuickLaunchScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

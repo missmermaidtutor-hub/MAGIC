@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
 import { showDestructiveConfirm } from '../utils/alertUtils';
 import { canShareApp } from '../utils/premiumUtils';
+import ThemedBackground from '../components/ThemedBackground';
 
 export default function MenuScreen({ navigation }) {
   const { user, userProfile, signOut } = useAuth();
@@ -47,7 +48,7 @@ export default function MenuScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Menu</Text>
         
@@ -64,7 +65,7 @@ export default function MenuScreen({ navigation }) {
           ))}
         </View>
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

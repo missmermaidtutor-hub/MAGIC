@@ -40,6 +40,7 @@ import { getESTDate } from '../utils/dateUtils';
 import { getMemberDayCount as getMemberDayCountUtil, getCuratedLimit, canAccessFeature, getPremiumStatus } from '../utils/premiumUtils';
 import { isAdmin } from '../config/admin';
 import PremiumPaywall from '../components/premium/PremiumPaywall';
+import ThemedBackground from '../components/ThemedBackground';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -2026,7 +2027,7 @@ export default function CommunityScreen({ navigation, route }) {
   };
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Connect</Text>
         <Text style={styles.subtitle}>Galleries & Community</Text>
@@ -2586,7 +2587,7 @@ export default function CommunityScreen({ navigation, route }) {
           })()}
         </View>
       </Modal>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { isAdmin } from '../../config/admin';
 import { getFaqItems, saveFaqItems } from '../../services/firestoreService';
 import { showAlert, showConfirm } from '../../utils/alertUtils';
+import ThemedBackground from '../../components/ThemedBackground';
 
 const DEFAULT_FAQS = [
   { question: 'What is MAGIC?', answer: 'MAGIC stands for Manifest, Art, Goals, Inspire, and Courage \u2014 the five daily creative practices that make up your streak. Each day, completing all five lights up your star!' },
@@ -120,7 +121,7 @@ export default function FaqScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
         <Text style={styles.menuBtnText}>{'\u2630'}</Text>
       </TouchableOpacity>
@@ -214,7 +215,7 @@ export default function FaqScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

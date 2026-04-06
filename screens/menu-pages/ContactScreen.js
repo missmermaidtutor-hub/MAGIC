@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import { openMailto } from '../../utils/emailUtils';
+import ThemedBackground from '../../components/ThemedBackground';
 
 export default function ContactScreen({ navigation }) {
   const handleEmail = () => {
@@ -8,7 +9,7 @@ export default function ContactScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerContainer}>
           <TouchableOpacity
@@ -41,7 +42,7 @@ export default function ContactScreen({ navigation }) {
           </Text>
         </View>
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { showAlert } from '../../utils/alertUtils';
 import { openMailto } from '../../utils/emailUtils';
+import ThemedBackground from '../../components/ThemedBackground';
 import {
   getUserInvitations,
   saveInvitation,
@@ -195,7 +196,7 @@ export default function InviteFriendsScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
         <Text style={styles.backBtnText}>{'<'}</Text>
       </TouchableOpacity>
@@ -257,7 +258,7 @@ export default function InviteFriendsScreen({ navigation }) {
           </>
         )}
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

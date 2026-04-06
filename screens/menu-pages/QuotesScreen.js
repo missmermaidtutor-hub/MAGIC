@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { canAccessFeature } from '../../utils/premiumUtils';
 import PremiumPaywall from '../../components/premium/PremiumPaywall';
 import { getQuoteLikeCounts } from '../../services/firestoreService';
+import ThemedBackground from '../../components/ThemedBackground';
 
 const quoteKeyFromText = (text) => text.slice(0, 80).replace(/[^a-zA-Z0-9]/g, '_');
 
@@ -54,7 +55,7 @@ export default function QuotesScreen({ navigation }) {
   );
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header with Back Button */}
         <View style={styles.headerContainer}>
@@ -136,7 +137,7 @@ export default function QuotesScreen({ navigation }) {
           </>
         )}
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

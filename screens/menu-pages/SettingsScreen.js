@@ -22,6 +22,7 @@ import {
   releasePseudonym,
 } from '../../services/firestoreService';
 import mediumsData from '../../mediums.json';
+import ThemedBackground from '../../components/ThemedBackground';
 
 const TIMEZONES = [
   'America/New_York',
@@ -289,7 +290,7 @@ export default function SettingsScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header with Back Button */}
         <View style={styles.headerContainer}>
@@ -642,7 +643,7 @@ export default function SettingsScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

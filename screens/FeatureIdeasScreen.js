@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, ImageBackground, ActivityIndicator,
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
 import { getAllFeatureIdeas } from '../services/firestoreService';
+import ThemedBackground from '../components/ThemedBackground';
 
 export default function FeatureIdeasScreen({ navigation }) {
   const { user } = useAuth();
@@ -39,7 +40,7 @@ export default function FeatureIdeasScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
         <Text style={styles.closeBtnText}>✕</Text>
       </TouchableOpacity>
@@ -68,7 +69,7 @@ export default function FeatureIdeasScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

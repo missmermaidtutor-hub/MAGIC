@@ -21,6 +21,7 @@ import { trackAction } from '../services/analyticsService';
 import { showAlert, showDestructiveConfirm } from '../utils/alertUtils';
 import { useFocusEffect } from '@react-navigation/native';
 import PremiumGate from '../components/premium/PremiumGate';
+import ThemedBackground from '../components/ThemedBackground';
 
 // Heart component (matches HomeScreen)
 const Heart = ({ size = 24, filled = false, onPress }) => (
@@ -784,7 +785,7 @@ export default function StreakScreen({ navigation }) {
   const hideTodayGoal = showKeepGoalPrompt && !!yesterdayGoal && !goalMetYes && goalAcknowledged;
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Grow</Text>
 
@@ -1178,7 +1179,7 @@ export default function StreakScreen({ navigation }) {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

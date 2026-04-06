@@ -35,6 +35,7 @@ import { persistImageUri } from '../utils/imageUtils';
 import { captureError } from '../config/sentry';
 import { trackAction } from '../services/analyticsService';
 import DrawingStudio from '../components/drawing/DrawingStudio';
+import ThemedBackground from '../components/ThemedBackground';
 
 const MIN_TIMER_MINUTES = 1;
 const MAX_TIMER_MINUTES = 180;
@@ -1043,7 +1044,7 @@ export default function ArtScreen() {
   const weeklyProgress = Math.min((weeklyTime / (120 * 60)) * 100, 100);
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Art Studio</Text>
         
@@ -1485,7 +1486,7 @@ export default function ArtScreen() {
         prompt={todaysChallenge}
         courageUploadedToday={courageUploadedToday}
       />
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

@@ -33,6 +33,7 @@ import {
 } from '../services/firestoreService';
 import { getESTDate, getESTYesterday } from '../utils/dateUtils';
 import { showAlert } from '../utils/alertUtils';
+import ThemedBackground from '../components/ThemedBackground';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -745,17 +746,17 @@ export default function InspireScreen({ navigation }) {
 
   if (loading) {
     return (
-      <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+      <ThemedBackground style={styles.container}>
         <View style={[styles.content, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
           <ActivityIndicator size="large" color="#004225" />
           <Text style={[styles.subtitle, { marginTop: 15 }]}>Loading courages...</Text>
         </View>
-      </ImageBackground>
+      </ThemedBackground>
     );
   }
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       {/* First-visit criteria overlay */}
       <Modal
         visible={criteriaModalVisible}
@@ -1075,7 +1076,7 @@ export default function InspireScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

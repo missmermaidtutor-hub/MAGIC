@@ -1,9 +1,10 @@
 import React from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import ThemedBackground from '../../components/ThemedBackground';
 
 export default function LegalScreen({ navigation }) {
   return (
-    <ImageBackground source={require('../../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerContainer}>
           <TouchableOpacity
@@ -110,7 +111,7 @@ export default function LegalScreen({ navigation }) {
           <Text style={styles.text}>Violations of these Community Guidelines may result in one or more of the following actions, at our sole discretion:{'\n\n'}• Content removal or modification{'\n'}• Issuance of a formal warning{'\n'}• Temporary suspension of account privileges{'\n'}• Permanent termination of your account{'\n'}• Restriction from specific Platform features (e.g., discussion pods, community gallery){'\n'}• Reporting to law enforcement authorities where required by law or where there is an imminent threat to safety{'\n\n'}The severity of enforcement depends on the nature and frequency of the violation. Repeated or egregious violations will result in escalated consequences. We reserve the right to take any action we deem necessary to protect the safety and integrity of the community.</Text>
         </View>
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { isAdmin } from '../config/admin';
 import { subscribeToUserPods } from '../services/firestoreService';
+import ThemedBackground from '../components/ThemedBackground';
 
 export default function DiscussionPodsScreen({ navigation }) {
   const { user } = useAuth();
@@ -53,7 +54,7 @@ export default function DiscussionPodsScreen({ navigation }) {
   };
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Discussion Pods</Text>
         <Text style={styles.subtitle}>Group Conversations</Text>
@@ -118,7 +119,7 @@ export default function DiscussionPodsScreen({ navigation }) {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

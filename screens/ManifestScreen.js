@@ -20,6 +20,7 @@ import PremiumPaywall from '../components/premium/PremiumPaywall';
 import quotesData from '../quotes.json';
 import { getTodayQuote } from '../utils/quoteUtils';
 import { trackAction } from '../services/analyticsService';
+import ThemedBackground from '../components/ThemedBackground';
 
 export default function ManifestScreen() {
   const { user, userProfile } = useAuth();
@@ -345,7 +346,7 @@ export default function ManifestScreen() {
   // ===== FAVORITE QUOTES VIEW =====
   if (showFavoriteQuotes) {
     return (
-      <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+      <ThemedBackground style={styles.container}>
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.header}>Favorite Quotes</Text>
 
@@ -377,13 +378,13 @@ export default function ManifestScreen() {
             ))
           )}
         </ScrollView>
-      </ImageBackground>
+      </ThemedBackground>
     );
   }
 
   if (showPastEntries) {
     return (
-      <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+      <ThemedBackground style={styles.container}>
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.header}>Past Entries</Text>
           
@@ -453,12 +454,12 @@ export default function ManifestScreen() {
             ))
           )}
         </ScrollView>
-      </ImageBackground>
+      </ThemedBackground>
     );
   }
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={{ marginTop: 40 }} />
         <Text style={styles.subtitle}>Today</Text>
@@ -594,7 +595,7 @@ export default function ManifestScreen() {
           <PremiumPaywall feature="pastDiaryEntries" compact />
         )}
       </ScrollView>
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 

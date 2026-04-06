@@ -21,6 +21,7 @@ import {
   deletePod,
 } from '../services/firestoreService';
 import UserProfileModal from '../components/admin/UserProfileModal';
+import ThemedBackground from '../components/ThemedBackground';
 
 const TIMEZONE_SHORT = {
   'America/New_York': 'EST',
@@ -614,16 +615,16 @@ export default function ManagePodsScreen({ navigation }) {
 
   if (loading) {
     return (
-      <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+      <ThemedBackground style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#FFD700" />
         </View>
-      </ImageBackground>
+      </ThemedBackground>
     );
   }
 
   return (
-    <ImageBackground source={require('../assets/background.png')} style={styles.container} resizeMode="cover">
+    <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.header}>Manage Pods</Text>
         <Text style={styles.subtitle}>Create and edit discussion pods</Text>
@@ -753,7 +754,7 @@ export default function ManagePodsScreen({ navigation }) {
         profile={selectedProfile}
         onClose={() => setSelectedProfile(null)}
       />
-    </ImageBackground>
+    </ThemedBackground>
   );
 }
 
