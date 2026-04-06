@@ -383,13 +383,33 @@ export default function InspireScreen({ navigation }) {
       'This inspired me to send to you!\n\n' +
       (courage.title ? `"${courage.title}"\n\n` : '') +
       '[Add your message here]\n\n— Sent from MAGIC Tracker';
-    const mediaUrl = courage.mediaUrl || null;
 
-    // Web Share API: try to share the actual image file (iOS Safari 15+ / Chrome Android)
-    if (Platform.OS === 'web' && mediaUrl && typeof navigator !== 'undefined' && navigator.share) {
+    // Resolve image URL — real courages have mediaUrl, filler stock images use bundled require() assets
+    let mediaUrl = courage.mediaUrl || null;
+    if (!mediaUrl && courage.isFiller && courage.source !== undefined && Platform.OS === 'web') {
       try {
-        // Fetch image and compress to low quality via Canvas
+        const { Asset } = require('expo-asset');
+        const asset = Asset.fromModule(courage.source);
+        if (asset && asset.uri) {
+          // asset.uri may be relative (/assets/...) — make it absolute for email links
+          const uri = asset.uri;
+          mediaUrl = uri.startsWith('http') ? uri : window.location.origin + uri;
+        }
+      } catch (e) {}
+    }
+
+    // Mobile web only: try Web Share API with actual compressed image (navigator.share on desktop
+    // loses the user-gesture context after async fetch and opens no email option anyway)
+    const isMobileWeb =
+      Platform.OS === 'web' &&
+      typeof navigator !== 'undefined' &&
+      navigator.share &&
+      /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+    if (isMobileWeb && mediaUrl) {
+      try {
         const res = await fetch(mediaUrl);
+        if (!res.ok) throw new Error('fetch failed');
         const blob = await res.blob();
         const compressedBlob = await new Promise((resolve) => {
           const img = new window.Image();
@@ -409,30 +429,26 @@ export default function InspireScreen({ navigation }) {
           img.onerror = () => { URL.revokeObjectURL(objUrl); resolve(blob); };
           img.src = objUrl;
         });
-
         const file = new File([compressedBlob], 'artwork.jpg', { type: 'image/jpeg' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({ title: shareTitle, text: shareText, files: [file] });
           await AsyncStorage.setItem(`email_sent_${today}`, 'true');
           return;
         }
-
-        // Fallback: share URL only via share sheet
-        if (navigator.canShare && navigator.canShare({ url: mediaUrl })) {
-          await navigator.share({ title: shareTitle, text: shareText, url: mediaUrl });
-          await AsyncStorage.setItem(`email_sent_${today}`, 'true');
-          return;
-        }
+        // File share not supported — fall back to URL share via share sheet
+        await navigator.share({ title: shareTitle, text: shareText, url: mediaUrl });
+        await AsyncStorage.setItem(`email_sent_${today}`, 'true');
+        return;
       } catch (e) {
-        // User cancelled or browser blocked — fall through to mailto
         if (e && e.name === 'AbortError') {
           await AsyncStorage.setItem(`email_sent_${today}`, 'true');
           return;
         }
+        // Other error — fall through to mailto
       }
     }
 
-    // Final fallback: mailto with image URL in body so recipient can tap it
+    // Desktop / fallback: compose mailto with clickable image link in the body
     const body = mediaUrl
       ? `${shareText}\n\nView artwork: ${mediaUrl}`
       : shareText;
