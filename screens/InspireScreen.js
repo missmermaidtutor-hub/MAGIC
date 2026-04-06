@@ -386,17 +386,20 @@ export default function InspireScreen({ navigation }) {
 
     // Resolve image URL — real courages have mediaUrl, filler stock images use bundled require() assets
     let mediaUrl = courage.mediaUrl || null;
-    if (!mediaUrl && courage.isFiller && courage.source !== undefined && Platform.OS === 'web') {
+    if (!mediaUrl && courage.isFiller && typeof courage.source === 'number' && Platform.OS === 'web') {
       try {
-        const { Asset } = require('expo-asset');
-        const asset = Asset.fromModule(courage.source);
-        if (asset && asset.uri) {
-          // asset.uri may be relative (/assets/...) — make it absolute for email links
-          const uri = asset.uri;
-          mediaUrl = uri.startsWith('http') ? uri : window.location.origin + uri;
+        // Use the same asset formula the Image component uses in the web bundle:
+        // getAssetByID returns { httpServerLocation, name, type } → build absolute URL
+        // expo-asset's Asset.fromModule returns '' for production web builds (no dev server / no fileUris)
+        const { getAssetByID } = require('@react-native/assets-registry/registry');
+        const meta = getAssetByID(courage.source);
+        if (meta && meta.httpServerLocation && meta.name && meta.type) {
+          mediaUrl = window.location.origin + meta.httpServerLocation + '/' + meta.name + '.' + meta.type;
         }
       } catch (e) {}
     }
+
+    console.log('[Share] courage.mediaUrl:', courage.mediaUrl, '| isFiller:', courage.isFiller, '| resolved mediaUrl:', mediaUrl);
 
     // Mobile web only: try Web Share API with actual compressed image (navigator.share on desktop
     // loses the user-gesture context after async fetch and opens no email option anyway)
