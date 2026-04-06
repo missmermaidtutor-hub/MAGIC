@@ -41,7 +41,7 @@ export default function ContactScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0e27' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   content: { padding: 20 },
   headerContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 40, marginBottom: 20 },
   backButton: { width: 44, height: 44, backgroundColor: '#1a1a1a', borderRadius: 22, borderWidth: 2, borderColor: '#FFD700', justifyContent: 'center', alignItems: 'center' },
