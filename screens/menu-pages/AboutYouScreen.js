@@ -19,6 +19,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { THEME_ORDER, THEMES } from '../../themes/themes';
 import {
   updateUserProfile,
   checkPseudonymAvailable,
@@ -86,6 +88,7 @@ const MEDIUM_CATEGORIES = Object.keys(mediumsData);
 
 export default function AboutYouScreen({ navigation }) {
   const { user, userProfile, refreshProfile } = useAuth();
+  const { themeId, selectTheme } = useTheme();
 
   // Account / Profile
   const [accountMethod, setAccountMethod] = useState('');
@@ -771,6 +774,34 @@ export default function AboutYouScreen({ navigation }) {
           ))}
         </View>
 
+        {/* ===== CREATIVE SKIN ===== */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Your Creative Skin</Text>
+          <Text style={styles.settingLabel}>Where are you creating from today?</Text>
+          {THEME_ORDER.map(id => {
+            const t = THEMES[id];
+            const isActive = id === themeId;
+            return (
+              <TouchableOpacity
+                key={id}
+                style={[
+                  skinStyles.skinRow,
+                  isActive && { borderColor: t.frame.innerBorder, borderWidth: 2, backgroundColor: 'rgba(180,160,100,0.08)' },
+                ]}
+                onPress={() => selectTheme(id)}
+                activeOpacity={0.8}
+              >
+                <Text style={skinStyles.skinEmoji}>{t.emoji}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={skinStyles.skinName}>{t.name}</Text>
+                  <Text style={skinStyles.skinQuestion}>"{t.question}"</Text>
+                </View>
+                {isActive && <Text style={[skinStyles.skinCheck, { color: t.frame.innerBorder }]}>✓</Text>}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
         {/* ===== F. PREFERENCES ===== */}
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Preferences</Text>
@@ -1368,5 +1399,38 @@ const styles = StyleSheet.create({
     fontSize: 9,
     textAlign: 'center',
     paddingVertical: 2,
+  },
+});
+
+const skinStyles = StyleSheet.create({
+  skinRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(150,150,150,0.2)',
+  },
+  skinEmoji: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  skinName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1a1a2e',
+    marginBottom: 1,
+  },
+  skinQuestion: {
+    fontSize: 12,
+    color: '#555',
+    fontStyle: 'italic',
+  },
+  skinCheck: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginLeft: 8,
   },
 });

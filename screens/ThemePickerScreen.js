@@ -5,34 +5,17 @@ import { useTheme } from '../context/ThemeContext';
 import { THEME_ORDER, THEMES } from '../themes/themes';
 import ThemedBackground from '../components/ThemedBackground';
 
-// Mini preview swatch for each theme
-function ThemeSwatch({ themeData }) {
+// Mini gradient/color swatch showing the skin's feel
+function ThemeSwatch({ themeData, size = 'full' }) {
   const bg = themeData.background;
-  const swatchStyle = [styles.swatch];
+  const h = size === 'small' ? 44 : 64;
 
-  if (bg.type === 'gradient') {
-    return (
-      <LinearGradient
-        colors={bg.colors}
-        start={bg.start || { x: 0, y: 0 }}
-        end={bg.end || { x: 0, y: 1 }}
-        style={swatchStyle}
-      >
-        <View style={[styles.swatchFrame, { borderColor: themeData.frame.innerBorder }]} />
-        <Text style={[styles.swatchLetters]}>
-          <Text style={{ color: '#78000E' }}>M</Text>
-          <Text style={{ color: '#9E4502' }}>A</Text>
-          <Text style={{ color: '#c1a900' }}>G</Text>
-          <Text style={{ color: '#3c9820' }}>I</Text>
-          <Text style={{ color: '#8B5CF6' }}>C</Text>
-        </Text>
-      </LinearGradient>
-    );
-  }
-
-  return (
-    <View style={[swatchStyle, { backgroundColor: bg.fallbackColor || '#eee' }]}>
-      <View style={[styles.swatchFrame, { borderColor: themeData.frame.innerBorder }]} />
+  const inner = (
+    <>
+      <View style={[
+        styles.swatchFrame,
+        { borderColor: themeData.frame.innerBorder, borderRadius: themeData.frame.innerBorderRadius },
+      ]} />
       <Text style={styles.swatchLetters}>
         <Text style={{ color: '#78000E' }}>M</Text>
         <Text style={{ color: '#9E4502' }}>A</Text>
@@ -40,6 +23,25 @@ function ThemeSwatch({ themeData }) {
         <Text style={{ color: '#3c9820' }}>I</Text>
         <Text style={{ color: '#8B5CF6' }}>C</Text>
       </Text>
+    </>
+  );
+
+  if (bg.type === 'gradient') {
+    return (
+      <LinearGradient
+        colors={bg.colors}
+        start={bg.start || { x: 0, y: 0 }}
+        end={bg.end || { x: 0, y: 1 }}
+        style={[styles.swatch, { height: h }]}
+      >
+        {inner}
+      </LinearGradient>
+    );
+  }
+
+  return (
+    <View style={[styles.swatch, { height: h, backgroundColor: bg.fallbackColor || '#eee' }]}>
+      {inner}
     </View>
   );
 }
@@ -47,16 +49,16 @@ function ThemeSwatch({ themeData }) {
 export default function ThemePickerScreen({ navigation }) {
   const { theme, themeId, selectTheme } = useTheme();
 
-  const handleSelect = async (id) => {
-    await selectTheme(id);
-  };
-
   return (
     <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, { color: theme.text.streak }]}>Choose Your Skin</Text>
-        <Text style={[styles.subtitle, { color: theme.text.tagline }]}>
-          Express your creative energy — the community stays the same, only the look changes.
+
+        <Text style={[styles.question, { color: theme.text.streak }]}>
+          Where are you{'\n'}creating from today?
+        </Text>
+        <Text style={[styles.sub, { color: theme.text.tagline }]}>
+          Your skin is an emotional tool — not decoration.{'\n'}
+          The community stays the same. Only your view changes.
         </Text>
 
         {THEME_ORDER.map(id => {
@@ -66,25 +68,28 @@ export default function ThemePickerScreen({ navigation }) {
             <TouchableOpacity
               key={id}
               style={[
-                styles.themeCard,
+                styles.card,
                 {
-                  borderColor: isActive ? theme.frame.innerBorder : 'rgba(150,150,150,0.3)',
+                  borderColor: isActive ? t.frame.innerBorder : 'rgba(150,150,150,0.2)',
                   borderWidth: isActive ? 3 : 1,
-                  shadowColor: isActive ? theme.frame.outerShadow : 'transparent',
+                  shadowColor: isActive ? t.frame.outerShadow : 'transparent',
                 },
               ]}
-              onPress={() => handleSelect(id)}
-              activeOpacity={0.8}
+              onPress={() => selectTheme(id)}
+              activeOpacity={0.85}
             >
               <ThemeSwatch themeData={t} />
-              <View style={styles.themeInfo}>
-                <Text style={styles.themeEmoji}>{t.emoji}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.themeName}>{t.name}</Text>
-                  <Text style={styles.themeDesc}>{t.description}</Text>
+
+              <View style={styles.cardBody}>
+                <View style={styles.cardLeft}>
+                  <Text style={styles.cardEmoji}>{t.emoji}</Text>
+                  <View>
+                    <Text style={styles.cardName}>{t.name}</Text>
+                    <Text style={styles.cardQuestion}>"{t.question}"</Text>
+                  </View>
                 </View>
                 {isActive && (
-                  <Text style={[styles.activeCheck, { color: theme.frame.innerBorder }]}>✓</Text>
+                  <Text style={[styles.activeCheck, { color: t.frame.innerBorder }]}>✓</Text>
                 )}
               </View>
             </TouchableOpacity>
@@ -92,7 +97,7 @@ export default function ThemePickerScreen({ navigation }) {
         })}
 
         <Text style={[styles.hint, { color: theme.text.tagline }]}>
-          More skins coming soon ✨
+          More skins coming with new seasons ✨
         </Text>
       </ScrollView>
     </ThemedBackground>
@@ -101,80 +106,89 @@ export default function ThemePickerScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 20, paddingTop: 60, paddingBottom: 40 },
-  title: {
-    fontSize: 28,
+  content: { padding: 20, paddingTop: 64, paddingBottom: 48 },
+
+  question: {
+    fontSize: 30,
     fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 8,
+    lineHeight: 38,
+    marginBottom: 10,
   },
-  subtitle: {
-    fontSize: 14,
+  sub: {
+    fontSize: 13,
     textAlign: 'center',
-    marginBottom: 28,
     lineHeight: 20,
+    marginBottom: 30,
     paddingHorizontal: 10,
   },
-  themeCard: {
+
+  card: {
     borderRadius: 14,
     marginBottom: 16,
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.45,
     shadowRadius: 8,
     elevation: 4,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(128,128,128,0.05)',
   },
   swatch: {
-    height: 70,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   swatchFrame: {
     position: 'absolute',
-    top: 10,
-    left: 20,
-    right: 20,
-    bottom: 10,
-    borderWidth: 2,
-    borderRadius: 8,
+    top: 8,
+    left: 16,
+    right: 16,
+    bottom: 8,
+    borderWidth: 1.5,
   },
   swatchLetters: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '700',
-    letterSpacing: 4,
+    letterSpacing: 3,
   },
-  themeInfo: {
+
+  cardBody: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 14,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
-  themeEmoji: {
-    fontSize: 26,
+  cardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  cardEmoji: {
+    fontSize: 28,
     marginRight: 12,
   },
-  themeName: {
+  cardName: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1a1a1a',
     marginBottom: 2,
   },
-  themeDesc: {
+  cardQuestion: {
     fontSize: 12,
     color: '#555',
-    lineHeight: 16,
+    fontStyle: 'italic',
   },
   activeCheck: {
     fontSize: 22,
     fontWeight: '700',
-    marginLeft: 10,
+    marginLeft: 8,
   },
   hint: {
     fontSize: 13,
     textAlign: 'center',
-    marginTop: 10,
+    marginTop: 8,
     fontStyle: 'italic',
+    opacity: 0.7,
   },
 });
