@@ -461,6 +461,11 @@ function AppContent() {
           <Text style={[styles.loadingLetter, { color: '#3c9820' }]}>I</Text>
           <Text style={[styles.loadingLetter, { color: '#5008a7' }]}>C</Text>
         </View>
+        {Platform.OS === 'web' && (
+          <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, marginTop: 24 }}>
+            {loading ? 'Connecting...' : 'Loading profile...'}
+          </Text>
+        )}
       </ImageBackground>
     );
   }

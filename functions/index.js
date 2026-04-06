@@ -3,7 +3,6 @@ const v1 = require('firebase-functions/v1');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
-
 initializeApp();
 const db = getFirestore();
 

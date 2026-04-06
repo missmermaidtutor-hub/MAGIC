@@ -75,17 +75,30 @@ export function AuthProvider({ children }) {
       return;
     }
 
+    // Safety net: if onAuthStateChanged never fires (expired token refresh hang,
+    // network block, or uncaught error before setLoading(false)), force loading off
+    // after 8s so the user sees the login screen rather than a permanent spinner.
+    const loadingTimeout = setTimeout(() => {
+      console.log('[Auth] onAuthStateChanged timeout — forcing loading=false');
+      setLoading(false);
+    }, 8000);
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      clearTimeout(loadingTimeout);
       setUser(firebaseUser);
 
       if (firebaseUser) {
         // Detect account switch: clear stale data if a different user logged in
-        const lastUid = await AsyncStorage.getItem('current_user_uid');
-        if (lastUid && lastUid !== firebaseUser.uid) {
-          console.log('Account switch detected, clearing previous user data');
-          await clearUserData();
+        try {
+          const lastUid = await AsyncStorage.getItem('current_user_uid');
+          if (lastUid && lastUid !== firebaseUser.uid) {
+            console.log('Account switch detected, clearing previous user data');
+            await clearUserData();
+          }
+          await AsyncStorage.setItem('current_user_uid', firebaseUser.uid);
+        } catch (e) {
+          console.log('[Auth] AsyncStorage error during uid check:', e);
         }
-        await AsyncStorage.setItem('current_user_uid', firebaseUser.uid);
 
         setSentryUser(firebaseUser.uid, firebaseUser.email);
         try {
@@ -106,8 +119,12 @@ export function AuthProvider({ children }) {
           console.log('Error loading profile, using cache:', error);
           captureError(error, { context: 'loadProfile' });
           // Offline fallback
-          const cached = await AsyncStorage.getItem('cached_user_profile');
-          if (cached) setUserProfile(JSON.parse(cached));
+          try {
+            const cached = await AsyncStorage.getItem('cached_user_profile');
+            if (cached) setUserProfile(JSON.parse(cached));
+          } catch (e) {
+            console.log('[Auth] AsyncStorage cache read error:', e);
+          }
         }
       } else {
         setUserProfile(null);
@@ -117,7 +134,10 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      clearTimeout(loadingTimeout);
+      unsubscribe();
+    };
   }, []);
 
   // Background sync: pull Firestore data into AsyncStorage (non-blocking)
