@@ -12,7 +12,14 @@ export const openMailto = (subject, body, to = '') => {
   const url = `mailto:${recipient}?subject=${encodedSubject}&body=${encodedBody}`;
 
   if (Platform.OS === 'web') {
-    window.location.href = url;
+    // Hidden anchor click: triggers mailto handler (Gmail) without navigating the app away.
+    // window.location.href can cause Gmail to open without launching compose.
+    const a = document.createElement('a');
+    a.href = url;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => document.body.removeChild(a), 200);
   } else {
     Linking.openURL(url);
   }
