@@ -10,18 +10,38 @@
 //   Mindful        → Safety          (habit builders / wellness)
 //   Minimal Lab    → Focus           (precision thinkers)
 //
+// ══════════════════════════════════════════════════════════════
+// LAW: ALL TEXT AND BACKGROUNDS MUST PASS WCAG AA LEGIBILITY
+// ══════════════════════════════════════════════════════════════
+// Every (text color, background color) pair in the app must meet
+// WCAG 2.1 Level AA: ≥4.5:1 for normal text, ≥3:1 for large text.
+// This applies to MAGIC letter colors too. When the background is
+// dark, the dark brand shades fail — use the light (bright) variant
+// from `theme.magic` instead. No exceptions.
+//
+// theme.magic contains per-letter colors already adjusted per skin:
+//   Light skins (isDark=false): use dark brand shades (readable on light cards)
+//   Dark  skins (isDark=true):  use bright shades (readable on dark backgrounds)
+//
+//   Letter → light skin   → dark skin
+//   M      → #78000E      → #ff8fa3  (rose-red)
+//   A      → #9E4502      → #FFB347  (bright tangerine)
+//   G      → #c1a900      → #FFE44D  (bright gold)
+//   I      → #3c9820      → #69e88c  (bright mint-green)
+//   C      → #5008a7      → #c4b5fd  (light lavender)
+//
 // WHAT STAYS FIXED ACROSS ALL SKINS:
-//   The MAGIC letter colors: M=#78000E  A=#9E4502  G=#c1a900  I=#3c9820  C=#8B5CF6
-//   These are the community identity — every member shares them.
-//   Because these colors are dark, card interiors must always be light.
+//   On CARD interiors: MAGIC dark shades are used (card.background is always light).
+//   Outside cards (headers, labels, calendar): use theme.magic.* for the letter color.
 //
 // WHAT YOU CUSTOMIZE PER SKIN:
 //   isDark      — true if background is dark; drives automatic text color logic
 //   background  — gradient colors OR image source (the app shell)
-//   card        — background color of the card interior (KEEP LIGHT — MAGIC text is dark)
+//   card        — background color of the card interior (KEEP LIGHT — dark MAGIC text)
 //   frame       — outerShadow (card glow), innerBorder (inner border line)
 //   tabBar      — background, activeTint, inactiveTint, borderTop
 //   header      — hamburger icon color
+//   magic       — per-letter colors (ADA-adjusted for this skin's background)
 //   text        — ALL text colors used outside of MAGIC-colored boxes:
 //                   body      → main prose / section content (white on dark skins)
 //                   muted     → secondary / caption text
@@ -40,7 +60,7 @@
 //   Safe defaults: body='#ffffff', muted='rgba(255,255,255,0.7)', heading='#ffffff'
 //
 // ADA / WCAG AA RULE:
-//   card.background must give ≥4.5:1 contrast with all MAGIC colors.
+//   card.background must give ≥4.5:1 contrast with the dark MAGIC shades.
 //   The safest card backgrounds are white or warm cream (≥0.85 opacity).
 //   For dark-background skins, use a near-opaque light card interior.
 //
@@ -49,7 +69,8 @@
 //   2. Give it a unique id, name, question, emoji
 //   3. Replace the TODO color values with your palette
 //   4. Keep card.background light (white/cream/parchment)
-//   5. Add the id to THEME_ORDER at the bottom
+//   5. Set magic.* to the correct bright/dark variant for your isDark value
+//   6. Add the id to THEME_ORDER at the bottom
 // ============================================================
 
 export const THEMES = {
@@ -71,6 +92,11 @@ export const THEMES = {
 
     card: {
       background: 'rgba(255, 255, 255, 0.45)',
+    },
+
+    // isDark=false → dark brand shades (readable on light card/bg)
+    magic: {
+      m: '#78000E', a: '#9E4502', g: '#c1a900', i: '#3c9820', c: '#5008a7',
     },
 
     frame: {
@@ -153,6 +179,11 @@ export const THEMES = {
 
     card: {
       background: 'rgba(255, 252, 240, 0.88)',
+    },
+
+    // isDark=false → dark brand shades
+    magic: {
+      m: '#78000E', a: '#9E4502', g: '#c1a900', i: '#3c9820', c: '#5008a7',
     },
 
     frame: {
@@ -244,6 +275,11 @@ export const THEMES = {
       background: 'rgba(255, 248, 220, 0.95)',
     },
 
+    // isDark=true → bright shades for dark background (WCAG AA ✓ on dark bg)
+    magic: {
+      m: '#ff8fa3', a: '#FFB347', g: '#FFE44D', i: '#69e88c', c: '#c4b5fd',
+    },
+
     frame: {
       // TODO: warm candlelight amber against the dark
       outerShadow: '#c8960c',
@@ -332,6 +368,11 @@ export const THEMES = {
       background: 'rgba(240, 250, 255, 0.95)',
     },
 
+    // isDark=true → bright shades for dark background (WCAG AA ✓ on dark bg)
+    magic: {
+      m: '#ff8fa3', a: '#FFB347', g: '#FFE44D', i: '#69e88c', c: '#c4b5fd',
+    },
+
     frame: {
       // TODO: electric cyan or magenta for that neon-on-dark pop
       outerShadow: '#00e5ff',
@@ -416,6 +457,11 @@ export const THEMES = {
       background: 'rgba(255, 255, 252, 0.82)',
     },
 
+    // isDark=false → dark brand shades
+    magic: {
+      m: '#78000E', a: '#9E4502', g: '#c1a900', i: '#3c9820', c: '#5008a7',
+    },
+
     frame: {
       // TODO: muted earthy tones — sage green, dusty teal
       outerShadow: '#5a8a70',
@@ -497,6 +543,11 @@ export const THEMES = {
 
     card: {
       background: 'rgba(255, 255, 255, 0.92)',
+    },
+
+    // isDark=false → dark brand shades
+    magic: {
+      m: '#78000E', a: '#9E4502', g: '#c1a900', i: '#3c9820', c: '#5008a7',
     },
 
     frame: {

@@ -210,7 +210,7 @@ const loadMonthData = async (year, month) => {
 };
 
 // ─── Single compact month grid ───────────────────────────────────
-const MiniMonth = ({ year, month, data, cellSize, todayInfo, onDayPress }) => {
+const MiniMonth = ({ year, month, data, cellSize, todayInfo, onDayPress, isDark }) => {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
   const { todayDate, todayMonth, todayYear } = todayInfo;
@@ -231,14 +231,14 @@ const MiniMonth = ({ year, month, data, cellSize, todayInfo, onDayPress }) => {
 
   return (
     <View style={styles.miniMonth}>
-      <Text style={styles.miniMonthTitle}>
+      <Text style={[styles.miniMonthTitle, isDark && { color: '#ffffff' }]}>
         {getMonthNameShort(month)} {year}
       </Text>
 
       <View style={styles.dayHeaderRow}>
         {DAY_ABBR.map((name, i) => (
           <View key={`${name}-${i}`} style={[styles.dayHeaderCell, { width: cellSize }]}>
-            <Text style={styles.dayHeaderText}>{name}</Text>
+            <Text style={[styles.dayHeaderText, isDark && { color: 'rgba(255,255,255,0.75)' }]}>{name}</Text>
           </View>
         ))}
       </View>
@@ -265,6 +265,7 @@ const MiniMonth = ({ year, month, data, cellSize, todayInfo, onDayPress }) => {
                   styles.dayNumber,
                   cell.isToday && styles.todayNumber,
                   cell.isFuture && styles.futureNumber,
+                  isDark && { color: cell.isFuture ? 'rgba(255,255,255,0.35)' : '#ffffff' },
                 ]}>
                   {cell.day}
                 </Text>
@@ -899,6 +900,7 @@ export default function StreakScreen({ navigation }) {
                 data={month1Data} cellSize={cellSize}
                 todayInfo={todayInfo}
                 onDayPress={handleDayPress}
+                isDark={theme.isDark}
               />
             </View>
             <View style={styles.monthGap} />
@@ -908,6 +910,7 @@ export default function StreakScreen({ navigation }) {
                 data={month2Data} cellSize={cellSize}
                 todayInfo={todayInfo}
                 onDayPress={handleDayPress}
+                isDark={theme.isDark}
               />
             </View>
           </View>
@@ -922,24 +925,24 @@ export default function StreakScreen({ navigation }) {
         </View>
 
         <TouchableOpacity onPress={goToNow} style={styles.todayButton}>
-          <Text style={styles.todayButtonText}>Today</Text>
+          <Text style={[styles.todayButtonText, theme.isDark && { color: '#FFE44D' }]}>Today</Text>
         </TouchableOpacity>
 
         {/* ── Statistics ── */}
 
         {/* Row 1: Streak */}
         <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{streakData.currentStreak}</Text>
-            <Text style={styles.statLabel}>Current Streak</Text>
+          <View style={[styles.statBox, theme.isDark && { backgroundColor: theme.card.background }]}>
+            <Text style={[styles.statNumber, theme.isDark && { color: '#FFD700' }]}>{streakData.currentStreak}</Text>
+            <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Current Streak</Text>
           </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{streakData.longestStreak}</Text>
-            <Text style={styles.statLabel}>Longest Streak</Text>
+          <View style={[styles.statBox, theme.isDark && { backgroundColor: theme.card.background }]}>
+            <Text style={[styles.statNumber, theme.isDark && { color: '#FFD700' }]}>{streakData.longestStreak}</Text>
+            <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Longest Streak</Text>
           </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statNumber}>{streakData.totalActiveDays}</Text>
-            <Text style={styles.statLabel}>Total Active</Text>
+          <View style={[styles.statBox, theme.isDark && { backgroundColor: theme.card.background }]}>
+            <Text style={[styles.statNumber, theme.isDark && { color: '#FFD700' }]}>{streakData.totalActiveDays}</Text>
+            <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Total Active</Text>
           </View>
         </View>
 
@@ -958,37 +961,37 @@ export default function StreakScreen({ navigation }) {
           <View style={styles.premiumGridItem}>
             <PremiumGate feature="advancedStats" compact>
               <View style={styles.statsRow}>
-                <View style={styles.statBox}>
+                <View style={[styles.statBox, theme.isDark && { backgroundColor: theme.card.background }]}>
                   <Text style={[styles.statNumber, { color: MAGIC_COLORS.manifest }]}>{streakData.manifestDays}</Text>
-                  <Text style={styles.statLabel}>Manifest{'\n'}Days</Text>
+                  <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Manifest{'\n'}Days</Text>
                 </View>
-                <View style={styles.statBox}>
+                <View style={[styles.statBox, theme.isDark && { backgroundColor: theme.card.background }]}>
                   <Text style={[styles.statNumber, { color: MAGIC_COLORS.art }]}>{streakData.artDays}</Text>
-                  <Text style={styles.statLabel}>Art{'\n'}Days</Text>
+                  <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Art{'\n'}Days</Text>
                 </View>
               </View>
               <View style={styles.statsRow}>
-                <View style={styles.statBox}>
+                <View style={[styles.statBox, theme.isDark && { backgroundColor: theme.card.background }]}>
                   <Text style={[styles.statNumber, { color: MAGIC_COLORS.inspire }]}>{streakData.inspireDays}</Text>
-                  <Text style={styles.statLabel}>Inspire{'\n'}Days</Text>
+                  <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Inspire{'\n'}Days</Text>
                 </View>
-                <View style={styles.statBox}>
+                <View style={[styles.statBox, theme.isDark && { backgroundColor: theme.card.background }]}>
                   <Text style={[styles.statNumber, { color: MAGIC_COLORS.connect }]}>{streakData.couragePosts}</Text>
-                  <Text style={styles.statLabel}>Connect{'\n'}Days</Text>
+                  <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Connect{'\n'}Days</Text>
                 </View>
               </View>
               <View style={styles.statsRow}>
-                <View style={styles.statBox}>
+                <View style={[styles.statBox, theme.isDark && { backgroundColor: theme.card.background }]}>
                   <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsSet}</Text>
-                  <Text style={styles.statLabel}>Goals{'\n'}Set</Text>
+                  <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Goals{'\n'}Set</Text>
                 </View>
-                <View style={styles.statBox}>
+                <View style={[styles.statBox, theme.isDark && { backgroundColor: theme.card.background }]}>
                   <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{streakData.goalsMet}</Text>
-                  <Text style={styles.statLabel}>Goals{'\n'}Met</Text>
+                  <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Goals{'\n'}Met</Text>
                 </View>
-                <View style={styles.statBox}>
+                <View style={[styles.statBox, theme.isDark && { backgroundColor: theme.card.background }]}>
                   <Text style={[styles.statNumber, { color: MAGIC_COLORS.grow }]}>{goalPct}%</Text>
-                  <Text style={styles.statLabel}>Goal{'\n'}Rate</Text>
+                  <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Goal{'\n'}Rate</Text>
                 </View>
               </View>
             </PremiumGate>
@@ -999,7 +1002,7 @@ export default function StreakScreen({ navigation }) {
                 <View style={styles.statsRow}>
                   <View style={[styles.statBox, { flex: 1 }]}>
                     <Text style={[styles.statNumber, { color: '#FF69B4' }]}>{inspiringSaveCount}</Text>
-                    <Text style={styles.statLabel}>Times Your Courages{'\n'}Inspired Others</Text>
+                    <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Times Your Courages{'\n'}Inspired Others</Text>
                   </View>
                 </View>
               </PremiumGate>
@@ -1012,7 +1015,7 @@ export default function StreakScreen({ navigation }) {
                   <Text style={[styles.statNumber, { color: '#B8860B' }]}>
                     {winningCourages > 0 ? '🏆 ' : ''}{winningCourages}
                   </Text>
-                  <Text style={styles.statLabel}>Winning Courages</Text>
+                  <Text style={[styles.statLabel, theme.isDark && { color: '#FFE44D' }]}>Winning Courages</Text>
                 </View>
               </View>
             </View>

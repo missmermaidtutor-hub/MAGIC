@@ -1052,10 +1052,10 @@ export default function ArtScreen() {
         
         {/* Today's Challenge */}
         <View style={styles.challengeCard}>
-          <Text style={styles.challengeLabel}>Be Creative:</Text>
-          <Text style={styles.challengeText}>{todaysChallenge}</Text>
+          <Text style={[styles.challengeLabel, theme.isDark && { color: '#FFB347' }]}>Be Creative:</Text>
+          <Text style={[styles.challengeText, theme.isDark && { color: '#FFB347' }]}>{todaysChallenge}</Text>
           <TouchableOpacity onPress={() => setNudgeModalVisible(true)}>
-            <Text style={styles.nudgeLink}>Click for a nudge</Text>
+            <Text style={[styles.nudgeLink, theme.isDark && { color: '#ffffff' }]}>Click for a nudge</Text>
           </TouchableOpacity>
         </View>
 
@@ -1063,12 +1063,12 @@ export default function ArtScreen() {
         <View style={styles.timerRow}>
           {/* Daily Timer */}
           <View style={styles.timerCardHalf}>
-            <Text style={styles.halfLabel}>Timer</Text>
+            <Text style={[styles.halfLabel, theme.isDark && { color: '#ffffff' }]}>Timer</Text>
 
             {!isDailyRunning && !alarmRinging ? (
               <View style={styles.halfInputRow}>
                 <TextInput
-                  style={styles.halfInput}
+                  style={[styles.halfInput, theme.isDark && { color: '#ffffff', borderBottomColor: 'rgba(255,255,255,0.6)' }]}
                   keyboardType="number-pad"
                   value={editHrs}
                   onChangeText={setEditHrs}
@@ -1076,9 +1076,9 @@ export default function ArtScreen() {
                   maxLength={2}
                   selectTextOnFocus
                 />
-                <Text style={styles.halfColon}>:</Text>
+                <Text style={[styles.halfColon, theme.isDark && { color: '#ffffff' }]}>:</Text>
                 <TextInput
-                  style={styles.halfInput}
+                  style={[styles.halfInput, theme.isDark && { color: '#ffffff', borderBottomColor: 'rgba(255,255,255,0.6)' }]}
                   keyboardType="number-pad"
                   value={editMins}
                   onChangeText={setEditMins}
@@ -1086,9 +1086,9 @@ export default function ArtScreen() {
                   maxLength={2}
                   selectTextOnFocus
                 />
-                <Text style={styles.halfColon}>:</Text>
+                <Text style={[styles.halfColon, theme.isDark && { color: '#ffffff' }]}>:</Text>
                 <TextInput
-                  style={styles.halfInput}
+                  style={[styles.halfInput, theme.isDark && { color: '#ffffff', borderBottomColor: 'rgba(255,255,255,0.6)' }]}
                   keyboardType="number-pad"
                   value={editSecs}
                   onChangeText={setEditSecs}
@@ -1098,7 +1098,7 @@ export default function ArtScreen() {
                 />
               </View>
             ) : (
-              <Text style={styles.halfDisplay}>{formatTime(dailyTime)}</Text>
+              <Text style={[styles.halfDisplay, theme.isDark && { color: '#ffffff' }]}>{formatTime(dailyTime)}</Text>
             )}
 
             <View style={styles.halfButtons}>
@@ -1129,16 +1129,16 @@ export default function ArtScreen() {
               )}
             </View>
 
-            <Text style={styles.halfHint}>
+            <Text style={[styles.halfHint, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>
               Use for meditation{'\n'}Race the clock to complete your art challenge{'\n'}Limit the time you spend on this app
             </Text>
           </View>
 
           {/* Weekly Stopwatch */}
           <View style={styles.timerCardHalf}>
-            <Text style={styles.halfLabel}>Stopwatch</Text>
-            <Text style={styles.halfDisplay}>{formatStopwatch(weeklyTime)}</Text>
-            <Text style={styles.halfSublabel}>weekly</Text>
+            <Text style={[styles.halfLabel, theme.isDark && { color: '#ffffff' }]}>Stopwatch</Text>
+            <Text style={[styles.halfDisplay, theme.isDark && { color: '#ffffff' }]}>{formatStopwatch(weeklyTime)}</Text>
+            <Text style={[styles.halfSublabel, theme.isDark && { color: 'rgba(255,255,255,0.75)' }]}>weekly</Text>
 
             <View style={styles.halfButtons}>
               <TouchableOpacity
@@ -1160,8 +1160,8 @@ export default function ArtScreen() {
             <View style={styles.halfProgressBar}>
               <View style={[styles.progressFill, { width: `${weeklyProgress}%` }]} />
             </View>
-            {weeklyGoalMet && <Text style={styles.halfGoalBadge}>✨ Goal Met!</Text>}
-            <Text style={styles.halfHint}>
+            {weeklyGoalMet && <Text style={[styles.halfGoalBadge, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>✨ Goal Met!</Text>}
+            <Text style={[styles.halfHint, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>
               120 min of art a week improves mental health
             </Text>
           </View>
@@ -1173,26 +1173,26 @@ export default function ArtScreen() {
             <View style={styles.toolIconContainer}>
               <Text style={styles.toolIcon}>📝</Text>
             </View>
-            <Text style={styles.toolLabel}>Write</Text>
+            <Text style={[styles.toolLabel, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>Write</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.toolButton} onPress={handleSketch}>
             <View style={[styles.toolIconContainer, styles.sketchIcon]}>
               <Text style={styles.toolIcon}>✏️</Text>
             </View>
-            <Text style={styles.toolLabel}>sketch</Text>
+            <Text style={[styles.toolLabel, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>sketch</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.toolButton} onPress={handleCapture}>
             <View style={styles.toolIconContainer}>
               <Text style={styles.toolIcon}>📷</Text>
             </View>
-            <Text style={styles.toolLabel}>Capture</Text>
+            <Text style={[styles.toolLabel, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>Capture</Text>
           </TouchableOpacity>
 
         </View>
 
-        <Text style={styles.toolsHintText}>
+        <Text style={[styles.toolsHintText, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>
           The most important thing is that you create — even 5 minutes counts! Share your Courage for tomorrow's Inspiration Ranking (once per day), or save it privately to your Vault. Capture lets you photograph your work or upload a file from your library.
         </Text>
 

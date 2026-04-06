@@ -469,8 +469,8 @@ export default function ManifestScreen() {
         {/* Quote of the Day */}
         <View style={styles.quoteCard}>
           <View style={styles.goldInnerBorder}>
-            <Text style={styles.quoteText}>"{todayQuote.quote}"</Text>
-            <Text style={styles.quoteAuthor}>~{todayQuote.author}</Text>
+            <Text style={[styles.quoteText, theme.isDark && { color: '#ffffff' }]}>"{todayQuote.quote}"</Text>
+            <Text style={[styles.quoteAuthor, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>~{todayQuote.author}</Text>
             <TouchableOpacity
               style={styles.heartButton}
               onPress={() => toggleHeartQuote(todayQuote)}
@@ -507,20 +507,20 @@ export default function ManifestScreen() {
         {/* Journaling Prompts */}
         <View style={styles.journalCard}>
           <View style={styles.goldInnerBorder}>
-          <Text style={styles.journalTitle}>Manifest</Text>
-          <Text style={styles.privacyNote}>
+          <Text style={[styles.journalTitle, theme.isDark && { color: '#ffffff' }]}>Manifest</Text>
+          <Text style={[styles.privacyNote, theme.isDark && { color: 'rgba(255,255,255,0.7)' }]}>
             This page is your private diary. It will not be shared with any other users, companies, organizations, persons, non-persons, etc. It is stored in archives for the purpose of your own reflection.
           </Text>
 
           {/* 1. Call the Muse - Long */}
           <View style={styles.promptContainer}>
-            <Text style={styles.promptNumber}>1.</Text>
+            <Text style={[styles.promptNumber, theme.isDark && { color: '#ffffff' }]}>1.</Text>
             <View style={styles.promptContent}>
-              <Text style={styles.promptLabel}>Call the Muse:</Text>
+              <Text style={[styles.promptLabel, theme.isDark && { color: '#ffffff' }]}>Call the Muse:</Text>
               <TextInput
-                style={styles.longInput}
+                style={[styles.longInput, theme.isDark && { color: '#ffffff', borderColor: '#78000E' }]}
                 placeholder="What inspires you? What sparks your creativity?"
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.45)' : '#aaa'}
                 value={callMuse}
                 onChangeText={setCallMuse}
                 onFocus={() => handleFieldFocus('muse')}
@@ -533,13 +533,13 @@ export default function ManifestScreen() {
 
           {/* 2. Dump What Stalls - Long */}
           <View style={styles.promptContainer}>
-            <Text style={styles.promptNumber}>2.</Text>
+            <Text style={[styles.promptNumber, theme.isDark && { color: '#ffffff' }]}>2.</Text>
             <View style={styles.promptContent}>
-              <Text style={styles.promptLabel}>Dump what stalls you:</Text>
+              <Text style={[styles.promptLabel, theme.isDark && { color: '#ffffff' }]}>Dump what stalls you:</Text>
               <TextInput
-                style={styles.longInput}
+                style={[styles.longInput, theme.isDark && { color: '#ffffff', borderColor: '#78000E' }]}
                 placeholder="What's holding you back? Release it here..."
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.45)' : '#aaa'}
                 value={dumpStalls}
                 onChangeText={setDumpStalls}
                 onFocus={() => handleFieldFocus('dump')}
@@ -552,13 +552,13 @@ export default function ManifestScreen() {
 
           {/* 3. Manifest Vision - Long */}
           <View style={styles.promptContainer}>
-            <Text style={styles.promptNumber}>3.</Text>
+            <Text style={[styles.promptNumber, theme.isDark && { color: '#ffffff' }]}>3.</Text>
             <View style={styles.promptContent}>
-              <Text style={styles.promptLabel}>Manifest Vision:</Text>
+              <Text style={[styles.promptLabel, theme.isDark && { color: '#ffffff' }]}>Manifest Vision:</Text>
               <TextInput
-                style={styles.longInput}
+                style={[styles.longInput, theme.isDark && { color: '#ffffff', borderColor: '#78000E' }]}
                 placeholder="Describe your vision in vivid detail..."
-                placeholderTextColor="#aaa"
+                placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.45)' : '#aaa'}
                 value={manifestVision}
                 onChangeText={setManifestVision}
                 onFocus={() => handleFieldFocus('vision')}

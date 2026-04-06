@@ -891,7 +891,7 @@ export default function InspireScreen({ navigation }) {
                 setCurrentSet([]);
               }}
             >
-              <Text style={styles.postVoteBtnSecondaryText}>Browse Without Ranking</Text>
+              <Text style={[styles.postVoteBtnSecondaryText, theme.isDark && { color: '#ffffff' }]}>Browse Without Ranking</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.postVoteCloseBtn}
@@ -912,9 +912,9 @@ export default function InspireScreen({ navigation }) {
         <Text style={[styles.subtitle, { color: theme.text.body }]}>Rank Community Courage</Text>
 
         {/* Today's Ranking Criterion */}
-        <View style={styles.criterionCard}>
-          <Text style={styles.criterionLabel}>Today's Ranking Criterion:</Text>
-          <Text style={styles.criterionText}>{todaysCriterion}</Text>
+        <View style={[styles.criterionCard, theme.isDark && { backgroundColor: 'rgba(0,40,20,0.85)', borderColor: '#4ade80' }]}>
+          <Text style={[styles.criterionLabel, theme.isDark && { color: '#69e88c' }]}>Today's Ranking Criterion:</Text>
+          <Text style={[styles.criterionText, theme.isDark && { color: '#4ade80' }]}>{todaysCriterion}</Text>
         </View>
 
         {/* All Done State */}
@@ -927,14 +927,14 @@ export default function InspireScreen({ navigation }) {
               {renderThankYouCard()}
             </View>
             <View style={styles.completeCard}>
-              <Text style={styles.completeText}>
+              <Text style={[styles.completeText, theme.isDark && { color: '#ffffff' }]}>
                 {availableCourages.length === 0
                   ? 'No courages available for ranking yet!'
                   : hasRankedToday
                     ? 'You already ranked today!'
                     : 'You have ranked all available courages!'}
               </Text>
-              <Text style={styles.completeSubtext}>
+              <Text style={[styles.completeSubtext, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>
                 {availableCourages.length === 0
                   ? 'Check back after others have uploaded their daily courage.'
                   : 'Come back tomorrow for new submissions!'}
@@ -946,7 +946,7 @@ export default function InspireScreen({ navigation }) {
                 style={styles.postVoteBtnSecondary}
                 onPress={() => { setAllDone(false); setBrowseMode(true); }}
               >
-                <Text style={styles.postVoteBtnSecondaryText}>Browse Yesterday's Courages</Text>
+                <Text style={[styles.postVoteBtnSecondaryText, theme.isDark && { color: '#ffffff' }]}>Browse Yesterday's Courages</Text>
               </TouchableOpacity>
             )}
           </>
@@ -956,8 +956,8 @@ export default function InspireScreen({ navigation }) {
         {browseMode && !allDone && (
           <>
             <View style={styles.completeCard}>
-              <Text style={styles.completeText}>Browse Yesterday's Courages</Text>
-              <Text style={styles.completeSubtext}>Tap any image to view full size</Text>
+              <Text style={[styles.completeText, theme.isDark && { color: '#ffffff' }]}>Browse Yesterday's Courages</Text>
+              <Text style={[styles.completeSubtext, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>Tap any image to view full size</Text>
             </View>
             <View style={styles.artworksGrid}>
               {availableCourages.map(courage => {
@@ -1005,7 +1005,7 @@ export default function InspireScreen({ navigation }) {
               style={styles.postVoteBtnSecondary}
               onPress={() => { setBrowseMode(false); setAllDone(true); }}
             >
-              <Text style={styles.postVoteBtnSecondaryText}>Done Browsing</Text>
+              <Text style={[styles.postVoteBtnSecondaryText, theme.isDark && { color: '#ffffff' }]}>Done Browsing</Text>
             </TouchableOpacity>
           </>
         )}
@@ -1013,8 +1013,8 @@ export default function InspireScreen({ navigation }) {
         {/* Return Visit — already voted today, but more courages available */}
         {!allDone && !browseMode && hasRankedToday && !continueVoting && currentSet.length === 4 && (
           <View style={styles.completeCard}>
-            <Text style={styles.completeText}>You already ranked today!</Text>
-            <Text style={styles.completeSubtext}>
+            <Text style={[styles.completeText, theme.isDark && { color: '#ffffff' }]}>You already ranked today!</Text>
+            <Text style={[styles.completeSubtext, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>
               There are new courages from yesterday you haven't seen yet.
             </Text>
             <View style={{ width: '100%', marginTop: 16, gap: 12 }}>
@@ -1028,7 +1028,7 @@ export default function InspireScreen({ navigation }) {
                 style={styles.postVoteBtnSecondary}
                 onPress={() => { setBrowseMode(true); setCurrentSet([]); }}
               >
-                <Text style={styles.postVoteBtnSecondaryText}>Browse Without Ranking</Text>
+                <Text style={[styles.postVoteBtnSecondaryText, theme.isDark && { color: '#ffffff' }]}>Browse Without Ranking</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1039,7 +1039,7 @@ export default function InspireScreen({ navigation }) {
           <>
             {/* Progress */}
             <View style={styles.progressContainer}>
-              <Text style={styles.progressText}>
+              <Text style={[styles.progressText, theme.isDark && { color: '#ffffff' }]}>
                 Ranked {rankedCount} of 4 artworks
               </Text>
               <View style={styles.progressBar}>
