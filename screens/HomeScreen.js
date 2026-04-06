@@ -1565,7 +1565,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Manifest')}
           >
             <View style={[styles.goldInnerBorder, { borderColor: theme.frame.innerBorder }]}>
-              <View style={styles.cardInner}>
+              <View style={[styles.cardInner, { backgroundColor: theme.card.background }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.cardContentText, { color: '#78000E', textAlign: 'center' }]}>"{todayQuote.quote}"</Text>
@@ -1587,7 +1587,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Art')}
           >
             <View style={[styles.goldInnerBorder, { borderColor: theme.frame.innerBorder }]}>
-              <View style={styles.cardInner}>
+              <View style={[styles.cardInner, { backgroundColor: theme.card.background }]}>
                 <Text style={[styles.boxSectionLabel, { color: '#9E4502' }]}>Creative Art Prompt:</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                   <Text style={[styles.cardContentText, { color: '#9E4502', textAlign: 'center', fontSize: 20, flex: 1 }]}>{todaysChallenge || 'Loading...'}</Text>
@@ -1604,7 +1604,7 @@ export default function HomeScreen({ navigation }) {
           {/* G · Grow */}
           <View style={[styles.stackedCard, styles.openFrame, { borderColor: '#c1a900', shadowColor: theme.frame.outerShadow }]}>
             <View style={[styles.goldInnerBorder, { borderColor: theme.frame.innerBorder }]}>
-              <View style={styles.cardInner}>
+              <View style={[styles.cardInner, { backgroundColor: theme.card.background }]}>
                 <Text style={[styles.boxSectionLabel, { color: '#c1a900' }]}>Today's Goal:</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                   <View style={{ flex: 1 }}>
@@ -1651,7 +1651,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Inspire')}
           >
             <View style={[styles.goldInnerBorder, { borderColor: theme.frame.innerBorder }]}>
-              <View style={styles.cardInner}>
+              <View style={[styles.cardInner, { backgroundColor: theme.card.background }]}>
                 <Text style={[styles.boxSectionLabel, { color: '#3c9820' }]}>Be Inspired by Courage</Text>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
                   <Text style={[styles.cardContentText, { color: '#3c9820', textAlign: 'center', fontSize: 20, flex: 1 }]}>
@@ -1674,7 +1674,7 @@ export default function HomeScreen({ navigation }) {
         {/* C · Connect box — wraps winner gallery */}
         <View style={[styles.stackedCard, styles.openFrame, { borderColor: '#8B5CF6', shadowColor: theme.frame.outerShadow, width: '90%', alignSelf: 'center', marginBottom: 20 }]}>
           <View style={styles.goldInnerBorder}>
-            <View style={{ padding: 12 }}>
+            <View style={{ padding: 12, backgroundColor: theme.card.background }}>
               <TouchableOpacity onPress={() => navigation.navigate('Connect')} style={{ marginBottom: 10 }}>
                 <Text style={[styles.boxPageLink, { color: '#8B5CF6', marginTop: 0 }]}>Go to Connect ›</Text>
               </TouchableOpacity>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { THEMES, DEFAULT_THEME_ID } from '../themes/themes';
+// DEFAULT_THEME_ID = 'celestial' — existing users get their familiar skin
 
 const STORAGE_KEY = 'magic_theme_id';
 

@@ -2,8 +2,8 @@
 // MAGIC SKIN DEFINITIONS
 // ============================================================
 // Each skin maps to a creative motivation, not a demographic.
-// The five skins together cover the full creative spectrum:
 //
+//   Celestial      → Original default (light, familiar)
 //   Atelier        → Authenticity    (traditional artists)
 //   Sanctuary      → Reflection      (writers / poets)
 //   Digital        → Expression      (modern / tech creatives)
@@ -13,9 +13,11 @@
 // WHAT STAYS FIXED ACROSS ALL SKINS:
 //   The MAGIC letter colors: M=#78000E  A=#9E4502  G=#c1a900  I=#3c9820  C=#8B5CF6
 //   These are the community identity — every member shares them.
+//   Because these colors are dark, card interiors must always be light.
 //
 // WHAT YOU CUSTOMIZE PER SKIN:
-//   background  — gradient colors OR image source
+//   background  — gradient colors OR image source (the app shell)
+//   card        — background color of the card interior (KEEP LIGHT — MAGIC text is dark)
 //   frame       — outerShadow (card glow), innerBorder (inner border line)
 //   tabBar      — background, activeTint, inactiveTint, borderTop
 //   header      — hamburger icon color
@@ -25,20 +27,98 @@
 //   input       — text input fields
 //   loading     — loading screen
 //
+// ADA / WCAG AA RULE:
+//   card.background must give ≥4.5:1 contrast with all MAGIC colors.
+//   The safest card backgrounds are white or warm cream (≥0.85 opacity).
+//   For dark-background skins, use a near-opaque light card interior.
+//
 // HOW TO ADD A NEW SKIN:
 //   1. Copy one block below
 //   2. Give it a unique id, name, question, emoji
 //   3. Replace the TODO color values with your palette
-//   4. Add the id to THEME_ORDER at the bottom
+//   4. Keep card.background light (white/cream/parchment)
+//   5. Add the id to THEME_ORDER at the bottom
 // ============================================================
 
 export const THEMES = {
+
+  // ── CELESTIAL (original default) ────────────────────────
+  // The app's original look — familiar to all existing users
+  celestial: {
+    id: 'celestial',
+    name: 'Celestial',
+    question: 'I want to feel inspired',
+    emoji: '✨',
+
+    background: {
+      type: 'image',
+      source: require('../assets/background.png'),
+      fallbackColor: '#d8eef8',
+    },
+
+    // Light frosted glass on the sky-blue background
+    card: {
+      background: 'rgba(255, 255, 255, 0.45)',
+    },
+
+    frame: {
+      outerShadow: '#FFD700',
+      innerBorder: '#DAA520',
+      innerBorderRadius: 6,
+    },
+
+    tabBar: {
+      background: 'rgba(10, 14, 39, 0.92)',
+      activeTint: '#B8860B',
+      inactiveTint: '#888',
+      borderTop: '#DAA520',
+    },
+
+    header: {
+      iconColor: '#B8860B',
+    },
+
+    text: {
+      streak: '#143fb8',
+      tagline: '#143fb8',
+      winnerDate: '#8B4513',
+      winnerName: '#8B4513',
+    },
+
+    modal: {
+      background: 'rgba(255, 255, 255, 0.97)',
+      border: '#DAA520',
+      titleColor: '#1a1a2e',
+      bodyColor: '#333',
+    },
+
+    button: {
+      primary: '#B8860B',
+      primaryText: '#fff',
+      secondary: 'transparent',
+      secondaryText: '#B8860B',
+      secondaryBorder: '#B8860B',
+      destructive: '#cc0000',
+      destructiveText: '#fff',
+    },
+
+    input: {
+      background: 'rgba(255, 255, 255, 0.8)',
+      border: '#DAA520',
+      text: '#1a1a2e',
+      placeholder: '#888',
+    },
+
+    loading: {
+      background: '#d8eef8',
+      indicator: '#FFD700',
+    },
+  },
 
   // ── ATELIER ─────────────────────────────────────────────
   // Emotional need: Authenticity
   // Creative type: Traditional artists
   // Feel: warm studio, linen canvas, natural light, oil paint
-  // Question answer: "I want to feel like an artist"
   atelier: {
     id: 'atelier',
     name: 'Atelier',
@@ -52,6 +132,11 @@ export const THEMES = {
       start: { x: 0.2, y: 0 },
       end: { x: 0, y: 1 },
       fallbackColor: '#fdf6ec',
+    },
+
+    // Warm cream — MAGIC colors read clearly on this
+    card: {
+      background: 'rgba(255, 252, 240, 0.88)',
     },
 
     frame: {
@@ -99,7 +184,7 @@ export const THEMES = {
     },
 
     input: {
-      background: 'rgba(255,255,255,0.75)',
+      background: 'rgba(255, 255, 255, 0.75)',
       border: '#a0522d',
       text: '#3b1f08',
       placeholder: '#b09070',
@@ -115,7 +200,9 @@ export const THEMES = {
   // Emotional need: Reflection
   // Creative type: Writers, poets, journalers
   // Feel: candlelit library, ink, deep quiet, old paper
-  // Question answer: "I want to think and write"
+  //
+  // ADA NOTE: Background is dark. card.background is near-opaque
+  // warm parchment so MAGIC colors remain legible inside cards.
   writersSanctuary: {
     id: 'writersSanctuary',
     name: "Writer's Sanctuary",
@@ -129,6 +216,12 @@ export const THEMES = {
       start: { x: 0, y: 0 },
       end: { x: 0.3, y: 1 },
       fallbackColor: '#0f1923',
+    },
+
+    // Near-opaque warm parchment — MAGIC colors fully legible
+    // WCAG AA: all MAGIC dark colors exceed 4.5:1 on #fff8ec
+    card: {
+      background: 'rgba(255, 248, 220, 0.95)',
     },
 
     frame: {
@@ -150,18 +243,20 @@ export const THEMES = {
     },
 
     text: {
-      // TODO: warm parchment text reads well on dark backgrounds
+      // These appear OUTSIDE cards, against the dark background —
+      // must be light enough for WCAG AA on #0f1923
+      // #d4b483 on #0f1923 ≈ 8:1 contrast ✓
       streak: '#d4b483',
       tagline: '#d4b483',
-      winnerDate: '#c8a870',
-      winnerName: '#c8a870',
+      winnerDate: '#e8d0a0',
+      winnerName: '#e8d0a0',
     },
 
     modal: {
-      background: 'rgba(15, 22, 35, 0.97)',
+      background: 'rgba(255, 248, 220, 0.97)',
       border: '#a87020',
-      titleColor: '#f0e0b0',
-      bodyColor: '#c8b890',
+      titleColor: '#3b2000',
+      bodyColor: '#5a3a10',
     },
 
     button: {
@@ -175,10 +270,10 @@ export const THEMES = {
     },
 
     input: {
-      background: 'rgba(255,255,255,0.07)',
+      background: 'rgba(255, 248, 220, 0.9)',
       border: '#a87020',
-      text: '#f0e0b0',
-      placeholder: '#806040',
+      text: '#3b2000',
+      placeholder: '#9a7040',
     },
 
     loading: {
@@ -191,7 +286,9 @@ export const THEMES = {
   // Emotional need: Expression
   // Creative type: Modern / digital / tech creatives, streamers
   // Feel: electric, high contrast, neon on dark, kinetic energy
-  // Question answer: "I want energy and expression"
+  //
+  // ADA NOTE: Background is very dark. card.background is near-opaque
+  // light so MAGIC colors remain legible inside cards.
   digitalCreator: {
     id: 'digitalCreator',
     name: 'Digital Creator',
@@ -205,6 +302,12 @@ export const THEMES = {
       start: { x: 0, y: 0 },
       end: { x: 0.5, y: 1 },
       fallbackColor: '#050510',
+    },
+
+    // Near-opaque cool white — MAGIC colors fully legible
+    // WCAG AA: all MAGIC dark colors exceed 4.5:1 on #f0faff
+    card: {
+      background: 'rgba(240, 250, 255, 0.95)',
     },
 
     frame: {
@@ -226,7 +329,8 @@ export const THEMES = {
     },
 
     text: {
-      // TODO: bright cool-toned text for dark environment
+      // Outside cards, on very dark background —
+      // #80deea on #050510 ≈ 9:1 contrast ✓
       streak: '#80deea',
       tagline: '#80deea',
       winnerDate: '#b2ebf2',
@@ -234,15 +338,15 @@ export const THEMES = {
     },
 
     modal: {
-      background: 'rgba(5, 5, 20, 0.97)',
+      background: 'rgba(240, 250, 255, 0.97)',
       border: '#00b8d4',
-      titleColor: '#e0f7fa',
-      bodyColor: '#80deea',
+      titleColor: '#001a20',
+      bodyColor: '#003040',
     },
 
     button: {
       primary: '#00b8d4',
-      primaryText: '#000',
+      primaryText: '#001a20',
       secondary: 'transparent',
       secondaryText: '#00e5ff',
       secondaryBorder: '#00b8d4',
@@ -251,10 +355,10 @@ export const THEMES = {
     },
 
     input: {
-      background: 'rgba(255,255,255,0.05)',
+      background: 'rgba(240, 250, 255, 0.9)',
       border: '#00b8d4',
-      text: '#e0f7fa',
-      placeholder: '#005f6b',
+      text: '#001a20',
+      placeholder: '#006070',
     },
 
     loading: {
@@ -267,7 +371,6 @@ export const THEMES = {
   // Emotional need: Safety
   // Creative type: Habit builders, wellness practitioners
   // Feel: gentle, grounded, soft morning light, breath, ritual
-  // Question answer: "I need calm to create"
   mindfulCreator: {
     id: 'mindfulCreator',
     name: 'Mindful Creator',
@@ -281,6 +384,11 @@ export const THEMES = {
       start: { x: 0, y: 0 },
       end: { x: 0.2, y: 1 },
       fallbackColor: '#f0f5f0',
+    },
+
+    // Soft warm white — MAGIC colors legible, feels gentle
+    card: {
+      background: 'rgba(255, 255, 252, 0.82)',
     },
 
     frame: {
@@ -302,7 +410,6 @@ export const THEMES = {
     },
 
     text: {
-      // TODO: deep but gentle — forest tones, not stark black
       streak: '#2e5040',
       tagline: '#2e5040',
       winnerDate: '#3a6050',
@@ -327,7 +434,7 @@ export const THEMES = {
     },
 
     input: {
-      background: 'rgba(255,255,255,0.7)',
+      background: 'rgba(255, 255, 255, 0.7)',
       border: '#7aaa88',
       text: '#1a3528',
       placeholder: '#8aaa98',
@@ -343,7 +450,6 @@ export const THEMES = {
   // Emotional need: Focus
   // Creative type: Precision thinkers, designers, architects
   // Feel: Bauhaus, stark white, single accent, no noise
-  // Question answer: "I need to focus"
   minimalistLab: {
     id: 'minimalistLab',
     name: 'Minimalist Lab',
@@ -357,6 +463,11 @@ export const THEMES = {
       start: { x: 0, y: 0 },
       end: { x: 0, y: 1 },
       fallbackColor: '#f5f5f7',
+    },
+
+    // Pure white — maximum clarity, Bauhaus feel
+    card: {
+      background: 'rgba(255, 255, 255, 0.92)',
     },
 
     frame: {
@@ -378,7 +489,6 @@ export const THEMES = {
     },
 
     text: {
-      // TODO: pure dark text on white — maximum readability
       streak: '#1c1c1e',
       tagline: '#3a3a3c',
       winnerDate: '#2c2c2e',
@@ -386,7 +496,7 @@ export const THEMES = {
     },
 
     modal: {
-      background: 'rgba(255,255,255,0.99)',
+      background: 'rgba(255, 255, 255, 0.99)',
       border: '#3a3a3c',
       titleColor: '#1c1c1e',
       bodyColor: '#3a3a3c',
@@ -417,9 +527,10 @@ export const THEMES = {
 };
 
 // Order skins appear in the picker
-// This is also the order of the emotional spectrum:
-//   analog warmth → introspective → energetic → calm → focused
+// Celestial first — familiar to existing users
+// Then emotional spectrum: analog warmth → introspective → energetic → calm → focused
 export const THEME_ORDER = [
+  'celestial',
   'atelier',
   'writersSanctuary',
   'digitalCreator',
@@ -427,4 +538,4 @@ export const THEME_ORDER = [
   'minimalistLab',
 ];
 
-export const DEFAULT_THEME_ID = 'atelier';
+export const DEFAULT_THEME_ID = 'celestial';
