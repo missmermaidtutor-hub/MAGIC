@@ -377,13 +377,66 @@ export default function InspireScreen({ navigation }) {
 
   // Email share — opens email compose + fills Connect star
   const handleEmailShare = async (courage) => {
-    openMailto(
-      'Something that inspired me',
+    const today = getESTDate();
+    const shareTitle = 'Something that inspired me';
+    const shareText =
       'This inspired me to send to you!\n\n' +
       (courage.title ? `"${courage.title}"\n\n` : '') +
-      '[Add your message here]\n\n— Sent from MAGIC Tracker'
-    );
-    const today = getESTDate();
+      '[Add your message here]\n\n— Sent from MAGIC Tracker';
+    const mediaUrl = courage.mediaUrl || null;
+
+    // Web Share API: try to share the actual image file (iOS Safari 15+ / Chrome Android)
+    if (Platform.OS === 'web' && mediaUrl && typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        // Fetch image and compress to low quality via Canvas
+        const res = await fetch(mediaUrl);
+        const blob = await res.blob();
+        const compressedBlob = await new Promise((resolve) => {
+          const img = new window.Image();
+          const objUrl = URL.createObjectURL(blob);
+          img.onload = () => {
+            const MAX = 800;
+            let { width, height } = img;
+            if (width > MAX || height > MAX) {
+              if (width >= height) { height = Math.round((height * MAX) / width); width = MAX; }
+              else { width = Math.round((width * MAX) / height); height = MAX; }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            canvas.toBlob((out) => { URL.revokeObjectURL(objUrl); resolve(out || blob); }, 'image/jpeg', 0.3);
+          };
+          img.onerror = () => { URL.revokeObjectURL(objUrl); resolve(blob); };
+          img.src = objUrl;
+        });
+
+        const file = new File([compressedBlob], 'artwork.jpg', { type: 'image/jpeg' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ title: shareTitle, text: shareText, files: [file] });
+          await AsyncStorage.setItem(`email_sent_${today}`, 'true');
+          return;
+        }
+
+        // Fallback: share URL only via share sheet
+        if (navigator.canShare && navigator.canShare({ url: mediaUrl })) {
+          await navigator.share({ title: shareTitle, text: shareText, url: mediaUrl });
+          await AsyncStorage.setItem(`email_sent_${today}`, 'true');
+          return;
+        }
+      } catch (e) {
+        // User cancelled or browser blocked — fall through to mailto
+        if (e && e.name === 'AbortError') {
+          await AsyncStorage.setItem(`email_sent_${today}`, 'true');
+          return;
+        }
+      }
+    }
+
+    // Final fallback: mailto with image URL in body so recipient can tap it
+    const body = mediaUrl
+      ? `${shareText}\n\nView artwork: ${mediaUrl}`
+      : shareText;
+    openMailto(shareTitle, body);
     await AsyncStorage.setItem(`email_sent_${today}`, 'true');
   };
 
