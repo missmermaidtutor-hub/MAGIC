@@ -1329,9 +1329,6 @@ export default function CommunityScreen({ navigation, route }) {
                 <Text style={styles.newsfeedArtCount}>
                   {feedUser.artworks.length} artwork{feedUser.artworks.length !== 1 ? 's' : ''}
                 </Text>
-                {hasNewInspiration && (
-                  <Text style={styles.newInspirationAlert}>✨ New Inspiration</Text>
-                )}
               </View>
             </View>
             <TouchableOpacity
@@ -1343,6 +1340,11 @@ export default function CommunityScreen({ navigation, route }) {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* New Inspiration banner — full-width centered above curio strip */}
+          {hasNewInspiration && (
+            <Text style={styles.newInspirationAlert}>✨ New Inspiration</Text>
+          )}
 
           {/* Horizontal thumbnail strip with arrows */}
           <View style={styles.curioStripRow}>
@@ -3129,10 +3131,12 @@ const styles = StyleSheet.create({
   },
   newInspirationAlert: {
     color: '#4B0082',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: 'bold',
     fontStyle: 'italic',
-    marginTop: 2,
+    textAlign: 'center',
+    marginTop: 6,
+    marginBottom: 4,
   },
   // Curio strip with arrows
   curioStripRow: {

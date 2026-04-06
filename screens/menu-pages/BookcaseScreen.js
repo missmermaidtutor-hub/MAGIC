@@ -201,15 +201,15 @@ export default function BookcaseScreen({ navigation }) {
   return (
     <ThemedBackground style={styles.container}>
       <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.navigate('Home')}>
-        <Text style={styles.closeBtnText}>✕</Text>
+        <Text style={[styles.closeBtnText, theme.isDark && { color: '#ffffff' }]}>✕</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.menuBtn} onPress={() => navigation.navigate('Menu')}>
-        <Text style={styles.menuBtnText}>☰</Text>
+        <Text style={[styles.menuBtnText, theme.isDark && { color: '#ffffff' }]}>☰</Text>
       </TouchableOpacity>
 
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={[styles.header, { color: theme.text.heading }]}>My Bookcase</Text>
-        <Text style={styles.subheader}>{earnedCount} of {BADGE_DEFS.length} badges earned</Text>
+        <Text style={[styles.subheader, theme.isDark && { color: '#ffffff' }]}>{earnedCount} of {BADGE_DEFS.length} badges earned</Text>
 
         {loading ? (
           <ActivityIndicator size="large" color="#FFD700" style={{ marginTop: 40 }} />

@@ -18,28 +18,28 @@ export default function ContactScreen({ navigation }) {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.backButtonText}>←</Text>
+            <Text style={[styles.backButtonText, theme.isDark && { color: '#ffffff' }]}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.header, { color: theme.text.heading }]}>Contact</Text>
           <TouchableOpacity
             style={styles.hamburgerButton}
             onPress={() => navigation.navigate('Menu')}
           >
-            <Text style={styles.hamburgerText}>☰</Text>
+            <Text style={[styles.hamburgerText, theme.isDark && { color: '#ffffff' }]}>☰</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.title}>Get in Touch</Text>
-          <Text style={styles.text}>We'd love to hear from you!</Text>
+          <Text style={[styles.title, theme.isDark && { color: '#ffffff' }]}>Get in Touch</Text>
+          <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>We'd love to hear from you!</Text>
 
           <TouchableOpacity style={styles.contactButton} onPress={handleEmail}>
             <Text style={styles.contactIcon}>📧</Text>
-            <Text style={styles.contactText}>cecelia@13magicalnights.com</Text>
+            <Text style={[styles.contactText, theme.isDark && { color: '#ffffff' }]}>cecelia@13magicalnights.com</Text>
           </TouchableOpacity>
 
           <Text style={[styles.subtitle, { color: theme.text.body }]}>Feedback & Support</Text>
-          <Text style={styles.text}>
+          <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>
             Have questions, suggestions, or need help? Send us an email and we'll get back to you as soon as possible.
           </Text>
         </View>

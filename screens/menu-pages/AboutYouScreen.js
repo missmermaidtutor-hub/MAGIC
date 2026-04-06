@@ -89,7 +89,7 @@ const MEDIUM_CATEGORIES = Object.keys(mediumsData);
 
 export default function AboutYouScreen({ navigation }) {
   const { user, userProfile, refreshProfile } = useAuth();
-  const { themeId, selectTheme } = useTheme();
+  const { themeId, selectTheme, theme } = useTheme();
 
   // Account / Profile
   const [accountMethod, setAccountMethod] = useState('');
@@ -553,7 +553,7 @@ export default function AboutYouScreen({ navigation }) {
               <Image source={{ uri: profileImageUrl }} style={styles.profileImagePreview} />
             ) : (
               <View style={styles.profileImagePlaceholder}>
-                <Text style={styles.profileImagePlaceholderText}>
+                <Text style={[styles.profileImagePlaceholderText, theme.isDark && { color: '#ffffff' }]}>
                   {(userProfile?.pseudonym || 'A').charAt(0).toUpperCase()}
                 </Text>
               </View>
@@ -794,8 +794,8 @@ export default function AboutYouScreen({ navigation }) {
               >
                 <Text style={skinStyles.skinEmoji}>{t.emoji}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={skinStyles.skinName}>{t.name}</Text>
-                  <Text style={skinStyles.skinQuestion}>"{t.question}"</Text>
+                  <Text style={[skinStyles.skinName, theme.isDark && { color: '#ffffff' }]}>{t.name}</Text>
+                  <Text style={[skinStyles.skinQuestion, theme.isDark && { color: 'rgba(255,255,255,0.75)' }]}>"{t.question}"</Text>
                 </View>
                 {isActive && <Text style={[skinStyles.skinCheck, { color: t.frame.innerBorder }]}>✓</Text>}
               </TouchableOpacity>

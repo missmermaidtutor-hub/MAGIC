@@ -4,6 +4,7 @@ import ThemedBackground from '../../components/ThemedBackground';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function LegalScreen({ navigation }) {
+  const { theme } = useTheme();
   return (
     <ThemedBackground style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>

@@ -4,6 +4,7 @@ import { openMailto } from '../../utils/emailUtils';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function AboutUsScreen({ navigation }) {
+  const { theme } = useTheme();
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
@@ -13,52 +14,52 @@ export default function AboutUsScreen({ navigation }) {
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.backButtonText}>←</Text>
+            <Text style={[styles.backButtonText, theme.isDark && { color: '#ffffff' }]}>←</Text>
           </TouchableOpacity>
           <Text style={[styles.header, { color: theme.text.heading }]}>About Us</Text>
           <TouchableOpacity
             style={styles.hamburgerButton}
             onPress={() => navigation.navigate('Menu')}
           >
-            <Text style={styles.hamburgerText}>☰</Text>
+            <Text style={[styles.hamburgerText, theme.isDark && { color: '#ffffff' }]}>☰</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.card}>
-          <Text style={styles.title}><Text style={styles.boldM}>M</Text><Text style={styles.boldA}>A</Text><Text style={styles.boldG}>G</Text><Text style={styles.boldI}>I</Text><Text style={styles.boldC}>C</Text> Tracker</Text>
+          <Text style={[styles.title, theme.isDark && { color: '#ffffff' }]}><Text style={[styles.boldM, { color: theme.magic.m }]}>M</Text><Text style={[styles.boldA, { color: theme.magic.a }]}>A</Text><Text style={[styles.boldG, { color: theme.magic.g }]}>G</Text><Text style={[styles.boldI, { color: theme.magic.i }]}>I</Text><Text style={[styles.boldC, { color: theme.magic.c }]}>C</Text> Tracker</Text>
           <Text style={[styles.subtitle, { color: theme.text.body }]}>Daily Creative Practice for Mental Health</Text>
           
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Our Mission</Text>
-            <Text style={styles.text}>
+            <Text style={[styles.sectionTitle, theme.isDark && { color: '#ffffff' }]}>Our Mission</Text>
+            <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>
               We exist to help you reclaim your mind from noise, break anxious patterns, and step out of doom spirals — in just 13 nights.
             </Text>
-            <Text style={styles.text}>
+            <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>
               Through five simple, guided daily practices, we are committed to strengthening your attention, transforming emotion into expression, and building creative power from the inside out. Not every practice is art — but every practice is designed to expand your creativity.
             </Text>
-            <Text style={styles.text}>
+            <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>
               We believe creative breakthrough isn't a talent. It's a trained capacity.
             </Text>
-            <Text style={styles.text}>
+            <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>
               Whether you spend five minutes or twenty, whether you complete one practice or all five, we're here to support your momentum, your streak, and your growth.
             </Text>
-            <Text style={styles.text}>
+            <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>
               Our commitment is to help you grow clearer, grow braver, and create from a place that's fully yours — with the courage to share your work, even under a pseudonym, when you're ready.
             </Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>What is MAGIC?</Text>
-            <Text style={styles.magicItem}>📝 <Text style={styles.boldM}>M</Text>anifest - Daily journaling and goal setting</Text>
-            <Text style={styles.magicItem}>🎨 <Text style={styles.boldA}>A</Text>rt - 20 minutes of creative practice</Text>
-            <Text style={styles.magicItem}>🎯 <Text style={styles.boldG}>G</Text>oal - Set and track growth goals</Text>
-            <Text style={styles.magicItem}>✨ <Text style={styles.boldI}>I</Text>nspire - Rank and appreciate community art</Text>
-            <Text style={styles.magicItem}>💪 <Text style={styles.boldC}>C</Text>ourage - Share your creativity publicly</Text>
+            <Text style={[styles.sectionTitle, theme.isDark && { color: '#ffffff' }]}>What is MAGIC?</Text>
+            <Text style={[styles.magicItem, theme.isDark && { color: '#ffffff' }]}>📝 <Text style={[styles.boldM, { color: theme.magic.m }]}>M</Text>anifest - Daily journaling and goal setting</Text>
+            <Text style={[styles.magicItem, theme.isDark && { color: '#ffffff' }]}>🎨 <Text style={[styles.boldA, { color: theme.magic.a }]}>A</Text>rt - 20 minutes of creative practice</Text>
+            <Text style={[styles.magicItem, theme.isDark && { color: '#ffffff' }]}>🎯 <Text style={[styles.boldG, { color: theme.magic.g }]}>G</Text>oal - Set and track growth goals</Text>
+            <Text style={[styles.magicItem, theme.isDark && { color: '#ffffff' }]}>✨ <Text style={[styles.boldI, { color: theme.magic.i }]}>I</Text>nspire - Rank and appreciate community art</Text>
+            <Text style={[styles.magicItem, theme.isDark && { color: '#ffffff' }]}>💪 <Text style={[styles.boldC, { color: theme.magic.c }]}>C</Text>ourage - Share your creativity publicly</Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Research-Backed</Text>
-            <Text style={styles.text}>
+            <Text style={[styles.sectionTitle, theme.isDark && { color: '#ffffff' }]}>Research-Backed</Text>
+            <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>
               Studies show that 120 minutes of creative activity per week significantly improves mental health outcomes. MAGIC Tracker makes it easy to reach this goal through daily practice.
             </Text>
 
@@ -67,34 +68,34 @@ export default function AboutUsScreen({ navigation }) {
                 style={styles.articleCard}
                 onPress={() => Linking.openURL('https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4937104/')}
               >
-                <Text style={styles.articleTitle}>120 Minutes of Art Per Week</Text>
-                <Text style={styles.articleDescription}>Study shows creative activities improve mental health</Text>
-                <Text style={styles.articleLink}>Read More →</Text>
+                <Text style={[styles.articleTitle, theme.isDark && { color: '#ffffff' }]}>120 Minutes of Art Per Week</Text>
+                <Text style={[styles.articleDescription, theme.isDark && { color: '#ffffff' }]}>Study shows creative activities improve mental health</Text>
+                <Text style={[styles.articleLink, theme.isDark && { color: '#ffffff' }]}>Read More →</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.articleCard}
                 onPress={() => Linking.openURL('https://www.psychologytoday.com/us/basics/creativity')}
               >
-                <Text style={styles.articleTitle}>The Psychology of Creativity</Text>
-                <Text style={styles.articleDescription}>How creative expression affects wellbeing</Text>
-                <Text style={styles.articleLink}>Read More →</Text>
+                <Text style={[styles.articleTitle, theme.isDark && { color: '#ffffff' }]}>The Psychology of Creativity</Text>
+                <Text style={[styles.articleDescription, theme.isDark && { color: '#ffffff' }]}>How creative expression affects wellbeing</Text>
+                <Text style={[styles.articleLink, theme.isDark && { color: '#ffffff' }]}>Read More →</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.articleCard}
                 onPress={() => Linking.openURL('https://www.arttherapy.org/research/')}
               >
-                <Text style={styles.articleTitle}>Art Therapy Research</Text>
-                <Text style={styles.articleDescription}>Benefits of regular artistic practice</Text>
-                <Text style={styles.articleLink}>Read More →</Text>
+                <Text style={[styles.articleTitle, theme.isDark && { color: '#ffffff' }]}>Art Therapy Research</Text>
+                <Text style={[styles.articleDescription, theme.isDark && { color: '#ffffff' }]}>Benefits of regular artistic practice</Text>
+                <Text style={[styles.articleLink, theme.isDark && { color: '#ffffff' }]}>Read More →</Text>
               </TouchableOpacity>
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Why Daily Practice?</Text>
-            <Text style={styles.text}>
+            <Text style={[styles.sectionTitle, theme.isDark && { color: '#ffffff' }]}>Why Daily Practice?</Text>
+            <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>
               • Reduces stress and anxiety{'\n'}
               • Improves mood and wellbeing{'\n'}
               • Builds creative confidence{'\n'}
@@ -104,15 +105,15 @@ export default function AboutUsScreen({ navigation }) {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Our Approach</Text>
-            <Text style={styles.text}>
+            <Text style={[styles.sectionTitle, theme.isDark && { color: '#ffffff' }]}>Our Approach</Text>
+            <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>
               We believe everyone is creative. MAGIC Tracker removes barriers to creative practice by providing structure, prompts, and community support. Whether you're an experienced artist or just beginning, our system adapts to your journey.
             </Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Contact Us</Text>
-            <Text style={styles.text}>
+            <Text style={[styles.sectionTitle, theme.isDark && { color: '#ffffff' }]}>Contact Us</Text>
+            <Text style={[styles.text, theme.isDark && { color: '#ffffff' }]}>
               We'd love to hear from you! Have questions, suggestions, or need help? Send us an email and we'll get back to you as soon as possible.
             </Text>
             <TouchableOpacity
@@ -120,7 +121,7 @@ export default function AboutUsScreen({ navigation }) {
               onPress={() => openMailto('MAGIC Tracker Feedback', '', 'cecelia@13magicalnights.com')}
             >
               <Text style={styles.contactIcon}>📧</Text>
-              <Text style={styles.contactText}>cecelia@13magicalnights.com</Text>
+              <Text style={[styles.contactText, theme.isDark && { color: '#ffffff' }]}>cecelia@13magicalnights.com</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -134,7 +135,7 @@ export default function AboutUsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAEBD7',
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,

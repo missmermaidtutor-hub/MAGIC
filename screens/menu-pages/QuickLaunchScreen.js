@@ -85,10 +85,10 @@ export default function QuickLaunchScreen({ navigation }) {
         <View style={styles.manifestBorder}>
           <View style={styles.manifestBox}>
             <View style={styles.boxTitleRow}>
-              <Text style={styles.manifestTitle}>M — Manifest</Text>
-              <Text style={styles.manifestNumber}>1</Text>
+              <Text style={[styles.manifestTitle, { color: theme.magic.m }]}>M — Manifest</Text>
+              <Text style={[styles.manifestNumber, { color: theme.magic.m }]}>1</Text>
             </View>
-            <Text style={styles.manifestText}>
+            <Text style={[styles.manifestText, { color: theme.magic.m }]}>
               Start your day by writing in your journal. Use the Muse prompt, dump your thoughts, or set your vision. This is your space to process and create clarity.
             </Text>
           </View>
@@ -98,10 +98,10 @@ export default function QuickLaunchScreen({ navigation }) {
         <View style={styles.artBorder}>
           <View style={styles.artBox}>
             <View style={styles.boxTitleRow}>
-              <Text style={styles.artTitle}>A — Art</Text>
-              <Text style={styles.artNumber}>2</Text>
+              <Text style={[styles.artTitle, { color: theme.magic.a }]}>A — Art</Text>
+              <Text style={[styles.artNumber, { color: theme.magic.a }]}>2</Text>
             </View>
-            <Text style={styles.artText}>
+            <Text style={[styles.artText, { color: theme.magic.a }]}>
               Create something today! Use the daily challenge prompt, sketch, write, record audio, or capture a photo. Set your art timer and let your creativity flow.
             </Text>
           </View>
@@ -111,10 +111,10 @@ export default function QuickLaunchScreen({ navigation }) {
         <View style={styles.goalBorder}>
           <View style={styles.goalBox}>
             <View style={styles.boxTitleRow}>
-              <Text style={styles.goalTitle}>G — Goals</Text>
-              <Text style={styles.goalNumber}>3</Text>
+              <Text style={[styles.goalTitle, { color: theme.magic.g }]}>G — Goals</Text>
+              <Text style={[styles.goalNumber, { color: theme.magic.g }]}>3</Text>
             </View>
-            <Text style={styles.goalText}>
+            <Text style={[styles.goalText, { color: theme.magic.g }]}>
               Set a growth goal each day. Check in on yesterday's goal — did you meet it? Keep pushing forward or carry it over. Small steps build big change.
             </Text>
           </View>
@@ -124,20 +124,20 @@ export default function QuickLaunchScreen({ navigation }) {
         <View style={styles.inspireBorder}>
           <View style={styles.inspireBox}>
             <View style={styles.boxTitleRow}>
-              <Text style={styles.inspireTitle}>I — Inspire</Text>
-              <Text style={styles.inspireNumber}>4</Text>
+              <Text style={[styles.inspireTitle, { color: theme.magic.i }]}>I — Inspire</Text>
+              <Text style={[styles.inspireNumber, { color: theme.magic.i }]}>4</Text>
             </View>
-            <Text style={styles.inspireText}>
+            <Text style={[styles.inspireText, { color: theme.magic.i }]}>
               Rank today's artwork submissions by the daily criterion and help choose the community winner. Your ranking matters!
             </Text>
             <View style={styles.inspireActions}>
               <TouchableOpacity onPress={() => {
                 openMailto('Something that inspired me', 'This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
               }}>
-                <Text style={styles.inspireActionText}>✉️ Send Inspiration</Text>
+                <Text style={[styles.inspireActionText, { color: theme.magic.i }]}>✉️ Send Inspiration</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => navigation.navigate('Connect', { gallery: 'private' })}>
-                <Text style={styles.inspireActionText}>Save to Your Inspiration Gallery ›</Text>
+                <Text style={[styles.inspireActionText, { color: theme.magic.i }]}>Save to Your Inspiration Gallery ›</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -153,10 +153,10 @@ export default function QuickLaunchScreen({ navigation }) {
             style={styles.courageGradient}
           >
             <View style={styles.boxTitleRow}>
-              <Text style={styles.courageTitle}>C — Courage</Text>
-              <Text style={styles.courageNumber}>5</Text>
+              <Text style={[styles.courageTitle, { color: theme.magic.c }]}>C — Courage</Text>
+              <Text style={[styles.courageNumber, { color: theme.magic.c }]}>5</Text>
             </View>
-            <Text style={styles.courageText}>
+            <Text style={[styles.courageText, { color: theme.magic.c }]}>
               Share your creation with the community! Upload your artwork to the public gallery for ranking. Being brave enough to share is what earns your Courage star.
             </Text>
           </LinearGradient>
@@ -166,10 +166,10 @@ export default function QuickLaunchScreen({ navigation }) {
         <View style={styles.connectBorder}>
           <View style={styles.connectBox}>
             <View style={styles.boxTitleRow}>
-              <Text style={styles.connectTitle}>C — Connect</Text>
-              <Text style={styles.connectNumber}>5</Text>
+              <Text style={[styles.connectTitle, { color: theme.magic.c }]}>C — Connect</Text>
+              <Text style={[styles.connectNumber, { color: theme.magic.c }]}>5</Text>
             </View>
-            <Text style={styles.connectText}>
+            <Text style={[styles.connectText, { color: theme.magic.c }]}>
               Browse the winner gallery, save artwork that inspires you, or send an inspiration email to a friend. Connecting with creativity is an alternate way to earn your final daily star point.
             </Text>
           </View>

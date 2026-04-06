@@ -55,6 +55,15 @@
 //   input       — text input fields
 //   loading     — loading screen
 //
+// DARK SKIN SCREEN CHECKLIST — apply this to EVERY screen when adding a new dark skin:
+//   □ Container backgroundColor → 'transparent' (ThemedBackground shows through)
+//   □ All Text against page bg → theme.isDark && { color: '#ffffff' } (or theme.text.body)
+//   □ Page/section titles → { color: theme.text.heading }
+//   □ MAGIC letters outside cards → { color: theme.magic.m/a/g/i/c }
+//   □ Nav buttons (←  ☰) → theme.isDark && { color: '#ffffff' }
+//   □ Text inside cards with explicit light backgroundColor → no override needed
+//   □ Verify useTheme() destructures `theme`, not just themeId/selectTheme
+//
 // ADA RULE FOR isDark SKINS:
 //   text.body / text.heading / text.muted must be light (≥4.5:1 on dark bg).
 //   Safe defaults: body='#ffffff', muted='rgba(255,255,255,0.7)', heading='#ffffff'
