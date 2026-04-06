@@ -384,22 +384,58 @@ export default function InspireScreen({ navigation }) {
       (courage.title ? `"${courage.title}"\n\n` : '') +
       '[Add your message here]\n\n— Sent from MAGIC Tracker';
 
-    // Resolve image URL — real courages have mediaUrl, filler stock images use bundled require() assets
+    // Resolve image URL — Firestore courages have mediaUrl, filler stock images use bundled require() assets
     let mediaUrl = courage.mediaUrl || null;
-    if (!mediaUrl && courage.isFiller && typeof courage.source === 'number' && Platform.OS === 'web') {
-      try {
-        // Use the same asset formula the Image component uses in the web bundle:
-        // getAssetByID returns { httpServerLocation, name, type } → build absolute URL
-        // expo-asset's Asset.fromModule returns '' for production web builds (no dev server / no fileUris)
-        const { getAssetByID } = require('@react-native/assets-registry/registry');
-        const meta = getAssetByID(courage.source);
-        if (meta && meta.httpServerLocation && meta.name && meta.type) {
-          mediaUrl = window.location.origin + meta.httpServerLocation + '/' + meta.name + '.' + meta.type;
+
+    if (!mediaUrl && courage.isFiller && Platform.OS === 'web') {
+      const src = courage.source;
+
+      if (typeof src === 'number') {
+        // Method 1: getAssetByID — uses the same asset metadata the Image component uses
+        try {
+          const { getAssetByID } = require('@react-native/assets-registry/registry');
+          const meta = getAssetByID(src);
+          console.log('[Share] getAssetByID meta:', JSON.stringify(meta));
+          if (meta && meta.httpServerLocation && meta.name && meta.type) {
+            const loc = meta.httpServerLocation.replace(/\/$/, '');
+            const sep = loc.startsWith('/') ? '' : '/';
+            mediaUrl = window.location.origin + sep + loc + '/' + meta.name + '.' + meta.type;
+          }
+        } catch (e) {
+          console.log('[Share] getAssetByID failed:', e.message);
         }
-      } catch (e) {}
+
+        // Method 2: Image.resolveAssetSource — fallback
+        if (!mediaUrl) {
+          try {
+            const { Image: RNImage } = require('react-native');
+            const resolved = RNImage.resolveAssetSource(src);
+            console.log('[Share] resolveAssetSource result:', JSON.stringify(resolved));
+            if (resolved && resolved.uri && resolved.uri.length > 5) {
+              mediaUrl = resolved.uri.startsWith('http')
+                ? resolved.uri
+                : window.location.origin + (resolved.uri.startsWith('/') ? resolved.uri : '/' + resolved.uri);
+            }
+          } catch (e) {
+            console.log('[Share] resolveAssetSource failed:', e.message);
+          }
+        }
+      } else if (typeof src === 'string' && src.startsWith('http')) {
+        // Source is already a URL (some Expo configs return string URIs)
+        mediaUrl = src;
+      }
     }
 
-    console.log('[Share] courage.mediaUrl:', courage.mediaUrl, '| isFiller:', courage.isFiller, '| resolved mediaUrl:', mediaUrl);
+    // Decode any percent-encoded characters in the URL before embedding.
+    // Firebase Storage URLs contain %2F (encoded slashes) — if left encoded, Gmail compose
+    // won't auto-linkify them because the URL doesn't look "clean". Decoding turns
+    // %2F back into / so Gmail recognises the string as a clickable URL.
+    let shareUrl = mediaUrl;
+    if (shareUrl) {
+      try { shareUrl = decodeURIComponent(shareUrl); } catch (_) { /* keep as-is if malformed */ }
+    }
+
+    console.log('[Share] courage.mediaUrl:', courage.mediaUrl, '| isFiller:', courage.isFiller, '| source type:', typeof courage.source, '| final shareUrl:', shareUrl);
 
     // Mobile web only: try Web Share API with actual compressed image (navigator.share on desktop
     // loses the user-gesture context after async fetch and opens no email option anyway)
@@ -451,9 +487,10 @@ export default function InspireScreen({ navigation }) {
       }
     }
 
-    // Desktop / fallback: compose mailto with clickable image link in the body
-    const body = mediaUrl
-      ? `${shareText}\n\nView artwork: ${mediaUrl}`
+    // Desktop / fallback: open Gmail compose with image link in the body.
+    // Use decoded URL so Gmail's compose editor auto-linkifies it as a clickable link.
+    const body = shareUrl
+      ? `${shareText}\n\nView artwork: ${shareUrl}`
       : shareText;
     openMailto(shareTitle, body);
     await AsyncStorage.setItem(`email_sent_${today}`, 'true');
