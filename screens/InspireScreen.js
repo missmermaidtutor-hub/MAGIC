@@ -35,6 +35,7 @@ import {
 import { getESTDate, getESTYesterday } from '../utils/dateUtils';
 import { showAlert } from '../utils/alertUtils';
 import ThemedBackground from '../components/ThemedBackground';
+import { getAssetByID } from '@react-native/assets-registry/registry';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -391,38 +392,34 @@ export default function InspireScreen({ navigation }) {
       const src = courage.source;
 
       if (typeof src === 'number') {
-        // Method 1: getAssetByID — uses the same asset metadata the Image component uses
+        // getAssetByID is imported at the top of the file (static import).
+        // Dynamic require('@react-native/assets-registry/registry') does NOT work in Metro
+        // production bundles — string-based requires are resolved at build time, not runtime.
         try {
-          const { getAssetByID } = require('@react-native/assets-registry/registry');
           const meta = getAssetByID(src);
-          console.log('[Share] getAssetByID meta:', JSON.stringify(meta));
           if (meta && meta.httpServerLocation && meta.name && meta.type) {
             const loc = meta.httpServerLocation.replace(/\/$/, '');
             const sep = loc.startsWith('/') ? '' : '/';
             mediaUrl = window.location.origin + sep + loc + '/' + meta.name + '.' + meta.type;
           }
         } catch (e) {
-          console.log('[Share] getAssetByID failed:', e.message);
-        }
-
-        // Method 2: Image.resolveAssetSource — fallback
-        if (!mediaUrl) {
+          // getAssetByID failed — fall back to resolveAssetSource
           try {
-            const { Image: RNImage } = require('react-native');
-            const resolved = RNImage.resolveAssetSource(src);
-            console.log('[Share] resolveAssetSource result:', JSON.stringify(resolved));
+            const resolved = Image.resolveAssetSource(src);
             if (resolved && resolved.uri && resolved.uri.length > 5) {
               mediaUrl = resolved.uri.startsWith('http')
                 ? resolved.uri
                 : window.location.origin + (resolved.uri.startsWith('/') ? resolved.uri : '/' + resolved.uri);
             }
-          } catch (e) {
-            console.log('[Share] resolveAssetSource failed:', e.message);
-          }
+          } catch (_) { /* no-op */ }
         }
-      } else if (typeof src === 'string' && src.startsWith('http')) {
-        // Source is already a URL (some Expo configs return string URIs)
-        mediaUrl = src;
+      } else if (typeof src === 'string') {
+        // Web production builds may return a string path (relative or absolute URL)
+        if (src.startsWith('http')) {
+          mediaUrl = src;
+        } else {
+          mediaUrl = window.location.origin + (src.startsWith('/') ? src : '/' + src);
+        }
       }
     }
 
@@ -434,8 +431,6 @@ export default function InspireScreen({ navigation }) {
     if (shareUrl) {
       try { shareUrl = decodeURIComponent(shareUrl); } catch (_) { /* keep as-is if malformed */ }
     }
-
-    console.log('[Share] courage.mediaUrl:', courage.mediaUrl, '| isFiller:', courage.isFiller, '| source type:', typeof courage.source, '| final shareUrl:', shareUrl);
 
     // Mobile web only: try Web Share API with actual compressed image (navigator.share on desktop
     // loses the user-gesture context after async fetch and opens no email option anyway)
