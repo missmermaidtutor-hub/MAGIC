@@ -14,7 +14,7 @@ import {
   AppState,
   PanResponder,
 } from 'react-native';
-import { openMailto } from '../utils/emailUtils';
+import { openMailto, sanitizeShareUrl } from '../utils/emailUtils';
 import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -423,14 +423,7 @@ export default function InspireScreen({ navigation }) {
       }
     }
 
-    // Decode any percent-encoded characters in the URL before embedding.
-    // Firebase Storage URLs contain %2F (encoded slashes) — if left encoded, Gmail compose
-    // won't auto-linkify them because the URL doesn't look "clean". Decoding turns
-    // %2F back into / so Gmail recognises the string as a clickable URL.
-    let shareUrl = mediaUrl;
-    if (shareUrl) {
-      try { shareUrl = decodeURIComponent(shareUrl); } catch (_) { /* keep as-is if malformed */ }
-    }
+    const shareUrl = sanitizeShareUrl(mediaUrl);
 
     // Mobile web only: try Web Share API with actual compressed image (navigator.share on desktop
     // loses the user-gesture context after async fetch and opens no email option anyway)
@@ -482,11 +475,7 @@ export default function InspireScreen({ navigation }) {
       }
     }
 
-    // Desktop / fallback: open Gmail compose with image link in the body.
-    // Use decoded URL so Gmail's compose editor auto-linkifies it as a clickable link.
-    const body = shareUrl
-      ? `${shareText}\n\nView artwork: ${shareUrl}`
-      : shareText;
+    const body = shareUrl ? `${shareText}\n\n${shareUrl}` : shareText;
     openMailto(shareTitle, body);
     await AsyncStorage.setItem(`email_sent_${today}`, 'true');
   };

@@ -18,7 +18,7 @@ import { getTodayQuote } from '../utils/quoteUtils';
 import { trackAction } from '../services/analyticsService';
 import { scheduleStreakReminder } from '../utils/notificationUtils';
 import { getTasksForDate } from '../utils/taskUtils';
-import { openMailto } from '../utils/emailUtils';
+import { openMailto, sanitizeShareUrl } from '../utils/emailUtils';
 import { getPremiumStatus, getMemberDayCount, checkActiveDayTokenEligibility } from '../utils/premiumUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width - 40; // minus padding
@@ -1749,7 +1749,13 @@ export default function HomeScreen({ navigation }) {
               {/* Inspired section */}
               <View style={styles.inspiredContainer}>
                 <TouchableOpacity onPress={async () => {
-                  openMailto('Something that inspired me', 'This inspired me to send to you!\n\n[Add your message here]\n\n— Sent from MAGIC Tracker');
+                  const w = winners[currentWinnerIndex];
+                  const shareText = 'This inspired me to send to you!\n\n' +
+                    (w?.title ? `"${w.title}"\n\n` : '') +
+                    '[Add your message here]\n\n— Sent from MAGIC Tracker';
+                  const shareUrl = sanitizeShareUrl(w?.mediaUrl);
+                  const body = shareUrl ? `${shareText}\n\n${shareUrl}` : shareText;
+                  openMailto('Something that inspired me', body);
                   await AsyncStorage.setItem(`email_sent_${getESTDate()}`, 'true');
                 }}>
                   <Text style={styles.iconEmoji}>✉️</Text>

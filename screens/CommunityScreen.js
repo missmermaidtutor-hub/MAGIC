@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { showAlert, showConfirm, showDestructiveConfirm } from '../utils/alertUtils';
 import { persistImageUri, migrateGalleryImages } from '../utils/imageUtils';
-import { openMailto } from '../utils/emailUtils';
+import { openMailto, sanitizeShareUrl } from '../utils/emailUtils';
 import { trackAction } from '../services/analyticsService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -518,12 +518,14 @@ export default function CommunityScreen({ navigation, route }) {
   };
 
   const handleEmailShare = async (artwork) => {
-    openMailto(
-      'Something that inspired me',
+    const shareText =
       'This inspired me to send to you!\n\n' +
       (artwork.title ? `"${artwork.title}"\n\n` : '') +
-      '[Add your message here]\n\n— Sent from MAGIC Tracker'
-    );
+      '[Add your message here]\n\n— Sent from MAGIC Tracker';
+
+    const shareUrl = sanitizeShareUrl(artwork.mediaUrl || artwork.imageUrl);
+    const body = shareUrl ? `${shareText}\n\n${shareUrl}` : shareText;
+    openMailto('Something that inspired me', body);
     const today = getESTDate();
     await AsyncStorage.setItem(`email_sent_${today}`, 'true');
   };

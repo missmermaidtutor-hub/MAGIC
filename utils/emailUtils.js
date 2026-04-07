@@ -11,6 +11,17 @@ import { Platform, Linking } from 'react-native';
  *
  * Falls back to hidden anchor mailto: click if the user's browser blocks window.open (rare).
  */
+/**
+ * Sanitize a URL for embedding in an email body.
+ * Strips whitespace (prevents broken HTTP requests from newlines in Firebase URLs).
+ * Does NOT decode percent-encoding — Firebase Storage URLs are valid as-is.
+ */
+export const sanitizeShareUrl = (url) => {
+  if (!url) return null;
+  const clean = String(url).replace(/\s+/g, '').trim();
+  return clean.length > 10 ? clean : null;
+};
+
 export const openMailto = (subject, body, to = '') => {
   if (Platform.OS === 'web') {
     const encodedSubject = encodeURIComponent(subject);
