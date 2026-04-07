@@ -3,6 +3,7 @@ const v1 = require('firebase-functions/v1');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
+const { getAuth } = require('firebase-admin/auth');
 initializeApp();
 const db = getFirestore();
 
@@ -169,4 +170,39 @@ exports.clearData = v1
     }
 
     console.log(`All data cleared for user ${uid}.`);
+  });
+
+/**
+ * Admin-only: generate a password reset link for any user email.
+ * Bypasses Firebase email delivery entirely — you copy the link and send it manually.
+ *
+ * Usage:
+ *   curl "https://us-east1-magicnestlings.cloudfunctions.net/adminResetLink?email=USER@EMAIL.COM" \
+ *        -H "x-admin-key: YOUR_SECRET"
+ *
+ * Returns the reset link as plain text.
+ */
+exports.adminResetLink = v1
+  .region('us-east1')
+  .https.onRequest(async (req, res) => {
+    // Verify secret key — accept via header or query param for browser convenience
+    const key = req.headers['x-admin-key'] || req.query.key;
+    if (!key || key !== process.env.ADMIN_KEY) {
+      res.status(403).send('Forbidden');
+      return;
+    }
+
+    const email = req.query.email;
+    if (!email) {
+      res.status(400).send('Missing ?email= parameter');
+      return;
+    }
+
+    try {
+      const link = await getAuth().generatePasswordResetLink(email);
+      res.status(200).send(link);
+    } catch (err) {
+      console.error('adminResetLink error:', err.message);
+      res.status(500).send(`Error: ${err.message}`);
+    }
   });
