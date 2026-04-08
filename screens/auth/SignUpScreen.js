@@ -397,7 +397,9 @@ export default function SignUpScreen({ navigation, route }) {
       let message = 'Could not create account. Please try again.';
       if (error.code === 'auth/email-already-in-use') message = 'An account with this email already exists.';
       else if (error.code === 'auth/invalid-email') message = 'Invalid email address.';
+      else if (error.code === 'auth/weak-password') message = 'Password must be at least 6 characters.';
       else if (error.message?.includes('username') || error.message?.includes('pseudonym')) message = error.message;
+      else message = `Could not create account. (${error.code || error.message || 'unknown'})`;
       showAlert('Sign Up Failed', message);
     }
     setLoading(false);
