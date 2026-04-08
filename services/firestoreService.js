@@ -21,6 +21,19 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../config/firebase';
 
+// Log a signup error to Firestore for admin review (signupErrors collection)
+export const logSignupError = async (emailAttempted, errorCode, errorMessage) => {
+  try {
+    await addDoc(collection(db, 'signupErrors'), {
+      emailAttempted: emailAttempted || '',
+      errorCode: errorCode || 'unknown',
+      errorMessage: errorMessage || '',
+      occurredAt: serverTimestamp(),
+      platform: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+    });
+  } catch (_) { /* never block anything for logging */ }
+};
+
 // Create a new user profile in Firestore
 export const createUserProfile = async (uid, data) => {
   const userRef = doc(db, 'users', uid);

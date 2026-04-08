@@ -294,6 +294,14 @@ service cloud.firestore {
       allow update: if request.auth != null;
     }
 
+    // ===== SIGNUP ERRORS (admin monitoring) =====
+    match /signupErrors/{errorId} {
+      allow create: if true; // unauthenticated users can log errors (signup failed before auth)
+      allow read: if request.auth != null
+                  && request.auth.uid == 'VYnCl7waz4VyxRhryIAOTA9NBMg2';
+      allow update, delete: if false;
+    }
+
     // Deny everything else by default
     match /{document=**} {
       allow read, write: if false;
