@@ -206,3 +206,33 @@ exports.adminResetLink = v1
       res.status(500).send(`Error: ${err.message}`);
     }
   });
+
+/**
+ * User-callable: generate an email verification link for the calling user.
+ * Bypasses Firebase email delivery — the link is returned directly to the app
+ * and shown as a tappable button. No email required.
+ *
+ * Requires a valid Firebase ID token in the Authorization header.
+ */
+exports.getVerifyLink = v1
+  .region('us-east1')
+  .https.onRequest(async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
+
+    const idToken = (req.headers['authorization'] || '').replace('Bearer ', '');
+    if (!idToken) { res.status(401).send('Missing token'); return; }
+
+    try {
+      const decoded = await getAuth().verifyIdToken(idToken);
+      const link = await getAuth().generateEmailVerificationLink(decoded.email, {
+        url: 'https://magicnestlings.web.app',
+        handleCodeInApp: false,
+      });
+      res.status(200).send(link);
+    } catch (err) {
+      console.error('getVerifyLink error:', err.message);
+      res.status(500).send(`Error: ${err.message}`);
+    }
+  });

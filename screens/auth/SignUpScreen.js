@@ -10,9 +10,11 @@ import {
   Platform,
   ScrollView,
   Modal,
+  Linking,
+  Alert,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
-import { createUserWithEmailAndPassword, sendEmailVerification, signInWithCredential, OAuthProvider, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithCredential, OAuthProvider, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
@@ -375,16 +377,27 @@ export default function SignUpScreen({ navigation, route }) {
         console.log('Invitation conversion check error:', convErr);
       }
 
-      // Send email verification (skip for Apple/Google sign-in — already verified)
+      // Get email verification link directly (bypasses Firebase email delivery)
       if (!skipCredentials) {
         try {
-          await sendEmailVerification(auth.currentUser, {
-            url: 'https://magicnestlings.web.app',
-            handleCodeInApp: false,
-          });
+          const idToken = await auth.currentUser.getIdToken();
+          const resp = await fetch(
+            'https://us-east1-magicnestlings.cloudfunctions.net/getVerifyLink',
+            { method: 'GET', headers: { Authorization: `Bearer ${idToken}` } }
+          );
+          if (resp.ok) {
+            const verifyLink = await resp.text();
+            Alert.alert(
+              'Verify Your Email',
+              'Tap "Verify Now" to confirm your email address.',
+              [
+                { text: 'Later', style: 'cancel' },
+                { text: 'Verify Now', onPress: () => Linking.openURL(verifyLink) },
+              ]
+            );
+          }
         } catch (verifyErr) {
-          console.log('Email verification send error:', verifyErr.code, verifyErr.message);
-          showAlert('Verification Email', 'Account created! We could not send a verification email right now — you can resend from the home screen.');
+          // Non-blocking — account is created successfully regardless
         }
       }
 
