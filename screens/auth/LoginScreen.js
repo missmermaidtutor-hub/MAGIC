@@ -10,6 +10,9 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+
+const FONT = Platform.OS === 'web' ? 'Montserrat' : 'Montserrat_400Regular';
+const FONT_BOLD = Platform.OS === 'web' ? 'Montserrat' : 'Montserrat_600SemiBold';
 import { showAlert } from '../../utils/alertUtils';
 import { signInWithEmailAndPassword, signInWithCredential, OAuthProvider, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import * as AppleAuthentication from 'expo-apple-authentication';
@@ -256,6 +259,7 @@ const styles = StyleSheet.create({
     fontSize: 48,
     fontWeight: 'bold',
     textAlign: 'center',
+    fontFamily: FONT_BOLD,
   },
   appSubtitle: {
     fontSize: 16,
@@ -263,6 +267,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
     fontStyle: 'italic',
+    fontFamily: FONT,
   },
   card: {
     borderWidth: 3,
@@ -276,12 +281,14 @@ const styles = StyleSheet.create({
     color: '#4B0082',
     textAlign: 'center',
     marginBottom: 24,
+    fontFamily: FONT_BOLD,
   },
   inputLabel: {
     fontSize: 14,
     color: '#4B0082',
     marginBottom: 6,
     fontWeight: '600',
+    fontFamily: FONT_BOLD,
   },
   textInput: {
     borderRadius: 8,
@@ -291,6 +298,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#4B0082',
     marginBottom: 16,
+    fontFamily: FONT,
   },
   primaryButton: {
     backgroundColor: '#FFD700',
@@ -303,12 +311,14 @@ const styles = StyleSheet.create({
     color: '#4B0082',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: FONT_BOLD,
   },
   linkText: {
     color: '#4B0082',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 16,
+    fontFamily: FONT,
   },
   divider: {
     flexDirection: 'row',
@@ -324,6 +334,7 @@ const styles = StyleSheet.create({
     color: '#4B0082',
     paddingHorizontal: 12,
     fontSize: 14,
+    fontFamily: FONT,
   },
   appleButton: {
     borderRadius: 8,
@@ -337,6 +348,7 @@ const styles = StyleSheet.create({
     color: '#4B0082',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: FONT_BOLD,
   },
   googleButton: {
     borderRadius: 8,
@@ -350,6 +362,7 @@ const styles = StyleSheet.create({
     color: '#4B0082',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: FONT_BOLD,
   },
   signUpRow: {
     flexDirection: 'row',
@@ -358,10 +371,12 @@ const styles = StyleSheet.create({
   signUpText: {
     color: '#4B0082',
     fontSize: 14,
+    fontFamily: FONT,
   },
   signUpLink: {
     color: '#4B0082',
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: FONT_BOLD,
   },
 });
