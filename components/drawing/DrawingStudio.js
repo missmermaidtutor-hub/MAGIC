@@ -13,11 +13,9 @@ import {
 import { captureRef } from 'react-native-view-shot';
 import DrawingCanvas from './DrawingCanvas';
 import DrawingToolbar from './DrawingToolbar';
-import ColorPicker, { ColorSidebar } from './ColorPicker';
-import BrushSettings from './BrushSettings';
 import ShapeToolPanel from './ShapeToolPanel';
 import TextOverlay from './TextOverlay';
-import { TOOLS, FREEHAND_TOOLS, SHAPE_TOOLS, BRUSH_PRESETS } from './drawingConstants';
+import { TOOLS, FREEHAND_TOOLS, SHAPE_TOOLS, BRUSH_PRESETS, COLORS, BRUSH_SIZES } from './drawingConstants';
 import { pointsToSvgPath, simplifyPoints, appendToSvgPath, hitTestStroke, moveStroke } from './drawingUtils';
 import { showAlert } from '../../utils/alertUtils';
 import { useAuth } from '../../context/AuthContext';
@@ -33,7 +31,6 @@ export default function DrawingStudio({
 }) {
   // Premium check
   const { userProfile } = useAuth();
-  const hasFullColors = canAccessFeature('studioFullColors', userProfile);
   const hasAdvancedText = canAccessFeature('studioAdvancedText', userProfile);
 
   // Title
@@ -54,8 +51,6 @@ export default function DrawingStudio({
   const [shapeFill, setShapeFill] = useState(false);
 
   // Panel visibility
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showBrushSettings, setShowBrushSettings] = useState(false);
   const [colorBgMode, setColorBgMode] = useState(false);
   const [showShapes, setShowShapes] = useState(false);
   const [showTextOverlay, setShowTextOverlay] = useState(false);
@@ -402,8 +397,6 @@ export default function DrawingStudio({
 
   const handleToggleShapes = () => {
     setShowShapes(!showShapes);
-    setShowColorPicker(false);
-    setShowBrushSettings(false);
   };
 
   const handleToggleText = () => {
@@ -507,8 +500,6 @@ export default function DrawingStudio({
     setBrushOpacity(1.0);
     setBackgroundColor('#FFFFFF');
     setShapeFill(false);
-    setShowColorPicker(false);
-    setShowBrushSettings(false);
     setShowShapes(false);
     setColorBgMode(false);
     setTextPlacementMode(false);
@@ -544,29 +535,66 @@ export default function DrawingStudio({
           canRedo={redoStack.length > 0 || redoOpsRef.current.length > 0}
           canDuplicate={lastMovedIndex !== null && lastMovedIndex < strokes.length}
           shapesActive={showShapes}
-          showBrushSettings={showBrushSettings}
-          onToggleBrushSettings={() => {
-            setShowBrushSettings(!showBrushSettings);
-            setShowColorPicker(false);
-            setShowShapes(false);
-          }}
-          showColorPicker={showColorPicker}
-          onToggleColorPicker={() => {
-            setShowColorPicker(!showColorPicker);
-            setColorBgMode(false); // always open in brush mode, not bg mode
-            setShowBrushSettings(false);
-            setShowShapes(false);
-          }}
-          brushColor={brushColor}
-          backgroundColor={backgroundColor}
-          colorBgMode={colorBgMode}
-          onToggleBgColor={() => {
-            setColorBgMode(true);
-            setShowColorPicker(true);
-            setShowBrushSettings(false);
-            setShowShapes(false);
-          }}
         />
+
+        {/* Always-visible controls: size + color */}
+        <View style={styles.controlStrip}>
+          {/* Size row */}
+          <View style={styles.controlRow}>
+            <Text style={styles.controlLabel}>Size</Text>
+            {BRUSH_SIZES.map((preset) => (
+              <TouchableOpacity
+                key={preset.value}
+                style={[styles.sizeBtn, brushSize === preset.value && styles.sizeBtnActive]}
+                onPress={() => setBrushSize(preset.value)}
+              >
+                <Text style={[styles.sizeBtnText, brushSize === preset.value && styles.sizeBtnTextActive]}>
+                  {preset.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Color row: Brush/BG toggle + color swatches */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.colorScrollContent}
+          >
+            <TouchableOpacity
+              style={[styles.modeChip, !colorBgMode && styles.modeChipActive]}
+              onPress={() => setColorBgMode(false)}
+            >
+              <View style={[styles.modeChipDot, { backgroundColor: brushColor }]} />
+              <Text style={styles.modeChipText}>Brush</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeChip, colorBgMode && styles.modeChipActive]}
+              onPress={() => setColorBgMode(true)}
+            >
+              <View style={[styles.modeChipDot, { backgroundColor: backgroundColor, borderWidth: 1, borderColor: '#999' }]} />
+              <Text style={styles.modeChipText}>BG</Text>
+            </TouchableOpacity>
+
+            <View style={styles.controlDivider} />
+
+            {COLORS.map((color) => {
+              const activeColor = colorBgMode ? backgroundColor : brushColor;
+              return (
+                <TouchableOpacity
+                  key={color}
+                  style={[
+                    styles.swatch,
+                    { backgroundColor: color },
+                    activeColor.toUpperCase() === color.toUpperCase() && styles.swatchSelected,
+                    color === '#FFFFFF' && styles.swatchWhite,
+                  ]}
+                  onPress={() => colorBgMode ? setBackgroundColor(color) : setBrushColor(color)}
+                />
+              );
+            })}
+          </ScrollView>
+        </View>
 
         {/* Shape panel */}
         {showShapes && (
@@ -576,26 +604,6 @@ export default function DrawingStudio({
             shapeFill={shapeFill}
             onToggleFill={() => setShapeFill(!shapeFill)}
             fillColor={brushColor}
-          />
-        )}
-
-        {/* Brush size panel */}
-        {showBrushSettings && (
-          <BrushSettings brushSize={brushSize} onChangeBrushSize={setBrushSize} />
-        )}
-
-        {/* Color picker panel */}
-        {showColorPicker && (
-          <ColorPicker
-            selectedColor={brushColor}
-            onSelectColor={setBrushColor}
-            opacity={brushOpacity}
-            onChangeOpacity={setBrushOpacity}
-            backgroundColor={backgroundColor}
-            onChangeBackground={setBackgroundColor}
-            bgMode={colorBgMode}
-            onBgModeChange={setColorBgMode}
-            isPremium={hasFullColors}
           />
         )}
 
@@ -613,15 +621,8 @@ export default function DrawingStudio({
           </View>
         )}
 
-        {/* Canvas row (sidebar + canvas) */}
+        {/* Canvas */}
         <View style={styles.canvasRow}>
-          {showColorPicker && (!colorBgMode || hasFullColors) && (
-            <ColorSidebar
-              brushColor={colorBgMode ? backgroundColor : brushColor}
-              onSelectColor={colorBgMode ? setBackgroundColor : setBrushColor}
-              isPremium={hasFullColors}
-            />
-          )}
           <DrawingCanvas
             strokes={strokes}
             currentStroke={currentStroke}
@@ -683,6 +684,96 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'stretch',
+  },
+  controlStrip: {
+    backgroundColor: '#FFF8E7',
+    borderBottomWidth: 1,
+    borderBottomColor: '#D4C4A0',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    gap: 6,
+  },
+  controlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  controlLabel: {
+    color: '#4a3520',
+    fontSize: 11,
+    fontWeight: '600',
+    width: 30,
+  },
+  sizeBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#D4C4A0',
+    backgroundColor: '#fff',
+  },
+  sizeBtnActive: {
+    borderColor: '#B8860B',
+    backgroundColor: 'rgba(184, 134, 11, 0.15)',
+  },
+  sizeBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
+  },
+  sizeBtnTextActive: {
+    color: '#B8860B',
+  },
+  colorScrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  modeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#D4C4A0',
+    backgroundColor: '#fff',
+  },
+  modeChipActive: {
+    borderColor: '#B8860B',
+    backgroundColor: 'rgba(184, 134, 11, 0.15)',
+  },
+  modeChipDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  modeChipText: {
+    fontSize: 11,
+    color: '#444',
+    fontWeight: '600',
+  },
+  controlDivider: {
+    width: 1,
+    height: 22,
+    backgroundColor: '#D4C4A0',
+    marginHorizontal: 2,
+  },
+  swatch: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  swatchSelected: {
+    borderColor: '#B8860B',
+    borderWidth: 2.5,
+  },
+  swatchWhite: {
+    borderColor: '#999',
+    borderWidth: 1,
   },
   container: {
     flex: 1,

@@ -11,10 +11,10 @@ const TOOL_ITEMS = [
 ];
 
 const ACTION_ITEMS = [
-  { key: 'undo', label: 'Undo', icon: '↩️' },
-  { key: 'redo', label: 'Redo', icon: '↪️' },
   { key: 'shapes', label: 'Shapes', icon: '⬡' },
   { key: TOOLS.MOVE, label: 'Move', icon: '✥' },
+  { key: 'undo', label: 'Undo', icon: '↩️' },
+  { key: 'redo', label: 'Redo', icon: '↪️' },
   { key: 'duplicate', label: 'Copy', icon: '⧉' },
   { key: 'text', label: 'Text', icon: 'Aa' },
   { key: 'clear', label: 'Clear', icon: '🗑️' },
@@ -33,96 +33,39 @@ export default function DrawingToolbar({
   canRedo,
   canDuplicate,
   shapesActive,
-  showBrushSettings,
-  onToggleBrushSettings,
-  showColorPicker,
-  onToggleColorPicker,
-  brushColor,
-  backgroundColor,
-  colorBgMode,
-  onToggleBgColor,
 }) {
   const handleAction = (key) => {
     switch (key) {
-      case 'undo':
-        onUndo();
-        break;
-      case 'redo':
-        onRedo();
-        break;
-      case 'clear':
-        showDestructiveConfirm('Clear Canvas', 'Erase everything?', onClear, 'Clear');
-        break;
-      case 'shapes':
-        onToggleShapes();
-        break;
-      case TOOLS.MOVE:
-        onSelectTool(TOOLS.MOVE);
-        break;
-      case 'duplicate':
-        if (onDuplicate) onDuplicate();
-        break;
-      case 'text':
-        onToggleText();
-        break;
+      case 'undo': onUndo(); break;
+      case 'redo': onRedo(); break;
+      case 'clear': showDestructiveConfirm('Clear Canvas', 'Erase everything?', onClear, 'Clear'); break;
+      case 'shapes': onToggleShapes(); break;
+      case TOOLS.MOVE: onSelectTool(TOOLS.MOVE); break;
+      case 'duplicate': if (onDuplicate) onDuplicate(); break;
+      case 'text': onToggleText(); break;
     }
   };
 
   return (
     <View style={styles.container}>
+      {/* Row 1: Drawing tools */}
       <View style={styles.row}>
-        {/* Size button */}
-        <TouchableOpacity
-          style={[styles.toolBtn, showBrushSettings && styles.toolBtnActive]}
-          onPress={onToggleBrushSettings}
-        >
-          <Text style={styles.toolIcon}>📏</Text>
-          <Text style={[styles.toolLabel, showBrushSettings && styles.toolLabelActive]}>Size</Text>
-        </TouchableOpacity>
-
-        {/* Color button */}
-        <TouchableOpacity
-          style={[styles.toolBtn, showColorPicker && styles.toolBtnActive]}
-          onPress={onToggleColorPicker}
-        >
-          <View style={[styles.colorPreview, { backgroundColor: brushColor }]} />
-          <Text style={[styles.toolLabel, showColorPicker && styles.toolLabelActive]}>Color</Text>
-        </TouchableOpacity>
-
-        {/* BG color button */}
-        {onToggleBgColor && (
-          <TouchableOpacity
-            style={[styles.toolBtn, colorBgMode && showColorPicker && styles.toolBtnActive]}
-            onPress={onToggleBgColor}
-          >
-            <View style={[styles.bgColorPreview, { backgroundColor: backgroundColor || '#FFFFFF' }]} />
-            <Text style={styles.toolLabel}>BG</Text>
-          </TouchableOpacity>
-        )}
-
-        <View style={styles.divider} />
-
-        {/* Drawing tools */}
         {TOOL_ITEMS.map((item) => (
           <TouchableOpacity
             key={item.key}
-            style={[
-              styles.toolBtn,
-              activeTool === item.key && styles.toolBtnActive,
-            ]}
+            style={[styles.toolBtn, activeTool === item.key && styles.toolBtnActive]}
             onPress={() => onSelectTool(item.key)}
           >
             <Text style={styles.toolIcon}>{item.icon}</Text>
-            <Text style={[
-              styles.toolLabel,
-              activeTool === item.key && styles.toolLabelActive,
-            ]}>{item.label}</Text>
+            <Text style={[styles.toolLabel, activeTool === item.key && styles.toolLabelActive]}>
+              {item.label}
+            </Text>
           </TouchableOpacity>
         ))}
+      </View>
 
-        <View style={styles.divider} />
-
-        {/* Action buttons */}
+      {/* Row 2: Actions */}
+      <View style={styles.row}>
         {ACTION_ITEMS.map((item) => {
           const disabled =
             (item.key === 'undo' && !canUndo) ||
@@ -135,22 +78,14 @@ export default function DrawingToolbar({
           return (
             <TouchableOpacity
               key={item.key}
-              style={[
-                styles.toolBtn,
-                isActive && styles.toolBtnActive,
-                disabled && styles.toolBtnDisabled,
-              ]}
+              style={[styles.toolBtn, isActive && styles.toolBtnActive, disabled && styles.toolBtnDisabled]}
               onPress={() => handleAction(item.key)}
               disabled={disabled}
             >
-              <Text style={[styles.toolIcon, disabled && styles.iconDisabled]}>
-                {item.icon}
+              <Text style={[styles.toolIcon, disabled && styles.iconDisabled]}>{item.icon}</Text>
+              <Text style={[styles.toolLabel, isActive && styles.toolLabelActive, disabled && styles.labelDisabled]}>
+                {item.label}
               </Text>
-              <Text style={[
-                styles.toolLabel,
-                isActive && styles.toolLabelActive,
-                disabled && styles.labelDisabled,
-              ]}>{item.label}</Text>
             </TouchableOpacity>
           );
         })}
@@ -164,22 +99,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF8E7',
     borderBottomWidth: 1,
     borderBottomColor: '#D4C4A0',
-    paddingVertical: 6,
+    paddingVertical: 4,
     paddingHorizontal: 4,
+    gap: 2,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: 2,
+    justifyContent: 'space-around',
   },
   toolBtn: {
     alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 4,
     borderRadius: 8,
-    minWidth: 44,
+    flex: 1,
   },
   toolBtnActive: {
     backgroundColor: 'rgba(184, 134, 11, 0.15)',
@@ -190,7 +124,7 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   toolIcon: {
-    fontSize: 18,
+    fontSize: 16,
   },
   iconDisabled: {
     opacity: 0.4,
@@ -206,25 +140,5 @@ const styles = StyleSheet.create({
   },
   labelDisabled: {
     color: '#555',
-  },
-  divider: {
-    width: 1,
-    height: 30,
-    backgroundColor: '#D4C4A0',
-    marginHorizontal: 4,
-  },
-  colorPreview: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: '#FFD700',
-  },
-  bgColorPreview: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: '#FFD700',
   },
 });
