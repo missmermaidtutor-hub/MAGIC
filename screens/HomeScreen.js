@@ -2664,13 +2664,19 @@ const styles = StyleSheet.create({
   insightDate: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#b18630',
+    color: '#ffffff',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   insightProgress: {
     fontSize: 14,
-    color: '#888',
+    color: 'rgba(255, 255, 255, 0.85)',
     marginTop: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   insightGuidance: {
     marginTop: 8,

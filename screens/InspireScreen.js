@@ -1686,7 +1686,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   postVoteBtnSecondaryText: {
-    color: '#4B0082',
+    color: '#FFD700',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -1725,7 +1725,7 @@ const styles = StyleSheet.create({
   criteriaModalCriterion: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#3c9820',
+    color: '#1a5c00',
     textAlign: 'center',
     marginBottom: 20,
   },
