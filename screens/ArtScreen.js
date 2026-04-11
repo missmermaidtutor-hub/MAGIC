@@ -591,7 +591,7 @@ export default function ArtScreen() {
       return;
     }
     if (user && !user.emailVerified) {
-      showAlert('Verify Email', 'Please verify your email before sharing with the community. Check your inbox for a verification link.');
+      await saveWriteToPersonal();
       return;
     }
     if (courageUploadedToday) {
@@ -729,7 +729,7 @@ export default function ArtScreen() {
 
   const saveSketchToCourage = async (imageUri, sketchTitle) => {
     if (user && !user.emailVerified) {
-      showAlert('Verify Email', 'Please verify your email before sharing with the community. Check your inbox for a verification link.');
+      await saveSketchToPersonal(imageUri, sketchTitle);
       return;
     }
     if (courageUploadedToday) {
@@ -926,7 +926,7 @@ export default function ArtScreen() {
   const saveCaptureToCourage = async () => {
     if (!capturedImageUri) return;
     if (user && !user.emailVerified) {
-      showAlert('Verify Email', 'Please verify your email before sharing with the community. Check your inbox for a verification link.');
+      await saveCaptureToPersonal();
       return;
     }
     if (courageUploadedToday) {
