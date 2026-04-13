@@ -315,10 +315,109 @@ export const calculateAndSetWinner = async (dateStr) => {
   const courages = await getCouragesForDate(dateStr);
   if (courages.length === 0) return null;
 
+  // Law: single submission → automatic winner, no votes needed
+  if (courages.length === 1) {
+    const solo = courages[0];
+    const soloWinnerData = {
+      date: dateStr,
+      courageId: solo.id,
+      uid: solo.uid,
+      pseudonym: solo.anonymous ? 'Anonymous' : (solo.pseudonym || 'Anonymous'),
+      title: solo.title || '',
+      mediaType: solo.mediaType || 'image',
+      mediaUrl: solo.mediaUrl || '',
+      averageScore: 0,
+      totalVotes: 0,
+      autoWin: true,
+      calculatedAt: serverTimestamp(),
+    };
+    try {
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(winnerRef);
+        if (snap.exists()) return;
+        transaction.set(winnerRef, soloWinnerData);
+      });
+    } catch (e) {
+      const fallback = await getDoc(winnerRef);
+      if (fallback.exists()) return fallback.data();
+    }
+    return soloWinnerData;
+  }
+
   // Get all votes for that date
   const votes = await getAllVotesForDate(dateStr);
-  if (votes.length === 0) return null;
 
+  // Law: multiple submissions, 0 votes → user with fewest prior wins wins
+  if (votes.length === 0) {
+    const allWinnersSnap = await getDocs(collection(db, 'dailyWinners'));
+    const winCounts = {};
+    courages.forEach(c => { winCounts[c.uid] = 0; });
+    allWinnersSnap.docs.forEach(d => {
+      const uid = d.data().uid;
+      if (uid in winCounts) winCounts[uid]++;
+    });
+
+    const sortedByWins = [...courages].sort((a, b) => winCounts[a.uid] - winCounts[b.uid]);
+    let noVoteWinner = sortedByWins[0];
+    const minWins = winCounts[noVoteWinner.uid];
+    const tiedNoVote = sortedByWins.filter(c => winCounts[c.uid] === minWins);
+
+    if (tiedNoVote.length > 1) {
+      const today = new Date();
+      const todayMD = (today.getMonth() + 1) * 100 + today.getDate();
+      let closestDiff = Infinity;
+      for (const c of tiedNoVote) {
+        const profile = await getUserProfile(c.uid);
+        if (profile?.birthdate) {
+          const parts = profile.birthdate.split('/');
+          if (parts.length === 3) {
+            const bMD = parseInt(parts[0]) * 100 + parseInt(parts[1]);
+            const diff = Math.abs(bMD - todayMD);
+            const wrappedDiff = Math.min(diff, 1231 - diff);
+            if (wrappedDiff < closestDiff) {
+              closestDiff = wrappedDiff;
+              noVoteWinner = c;
+            }
+          }
+        }
+      }
+    }
+
+    const noVoteWinnerData = {
+      date: dateStr,
+      courageId: noVoteWinner.id,
+      uid: noVoteWinner.uid,
+      pseudonym: noVoteWinner.anonymous ? 'Anonymous' : (noVoteWinner.pseudonym || 'Anonymous'),
+      title: noVoteWinner.title || '',
+      mediaType: noVoteWinner.mediaType || 'image',
+      mediaUrl: noVoteWinner.mediaUrl || '',
+      averageScore: 0,
+      totalVotes: 0,
+      noVoteWin: true,
+      calculatedAt: serverTimestamp(),
+    };
+    try {
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(winnerRef);
+        if (snap.exists()) return;
+        transaction.set(winnerRef, noVoteWinnerData);
+      });
+    } catch (e) {
+      const fallback = await getDoc(winnerRef);
+      if (fallback.exists()) return fallback.data();
+    }
+    return noVoteWinnerData;
+  }
+
+  // SCALE REVIEW NEEDED at ~500 users:
+  // getAllVotesForDate() reads every vote doc for the day (500 users × avg sets ranked × 4 votes
+  // each = potentially 50,000+ docs per call). Two concerns:
+  //   1. calculateAndSetWinner reads all votes once — acceptable.
+  //   2. InspireScreen re-fetches all votes between every ranking set (for fair exposure sorting).
+  //      At 500 users this becomes expensive. Fix: maintain a dailyVoteCounts/{date} Firestore
+  //      document with courageId → count using atomic increment(). Then between-set re-fetch
+  //      is a single document read instead of 50K docs. Also: concurrent rankers loading the
+  //      same stale countMap at session start can cause unequal artwork exposure — same fix applies.
   // Calculate average score per courage
   const scoreMap = {}; // courageId -> { total, count }
   for (const vote of votes) {
