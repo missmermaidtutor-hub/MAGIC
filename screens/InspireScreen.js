@@ -185,7 +185,8 @@ export default function InspireScreen({ navigation }) {
   const [allDone, setAllDone] = useState(false);
   const [postVoteModalVisible, setPostVoteModalVisible] = useState(false);
   const [browseMode, setBrowseMode] = useState(false);
-  const [currentSet, setCurrentSet] = useState([]); // 4 courages to vote on
+  const [currentSet, setCurrentSet] = useState([]);
+  const [initialRealCount, setInitialRealCount] = useState(0); // total eligible real arts for today's ranking
   const [votedCourageIds, setVotedCourageIds] = useState(new Set());
   const [availableCourages, setAvailableCourages] = useState([]); // all eligible, minus own
   const [fullViewArtwork, setFullViewArtwork] = useState(null);
@@ -553,29 +554,48 @@ export default function InspireScreen({ navigation }) {
 
       setAvailableCourages(eligible);
       setVotedCourageIds(alreadyVotedIds);
+      setInitialRealCount(eligible.length);
 
-      // Build voting set: real courages first, pad with stock if < 4
+      // Law: always show sets of 4.
+      // 0 real arts → pure stock set of 4.
+      // 1–3 real arts → pad with stock to reach 4.
+      // 4+ real arts → real arts only, in batches of 4 (no stock).
       const unvoted = eligible.filter(c => !alreadyVotedIds.has(c.id));
+      const availableStock = ARTOWORKS_IMAGES.filter(img => !stockVotedIds.has(img.id));
+
       if (unvoted.length >= 4) {
-        // Plenty of real courages — sort by least-voted for equal exposure
+        // Enough real arts — sort by least-voted for fair exposure, show first 4
         const sorted = [...unvoted].sort((a, b) =>
           (countMap[a.id] || 0) - (countMap[b.id] || 0)
         );
         setCurrentSet(sorted.slice(0, 4));
         setAllDone(false);
-      } else {
-        // Fewer than 4 real courages — pad with stock images
-        const availableStock = ARTOWORKS_IMAGES.filter(img => !stockVotedIds.has(img.id));
-        const stockFiller = shuffleArray(availableStock).slice(0, 4 - unvoted.length);
+      } else if (unvoted.length > 0) {
+        // 1–3 real arts — pad with stock to reach 4
+        const needed = 4 - unvoted.length;
+        const stockFiller = shuffleArray(availableStock).slice(0, needed);
         const combined = [...unvoted, ...stockFiller];
         if (combined.length < 4) {
-          // Not enough items even with stock — all done
           setAllDone(true);
           setCurrentSet([]);
         } else {
           setCurrentSet(combined);
           setAllDone(false);
         }
+      } else if (eligible.length === 0) {
+        // No real arts submitted at all — pure stock set of 4
+        const stockFiller = shuffleArray(availableStock).slice(0, 4);
+        if (stockFiller.length < 4) {
+          setAllDone(true);
+          setCurrentSet([]);
+        } else {
+          setCurrentSet(stockFiller);
+          setAllDone(false);
+        }
+      } else {
+        // Real arts existed but user already voted on all of them
+        setAllDone(true);
+        setCurrentSet([]);
       }
     } catch (error) {
       console.log('Error loading voting data:', error);
@@ -597,7 +617,7 @@ export default function InspireScreen({ navigation }) {
       if (rankings[id] !== undefined) batchRankings[id] = rankings[id];
     });
 
-    if (Object.keys(batchRankings).length < 4) {
+    if (Object.keys(batchRankings).length < currentSet.length) {
       showAlert('Incomplete', 'Please rank all artworks before submitting.');
       return;
     }
@@ -605,7 +625,7 @@ export default function InspireScreen({ navigation }) {
     // Check for duplicate ranks
     const usedRanks = Object.values(batchRankings);
     if (new Set(usedRanks).size !== usedRanks.length) {
-      showAlert('Duplicate Ranks', 'Rank these images from 1, most aligned to the criteria, to 4, least aligned. Use each number (1,2,3,4) only once. Please review your rankings and resubmit.');
+      showAlert('Duplicate Ranks', `Rank these images from 1 (most aligned) to ${currentSet.length} (least aligned). Use each number only once.`);
       return;
     }
 
@@ -681,32 +701,33 @@ export default function InspireScreen({ navigation }) {
       });
       setVoteCountMap(updatedCounts);
 
-      // Check if more courages are available
+      // Law: if ≤4 real arts were available, no continue option — just thank you
       const unvotedReal = availableCourages.filter(c => !newVotedIds.has(c.id));
 
-      // Merge all stock seen IDs (persistent window + current batch) for accurate filtering
-      const allStockVoted = new Set();
-      try {
-        const stored = await AsyncStorage.getItem(STOCK_SEEN_KEY);
-        if (stored) JSON.parse(stored).forEach(id => allStockVoted.add(id));
-      } catch (e) {}
-      currentIds.forEach(id => {
-        if (currentSet.find(c => c.id === id)?.isFiller) allStockVoted.add(id);
-      });
-      const availableStockCount = ARTOWORKS_IMAGES.filter(img => !allStockVoted.has(img.id)).length;
+      if (initialRealCount <= 4) {
+        // All real arts fit in one set — ranking is complete
+        setAllDone(true);
+        setCurrentSet([]);
+      } else if (unvotedReal.length > 0) {
+        // Re-fetch live vote counts from Firestore so next set reflects all concurrent rankers,
+        // not just this user's local session counts.
+        let liveCounts = { ...updatedCounts };
+        try {
+          const liveVotes = await getAllVotesForDate(getESTYesterday());
+          liveCounts = {};
+          liveVotes.forEach(v => {
+            liveCounts[v.courageId] = (liveCounts[v.courageId] || 0) + 1;
+          });
+          setVoteCountMap(liveCounts);
+        } catch (e) {
+          // If Firestore read fails, fall back to local counts — still better than nothing
+        }
 
-      if (unvotedReal.length >= 4) {
-        // More real courages available — prepare next set
+        // More than 4 real arts existed — prepare next set of up to 4, fairest first
         const sorted = [...unvotedReal].sort((a, b) =>
-          (updatedCounts[a.id] || 0) - (updatedCounts[b.id] || 0)
+          (liveCounts[a.id] || 0) - (liveCounts[b.id] || 0)
         );
         setCurrentSet(sorted.slice(0, 4));
-        setPostVoteModalVisible(true);
-      } else if (unvotedReal.length + availableStockCount >= 4) {
-        // Pad remaining real with stock
-        const stockFiller = shuffleArray(ARTOWORKS_IMAGES.filter(img => !allStockVoted.has(img.id)))
-          .slice(0, 4 - unvotedReal.length);
-        setCurrentSet([...unvotedReal, ...stockFiller]);
         setPostVoteModalVisible(true);
       } else {
         setAllDone(true);
@@ -876,7 +897,7 @@ export default function InspireScreen({ navigation }) {
         {/* Ranking Buttons */}
         <View style={styles.rankingContainer}>
           <View style={styles.rankingButtons}>
-            {[1, 2, 3, 4].map((score) => {
+            {Array.from({ length: currentSet.length }, (_, i) => i + 1).map((score) => {
               const isSelected = currentRank === score;
               return (
                 <TouchableOpacity
@@ -1176,7 +1197,7 @@ export default function InspireScreen({ navigation }) {
         )}
 
         {/* Return Visit — already voted today, but more courages available */}
-        {!allDone && !browseMode && hasRankedToday && !continueVoting && currentSet.length === 4 && (
+        {!allDone && !browseMode && hasRankedToday && !continueVoting && currentSet.length > 0 && (
           <View style={styles.completeCard}>
             <Text style={[styles.completeText, theme.isDark && { color: '#ffffff' }]}>You already ranked today!</Text>
             <Text style={[styles.completeSubtext, theme.isDark && { color: 'rgba(255,255,255,0.8)' }]}>
@@ -1200,12 +1221,12 @@ export default function InspireScreen({ navigation }) {
         )}
 
         {/* Voting Mode */}
-        {!allDone && !browseMode && (!hasRankedToday || continueVoting) && currentSet.length === 4 && (
+        {!allDone && !browseMode && (!hasRankedToday || continueVoting) && currentSet.length > 0 && (
           <>
             {/* Progress */}
             <View style={styles.progressContainer}>
               <Text style={[styles.progressText, theme.isDark && { color: '#ffffff' }]}>
-                Ranked {rankedCount} of 4 artworks
+                Ranked {rankedCount} of {currentSet.length} artworks
               </Text>
               <View style={styles.progressBar}>
                 <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
@@ -1213,7 +1234,7 @@ export default function InspireScreen({ navigation }) {
             </View>
 
             <Text style={[styles.instructionText, theme.isDark && { color: '#ffffff' }]}>
-              Rank 1=most  4=least meets the criteria of "{todaysCriterion}". Each rank used once.
+              Rank 1=most  {currentSet.length}=least meets the criteria of "{todaysCriterion}". Each rank used once.
             </Text>
             <Text style={[styles.instructionText, theme.isDark && { color: '#ffffff' }]}>
               Light candles to the right of image to save to your inspiration gallery on connect screen.
@@ -1226,9 +1247,9 @@ export default function InspireScreen({ navigation }) {
 
             {/* Submit Button */}
             <TouchableOpacity
-              style={[styles.submitButton, (submitting || rankedCount < 4) && styles.submitButtonDisabled]}
+              style={[styles.submitButton, (submitting || rankedCount < currentSet.length) && styles.submitButtonDisabled]}
               onPress={handleSubmit}
-              disabled={submitting || rankedCount < 4}
+              disabled={submitting || rankedCount < currentSet.length}
             >
               {submitting ? (
                 <ActivityIndicator color="#cfe8c7" />
