@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useEffect, memo } from 'react';
+import React, { useRef, useCallback, useEffect, memo, useState } from 'react';
 import { View, PanResponder, StyleSheet } from 'react-native';
 import Svg, { Path, Line, Rect, Circle, Polygon, Text as SvgText, G } from 'react-native-svg';
 import { TOOLS, FREEHAND_TOOLS, BRUSH_PRESETS } from './drawingConstants';
@@ -142,9 +142,19 @@ export default function DrawingCanvas({
     })
   ).current;
 
+  const [canvasSize, setCanvasSize] = useState(300);
+  const onContainerLayout = useCallback((e) => {
+    const { width, height } = e.nativeEvent.layout;
+    setCanvasSize(Math.min(width, height, 500));
+  }, []);
+
   return (
-    <View style={styles.container}>
-      <View style={styles.canvasOuter} ref={canvasRef} collapsable={false}>
+    <View style={styles.container} onLayout={onContainerLayout}>
+      <View
+        style={[styles.canvasOuter, canvasSize > 0 && { width: canvasSize, height: canvasSize }]}
+        ref={canvasRef}
+        collapsable={false}
+      >
         <View style={styles.canvasWrap} {...panResponder.panHandlers}>
           <Svg style={styles.svg}>
             {/* Memoized completed strokes — won't re-render during active drawing */}
@@ -171,9 +181,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   canvasOuter: {
-    width: '100%',
-    maxWidth: 500,
-    aspectRatio: 1,
     borderWidth: 2,
     borderColor: '#D4C4A0',
   },
