@@ -425,17 +425,24 @@ export default function DrawingStudio({
           return null;
         }
         const { width, height } = svgEl.getBoundingClientRect();
+        // Clone and stamp explicit dimensions so browsers don't default to 300×150
+        const svgClone = svgEl.cloneNode(true);
+        const w = Math.round(width) || 400;
+        const h = Math.round(height) || 400;
+        svgClone.setAttribute('width', String(w));
+        svgClone.setAttribute('height', String(h));
+        svgClone.setAttribute('viewBox', `0 0 ${w} ${h}`);
         const serializer = new XMLSerializer();
-        const svgStr = serializer.serializeToString(svgEl);
+        const svgStr = serializer.serializeToString(svgClone);
         const svgBlob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(svgBlob);
         return new Promise((resolve) => {
           const img = new window.Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            canvas.width = width || 400;
-            canvas.height = height || 400;
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
             URL.revokeObjectURL(url);
             resolve(canvas.toDataURL('image/png', 0.9));
           };
