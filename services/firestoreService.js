@@ -367,18 +367,23 @@ export const calculateAndSetWinner = async (dateStr) => {
       const todayMD = (today.getMonth() + 1) * 100 + today.getDate();
       let closestDiff = Infinity;
       for (const c of tiedNoVote) {
-        const profile = await getUserProfile(c.uid);
-        if (profile?.birthdate) {
-          const parts = profile.birthdate.split('/');
-          if (parts.length === 3) {
-            const bMD = parseInt(parts[0]) * 100 + parseInt(parts[1]);
-            const diff = Math.abs(bMD - todayMD);
-            const wrappedDiff = Math.min(diff, 1231 - diff);
-            if (wrappedDiff < closestDiff) {
-              closestDiff = wrappedDiff;
-              noVoteWinner = c;
+        try {
+          const profile = await getUserProfile(c.uid);
+          if (profile?.birthdate) {
+            const parts = profile.birthdate.split('/');
+            if (parts.length === 3) {
+              const bMD = parseInt(parts[0]) * 100 + parseInt(parts[1]);
+              const diff = Math.abs(bMD - todayMD);
+              const wrappedDiff = Math.min(diff, 1231 - diff);
+              if (wrappedDiff < closestDiff) {
+                closestDiff = wrappedDiff;
+                noVoteWinner = c;
+              }
             }
           }
+        } catch (e) {
+          // Profile fetch failed for this user — skip, keep current best
+          console.log(`Birthday tiebreak: profile fetch failed for ${c.uid}`, e);
         }
       }
     }
@@ -448,18 +453,23 @@ export const calculateAndSetWinner = async (dateStr) => {
     const todayMD = (today.getMonth() + 1) * 100 + today.getDate(); // MMDD as number
     let closestDiff = Infinity;
     for (const c of tied) {
-      const profile = await getUserProfile(c.uid);
-      if (profile?.birthdate) {
-        const parts = profile.birthdate.split('/'); // mm/dd/yyyy
-        if (parts.length === 3) {
-          const bMD = parseInt(parts[0]) * 100 + parseInt(parts[1]);
-          const diff = Math.abs(bMD - todayMD);
-          const wrappedDiff = Math.min(diff, 1231 - diff); // handle year wrap
-          if (wrappedDiff < closestDiff) {
-            closestDiff = wrappedDiff;
-            winner = c;
+      try {
+        const profile = await getUserProfile(c.uid);
+        if (profile?.birthdate) {
+          const parts = profile.birthdate.split('/'); // mm/dd/yyyy
+          if (parts.length === 3) {
+            const bMD = parseInt(parts[0]) * 100 + parseInt(parts[1]);
+            const diff = Math.abs(bMD - todayMD);
+            const wrappedDiff = Math.min(diff, 1231 - diff); // handle year wrap
+            if (wrappedDiff < closestDiff) {
+              closestDiff = wrappedDiff;
+              winner = c;
+            }
           }
         }
+      } catch (e) {
+        // Profile fetch failed — skip this user, keep current best
+        console.log(`Birthday tiebreak: profile fetch failed for ${c.uid}`, e);
       }
     }
   }

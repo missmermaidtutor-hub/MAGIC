@@ -659,6 +659,9 @@ export default function InspireScreen({ navigation }) {
           await submitVoteBatch(user.uid, realVotes);
         } catch (e) {
           console.log('Firestore vote submit error:', e);
+          showAlert('Connection Error', 'Your ranking could not be saved. Please check your connection and try again.');
+          setSubmitting(false);
+          return; // Do NOT update local state — user can retry with same rankings
         }
       }
 
