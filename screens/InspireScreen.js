@@ -344,6 +344,9 @@ export default function InspireScreen({ navigation }) {
           id: courage.id,
           imageUrl: courage.mediaUrl || null,
           title: courage.title || 'Untitled',
+          text: courage.text || '',
+          textStyle: courage.textStyle || null,
+          mediaType: courage.mediaType || 'image',
           source: 'candle_save',
           date: getESTDate(),
           savedAt: new Date().toISOString(),
@@ -875,13 +878,15 @@ export default function InspireScreen({ navigation }) {
             </TouchableOpacity>
           )}
 
-          {/* Candle on the right */}
+          {/* Candle on the right — hidden for stock filler images */}
           <View style={styles.sideAction}>
-            <Candle
-              lit={isSaved}
-              onPress={() => handleCandleSave(courage)}
-              size={32}
-            />
+            {!courage.isFiller && (
+              <Candle
+                lit={isSaved}
+                onPress={() => handleCandleSave(courage)}
+                size={32}
+              />
+            )}
           </View>
         </View>
 
@@ -1174,7 +1179,9 @@ export default function InspireScreen({ navigation }) {
                         </TouchableOpacity>
                       )}
                       <View style={styles.sideAction}>
-                        <Candle lit={isSaved} onPress={() => handleCandleSave(courage)} size={32} />
+                        {!courage.isFiller && (
+                          <Candle lit={isSaved} onPress={() => handleCandleSave(courage)} size={32} />
+                        )}
                       </View>
                     </View>
                     <View style={styles.artistInfo}>

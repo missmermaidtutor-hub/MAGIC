@@ -664,7 +664,13 @@ export default function CommunityScreen({ navigation, route }) {
       const favData = await AsyncStorage.getItem('favorite_artworks');
       if (favData) {
         const dedupedF = dedupeById(JSON.parse(favData));
-        const filteredF = dedupedF.filter(a => !trashedIds.has(String(a.id)));
+        const filteredF = dedupedF.filter(a => {
+          if (trashedIds.has(String(a.id))) return false;
+          // Remove broken placeholders: no image URL and no text = nothing to display
+          const hasImage = !!a.imageUrl;
+          const hasText = !!(a.text && a.text.trim().length > 0);
+          return hasImage || hasText;
+        });
         setInspirationArtworks(filteredF);
         if (filteredF.length !== JSON.parse(favData).length) {
           await AsyncStorage.setItem('favorite_artworks', JSON.stringify(filteredF));
