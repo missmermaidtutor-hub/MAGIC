@@ -488,9 +488,11 @@ export default function CommunityScreen({ navigation, route }) {
       } else {
         favorites.push({
           id: artId,
-          imageUrl: artwork.imageUrl,
+          imageUrl: artwork.imageUrl || artwork.mediaUrl || null,
+          mediaUrl: artwork.mediaUrl || artwork.imageUrl || null,
           text: artwork.text || '',
           title: artwork.title || 'Untitled',
+          mediaType: artwork.mediaType || 'image',
           source: 'candle_save',
           date: artwork.date,
           savedAt: new Date().toISOString(),
@@ -502,7 +504,8 @@ export default function CommunityScreen({ navigation, route }) {
         // Record Firestore art save
         if (user && curatorUid) {
           recordArtSave(curatorUid, artId, user.uid, userPseudonym || 'Anonymous', {
-            imageUrl:  artwork.imageUrl  || '',
+            imageUrl:  artwork.imageUrl  || artwork.mediaUrl || '',
+            mediaUrl:  artwork.mediaUrl  || artwork.imageUrl || '',
             title:     artwork.title     || '',
             mediaType: artwork.mediaType || 'image',
             text:      artwork.text      || '',
@@ -1073,6 +1076,7 @@ export default function CommunityScreen({ navigation, route }) {
 
   const getArtworkImageSource = (artwork) => {
     if (artwork.imageUrl) return { uri: artwork.imageUrl };
+    if (artwork.mediaUrl) return { uri: artwork.mediaUrl };
     return null;
   };
 
