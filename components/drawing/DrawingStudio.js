@@ -76,13 +76,18 @@ export default function DrawingStudio({
   const textPlacementModeRef = useRef(textPlacementMode);
   const pendingTextRef = useRef(pendingText);
 
-  // Move tool refs
+  // Move tool refs — strokes
   const movingStrokeIndexRef = useRef(null);
   const moveStartPosRef = useRef(null);
   const originalStrokeRef = useRef(null);
   const moveDeltaRef = useRef({ dx: 0, dy: 0 }); // accumulated delta for RAF batching
   const strokesRef = useRef(strokes);
   const [lastMovedIndex, setLastMovedIndex] = useState(null);
+
+  // Move tool refs — text overlays
+  const movingTextIndexRef = useRef(null);
+  const originalTextRef = useRef(null);
+  const textOverlaysRef = useRef(textOverlays);
 
   // Undo operations stack — tracks whether each action was 'draw' or 'move'
   const undoOpsRef = useRef([]);
@@ -98,6 +103,7 @@ export default function DrawingStudio({
   textPlacementModeRef.current = textPlacementMode;
   pendingTextRef.current = pendingText;
   strokesRef.current = strokes;
+  textOverlaysRef.current = textOverlays;
 
   const getStrokeColor = () => {
     if (activeToolRef.current === TOOLS.ERASER) return backgroundColorRef.current;
@@ -136,6 +142,9 @@ export default function DrawingStudio({
       ]);
       setTextPlacementMode(false);
       setPendingText(null);
+      setRedoStack([]);
+      redoOpsRef.current = [];
+      undoOpsRef.current.push({ type: 'text' });
       return;
     }
 
@@ -147,6 +156,7 @@ export default function DrawingStudio({
       for (let i = currentStrokes.length - 1; i >= 0; i--) {
         if (hitTestStroke(currentStrokes[i], pos)) {
           movingStrokeIndexRef.current = i;
+          movingTextIndexRef.current = null;
           moveStartPosRef.current = pos;
           originalStrokeRef.current = { ...currentStrokes[i] };
           // Deep copy points array for path strokes
@@ -156,8 +166,22 @@ export default function DrawingStudio({
           return;
         }
       }
-      // No stroke found at this position
+      // No stroke hit — try text overlays from topmost to bottom
+      const currentTexts = textOverlaysRef.current;
+      const TOUCH_RADIUS = 40;
+      for (let i = currentTexts.length - 1; i >= 0; i--) {
+        const t = currentTexts[i];
+        if (Math.abs(pos.x - t.x) < TOUCH_RADIUS && Math.abs(pos.y - t.y) < TOUCH_RADIUS) {
+          movingTextIndexRef.current = i;
+          movingStrokeIndexRef.current = null;
+          moveStartPosRef.current = pos;
+          originalTextRef.current = { ...t };
+          return;
+        }
+      }
+      // Nothing found
       movingStrokeIndexRef.current = null;
+      movingTextIndexRef.current = null;
       return;
     }
 
@@ -221,6 +245,27 @@ export default function DrawingStudio({
       return;
     }
 
+    if (tool === TOOLS.MOVE && movingTextIndexRef.current !== null) {
+      const prevPos = moveStartPosRef.current;
+      moveStartPosRef.current = pos;
+      moveDeltaRef.current.dx += pos.x - prevPos.x;
+      moveDeltaRef.current.dy += pos.y - prevPos.y;
+      const idx = movingTextIndexRef.current;
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = null;
+          const { dx, dy } = moveDeltaRef.current;
+          moveDeltaRef.current = { dx: 0, dy: 0 };
+          setTextOverlays((prev) => {
+            const updated = [...prev];
+            updated[idx] = { ...updated[idx], x: updated[idx].x + dx, y: updated[idx].y + dy };
+            return updated;
+          });
+        });
+      }
+      return;
+    }
+
     if (FREEHAND_TOOLS.includes(tool) && pointsRef.current.length > 0) {
       pointsRef.current.push(pos);
 
@@ -250,7 +295,7 @@ export default function DrawingStudio({
   }, []);
 
   const handleStrokeEnd = useCallback(() => {
-    // Handle move tool end
+    // Handle move tool end — stroke
     if (activeToolRef.current === TOOLS.MOVE && movingStrokeIndexRef.current !== null) {
       // Flush any pending accumulated delta
       if (rafRef.current !== null) {
@@ -278,6 +323,35 @@ export default function DrawingStudio({
       movingStrokeIndexRef.current = null;
       moveStartPosRef.current = null;
       originalStrokeRef.current = null;
+      return;
+    }
+
+    // Handle move tool end — text overlay
+    if (activeToolRef.current === TOOLS.MOVE && movingTextIndexRef.current !== null) {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      const { dx, dy } = moveDeltaRef.current;
+      if (dx !== 0 || dy !== 0) {
+        const idx = movingTextIndexRef.current;
+        setTextOverlays((prev) => {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], x: updated[idx].x + dx, y: updated[idx].y + dy };
+          return updated;
+        });
+      }
+      moveDeltaRef.current = { dx: 0, dy: 0 };
+
+      const origText = originalTextRef.current;
+      if (origText) {
+        undoOpsRef.current.push({ type: 'moveText', index: movingTextIndexRef.current, originalText: origText });
+        setRedoStack([]);
+        redoOpsRef.current = [];
+      }
+      movingTextIndexRef.current = null;
+      moveStartPosRef.current = null;
+      originalTextRef.current = null;
       return;
     }
 
@@ -316,7 +390,24 @@ export default function DrawingStudio({
     const op = undoOpsRef.current.pop();
     if (!op) return;
 
-    if (op.type === 'move') {
+    if (op.type === 'text') {
+      // Remove last placed text overlay
+      setTextOverlays((prev) => {
+        if (prev.length === 0) return prev;
+        const last = prev[prev.length - 1];
+        redoOpsRef.current.push({ type: 'text', overlay: last });
+        return prev.slice(0, -1);
+      });
+    } else if (op.type === 'moveText') {
+      // Restore text overlay to its original position
+      setTextOverlays((prev) => {
+        const updated = [...prev];
+        const movedText = updated[op.index];
+        updated[op.index] = op.originalText;
+        redoOpsRef.current.push({ type: 'moveText', index: op.index, originalText: movedText });
+        return updated;
+      });
+    } else if (op.type === 'move') {
       // Restore the original stroke at its index
       setStrokes((prev) => {
         const updated = [...prev];
@@ -341,8 +432,21 @@ export default function DrawingStudio({
     const op = redoOpsRef.current.pop();
     if (!op) return;
 
-    if (op.type === 'move') {
-      // Re-apply the move: swap back
+    if (op.type === 'text') {
+      // Re-place the text overlay
+      setTextOverlays((prev) => [...prev, op.overlay]);
+      undoOpsRef.current.push({ type: 'text' });
+    } else if (op.type === 'moveText') {
+      // Re-apply the text move: swap back
+      setTextOverlays((prev) => {
+        const updated = [...prev];
+        const currentText = updated[op.index];
+        updated[op.index] = op.originalText;
+        undoOpsRef.current.push({ type: 'moveText', index: op.index, originalText: currentText });
+        return updated;
+      });
+    } else if (op.type === 'move') {
+      // Re-apply the stroke move: swap back
       setStrokes((prev) => {
         const updated = [...prev];
         const currentStroke = updated[op.index];
@@ -386,6 +490,8 @@ export default function DrawingStudio({
     undoOpsRef.current = [];
     redoOpsRef.current = [];
     setLastMovedIndex(null);
+    movingTextIndexRef.current = null;
+    originalTextRef.current = null;
   };
 
   const handleSelectTool = (tool) => {
@@ -424,11 +530,14 @@ export default function DrawingStudio({
           showAlert('Export Error', 'Could not export drawing.');
           return null;
         }
-        const { width, height } = svgEl.getBoundingClientRect();
-        // Clone and stamp explicit dimensions so browsers don't default to 300×150
+        // Read authoritative dimensions from SVG attributes (coordinate space),
+        // fall back to getBoundingClientRect if attributes are missing.
         const svgClone = svgEl.cloneNode(true);
-        const w = Math.round(width) || 400;
-        const h = Math.round(height) || 400;
+        const attrW = parseInt(svgEl.getAttribute('width') || '0', 10);
+        const attrH = parseInt(svgEl.getAttribute('height') || '0', 10);
+        const { width: bcrW, height: bcrH } = svgEl.getBoundingClientRect();
+        const w = attrW || Math.round(bcrW) || 400;
+        const h = attrH || Math.round(bcrH) || 400;
         svgClone.setAttribute('width', String(w));
         svgClone.setAttribute('height', String(h));
         svgClone.setAttribute('viewBox', `0 0 ${w} ${h}`);
@@ -514,6 +623,8 @@ export default function DrawingStudio({
     setLastMovedIndex(null);
     undoOpsRef.current = [];
     redoOpsRef.current = [];
+    movingTextIndexRef.current = null;
+    originalTextRef.current = null;
     onClose();
   };
 
@@ -538,7 +649,7 @@ export default function DrawingStudio({
           onToggleShapes={handleToggleShapes}
           onToggleText={handleToggleText}
           onDuplicate={handleDuplicate}
-          canUndo={strokes.length > 0 || undoOpsRef.current.length > 0}
+          canUndo={undoOpsRef.current.length > 0}
           canRedo={redoStack.length > 0 || redoOpsRef.current.length > 0}
           canDuplicate={lastMovedIndex !== null && lastMovedIndex < strokes.length}
           shapesActive={showShapes}
