@@ -84,9 +84,14 @@ export default function DrawingStudio({
   const strokesRef = useRef(strokes);
   const [lastMovedIndex, setLastMovedIndex] = useState(null);
 
-  // Undo operations stack — tracks whether each action was 'draw' or 'move'
+  // Undo operations stack — tracks whether each action was 'draw', 'move', 'text', or 'moveText'
   const undoOpsRef = useRef([]);
   const redoOpsRef = useRef([]);
+
+  // Text overlay move refs (appended after all existing hooks to preserve hook order)
+  const movingTextIndexRef = useRef(null);
+  const originalTextRef = useRef(null);
+  const textOverlaysRef = useRef(textOverlays);
 
   // Keep refs in sync with state
   activeToolRef.current = activeTool;
@@ -98,6 +103,7 @@ export default function DrawingStudio({
   textPlacementModeRef.current = textPlacementMode;
   pendingTextRef.current = pendingText;
   strokesRef.current = strokes;
+  textOverlaysRef.current = textOverlays;
 
   const getStrokeColor = () => {
     if (activeToolRef.current === TOOLS.ERASER) return backgroundColorRef.current;
@@ -130,10 +136,11 @@ export default function DrawingStudio({
 
   const handleStrokeStart = useCallback((pos) => {
     if (textPlacementModeRef.current && pendingTextRef.current) {
-      setTextOverlays((prev) => [
-        ...prev,
-        { ...pendingTextRef.current, x: pos.x, y: pos.y },
-      ]);
+      const newOverlay = { ...pendingTextRef.current, x: pos.x, y: pos.y };
+      setTextOverlays((prev) => [...prev, newOverlay]);
+      undoOpsRef.current.push({ type: 'text', overlay: newOverlay });
+      setRedoStack([]);
+      redoOpsRef.current = [];
       setTextPlacementMode(false);
       setPendingText(null);
       return;
@@ -156,8 +163,21 @@ export default function DrawingStudio({
           return;
         }
       }
-      // No stroke found at this position
+      // No stroke hit — try text overlays (40px radius from anchor point)
       movingStrokeIndexRef.current = null;
+      const overlays = textOverlaysRef.current;
+      for (let i = overlays.length - 1; i >= 0; i--) {
+        const t = overlays[i];
+        const dx = pos.x - t.x;
+        const dy = pos.y - t.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 40) {
+          movingTextIndexRef.current = i;
+          moveStartPosRef.current = pos;
+          originalTextRef.current = { ...t };
+          return;
+        }
+      }
+      movingTextIndexRef.current = null;
       return;
     }
 
@@ -199,6 +219,20 @@ export default function DrawingStudio({
 
   const handleStrokeMove = useCallback((pos) => {
     const tool = activeToolRef.current;
+
+    if (tool === TOOLS.MOVE && movingTextIndexRef.current !== null) {
+      const prevPos = moveStartPosRef.current;
+      moveStartPosRef.current = pos;
+      const dx = pos.x - prevPos.x;
+      const dy = pos.y - prevPos.y;
+      const idx = movingTextIndexRef.current;
+      setTextOverlays((prev) => {
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], x: updated[idx].x + dx, y: updated[idx].y + dy };
+        return updated;
+      });
+      return;
+    }
 
     if (tool === TOOLS.MOVE && movingStrokeIndexRef.current !== null) {
       const prevPos = moveStartPosRef.current;
@@ -250,7 +284,21 @@ export default function DrawingStudio({
   }, []);
 
   const handleStrokeEnd = useCallback(() => {
-    // Handle move tool end
+    // Handle text overlay move end
+    if (activeToolRef.current === TOOLS.MOVE && movingTextIndexRef.current !== null) {
+      const origText = originalTextRef.current;
+      if (origText) {
+        undoOpsRef.current.push({ type: 'moveText', index: movingTextIndexRef.current, originalText: origText });
+        setRedoStack([]);
+        redoOpsRef.current = [];
+      }
+      movingTextIndexRef.current = null;
+      moveStartPosRef.current = null;
+      originalTextRef.current = null;
+      return;
+    }
+
+    // Handle stroke move tool end
     if (activeToolRef.current === TOOLS.MOVE && movingStrokeIndexRef.current !== null) {
       // Flush any pending accumulated delta
       if (rafRef.current !== null) {
@@ -316,7 +364,21 @@ export default function DrawingStudio({
     const op = undoOpsRef.current.pop();
     if (!op) return;
 
-    if (op.type === 'move') {
+    if (op.type === 'text') {
+      setTextOverlays((prev) => {
+        const removed = prev[prev.length - 1];
+        redoOpsRef.current.push({ type: 'text', overlay: removed });
+        return prev.slice(0, -1);
+      });
+    } else if (op.type === 'moveText') {
+      setTextOverlays((prev) => {
+        const updated = [...prev];
+        const movedText = updated[op.index];
+        updated[op.index] = op.originalText;
+        redoOpsRef.current.push({ type: 'moveText', index: op.index, originalText: movedText });
+        return updated;
+      });
+    } else if (op.type === 'move') {
       // Restore the original stroke at its index
       setStrokes((prev) => {
         const updated = [...prev];
@@ -341,13 +403,24 @@ export default function DrawingStudio({
     const op = redoOpsRef.current.pop();
     if (!op) return;
 
-    if (op.type === 'move') {
+    if (op.type === 'text') {
+      setTextOverlays((prev) => [...prev, op.overlay]);
+      undoOpsRef.current.push({ type: 'text', overlay: op.overlay });
+    } else if (op.type === 'moveText') {
+      setTextOverlays((prev) => {
+        const updated = [...prev];
+        const currentText = updated[op.index];
+        updated[op.index] = op.originalText;
+        undoOpsRef.current.push({ type: 'moveText', index: op.index, originalText: currentText });
+        return updated;
+      });
+    } else if (op.type === 'move') {
       // Re-apply the move: swap back
       setStrokes((prev) => {
         const updated = [...prev];
-        const currentStroke = updated[op.index];
+        const currentStrokeVal = updated[op.index];
         updated[op.index] = op.originalStroke;
-        undoOpsRef.current.push({ type: 'move', index: op.index, originalStroke: currentStroke });
+        undoOpsRef.current.push({ type: 'move', index: op.index, originalStroke: currentStrokeVal });
         return updated;
       });
     } else {
@@ -386,6 +459,8 @@ export default function DrawingStudio({
     undoOpsRef.current = [];
     redoOpsRef.current = [];
     setLastMovedIndex(null);
+    movingTextIndexRef.current = null;
+    originalTextRef.current = null;
   };
 
   const handleSelectTool = (tool) => {
@@ -424,11 +499,12 @@ export default function DrawingStudio({
           showAlert('Export Error', 'Could not export drawing.');
           return null;
         }
-        const { width, height } = svgEl.getBoundingClientRect();
+        // Read width/height from SVG attributes (matches coordinate space exactly).
+        // getBoundingClientRect() can differ from SVG coordinate space when flex CSS is applied.
+        const w = parseInt(svgEl.getAttribute('width'), 10) || 400;
+        const h = parseInt(svgEl.getAttribute('height'), 10) || 400;
         // Clone and stamp explicit dimensions so browsers don't default to 300×150
         const svgClone = svgEl.cloneNode(true);
-        const w = Math.round(width) || 400;
-        const h = Math.round(height) || 400;
         svgClone.setAttribute('width', String(w));
         svgClone.setAttribute('height', String(h));
         svgClone.setAttribute('viewBox', `0 0 ${w} ${h}`);
@@ -514,6 +590,8 @@ export default function DrawingStudio({
     setLastMovedIndex(null);
     undoOpsRef.current = [];
     redoOpsRef.current = [];
+    movingTextIndexRef.current = null;
+    originalTextRef.current = null;
     onClose();
   };
 
@@ -603,47 +681,56 @@ export default function DrawingStudio({
           </ScrollView>
         </View>
 
-        {/* Shape panel */}
-        {showShapes && (
-          <ShapeToolPanel
-            activeTool={activeTool}
-            onSelectTool={handleSelectTool}
-            shapeFill={shapeFill}
-            onToggleFill={() => setShapeFill(!shapeFill)}
-            fillColor={brushColor}
-          />
-        )}
+        {/* Canvas section — panels float as absolute overlays so they don't shrink the canvas */}
+        <View style={styles.canvasSection}>
+          {/* Shape panel — absolute so opening it doesn't trigger canvas resize */}
+          {showShapes && (
+            <View style={styles.panelOverlay}>
+              <ShapeToolPanel
+                activeTool={activeTool}
+                onSelectTool={handleSelectTool}
+                shapeFill={shapeFill}
+                onToggleFill={() => setShapeFill(!shapeFill)}
+                fillColor={brushColor}
+              />
+            </View>
+          )}
 
-        {/* Text placement hint */}
-        {textPlacementMode && (
-          <View style={styles.textHint}>
-            <Text style={styles.textHintText}>Tap on the canvas to place your text</Text>
+          {/* Text placement hint — absolute banner */}
+          {textPlacementMode && (
+            <View style={styles.panelOverlay}>
+              <View style={styles.textHint}>
+                <Text style={styles.textHintText}>Tap on the canvas to place your text</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Move tool hint — absolute banner */}
+          {activeTool === TOOLS.MOVE && (
+            <View style={styles.panelOverlay}>
+              <View style={styles.textHint}>
+                <Text style={styles.textHintText}>Tap and drag a shape or stroke to move it</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Canvas — always gets full flex space regardless of which panels are open */}
+          <View style={styles.canvasRow}>
+            <DrawingCanvas
+              strokes={strokes}
+              currentStroke={currentStroke}
+              textOverlays={textOverlays}
+              backgroundColor={backgroundColor}
+              activeTool={activeTool}
+              brushColor={brushColor}
+              brushSize={brushSize}
+              brushOpacity={brushOpacity}
+              onStrokeStart={handleStrokeStart}
+              onStrokeMove={handleStrokeMove}
+              onStrokeEnd={handleStrokeEnd}
+              canvasRef={canvasRef}
+            />
           </View>
-        )}
-
-        {/* Move tool hint */}
-        {activeTool === TOOLS.MOVE && (
-          <View style={styles.textHint}>
-            <Text style={styles.textHintText}>Tap and drag a shape or stroke to move it</Text>
-          </View>
-        )}
-
-        {/* Canvas */}
-        <View style={styles.canvasRow}>
-          <DrawingCanvas
-            strokes={strokes}
-            currentStroke={currentStroke}
-            textOverlays={textOverlays}
-            backgroundColor={backgroundColor}
-            activeTool={activeTool}
-            brushColor={brushColor}
-            brushSize={brushSize}
-            brushOpacity={brushOpacity}
-            onStrokeStart={handleStrokeStart}
-            onStrokeMove={handleStrokeMove}
-            onStrokeEnd={handleStrokeEnd}
-            canvasRef={canvasRef}
-          />
         </View>
 
         {/* Title */}
@@ -687,6 +774,17 @@ export default function DrawingStudio({
 }
 
 const styles = StyleSheet.create({
+  canvasSection: {
+    flex: 1,
+    position: 'relative',
+  },
+  panelOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
   canvasRow: {
     flex: 1,
     flexDirection: 'row',
