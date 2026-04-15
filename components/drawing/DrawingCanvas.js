@@ -156,7 +156,7 @@ export default function DrawingCanvas({
         collapsable={false}
       >
         <View style={styles.canvasWrap} {...panResponder.panHandlers}>
-          <Svg style={styles.svg} width={canvasSize} height={canvasSize} viewBox={`0 0 ${canvasSize} ${canvasSize}`}>
+          <Svg style={styles.svg} width={canvasSize} height={canvasSize}>
             {/* Memoized completed strokes — won't re-render during active drawing */}
             <CompletedStrokes
               strokes={strokes}
