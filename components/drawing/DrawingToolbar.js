@@ -3,15 +3,7 @@ import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { showDestructiveConfirm } from '../../utils/alertUtils';
 import { TOOLS } from './drawingConstants';
 
-const TOOL_ITEMS = [
-  { key: TOOLS.PEN, label: 'Pen', icon: '✏️' },
-  { key: TOOLS.MARKER, label: 'Marker', icon: '🖊️' },
-  { key: TOOLS.HIGHLIGHTER, label: 'Highlight', icon: '🖍️' },
-  { key: TOOLS.ERASER, label: 'Eraser', icon: '🧹' },
-];
-
 const ACTION_ITEMS = [
-  { key: 'shapes', label: 'Shapes', icon: '⬡' },
   { key: TOOLS.MOVE, label: 'Move', icon: '✥' },
   { key: 'undo', label: 'Undo', icon: '↩️' },
   { key: 'redo', label: 'Redo', icon: '↪️' },
@@ -26,20 +18,17 @@ export default function DrawingToolbar({
   onUndo,
   onRedo,
   onClear,
-  onToggleShapes,
   onToggleText,
   onDuplicate,
   canUndo,
   canRedo,
   canDuplicate,
-  shapesActive,
 }) {
   const handleAction = (key) => {
     switch (key) {
       case 'undo': onUndo(); break;
       case 'redo': onRedo(); break;
       case 'clear': showDestructiveConfirm('Clear Canvas', 'Erase everything?', onClear, 'Clear'); break;
-      case 'shapes': onToggleShapes(); break;
       case TOOLS.MOVE: onSelectTool(TOOLS.MOVE); break;
       case 'duplicate': if (onDuplicate) onDuplicate(); break;
       case 'text': onToggleText(); break;
@@ -48,32 +37,13 @@ export default function DrawingToolbar({
 
   return (
     <View style={styles.container}>
-      {/* Row 1: Drawing tools */}
-      <View style={styles.row}>
-        {TOOL_ITEMS.map((item) => (
-          <TouchableOpacity
-            key={item.key}
-            style={[styles.toolBtn, activeTool === item.key && styles.toolBtnActive]}
-            onPress={() => onSelectTool(item.key)}
-          >
-            <Text style={styles.toolIcon}>{item.icon}</Text>
-            <Text style={[styles.toolLabel, activeTool === item.key && styles.toolLabelActive]}>
-              {item.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Row 2: Actions */}
       <View style={styles.row}>
         {ACTION_ITEMS.map((item) => {
           const disabled =
             (item.key === 'undo' && !canUndo) ||
             (item.key === 'redo' && !canRedo) ||
             (item.key === 'duplicate' && !canDuplicate);
-          const isActive =
-            (item.key === 'shapes' && shapesActive) ||
-            (item.key === TOOLS.MOVE && activeTool === TOOLS.MOVE);
+          const isActive = item.key === TOOLS.MOVE && activeTool === TOOLS.MOVE;
 
           return (
             <TouchableOpacity

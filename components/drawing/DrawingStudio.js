@@ -13,7 +13,6 @@ import {
 import { captureRef } from 'react-native-view-shot';
 import DrawingCanvas from './DrawingCanvas';
 import DrawingToolbar from './DrawingToolbar';
-import ShapeToolPanel from './ShapeToolPanel';
 import TextOverlay from './TextOverlay';
 import { TOOLS, FREEHAND_TOOLS, SHAPE_TOOLS, BRUSH_PRESETS, COLORS, BRUSH_SIZES } from './drawingConstants';
 import { pointsToSvgPath, simplifyPoints, appendToSvgPath, hitTestStroke, moveStroke } from './drawingUtils';
@@ -51,8 +50,7 @@ export default function DrawingStudio({
   const [shapeFill, setShapeFill] = useState(false);
 
   // Panel visibility
-  const [colorBgMode, setColorBgMode] = useState(false);
-  const [showShapes, setShowShapes] = useState(false);
+  const [selectedPanel, setSelectedPanel] = useState('pen'); // 'bg'|'shapes'|'pen'|'marker'|'highlighter'|'eraser'
   const [showTextOverlay, setShowTextOverlay] = useState(false);
   const [textPlacementMode, setTextPlacementMode] = useState(false);
   const [pendingText, setPendingText] = useState(null);
@@ -463,15 +461,35 @@ export default function DrawingStudio({
     originalTextRef.current = null;
   };
 
+  // Called from toolbar actions (Move) — doesn't change the panel selection
   const handleSelectTool = (tool) => {
     setActiveTool(tool);
-    setShowShapes(false);
     setTextPlacementMode(false);
     setPendingText(null);
   };
 
-  const handleToggleShapes = () => {
-    setShowShapes(!showShapes);
+  // Called from the tool selector strip — sets both panel and active tool
+  const handleSelectPanel = (panel) => {
+    setSelectedPanel(panel);
+    setTextPlacementMode(false);
+    setPendingText(null);
+    switch (panel) {
+      case 'pen': setActiveTool(TOOLS.PEN); break;
+      case 'marker': setActiveTool(TOOLS.MARKER); break;
+      case 'highlighter': setActiveTool(TOOLS.HIGHLIGHTER); break;
+      case 'eraser': setActiveTool(TOOLS.ERASER); break;
+      case 'shapes': {
+        const current = SHAPE_TOOLS.includes(activeTool) ? activeTool : TOOLS.RECT;
+        setActiveTool(current);
+        break;
+      }
+      case 'bg': break; // don't change activeTool — bg is just a color target
+    }
+  };
+
+  // Called when user picks a shape sub-type within the shapes panel
+  const handleSelectShapeTool = (tool) => {
+    setActiveTool(tool);
   };
 
   const handleToggleText = () => {
@@ -583,8 +601,7 @@ export default function DrawingStudio({
     setBrushOpacity(1.0);
     setBackgroundColor('#FFFFFF');
     setShapeFill(false);
-    setShowShapes(false);
-    setColorBgMode(false);
+    setSelectedPanel('pen');
     setTextPlacementMode(false);
     setPendingText(null);
     setLastMovedIndex(null);
@@ -606,95 +623,121 @@ export default function DrawingStudio({
           <Text style={styles.title} numberOfLines={1}>{prompt || 'Art Studio'}</Text>
         </View>
 
-        {/* Toolbar */}
+        {/* Action toolbar: Move, Undo, Redo, Copy, Text, Clear */}
         <DrawingToolbar
           activeTool={activeTool}
           onSelectTool={handleSelectTool}
           onUndo={handleUndo}
           onRedo={handleRedo}
           onClear={handleClear}
-          onToggleShapes={handleToggleShapes}
           onToggleText={handleToggleText}
           onDuplicate={handleDuplicate}
           canUndo={strokes.length > 0 || undoOpsRef.current.length > 0}
           canRedo={redoStack.length > 0 || redoOpsRef.current.length > 0}
           canDuplicate={lastMovedIndex !== null && lastMovedIndex < strokes.length}
-          shapesActive={showShapes}
         />
 
-        {/* Always-visible controls: size + color */}
+        {/* Tool selector + contextual options strip */}
         <View style={styles.controlStrip}>
-          {/* Size row */}
-          <View style={styles.controlRow}>
-            <Text style={styles.controlLabel}>Size</Text>
-            {BRUSH_SIZES.map((preset) => (
+          {/* Tool selector row: BG | Shapes | Pen | Marker | Highlight | Eraser */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolSelectorRow}>
+            {[
+              { key: 'bg',          label: 'BG',       dot: backgroundColor },
+              { key: 'shapes',      label: 'Shapes',   icon: '⬡' },
+              { key: 'pen',         label: 'Pen',       icon: '✏️' },
+              { key: 'marker',      label: 'Marker',    icon: '🖊️' },
+              { key: 'highlighter', label: 'Highlight', icon: '🖍️' },
+              { key: 'eraser',      label: 'Eraser',    icon: '🧹' },
+            ].map(({ key, label, icon, dot }) => (
               <TouchableOpacity
-                key={preset.value}
-                style={[styles.sizeBtn, brushSize === preset.value && styles.sizeBtnActive]}
-                onPress={() => setBrushSize(preset.value)}
+                key={key}
+                style={[styles.panelToolBtn, selectedPanel === key && styles.panelToolBtnActive]}
+                onPress={() => handleSelectPanel(key)}
               >
-                <Text style={[styles.sizeBtnText, brushSize === preset.value && styles.sizeBtnTextActive]}>
-                  {preset.label}
-                </Text>
+                {dot !== undefined
+                  ? <View style={[styles.panelToolDot, { backgroundColor: dot, borderColor: dot === '#FFFFFF' ? '#999' : 'transparent' }]} />
+                  : <Text style={styles.panelToolIcon}>{icon}</Text>
+                }
+                <Text style={[styles.panelToolLabel, selectedPanel === key && styles.panelToolLabelActive]}>{label}</Text>
               </TouchableOpacity>
             ))}
-          </View>
-
-          {/* Color row: Brush/BG toggle + color swatches */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.colorScrollContent}
-          >
-            <TouchableOpacity
-              style={[styles.modeChip, !colorBgMode && styles.modeChipActive]}
-              onPress={() => setColorBgMode(false)}
-            >
-              <View style={[styles.modeChipDot, { backgroundColor: brushColor }]} />
-              <Text style={styles.modeChipText}>Brush</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modeChip, colorBgMode && styles.modeChipActive]}
-              onPress={() => setColorBgMode(true)}
-            >
-              <View style={[styles.modeChipDot, { backgroundColor: backgroundColor, borderWidth: 1, borderColor: '#999' }]} />
-              <Text style={styles.modeChipText}>BG</Text>
-            </TouchableOpacity>
-
-            <View style={styles.controlDivider} />
-
-            {COLORS.map((color) => {
-              const activeColor = colorBgMode ? backgroundColor : brushColor;
-              return (
-                <TouchableOpacity
-                  key={color}
-                  style={[
-                    styles.swatch,
-                    { backgroundColor: color },
-                    activeColor.toUpperCase() === color.toUpperCase() && styles.swatchSelected,
-                    color === '#FFFFFF' && styles.swatchWhite,
-                  ]}
-                  onPress={() => colorBgMode ? setBackgroundColor(color) : setBrushColor(color)}
-                />
-              );
-            })}
           </ScrollView>
-        </View>
 
-        {/* Canvas section — panels float as absolute overlays so they don't shrink the canvas */}
-        <View style={styles.canvasSection}>
-          {/* Shape panel — absolute so opening it doesn't trigger canvas resize */}
-          {showShapes && (
-            <View style={styles.panelOverlay}>
-              <ShapeToolPanel
-                activeTool={activeTool}
-                onSelectTool={handleSelectTool}
-                shapeFill={shapeFill}
-                onToggleFill={() => setShapeFill(!shapeFill)}
-                fillColor={brushColor}
-              />
+          {/* Shape sub-options (only when Shapes selected) */}
+          {selectedPanel === 'shapes' && (
+            <View style={styles.controlRow}>
+              {[
+                { key: TOOLS.LINE,     label: 'Line',   icon: '╱' },
+                { key: TOOLS.RECT,     label: 'Rect',   icon: '▭' },
+                { key: TOOLS.CIRCLE,   label: 'Circle', icon: '◯' },
+                { key: TOOLS.TRIANGLE, label: 'Tri',    icon: '△' },
+              ].map(({ key, label, icon }) => (
+                <TouchableOpacity
+                  key={key}
+                  style={[styles.sizeBtn, activeTool === key && styles.sizeBtnActive]}
+                  onPress={() => handleSelectShapeTool(key)}
+                >
+                  <Text style={[styles.sizeBtnText, activeTool === key && styles.sizeBtnTextActive]}>
+                    {icon} {label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity
+                style={[styles.sizeBtn, shapeFill && styles.sizeBtnActive]}
+                onPress={() => setShapeFill(!shapeFill)}
+              >
+                <Text style={[styles.sizeBtnText, shapeFill && styles.sizeBtnTextActive]}>
+                  {shapeFill ? 'Fill ●' : 'Fill ○'}
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
+
+          {/* Size row (hidden for BG) */}
+          {selectedPanel !== 'bg' && (
+            <View style={styles.controlRow}>
+              <Text style={styles.controlLabel}>Size</Text>
+              {BRUSH_SIZES.map((preset) => (
+                <TouchableOpacity
+                  key={preset.value}
+                  style={[styles.sizeBtn, brushSize === preset.value && styles.sizeBtnActive]}
+                  onPress={() => setBrushSize(preset.value)}
+                >
+                  <Text style={[styles.sizeBtnText, brushSize === preset.value && styles.sizeBtnTextActive]}>
+                    {preset.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Color swatches (hidden for Eraser) */}
+          {selectedPanel !== 'eraser' && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.colorScrollContent}>
+              {COLORS.map((color) => {
+                const activeColor = selectedPanel === 'bg' ? backgroundColor : brushColor;
+                const onPressColor = selectedPanel === 'bg'
+                  ? () => setBackgroundColor(color)
+                  : () => setBrushColor(color);
+                return (
+                  <TouchableOpacity
+                    key={color}
+                    style={[
+                      styles.swatch,
+                      { backgroundColor: color },
+                      activeColor.toUpperCase() === color.toUpperCase() && styles.swatchSelected,
+                      color === '#FFFFFF' && styles.swatchWhite,
+                    ]}
+                    onPress={onPressColor}
+                  />
+                );
+              })}
+            </ScrollView>
+          )}
+        </View>
+
+        {/* Canvas section — hints float as absolute overlays */}
+        <View style={styles.canvasSection}>
 
           {/* Text placement hint — absolute banner */}
           {textPlacementMode && (
@@ -798,6 +841,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     gap: 6,
   },
+  toolSelectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingBottom: 2,
+  },
+  panelToolBtn: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#D4C4A0',
+    backgroundColor: '#fff',
+  },
+  panelToolBtnActive: {
+    borderColor: '#B8860B',
+    backgroundColor: 'rgba(184, 134, 11, 0.15)',
+  },
+  panelToolIcon: {
+    fontSize: 14,
+  },
+  panelToolDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+  },
+  panelToolLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#555',
+  },
+  panelToolLabelActive: {
+    color: '#B8860B',
+  },
   controlRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -811,7 +892,7 @@ const styles = StyleSheet.create({
   },
   sizeBtn: {
     paddingVertical: 4,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#D4C4A0',
@@ -822,7 +903,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(184, 134, 11, 0.15)',
   },
   sizeBtnText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#666',
   },
@@ -833,37 +914,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  modeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D4C4A0',
-    backgroundColor: '#fff',
-  },
-  modeChipActive: {
-    borderColor: '#B8860B',
-    backgroundColor: 'rgba(184, 134, 11, 0.15)',
-  },
-  modeChipDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  modeChipText: {
-    fontSize: 11,
-    color: '#444',
-    fontWeight: '600',
-  },
-  controlDivider: {
-    width: 1,
-    height: 22,
-    backgroundColor: '#D4C4A0',
-    marginHorizontal: 2,
   },
   swatch: {
     width: 24,
