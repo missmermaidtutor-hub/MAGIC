@@ -1140,7 +1140,7 @@ export default function InspireScreen({ navigation }) {
                 style={styles.postVoteBtnSecondary}
                 onPress={() => { setAllDone(false); setBrowseMode(true); }}
               >
-                <Text style={[styles.postVoteBtnSecondaryText, theme.isDark && { color: '#ffffff' }]}>Browse Yesterday's Courages</Text>
+                <Text style={[styles.postVoteBtnSecondaryText, theme.isDark ? { color: '#ffffff' } : { color: '#004225' }]}>Browse Yesterday's Courages</Text>
               </TouchableOpacity>
             )}
           </>
@@ -1201,7 +1201,7 @@ export default function InspireScreen({ navigation }) {
               style={styles.postVoteBtnSecondary}
               onPress={() => { setBrowseMode(false); setAllDone(true); }}
             >
-              <Text style={[styles.postVoteBtnSecondaryText, theme.isDark && { color: '#ffffff' }]}>Done Browsing</Text>
+              <Text style={[styles.postVoteBtnSecondaryText, theme.isDark ? { color: '#ffffff' } : { color: '#004225' }]}>Done Browsing</Text>
             </TouchableOpacity>
           </>
         )}
@@ -1224,7 +1224,7 @@ export default function InspireScreen({ navigation }) {
                 style={styles.postVoteBtnSecondary}
                 onPress={() => { setBrowseMode(true); setCurrentSet([]); }}
               >
-                <Text style={[styles.postVoteBtnSecondaryText, theme.isDark && { color: '#ffffff' }]}>Browse Without Ranking</Text>
+                <Text style={[styles.postVoteBtnSecondaryText, theme.isDark ? { color: '#ffffff' } : { color: '#004225' }]}>Browse Without Ranking</Text>
               </TouchableOpacity>
             </View>
           </View>
