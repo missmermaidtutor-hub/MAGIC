@@ -19,32 +19,19 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
 import { auth } from '../../config/firebase';
-import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable, applyReferralCode, checkAndConvertInvitation, logSignupError } from '../../services/firestoreService';
+import { createUserProfile, claimPseudonym, checkPseudonymAvailable, claimUsername, checkUsernameAvailable, checkAndConvertInvitation, logSignupError } from '../../services/firestoreService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const GENDER_OPTIONS = [
-  { key: 'female', label: 'Identify Female' },
-  { key: 'male', label: 'Identify Male' },
-  { key: 'non-binary', label: 'Non-Binary' },
-  { key: 'prefer-not-to-say', label: 'Prefer Not to Say' },
-];
-
-const TIMEZONES = [
-  { key: 'America/New_York', label: 'Eastern (EST/EDT)' },
-  { key: 'America/Chicago', label: 'Central (CST/CDT)' },
-  { key: 'America/Denver', label: 'Mountain (MST/MDT)' },
-  { key: 'America/Los_Angeles', label: 'Pacific (PST/PDT)' },
-  { key: 'America/Anchorage', label: 'Alaska (AKST/AKDT)' },
-  { key: 'Pacific/Honolulu', label: 'Hawaii (HST)' },
-  { key: 'America/Phoenix', label: 'Arizona (MST)' },
-  { key: 'Europe/London', label: 'London (GMT/BST)' },
-  { key: 'Europe/Paris', label: 'Paris (CET/CEST)' },
-  { key: 'Asia/Tokyo', label: 'Tokyo (JST)' },
-  { key: 'Australia/Sydney', label: 'Sydney (AEST/AEDT)' },
-];
+const detectTimezone = () => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
+  } catch {
+    return 'America/New_York';
+  }
+};
 
 export default function SignUpScreen({ navigation, route }) {
   const { refreshProfile } = useAuth();
@@ -65,19 +52,12 @@ export default function SignUpScreen({ navigation, route }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // Step 2: Required profile
+  // Step 2: Profile
   const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [birthdate, setBirthdate] = useState('');
-  const [timezone, setTimezone] = useState('America/New_York');
-  const [showTimezoneList, setShowTimezoneList] = useState(false);
-  const [gender, setGender] = useState('');
-  const [showGenderList, setShowGenderList] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [referralCodeInput, setReferralCodeInput] = useState('');
 
   // Debounced username availability check
   useEffect(() => {
@@ -210,10 +190,6 @@ export default function SignUpScreen({ navigation, route }) {
       showAlert('Missing First Name', 'Please enter your first name.');
       return;
     }
-    if (!lastName.trim()) {
-      showAlert('Missing Last Name', 'Please enter your last name.');
-      return;
-    }
     if (!username.trim()) {
       showAlert('Missing Username', 'Please choose a username.');
       return;
@@ -230,15 +206,7 @@ export default function SignUpScreen({ navigation, route }) {
       showAlert('Invalid Date', 'Please enter a complete birthdate (mm/dd/yyyy).');
       return;
     }
-    if (!gender) {
-      showAlert('Missing Gender', 'Please select a gender option.');
-      return;
-    }
-    if (!phoneNumber.trim()) {
-      showAlert('Missing Phone Number', 'Please enter your phone number.');
-      return;
-    }
-    setStep(3);
+    handleFinish();
   };
 
   // Auto-generate a memorable pseudonym (no connection to real name)
@@ -287,6 +255,7 @@ export default function SignUpScreen({ navigation, route }) {
       showAlert('Agreement Required', 'Please read and agree to the Terms of Service and Privacy Policy before creating your account.');
       return;
     }
+    const timezone = detectTimezone();
     setLoading(true);
     try {
       let uid = socialUid;
@@ -319,7 +288,7 @@ export default function SignUpScreen({ navigation, route }) {
         email: userEmail,
         accountMethod: socialMethod,
         firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        lastName: '',
         username: username.trim(),
         pseudonym: autoPseudonym,
         birthdate,
@@ -330,8 +299,8 @@ export default function SignUpScreen({ navigation, route }) {
         notificationPreference: settings.dailyReminder === false ? 'none' : 'daily',
         allowWorkBoutique: false,
         anonymous: true,
-        gender,
-        phoneNumber: phoneNumber.trim(),
+        gender: '',
+        phoneNumber: '',
         bio: profile.bio || '',
         favoritePrompt: profile.favoritePrompt || '',
         pseudonymChangeCount: 0,
@@ -343,7 +312,7 @@ export default function SignUpScreen({ navigation, route }) {
         accountMethod: socialMethod,
         email: userEmail,
         firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        lastName: '',
         username: username.trim(),
         pseudonym: autoPseudonym,
         timezone,
@@ -358,16 +327,6 @@ export default function SignUpScreen({ navigation, route }) {
         bio: profile.bio || '',
       };
       await AsyncStorage.setItem('user_profile', JSON.stringify(updatedProfile));
-
-      // Apply referral code if provided
-      if (referralCodeInput.trim()) {
-        try {
-          await applyReferralCode(referralCodeInput.trim(), uid);
-        } catch (refErr) {
-          console.log('Referral code error:', refErr);
-          // Don't block signup for referral errors
-        }
-      }
 
       // Check if this email was invited by someone — mark invitation as converted
       // Pass uid so inviter gets premium grant and friend token gifts are applied
@@ -500,16 +459,6 @@ export default function SignUpScreen({ navigation, route }) {
         autoCapitalize="words"
       />
 
-      <Text style={styles.inputLabel}>Last Name</Text>
-      <TextInput
-        style={styles.textInput}
-        value={lastName}
-        onChangeText={setLastName}
-        placeholder="Your last name"
-        placeholderTextColor="#999"
-        autoCapitalize="words"
-      />
-
       <Text style={styles.inputLabel}>Username</Text>
       <Text style={styles.fieldHint}>Your login identity (cannot be changed later)</Text>
       <TextInput
@@ -545,134 +494,6 @@ export default function SignUpScreen({ navigation, route }) {
         maxLength={10}
       />
 
-      <Text style={styles.inputLabel}>Gender</Text>
-      <TouchableOpacity
-        style={styles.dropdownButton}
-        onPress={() => { setShowGenderList(!showGenderList); setShowTimezoneList(false); }}
-      >
-        <Text style={styles.dropdownText}>
-          {gender ? GENDER_OPTIONS.find(g => g.key === gender)?.label : 'Select gender...'}
-        </Text>
-        <Text style={styles.dropdownArrow}>{showGenderList ? '▲' : '▼'}</Text>
-      </TouchableOpacity>
-
-      {showGenderList && (
-        <View style={styles.dropdownList}>
-          {GENDER_OPTIONS.map(opt => (
-            <TouchableOpacity
-              key={opt.key}
-              style={[styles.dropdownItem, gender === opt.key && styles.dropdownItemActive]}
-              onPress={() => {
-                setGender(opt.key);
-                setShowGenderList(false);
-              }}
-            >
-              <Text style={[
-                styles.dropdownItemText,
-                gender === opt.key && styles.dropdownItemTextActive,
-              ]}>{opt.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      <Text style={styles.inputLabel}>Phone Number</Text>
-      <TextInput
-        style={styles.textInput}
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-        placeholder="555-123-4567"
-        placeholderTextColor="#999"
-        keyboardType="phone-pad"
-      />
-
-      <Text style={styles.inputLabel}>Timezone</Text>
-      <TouchableOpacity
-        style={styles.dropdownButton}
-        onPress={() => { setShowTimezoneList(!showTimezoneList); setShowGenderList(false); }}
-      >
-        <Text style={styles.dropdownText}>
-          {TIMEZONES.find(t => t.key === timezone)?.label || timezone}
-        </Text>
-        <Text style={styles.dropdownArrow}>{showTimezoneList ? '▲' : '▼'}</Text>
-      </TouchableOpacity>
-
-      {showTimezoneList && (
-        <View style={styles.dropdownList}>
-          {TIMEZONES.map(tz => (
-            <TouchableOpacity
-              key={tz.key}
-              style={[styles.dropdownItem, timezone === tz.key && styles.dropdownItemActive]}
-              onPress={() => {
-                setTimezone(tz.key);
-                setShowTimezoneList(false);
-              }}
-            >
-              <Text style={[
-                styles.dropdownItemText,
-                timezone === tz.key && styles.dropdownItemTextActive,
-              ]}>{tz.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      <Text style={styles.inputLabel}>Referral Code (optional)</Text>
-      <Text style={styles.fieldHint}>Were you invited by a friend? Enter their code here.</Text>
-      <TextInput
-        style={styles.textInput}
-        value={referralCodeInput}
-        onChangeText={setReferralCodeInput}
-        placeholder="e.g. MAGIC-ABC123"
-        placeholderTextColor="#999"
-        autoCapitalize="characters"
-      />
-
-      <View style={styles.buttonRow}>
-        {!skipCredentials && (
-          <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(1)}>
-            <Text style={styles.secondaryButtonText}>Back</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity style={styles.primaryButton} onPress={handleStep2}>
-          <Text style={styles.primaryButtonText}>Next</Text>
-        </TouchableOpacity>
-      </View>
-    </>
-  );
-
-  const renderStep3 = () => (
-    <>
-      <Text style={styles.stepTitle}>Confirm Your Account</Text>
-      <Text style={styles.stepIndicator}>Almost there!</Text>
-
-      <View style={styles.confirmSection}>
-        <Text style={styles.confirmLabel}>Name</Text>
-        <Text style={styles.confirmValue}>{firstName} {lastName}</Text>
-
-        <Text style={styles.confirmLabel}>Username</Text>
-        <Text style={styles.confirmValue}>{username}</Text>
-
-        <Text style={styles.confirmLabel}>Email</Text>
-        <Text style={styles.confirmValue}>{email}</Text>
-
-        <Text style={styles.confirmLabel}>Birthdate</Text>
-        <Text style={styles.confirmValue}>{birthdate}</Text>
-
-        <Text style={styles.confirmLabel}>Gender</Text>
-        <Text style={styles.confirmValue}>{GENDER_OPTIONS.find(g => g.key === gender)?.label || gender}</Text>
-
-        <Text style={styles.confirmLabel}>Timezone</Text>
-        <Text style={styles.confirmValue}>{TIMEZONES.find(t => t.key === timezone)?.label || timezone}</Text>
-      </View>
-
-      <View style={styles.confirmNote}>
-        <Text style={styles.confirmNoteText}>
-          You can update your bio, location, and other details anytime from the{' '}
-          <Text style={styles.confirmNoteBold}>About You</Text> page in the menu.
-        </Text>
-      </View>
-
       <TouchableOpacity style={styles.agreementRow} onPress={() => setAgreedToTerms(!agreedToTerms)} activeOpacity={0.7}>
         <View style={[styles.checkbox, agreedToTerms && styles.checkboxChecked]}>
           {agreedToTerms && <Text style={styles.checkmark}>✓</Text>}
@@ -690,12 +511,14 @@ export default function SignUpScreen({ navigation, route }) {
       </TouchableOpacity>
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(2)}>
-          <Text style={styles.secondaryButtonText}>Back</Text>
-        </TouchableOpacity>
+        {!skipCredentials && (
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(1)}>
+            <Text style={styles.secondaryButtonText}>Back</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
-          style={[styles.primaryButton, !agreedToTerms && styles.primaryButtonDisabled]}
-          onPress={handleFinish}
+          style={[styles.primaryButton, (!agreedToTerms || loading) && styles.primaryButtonDisabled]}
+          onPress={handleStep2}
           disabled={loading}
         >
           {loading ? (
@@ -708,6 +531,7 @@ export default function SignUpScreen({ navigation, route }) {
     </>
   );
 
+
   return (
     <View style={styles.container}>
       <KeyboardAvoidingView
@@ -718,7 +542,6 @@ export default function SignUpScreen({ navigation, route }) {
           <View style={styles.card}>
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
-            {step === 3 && renderStep3()}
 
             {step === 1 && (
               <View style={styles.loginRow}>
@@ -852,35 +675,6 @@ const styles = StyleSheet.create({
   inputInvalid: {
     borderColor: '#FF6B6B',
   },
-  confirmSection: {
-    marginBottom: 16,
-  },
-  confirmLabel: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 2,
-    fontWeight: '600',
-  },
-  confirmValue: {
-    fontSize: 16,
-    color: '#4B0082',
-    marginBottom: 12,
-  },
-  confirmNote: {
-    backgroundColor: 'rgba(75, 0, 130, 0.08)',
-    borderRadius: 8,
-    padding: 14,
-    marginBottom: 16,
-  },
-  confirmNoteText: {
-    fontSize: 14,
-    color: '#4B0082',
-    lineHeight: 20,
-    textAlign: 'center',
-  },
-  confirmNoteBold: {
-    fontWeight: 'bold',
-  },
   checkingText: {
     color: '#4B0082',
     fontSize: 12,
@@ -899,47 +693,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: -12,
     marginBottom: 12,
-    fontWeight: '600',
-  },
-  dropdownButton: {
-    borderRadius: 8,
-    padding: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4B0082',
-    marginBottom: 16,
-  },
-  dropdownText: {
-    color: '#4B0082',
-    fontSize: 16,
-  },
-  dropdownArrow: {
-    color: '#4B0082',
-    fontSize: 14,
-  },
-  dropdownList: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#4B0082',
-    marginBottom: 16,
-    maxHeight: 200,
-  },
-  dropdownItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  dropdownItemActive: {
-    backgroundColor: 'rgba(75, 0, 130, 0.1)',
-  },
-  dropdownItemText: {
-    color: '#4B0082',
-    fontSize: 15,
-  },
-  dropdownItemTextActive: {
-    color: '#4B0082',
     fontWeight: '600',
   },
   primaryButton: {
