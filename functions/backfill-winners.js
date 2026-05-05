@@ -30,7 +30,7 @@ async function getCouragesForDate(dateStr) {
 
 // ─── Helper: get all votes for a date ────────────────────────────────────────
 async function getAllVotesForDate(dateStr) {
-  const snap = await db.collection('votes').where('date', '==', dateStr).get();
+  const snap = await db.collection('votes').where('courageDate', '==', dateStr).get();
   return snap.docs.map(d => d.data());
 }
 
@@ -68,6 +68,7 @@ async function calculateWinner(dateStr, dryRun) {
       title: solo.title || '',
       mediaType: solo.mediaType || 'image',
       mediaUrl: solo.mediaUrl || '',
+      text: solo.text || '',
       averageScore: 0,
       totalVotes: 0,
       autoWin: true,
@@ -129,6 +130,7 @@ async function calculateWinner(dateStr, dryRun) {
       title: noVoteWinner.title || '',
       mediaType: noVoteWinner.mediaType || 'image',
       mediaUrl: noVoteWinner.mediaUrl || '',
+      text: noVoteWinner.text || '',
       averageScore: 0,
       totalVotes: 0,
       noVoteWin: true,
@@ -196,6 +198,7 @@ async function calculateWinner(dateStr, dryRun) {
     title: winner.title || '',
     mediaType: winner.mediaType || 'image',
     mediaUrl: winner.mediaUrl || '',
+    text: winner.text || '',
     averageScore: winner.averageScore,
     totalVotes: winner.totalVotes,
     calculatedAt: FieldValue.serverTimestamp(),

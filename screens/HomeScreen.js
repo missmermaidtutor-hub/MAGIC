@@ -1716,6 +1716,11 @@ export default function HomeScreen({ navigation }) {
                         <Text style={styles.audioPlayIcon}>{isPlayingWinner ? '⏸' : '▶'}</Text>
                         <Text style={styles.audioWinnerTitle}>{winners[currentWinnerIndex]?.title || 'Audio Courage'}</Text>
                       </TouchableOpacity>
+                    ) : winners[currentWinnerIndex]?.mediaType === 'text' ? (
+                      <View style={styles.textWinnerFrame}>
+                        <Text style={styles.textWinnerTitle}>{winners[currentWinnerIndex]?.title || ''}</Text>
+                        <Text style={styles.textWinnerBody}>{winners[currentWinnerIndex]?.text || ''}</Text>
+                      </View>
                     ) : (
                       <Image
                         source={{ uri: winners[currentWinnerIndex]?.mediaUrl }}
@@ -2642,6 +2647,27 @@ const styles = StyleSheet.create({
     color: '#061679',
     textAlign: 'center',
     paddingHorizontal: 20,
+  },
+  textWinnerFrame: {
+    width: 240,
+    height: 240,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(75, 0, 130, 0.08)',
+    padding: 16,
+  },
+  textWinnerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#4B0082',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  textWinnerBody: {
+    fontSize: 13,
+    color: '#2d0057',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 
   // Daily Insight Modal
