@@ -1739,10 +1739,15 @@ export default function HomeScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
 
-              {/* Winner pseudonym */}
+              {/* Winner nameplate: title + pseudonym */}
               <View style={styles.winnerNameRow}>
                 <GoldFrame>
                   <View style={styles.winnerNameInner}>
+                    {winners.length > 0 && winners[currentWinnerIndex]?.title ? (
+                      <Text style={styles.winnerTitleText}>
+                        {winners[currentWinnerIndex].title}
+                      </Text>
+                    ) : null}
                     <Text style={styles.winnerNameText}>
                       {winners.length > 0
                         ? (winners[currentWinnerIndex]?.anonymous ? 'Anonymous' : (winners[currentWinnerIndex]?.pseudonym || 'Anonymous'))
@@ -2546,13 +2551,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     paddingVertical: 10,
   },
-  winnerNameText: {
+  winnerTitleText: {
     color: '#ffffff',
     textShadowColor: 'rgba(0, 0, 0, 0.7)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
     fontSize: 16,
     fontWeight: 'bold',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 2,
+  },
+  winnerNameText: {
+    color: 'rgba(255,255,255,0.75)',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+    fontSize: 13,
+    fontWeight: '400',
     textAlign: 'center',
     fontStyle: 'italic',
   },
