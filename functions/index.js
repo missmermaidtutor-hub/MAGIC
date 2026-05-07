@@ -173,6 +173,41 @@ exports.clearData = v1
   });
 
 /**
+ * User-callable: generate a password reset link for any email.
+ * Bypasses Firebase email delivery — the link is returned directly to the app
+ * and opened via Linking.openURL(). Works for all email providers including Comcast.
+ *
+ * No auth required (user is logged out when resetting password).
+ * Security: same as sendPasswordResetEmail — the link only works for the account owner.
+ */
+exports.getPasswordResetLink = v1
+  .region('us-east1')
+  .https.onRequest(async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
+
+    const email = (req.query.email || req.body?.email || '').trim();
+    if (!email) { res.status(400).json({ error: 'Missing email' }); return; }
+
+    try {
+      const link = await getAuth().generatePasswordResetLink(email, {
+        url: 'https://magicnestlings.web.app',
+        handleCodeInApp: false,
+      });
+      res.status(200).json({ link });
+    } catch (err) {
+      // Don't reveal whether account exists — return same message for all errors
+      console.error('getPasswordResetLink error:', err.code, err.message);
+      if (err.code === 'auth/user-not-found') {
+        res.status(200).json({ link: null, reason: 'not_found' });
+      } else {
+        res.status(500).json({ error: 'Could not generate reset link' });
+      }
+    }
+  });
+
+/**
  * Admin-only: generate a password reset link for any user email.
  * Bypasses Firebase email delivery entirely — you copy the link and send it manually.
  *

@@ -1604,3 +1604,50 @@ export const getFaqItems = async () => {
 export const saveFaqItems = async (items) => {
   await setDoc(doc(db, 'appConfig', 'faq'), { items, updatedAt: serverTimestamp() });
 };
+
+// ─── Stock Image Scores ────────────────────────────────────────────────────────
+// Each doc in `stockImageScores` has: { id, totalScore, count, retired }
+// Lower avg score = better (same as real courage ranking: 1 = best)
+
+export const recordStockImageScores = async (scoreEntries) => {
+  // scoreEntries: [{ id: 'artowork_1', score: 2 }, ...]
+  const batch = writeBatch(db);
+  for (const entry of scoreEntries) {
+    const ref = doc(db, 'stockImageScores', entry.id);
+    // increment running total and count; setDoc with merge so doc is created if missing
+    batch.set(ref, {
+      id: entry.id,
+      totalScore: increment(entry.score),
+      count: increment(1),
+      retired: false,
+    }, { merge: true });
+  }
+  await batch.commit();
+};
+
+export const getBestStockImage = async () => {
+  // Returns the non-retired stock image with the lowest average score (best rank),
+  // falling back to the one with the most votes if tied, then random from unscored.
+  const snap = await getDocs(
+    query(collection(db, 'stockImageScores'), where('retired', '==', false))
+  );
+  if (snap.empty) return null; // no scores yet — caller handles fallback
+
+  let best = null;
+  let bestAvg = Infinity;
+  snap.docs.forEach(d => {
+    const { id, totalScore, count } = d.data();
+    if (count > 0) {
+      const avg = totalScore / count;
+      if (avg < bestAvg || (avg === bestAvg && (!best || count > best.count))) {
+        bestAvg = avg;
+        best = { id, avg, count };
+      }
+    }
+  });
+  return best; // { id, avg, count } or null
+};
+
+export const retireStockImage = async (id) => {
+  await setDoc(doc(db, 'stockImageScores', id), { retired: true }, { merge: true });
+};

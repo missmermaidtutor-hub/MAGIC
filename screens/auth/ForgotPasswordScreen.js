@@ -8,31 +8,37 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from 'react-native';
 import { showAlert } from '../../utils/alertUtils';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../../config/firebase';
+
+const RESET_LINK_URL = 'https://us-east1-magicnestlings.cloudfunctions.net/getPasswordResetLink';
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [resetLink, setResetLink] = useState(null);
 
   const handleReset = async () => {
-    if (!email.trim()) {
+    const trimmed = email.trim();
+    if (!trimmed) {
       showAlert('Missing Email', 'Please enter your email address.');
       return;
     }
     setLoading(true);
     try {
-      await sendPasswordResetEmail(auth, email.trim());
-      setSent(true);
+      const resp = await fetch(`${RESET_LINK_URL}?email=${encodeURIComponent(trimmed)}`);
+      const data = await resp.json();
+      if (data.reason === 'not_found') {
+        showAlert('Not Found', 'No account found with that email address.');
+      } else if (data.link) {
+        setResetLink(data.link);
+      } else {
+        showAlert('Error', 'Could not generate a reset link. Please try again.');
+      }
     } catch (error) {
-      console.error('Password reset error:', error.code, error.message, error);
-      let message = 'Could not send reset email. Please try again.';
-      if (error.code === 'auth/user-not-found') message = 'No account found with this email.';
-      else if (error.code === 'auth/invalid-email') message = 'Invalid email address.';
-      showAlert('Error', message);
+      console.error('Password reset error:', error);
+      showAlert('Error', 'Could not reach the server. Please check your connection.');
     }
     setLoading(false);
   };
@@ -47,20 +53,22 @@ export default function ForgotPasswordScreen({ navigation }) {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Reset Password</Text>
 
-            {sent ? (
+            {resetLink ? (
               <>
                 <Text style={styles.successText}>
-                  A password reset link has been sent to{'\n'}
-                  <Text style={styles.emailHighlight}>{email}</Text>
+                  Your reset link is ready.
                 </Text>
                 <Text style={styles.instructionText}>
-                  Check your inbox and follow the link to reset your password.
+                  Tap below to open the password reset page. After resetting, come back and sign in.
                 </Text>
                 <TouchableOpacity
                   style={styles.primaryButton}
-                  onPress={() => navigation.goBack()}
+                  onPress={() => Linking.openURL(resetLink)}
                 >
-                  <Text style={styles.primaryButtonText}>Back to Sign In</Text>
+                  <Text style={styles.primaryButtonText}>Reset My Password</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                  <Text style={styles.linkText}>Back to Sign In</Text>
                 </TouchableOpacity>
               </>
             ) : (

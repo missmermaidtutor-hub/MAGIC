@@ -9,7 +9,7 @@ import { Audio } from 'expo-av';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import ThemedBackground from '../components/ThemedBackground';
-import { calculateAndSetWinner, getRecentWinners, saveProgress, checkPseudonymAvailable, claimPseudonym, releasePseudonym, updateUserProfile, getUserWinCount, awardTrialToken, redeemTrialTokenFirestore, getDailyPrompt } from '../services/firestoreService';
+import { calculateAndSetWinner, getRecentWinners, saveProgress, checkPseudonymAvailable, claimPseudonym, releasePseudonym, updateUserProfile, getUserWinCount, awardTrialToken, redeemTrialTokenFirestore, getDailyPrompt, getBestStockImage, retireStockImage } from '../services/firestoreService';
 import { getESTDate, getESTYesterday, getESTDayBeforeYesterday, formatDisplayDate } from '../utils/dateUtils';
 import quotesData from '../quotes.json';
 import promptsData from '../prompts-data.json';
@@ -18,6 +18,7 @@ import { getTodayQuote } from '../utils/quoteUtils';
 import { trackAction } from '../services/analyticsService';
 import { scheduleStreakReminder } from '../utils/notificationUtils';
 import { getTasksForDate } from '../utils/taskUtils';
+import ARTOWORKS_IMAGES from '../utils/artoworksImages';
 import { openMailto, sanitizeShareUrl } from '../utils/emailUtils';
 import { getPremiumStatus, getMemberDayCount, checkActiveDayTokenEligibility } from '../utils/premiumUtils';
 
@@ -668,6 +669,7 @@ export default function HomeScreen({ navigation }) {
   const goalLockTimerRef = useRef(null);
   const [savedArtworks, setSavedArtworks] = useState(new Set());
   const [winners, setWinners] = useState([]);
+  const [stockWinner, setStockWinner] = useState(null); // { source, title } shown when no real winners
   const [currentWinnerIndex, setCurrentWinnerIndex] = useState(0);
   const [winnerSound, setWinnerSound] = useState(null);
   const [isPlayingWinner, setIsPlayingWinner] = useState(false);
@@ -1236,6 +1238,27 @@ export default function HomeScreen({ navigation }) {
       if (recent.length > 0 && currentWinnerIndex >= recent.length) {
         setCurrentWinnerIndex(0);
       }
+
+      // If no real winners yet, fill frame with highest-rated stock image
+      if (recent.length === 0) {
+        try {
+          const best = await getBestStockImage();
+          let picked = null;
+          if (best) {
+            picked = ARTOWORKS_IMAGES.find(img => img.id === best.id);
+          }
+          // Fall back to random non-retired pick if no scores yet
+          if (!picked) {
+            picked = ARTOWORKS_IMAGES[Math.floor(Math.random() * ARTOWORKS_IMAGES.length)];
+          }
+          if (picked) {
+            setStockWinner({ source: picked.source, title: picked.title, id: picked.id });
+            await retireStockImage(picked.id);
+          }
+        } catch (e) {
+          // Stock winner is cosmetic — fail silently
+        }
+      }
     } catch (error) {
       console.log('Error loading winners:', error);
     }
@@ -1687,7 +1710,7 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.winnerDateText}>
                       {winners.length > 0
                         ? `${formatDisplayDate(winners[currentWinnerIndex]?.date)} winner`
-                        : 'No winners yet'}
+                        : 'Featured Artwork'}
                     </Text>
                   </View>
                 </GoldFrame>
@@ -1705,9 +1728,17 @@ export default function HomeScreen({ navigation }) {
                 <GoldFrame thickness={50}>
                   <View style={styles.imageFrameInner}>
                     {winners.length === 0 ? (
-                      <View style={styles.noWinnerPlaceholder}>
-                        <Text style={styles.noWinnerText}>Winners will{'\n'}appear here</Text>
-                      </View>
+                      stockWinner ? (
+                        <Image
+                          source={stockWinner.source}
+                          style={styles.artworkImage}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <View style={styles.noWinnerPlaceholder}>
+                          <Text style={styles.noWinnerText}>Winners will{'\n'}appear here</Text>
+                        </View>
+                      )
                     ) : winners[currentWinnerIndex]?.mediaType === 'audio' ? (
                       <TouchableOpacity
                         style={styles.audioWinnerFrame}
@@ -1743,15 +1774,15 @@ export default function HomeScreen({ navigation }) {
               <View style={styles.winnerNameRow}>
                 <GoldFrame>
                   <View style={styles.winnerNameInner}>
-                    {winners.length > 0 && winners[currentWinnerIndex]?.title ? (
+                    {(winners.length > 0 && winners[currentWinnerIndex]?.title) || (winners.length === 0 && stockWinner?.title) ? (
                       <Text style={styles.winnerTitleText}>
-                        {winners[currentWinnerIndex].title}
+                        {winners.length > 0 ? winners[currentWinnerIndex].title : stockWinner.title}
                       </Text>
                     ) : null}
                     <Text style={styles.winnerNameText}>
                       {winners.length > 0
                         ? (winners[currentWinnerIndex]?.anonymous ? 'Anonymous' : (winners[currentWinnerIndex]?.pseudonym || 'Anonymous'))
-                        : '---'}
+                        : 'From the Gallery'}
                     </Text>
                   </View>
                 </GoldFrame>

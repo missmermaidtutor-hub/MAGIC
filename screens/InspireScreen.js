@@ -31,88 +31,17 @@ import {
   deleteInspiration,
   recordArtSave,
   removeArtSave,
+  recordStockImageScores,
 } from '../services/firestoreService';
 import { getESTDate, getESTYesterday } from '../utils/dateUtils';
 import { showAlert } from '../utils/alertUtils';
 import ThemedBackground from '../components/ThemedBackground';
 import { getAssetByID } from '@react-native/assets-registry/registry';
+import ARTOWORKS_IMAGES from '../utils/artoworksImages';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-// Stock artwork images from ARTOWORKS folder for voting (full set)
-const ARTOWORKS_IMAGES = [
-  { id: 'artowork_1', source: require('../Cliparts/ARTOWORKS/0BA40B55-394A-4F5B-AC78-53216811944D.jpg'), title: 'Abstract Geometry', isFiller: true },
-  { id: 'artowork_2', source: require('../Cliparts/ARTOWORKS/0E43E649-4EFB-4F00-BB5A-9B6B3AFA23A1.jpg'), title: 'Still Life', isFiller: true },
-  { id: 'artowork_3', source: require('../Cliparts/ARTOWORKS/10-18.jpg'), title: 'Sunset Reflections', isFiller: true },
-  { id: 'artowork_4', source: require('../Cliparts/ARTOWORKS/1st Profile Pic.jpg'), title: 'Portrait Study', isFiller: true },
-  { id: 'artowork_5', source: require('../Cliparts/ARTOWORKS/2640CDAE-43BD-4790-91DC-28460863738B.jpg'), title: 'Mixed Media', isFiller: true },
-  { id: 'artowork_6', source: require('../Cliparts/ARTOWORKS/524144317_10162839591567264_3907841676702630020_n.jpg'), title: 'Color Study', isFiller: true },
-  { id: 'artowork_7', source: require('../Cliparts/ARTOWORKS/540119055_10162967375152264_4178779566219057526_n.jpg'), title: 'Morning Light', isFiller: true },
-  { id: 'artowork_8', source: require('../Cliparts/ARTOWORKS/555583717_10163109406592264_4681170089551922231_n.jpg'), title: 'Creative Vision', isFiller: true },
-  { id: 'artowork_9', source: require('../Cliparts/ARTOWORKS/8EAF3CC2-03CC-44BF-901A-BB9352E3F9ED.jpg'), title: 'Texture Work', isFiller: true },
-  { id: 'artowork_10', source: require('../Cliparts/ARTOWORKS/BLUEBEE FLOWER 2.jpeg'), title: 'Blue Bee Flower', isFiller: true },
-  { id: 'artowork_11', source: require('../Cliparts/ARTOWORKS/C5FECDFF-13A0-41AD-93B6-6BE833D5E4E5.jpg'), title: 'Composition Study', isFiller: true },
-  { id: 'artowork_12', source: require('../Cliparts/ARTOWORKS/Cake.jpg'), title: 'Sweet Creation', isFiller: true },
-  { id: 'artowork_13', source: require('../Cliparts/ARTOWORKS/Clock.jpg'), title: 'Time Piece', isFiller: true },
-  { id: 'artowork_14', source: require('../Cliparts/ARTOWORKS/D4EB9DEC-C870-41BC-B771-D3A1EC8BB229.jpg'), title: 'Dark Contrast', isFiller: true },
-  { id: 'artowork_15', source: require('../Cliparts/ARTOWORKS/Floundering.jpg'), title: 'Floundering', isFiller: true },
-  { id: 'artowork_16', source: require('../Cliparts/ARTOWORKS/IMG_4057.jpg'), title: 'Captured Moment', isFiller: true },
-  { id: 'artowork_17', source: require('../Cliparts/ARTOWORKS/IMG_7854.jpeg'), title: 'Daily Practice', isFiller: true },
-  { id: 'artowork_18', source: require('../Cliparts/ARTOWORKS/IMG_7872.jpeg'), title: 'Visual Study', isFiller: true },
-  { id: 'artowork_19', source: require('../Cliparts/ARTOWORKS/IMG_7907.jpeg'), title: 'Creative Impulse', isFiller: true },
-  { id: 'artowork_20', source: require('../Cliparts/ARTOWORKS/IMG_7978.jpeg'), title: 'Art Session', isFiller: true },
-  { id: 'artowork_21', source: require('../Cliparts/ARTOWORKS/IMG_7980.jpeg'), title: 'Light and Shadow', isFiller: true },
-  { id: 'artowork_22', source: require('../Cliparts/ARTOWORKS/IMG_7994.jpeg'), title: 'Form Study', isFiller: true },
-  { id: 'artowork_23', source: require('../Cliparts/ARTOWORKS/IMG_7998.jpeg'), title: 'Expressive Work', isFiller: true },
-  { id: 'artowork_24', source: require('../Cliparts/ARTOWORKS/IMG_8018.jpeg'), title: 'Creative Process', isFiller: true },
-  { id: 'artowork_25', source: require('../Cliparts/ARTOWORKS/IMG_8021.jpeg'), title: 'Studio Work', isFiller: true },
-  { id: 'artowork_26', source: require('../Cliparts/ARTOWORKS/IMG_8069.jpeg'), title: 'Personal Vision', isFiller: true },
-  { id: 'artowork_27', source: require('../Cliparts/ARTOWORKS/IMG_8075.jpeg'), title: 'Exploration', isFiller: true },
-  { id: 'artowork_28', source: require('../Cliparts/ARTOWORKS/IMG_8081.jpeg'), title: 'Raw Expression', isFiller: true },
-  { id: 'artowork_29', source: require('../Cliparts/ARTOWORKS/IMG_8092.jpeg'), title: 'Intuitive Mark', isFiller: true },
-  { id: 'artowork_30', source: require('../Cliparts/ARTOWORKS/IMG_8099.jpeg'), title: 'Color Field', isFiller: true },
-  { id: 'artowork_31', source: require('../Cliparts/ARTOWORKS/IMG_8159.jpeg'), title: 'Quiet Study', isFiller: true },
-  { id: 'artowork_32', source: require('../Cliparts/ARTOWORKS/IMG_8164.jpeg'), title: 'Meditative Work', isFiller: true },
-  { id: 'artowork_33', source: require('../Cliparts/ARTOWORKS/IMG_8172.jpeg'), title: 'Natural Form', isFiller: true },
-  { id: 'artowork_34', source: require('../Cliparts/ARTOWORKS/IMG_8190.jpeg'), title: 'Abstract Flow', isFiller: true },
-  { id: 'artowork_35', source: require('../Cliparts/ARTOWORKS/IMG_8193.jpeg'), title: 'Layered Depth', isFiller: true },
-  { id: 'artowork_36', source: require('../Cliparts/ARTOWORKS/IMG_8194.jpeg'), title: 'Surface Study', isFiller: true },
-  { id: 'artowork_37', source: require('../Cliparts/ARTOWORKS/IMG_8291.jpeg'), title: 'Brave Mark', isFiller: true },
-  { id: 'artowork_38', source: require('../Cliparts/ARTOWORKS/IMG_8332.jpeg'), title: 'Open Field', isFiller: true },
-  { id: 'artowork_39', source: require('../Cliparts/ARTOWORKS/IMG_8367.jpeg'), title: 'Gestural Work', isFiller: true },
-  { id: 'artowork_40', source: require('../Cliparts/ARTOWORKS/IMG_8368.jpeg'), title: 'Presence', isFiller: true },
-  { id: 'artowork_41', source: require('../Cliparts/ARTOWORKS/IMG_8370.jpeg'), title: 'Movement', isFiller: true },
-  { id: 'artowork_42', source: require('../Cliparts/ARTOWORKS/IMG_8372.jpeg'), title: 'Rhythm', isFiller: true },
-  { id: 'artowork_43', source: require('../Cliparts/ARTOWORKS/IMG_8382.jpeg'), title: 'Balance', isFiller: true },
-  { id: 'artowork_44', source: require('../Cliparts/ARTOWORKS/IMG_8387.jpeg'), title: 'Tension', isFiller: true },
-  { id: 'artowork_45', source: require('../Cliparts/ARTOWORKS/IMG_8392.jpeg'), title: 'Release', isFiller: true },
-  { id: 'artowork_46', source: require('../Cliparts/ARTOWORKS/IMG_8397.jpeg'), title: 'Discovery', isFiller: true },
-  { id: 'artowork_47', source: require('../Cliparts/ARTOWORKS/IMG_8405.jpeg'), title: 'Wonder', isFiller: true },
-  { id: 'artowork_48', source: require('../Cliparts/ARTOWORKS/IMG_8466.jpeg'), title: 'Spark', isFiller: true },
-  { id: 'artowork_49', source: require('../Cliparts/ARTOWORKS/IMG_8469.jpeg'), title: 'Glow', isFiller: true },
-  { id: 'artowork_50', source: require('../Cliparts/ARTOWORKS/IMG_8472.jpeg'), title: 'Drift', isFiller: true },
-  { id: 'artowork_51', source: require('../Cliparts/ARTOWORKS/IMG_8491.jpeg'), title: 'Grounded', isFiller: true },
-  { id: 'artowork_52', source: require('../Cliparts/ARTOWORKS/IMG_8594.jpeg'), title: 'Wild Edge', isFiller: true },
-  { id: 'artowork_53', source: require('../Cliparts/ARTOWORKS/IMG_8599.jpeg'), title: 'Abstract Dreams', isFiller: true },
-  { id: 'artowork_54', source: require('../Cliparts/ARTOWORKS/IMG_8610.jpeg'), title: 'Quiet Moments', isFiller: true },
-  { id: 'artowork_55', source: require('../Cliparts/ARTOWORKS/IMG_8618.jpeg'), title: 'Deep Perspective', isFiller: true },
-  { id: 'artowork_56', source: require('../Cliparts/ARTOWORKS/IMG_8619.jpeg'), title: 'Inner Landscape', isFiller: true },
-  { id: 'artowork_57', source: require('../Cliparts/ARTOWORKS/IMG_8629.jpeg'), title: 'Free Expression', isFiller: true },
-  { id: 'artowork_58', source: require('../Cliparts/ARTOWORKS/IMG_8646.jpeg'), title: 'Bold Strokes', isFiller: true },
-  { id: 'artowork_59', source: require('../Cliparts/ARTOWORKS/IMG_8647.jpeg'), title: 'Peaceful Flow', isFiller: true },
-  { id: 'artowork_60', source: require('../Cliparts/ARTOWORKS/IMG_8653.jpeg'), title: 'Emergent Form', isFiller: true },
-  { id: 'artowork_61', source: require('../Cliparts/ARTOWORKS/IMG_8679.jpeg'), title: 'Soft Focus', isFiller: true },
-  { id: 'artowork_62', source: require('../Cliparts/ARTOWORKS/IMG_8734.jpeg'), title: 'Resonance', isFiller: true },
-  { id: 'artowork_63', source: require('../Cliparts/ARTOWORKS/IMG_8745.jpeg'), title: 'Vibration', isFiller: true },
-  { id: 'artowork_64', source: require('../Cliparts/ARTOWORKS/IMG_8795.jpeg'), title: 'Density', isFiller: true },
-  { id: 'artowork_65', source: require('../Cliparts/ARTOWORKS/IMG_8836.jpeg'), title: 'Transparency', isFiller: true },
-  { id: 'artowork_66', source: require('../Cliparts/ARTOWORKS/IMG_8859.jpeg'), title: 'Weight', isFiller: true },
-  { id: 'artowork_67', source: require('../Cliparts/ARTOWORKS/IMG_8864.jpeg'), title: 'Lightness', isFiller: true },
-  { id: 'artowork_68', source: require('../Cliparts/ARTOWORKS/Justwords.jpg'), title: 'Just Words', isFiller: true },
-  { id: 'artowork_69', source: require('../Cliparts/ARTOWORKS/Moon.jpg'), title: 'Nature\'s Pattern', isFiller: true },
-  { id: 'artowork_70', source: require('../Cliparts/ARTOWORKS/ravendoodle.jpg'), title: 'Raven Doodle', isFiller: true },
-];
 
 // Persistent key for sliding-window "recently seen" stock images (not date-keyed)
 const STOCK_SEEN_KEY = 'stock_seen_recent';
@@ -665,7 +594,7 @@ export default function InspireScreen({ navigation }) {
         }
       }
 
-      // Save stock image seen IDs to persistent sliding window
+      // Save stock image seen IDs to persistent sliding window + record scores to Firestore
       if (stockIds.length > 0) {
         try {
           const existing = await AsyncStorage.getItem(STOCK_SEEN_KEY);
@@ -675,6 +604,14 @@ export default function InspireScreen({ navigation }) {
           const windowSize = Math.max(0, ARTOWORKS_IMAGES.length - 4);
           const trimmed = merged.slice(-windowSize);
           await AsyncStorage.setItem(STOCK_SEEN_KEY, JSON.stringify(trimmed));
+        } catch (e) {}
+
+        // Record filler scores to Firestore so HomeScreen can pick the best one
+        try {
+          const scoreEntries = stockIds
+            .filter(id => batchRankings[id] !== undefined)
+            .map(id => ({ id, score: batchRankings[id] }));
+          if (scoreEntries.length > 0) await recordStockImageScores(scoreEntries);
         } catch (e) {}
       }
 
