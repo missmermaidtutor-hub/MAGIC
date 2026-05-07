@@ -577,9 +577,14 @@ export default function SignUpScreen({ navigation, route }) {
                 {"By creating an account you confirm you have read, understood, and agree to these Terms of Service."}
               </Text>
             </ScrollView>
-            <TouchableOpacity style={styles.legalCloseBtn} onPress={() => setShowTermsModal(false)}>
-              <Text style={styles.legalCloseBtnText}>Close</Text>
-            </TouchableOpacity>
+            <View style={styles.legalBtnRow}>
+              <TouchableOpacity onPress={() => Linking.openURL('https://13magicalnights.com/terms')}>
+                <Text style={styles.legalOpenLink}>Open in browser ↗</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.legalCloseBtn} onPress={() => setShowTermsModal(false)}>
+                <Text style={styles.legalCloseBtnText}>Close</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -605,9 +610,14 @@ export default function SignUpScreen({ navigation, route }) {
                 {"By creating an account you confirm you have read and understood this Privacy Policy."}
               </Text>
             </ScrollView>
-            <TouchableOpacity style={styles.legalCloseBtn} onPress={() => setShowPrivacyModal(false)}>
-              <Text style={styles.legalCloseBtnText}>Close</Text>
-            </TouchableOpacity>
+            <View style={styles.legalBtnRow}>
+              <TouchableOpacity onPress={() => Linking.openURL('https://13magicalnights.com/privacy')}>
+                <Text style={styles.legalOpenLink}>Open in browser ↗</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.legalCloseBtn} onPress={() => setShowPrivacyModal(false)}>
+                <Text style={styles.legalCloseBtnText}>Close</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -839,12 +849,23 @@ const styles = StyleSheet.create({
     color: '#332100',
     lineHeight: 21,
   },
+  legalBtnRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  legalOpenLink: {
+    color: '#4B0082',
+    fontSize: 13,
+    textDecorationLine: 'underline',
+  },
   legalCloseBtn: {
     backgroundColor: '#FFD700',
     borderRadius: 8,
-    padding: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     alignItems: 'center',
-    marginTop: 16,
   },
   legalCloseBtnText: {
     color: '#4B0082',

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "magic-tracker",
+    "name": "MAGIC",
     "slug": "magic-tracker",
     "version": "1.0.0",
     "scheme": "magic-tracker",
@@ -20,15 +20,33 @@
       "bundleIdentifier": "com.cejafi.magictracker",
       "buildNumber": "1",
       "usesAppleSignIn": true,
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
+          }
+        ]
+      },
       "infoPlist": {
-        "NSCameraUsageDescription": "MAGIC Tracker uses your camera to capture artwork for your gallery and daily courage posts.",
-        "NSPhotoLibraryUsageDescription": "MAGIC Tracker accesses your photo library to upload artwork to your gallery and community features."
+        "NSCameraUsageDescription": "MAGIC uses your camera to capture artwork for your daily courage post and gallery.",
+        "NSPhotoLibraryUsageDescription": "MAGIC accesses your photo library to upload artwork to your gallery and community features.",
+        "NSMicrophoneUsageDescription": "MAGIC uses your microphone to record audio courage posts."
       }
     },
     "android": {
+      "package": "com.cejafi.magictracker",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#000000"
-      }
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0a0e27"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -36,6 +54,7 @@
     },
     "plugins": [
       "@sentry/react-native/expo",
+      "expo-apple-authentication",
       [
         "expo-notifications",
         {
